@@ -1,0 +1,52 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e59]:
+    - generic [ref=e60]:
+      - generic [ref=e62]:
+        - heading "Create your account" [level=1] [ref=e63]
+        - paragraph [ref=e64]: Welcome! Please fill in the details to get started.
+      - generic [ref=e65]:
+        - button "Sign in with Google Continue with Google" [ref=e68] [cursor=pointer]:
+          - generic [ref=e69]:
+            - generic "Sign in with Google" [ref=e71]
+            - generic [ref=e72]: Continue with Google
+        - paragraph [ref=e75]: or
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e81]:
+              - generic [ref=e83]: Email address
+              - textbox "Email address" [ref=e84]:
+                - /placeholder: Enter your email address
+            - generic [ref=e88]:
+              - generic [ref=e90]: Phone number
+              - generic [ref=e91]:
+                - button "us" [ref=e92] [cursor=pointer]:
+                  - generic: us
+                  - img
+                - generic [ref=e93]:
+                  - paragraph: "+1"
+                  - textbox "Phone number" [ref=e94]:
+                    - /placeholder: Enter your phone number
+            - generic [ref=e98]:
+              - generic [ref=e100]: Password
+              - generic [ref=e101]:
+                - textbox "Password" [ref=e102]:
+                  - /placeholder: Create a password
+                - button "Show password" [ref=e103] [cursor=pointer]:
+                  - img [ref=e104]
+          - button "Continue" [ref=e110] [cursor=pointer]:
+            - generic [ref=e111]:
+              - text: Continue
+              - img [ref=e112]
+    - generic [ref=e114]:
+      - generic [ref=e115]:
+        - generic [ref=e116]: Already have an account?
+        - link "Sign in" [ref=e117] [cursor=pointer]:
+          - /url: https://workable-slug-6.accounts.dev/sign-in#/?redirect_url=http%3A%2F%2Flocalhost%3A3699%2Fdashboard
+      - generic [ref=e119]:
+        - generic [ref=e121]:
+          - paragraph [ref=e122]: Secured by
+          - link "Clerk logo" [ref=e123] [cursor=pointer]:
+            - /url: https://go.clerk.com/components
+            - img [ref=e124]
+        - paragraph [ref=e129]: Development mode
+  - alert [ref=e4]: My account | Kiaros

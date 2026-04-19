@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE user_profiles
+ADD COLUMN IF NOT EXISTS study_focus TEXT;
+
+COMMIT;

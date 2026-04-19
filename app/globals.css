@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 26 18% 6%;
+    --foreground: 32 22% 92%;
+    --card: 26 16% 11%;
+    --card-foreground: 32 22% 92%;
+    --popover: 26 16% 10%;
+    --popover-foreground: 32 22% 92%;
+    --muted: 25 12% 17%;
+    --muted-foreground: 28 10% 65%;
+    --accent: 34 28% 61%;
+    --accent-foreground: 0 0% 3.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 28 14% 22%;
+    --input: 28 14% 18%;
+    --primary: 32 22% 92%;
+    --primary-foreground: 0 0% 3.9%;
+    --secondary: 26 13% 18%;
+    --secondary-foreground: 32 22% 92%;
+    --ring: 34 28% 61%;
+    --radius: 1rem;
+
+    --bone: 30 26% 92%;
+    --bone-muted: 28 12% 76%;
+    --stone-950: 26 18% 5%;
+    --stone-900: 24 16% 8%;
+    --stone-850: 26 14% 12%;
+    --stone-800: 25 12% 16%;
+    --stone-700: 28 10% 25%;
+    --leather-500: 31 23% 44%;
+    --leather-400: 32 24% 58%;
+    --leather-300: 31 27% 74%;
+    --leather-200: 30 28% 83%;
+    --moss-500: 114 12% 39%;
+    --moss-400: 110 13% 55%;
+    --moss-300: 108 15% 70%;
+    --moss-200: 106 18% 82%;
+    --ember-400: 22 74% 57%;
+    --ember-300: 26 80% 71%;
+    --plum-400: 286 24% 55%;
+    --plum-300: 289 26% 74%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top, rgba(189, 165, 136, 0.08), transparent 30%),
+      radial-gradient(circle at 80% 20%, rgba(110, 130, 108, 0.08), transparent 22%),
+      hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: rgba(189, 165, 136, 0.26);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .page-wrapper {
+    @apply min-h-screen bg-stone-950;
+  }
+
+  .shell-panel {
+    @apply rounded-[1.35rem] border border-border/80 bg-card/95 shadow-panel backdrop-blur-sm;
+  }
+
+  .shell-panel-soft {
+    @apply rounded-[1.15rem] border border-border/60 bg-stone-900/70 shadow-panel backdrop-blur-sm;
+  }
+
+  .shell-section-title {
+    @apply font-serif text-[1.75rem] leading-tight text-bone;
+  }
+
+  .shell-kicker {
+    @apply text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-leather-300/85;
+  }
+
+  .shell-pill {
+    @apply inline-flex items-center rounded-full border border-border/80 bg-stone-950/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-bone-muted;
+  }
+
+  .shell-grid-card {
+    @apply rounded-[1.15rem] border border-border/70 bg-stone-900/80 p-5 shadow-panel transition duration-200;
+  }
+
+  .shell-grid-card:hover {
+    @apply border-leather-500/50 bg-stone-850/90;
+  }
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
