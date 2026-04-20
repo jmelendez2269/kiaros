@@ -3,8 +3,13 @@ import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/pricing(.*)",
+  "/activate(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/api/commerce/etsy-ingest",
+  "/api/commerce/(.*)",
+  "/api/activate/(.*)",
   "/api/webhooks/(.*)",
 ]);
 

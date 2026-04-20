@@ -9,7 +9,7 @@ const MESSAGES = [
   "Building your timing framework...",
   "Weaving your focus layers into the planner...",
   "Shaping your quarterly rhythms...",
-  "Aligning push periods and rest windows...",
+  "Aligning activation windows and rest windows...",
   "Almost there...",
 ];
 

@@ -213,11 +213,13 @@ Rules:
 3. months: one per calendar month in the plan period. theme ≤10 words, 2–3 intentions, keyTransits ≤4 items, energyArc 1 sentence.
 4. weeks: one per week in the week grid above. theme ≤8 words, 2–3 intentions (≤10 words each), cosmicContext ONE sentence referencing the actual transit/moon/retrograde that week. energyType reflects the actual planetary energy.
 5. pushPeriods / restPeriods: reason ≤1 sentence each.
+   Treat pushPeriods as activation windows, not commands. They mark moments when the sky may feel more supportive of effort or forward motion, while fully honoring the user's free will, energy, capacity, and changing circumstances.
 6. Never invent transit dates not listed above. Never assign a transit to a week unless its date range overlaps.
 7. goalCategoryFocus in each week must use the exact goal category names listed above.
 8. Write intentions in first person (e.g. "I tend to..." not "You will...").
 9. Intention language must stay suggestive, spacious, and non-prescriptive. Prefer phrases like "I explore," "I notice," "I make room for," "I experiment with," or "I gently return to."
 10. Do not make identity claims or promises of outcomes. Speak as if each theme is a timely suggestion, not a command.
+11. Never imply the user must act during a pushPeriods window. Frame those periods as invitations, openings, or supportive currents they may choose to engage with.
 
 JSON schema:
 {

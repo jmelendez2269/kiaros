@@ -7,52 +7,70 @@ interface BlueprintViewProps {
 }
 
 export function BlueprintView({ blueprint, planYear }: BlueprintViewProps) {
+  const currentMonth = new Date().getMonth() + 1
+  const currentQuarter = Math.ceil(currentMonth / 3)
+
+  const hasPushRest = blueprint.pushPeriods.length > 0 || blueprint.restPeriods.length > 0
+
   return (
-    <div className="space-y-8">
-      <div className="shell-panel px-6 py-7 md:px-8">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="shell-kicker">{planYear} Blueprint</span>
-          </div>
-          <h1 className="shell-section-title">{blueprint.yearTheme}</h1>
-          <p className="max-w-3xl text-base leading-7 text-bone-muted">{blueprint.yearSummary}</p>
+    <div className="space-y-8 pb-6">
+      {/* HERO */}
+      <div className="shell-panel-hero px-7 py-9 md:px-10 md:py-11">
+        <div className="relative">
+          <p className="shell-kicker mb-4">{planYear} Blueprint</p>
+          <h1 className="shell-hero-title max-w-3xl">{blueprint.yearTheme}</h1>
+          <p className="mt-5 shell-prose-lead">{blueprint.yearSummary}</p>
+
+          {hasPushRest && (
+            <div className="mt-7 flex flex-wrap gap-5 border-t border-border/40 pt-6">
+              {blueprint.pushPeriods.length > 0 && (
+                <div>
+                  <p className="shell-eyebrow mb-2 text-leather-200/80">Activation windows</p>
+                  <div className="flex flex-wrap gap-2">
+                    {blueprint.pushPeriods.map((p, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-leather-400/30 bg-leather-500/12 px-3 py-1 text-[0.72rem] text-bone-muted"
+                        title={p.reason}
+                      >
+                        <span className="h-1 w-1 rounded-full bg-leather-300/70" />
+                        {p.startDate} – {p.endDate}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {blueprint.restPeriods.length > 0 && (
+                <div>
+                  <p className="shell-eyebrow mb-2 text-moss-200/80">Rest periods</p>
+                  <div className="flex flex-wrap gap-2">
+                    {blueprint.restPeriods.map((p, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-moss-500/30 bg-moss-500/10 px-3 py-1 text-[0.72rem] text-bone-muted"
+                        title={p.reason}
+                      >
+                        <span className="h-1 w-1 rounded-full bg-moss-300/70" />
+                        {p.startDate} – {p.endDate}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {(blueprint.pushPeriods.length > 0 || blueprint.restPeriods.length > 0) && (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          {blueprint.pushPeriods.length > 0 && (
-            <div className="shell-panel px-5 py-5">
-              <p className="shell-kicker mb-3 text-leather-300/90">Push Periods - {planYear}</p>
-              <ul className="space-y-2">
-                {blueprint.pushPeriods.map((p, i) => (
-                  <li key={i} className="text-sm text-bone-muted">
-                    <span className="font-medium text-bone">{p.startDate} - {p.endDate}</span>
-                    {p.reason && <span className="ml-2">{p.reason}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {blueprint.restPeriods.length > 0 && (
-            <div className="shell-panel px-5 py-5">
-              <p className="shell-kicker mb-3 text-moss-300/90">Rest Periods - {planYear}</p>
-              <ul className="space-y-2">
-                {blueprint.restPeriods.map((p, i) => (
-                  <li key={i} className="text-sm text-bone-muted">
-                    <span className="font-medium text-bone">{p.startDate} - {p.endDate}</span>
-                    {p.reason && <span className="ml-2">{p.reason}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-6">
+      {/* QUARTERS */}
+      <div className="space-y-4">
         {blueprint.quarters.map((quarter) => (
-          <QuarterSection key={quarter.quarter} quarter={quarter} months={blueprint.months} />
+          <QuarterSection
+            key={quarter.quarter}
+            quarter={quarter}
+            months={blueprint.months}
+            isCurrentQuarter={quarter.quarter === currentQuarter}
+          />
         ))}
       </div>
     </div>

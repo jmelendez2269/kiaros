@@ -17,10 +17,16 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-function energyTone(activeNow: boolean, windowsCount: number) {
-  if (activeNow) return 'border-leather-400/45 bg-leather-500/12 text-leather-200'
-  if (windowsCount > 0) return 'border-moss-500/35 bg-moss-500/10 text-moss-200'
-  return 'border-border/70 bg-stone-950/60 text-bone-muted'
+function statusLabel(activeNow: boolean, windowsCount: number) {
+  if (activeNow) return 'Active now'
+  if (windowsCount > 0) return `${windowsCount} windows this year`
+  return 'Timing still forming'
+}
+
+function statusTone(activeNow: boolean, windowsCount: number) {
+  if (activeNow) return 'border-leather-400/55 bg-leather-500/18 text-leather-100'
+  if (windowsCount > 0) return 'border-moss-500/40 bg-moss-500/12 text-moss-200'
+  return 'border-border/60 bg-stone-950/60 text-bone-muted'
 }
 
 function buildJournalHref({
@@ -51,6 +57,18 @@ function buildJournalHref({
   })
 
   return `/journal?${params.toString()}`
+}
+
+function formatDateRange(startDate: string, endDate: string) {
+  const start = new Date(`${startDate}T12:00:00`)
+  const end = new Date(`${endDate}T12:00:00`)
+  const sameMonth = start.getMonth() === end.getMonth()
+  const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const endStr = end.toLocaleDateString('en-US', {
+    month: sameMonth ? undefined : 'short',
+    day: 'numeric',
+  })
+  return `${startStr} — ${endStr}`
 }
 
 export default async function AreaDetailPage({
@@ -95,8 +113,10 @@ export default async function AreaDetailPage({
   const activeNow = activeWeeks.some((week) => week.startDate <= today && today <= week.endDate)
   const houseDetails = areaHouseDetails(category.name, natalChart)
   const natalPlacements = areaNatalPlanets(category.name, natalChart)
-  const currentWindow = activeWeeks.find((week) => week.startDate <= today && today <= week.endDate) ?? activeWeeks[0] ?? null
-  const nextWindows = activeWeeks.slice(0, 6)
+  const currentWindow = activeWeeks.find((week) => week.startDate <= today && today <= week.endDate) ?? null
+  const upcomingWindows = activeWeeks.filter((week) => week !== currentWindow).slice(0, 5)
+  const primaryHouse = houseDetails[0] ?? null
+  const primaryPlacement = natalPlacements[0] ?? null
   const areaYearNarrative = buildAreaYearNarrative({
     nameOrSlug: category.name,
     blueprintTheme: blueprintRes.data?.year_theme,
@@ -106,207 +126,279 @@ export default async function AreaDetailPage({
   })
 
   return (
-    <div className="space-y-8">
-      <section className="shell-panel px-6 py-7 md:px-8">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-3xl">
-            <p className="shell-kicker mb-3">Life Area</p>
-            <h1 className="shell-section-title">
-              {category.icon_key ? `${category.icon_key} ${category.name}` : category.name}
-            </h1>
-            <p className="mt-4 text-base leading-7 text-bone-muted">
-              {category.description || area.summary}
-            </p>
+    <div className="space-y-10 pb-6">
+      {/* HERO */}
+      <section className="shell-panel-hero px-7 py-9 md:px-10 md:py-11">
+        <div className="relative flex flex-col gap-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="shell-kicker mb-4">Life Area</p>
+              <h1 className="shell-hero-title">
+                {category.icon_key ? (
+                  <span className="mr-3 text-[0.85em] opacity-80">{category.icon_key}</span>
+                ) : null}
+                {category.name}
+              </h1>
+              <p className="mt-5 shell-prose-lead">
+                {category.description || area.summary}
+              </p>
+            </div>
+            <div
+              className={`inline-flex shrink-0 items-center gap-2 self-start rounded-full border px-4 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] ${statusTone(activeNow, activeWeeks.length)}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${activeNow ? 'bg-leather-300' : 'bg-bone-muted/50'}`} />
+              {statusLabel(activeNow, activeWeeks.length)}
+            </div>
           </div>
-          <div className={`rounded-2xl border px-4 py-3 text-sm ${energyTone(activeNow, activeWeeks.length)}`}>
-            {activeNow ? 'Active now' : activeWeeks.length > 0 ? `${activeWeeks.length} timing windows this year` : 'Area timing still generating'}
+
+          <div className="flex flex-wrap gap-2.5">
+            <div className="shell-stat-chip">
+              <span className="shell-stat-chip-label">Energy</span>
+              <span className="shell-stat-chip-value capitalize">{area.energyMode}</span>
+            </div>
+            {primaryHouse ? (
+              <div className="shell-stat-chip">
+                <span className="shell-stat-chip-label">House</span>
+                <span className="shell-stat-chip-value">
+                  {primaryHouse.house}
+                  {primaryHouse.sign ? ` · ${primaryHouse.sign}` : ''}
+                </span>
+              </div>
+            ) : null}
+            {primaryPlacement ? (
+              <div className="shell-stat-chip">
+                <span className="shell-stat-chip-label">Anchor</span>
+                <span className="shell-stat-chip-value">
+                  {primaryPlacement.planet} in {primaryPlacement.sign}
+                </span>
+              </div>
+            ) : null}
+            {currentWindow ? (
+              <div className="shell-stat-chip">
+                <span className="shell-stat-chip-label">Now</span>
+                <span className="shell-stat-chip-value">{currentWindow.theme}</span>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <article className="shell-panel px-6 py-6">
-          <p className="shell-kicker">This Year</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">How this area is moving</h2>
-          <p className="mt-4 text-sm leading-7 text-bone-muted">
-            {category.success || area.plannerPrompt}
-          </p>
-          <div className="mt-5 space-y-4 rounded-[1.1rem] border border-border/70 bg-stone-950/60 p-5">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-bone-muted/60">Year theme</p>
-              <p className="mt-2 text-sm leading-7 text-bone">
-                {areaYearNarrative.theme}
+      {/* CURRENT WINDOW — primary action zone */}
+      {currentWindow ? (
+        <section className="relative overflow-hidden rounded-[1.5rem] border border-leather-400/35 bg-gradient-to-br from-leather-500/14 via-stone-900/60 to-stone-950/80 px-7 py-8 md:px-9">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-xl">
+              <p className="shell-kicker mb-3 text-leather-200/90">This week</p>
+              <h2 className="shell-section-title">{currentWindow.theme}</h2>
+              <p className="mt-2 text-sm text-bone-muted">
+                Week {currentWindow.weekNumber} · {formatDateRange(currentWindow.startDate, currentWindow.endDate)}
               </p>
+              <p className="mt-5 shell-prose">{currentWindow.cosmicContext}</p>
             </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-bone-muted/60">Interpretation direction</p>
-              <p className="mt-2 text-sm leading-7 text-bone-muted">
-                {areaYearNarrative.direction || profileRes.data?.year_vision || 'Kiaros will synthesize your natal chart, house rulers, and yearly transits into a focused narrative for this area.'}
-              </p>
-            </div>
-          </div>
-        </article>
-
-        <article className="shell-panel px-6 py-6">
-          <p className="shell-kicker">Planner Strategy</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">How to work with the energy</h2>
-          <div className="mt-5 space-y-3">
-            {area.supportStrategies.map((strategy) => (
-              <div key={strategy} className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm leading-7 text-bone-muted">
-                {strategy}
+            {currentWindow.intentions.length > 0 ? (
+              <div className="lg:max-w-sm lg:shrink-0">
+                <p className="shell-eyebrow mb-3">Start a journal entry</p>
+                <div className="flex flex-col gap-2">
+                  {currentWindow.intentions.slice(0, 3).map((intention) => (
+                    <Link
+                      key={intention}
+                      href={buildJournalHref({
+                        area: category.name,
+                        theme: currentWindow.theme,
+                        intention,
+                        weekNumber: currentWindow.weekNumber,
+                        startDate: currentWindow.startDate,
+                        endDate: currentWindow.endDate,
+                        cosmicContext: currentWindow.cosmicContext,
+                      })}
+                      className="group flex items-center gap-3 rounded-2xl border border-leather-400/30 bg-stone-950/55 px-4 py-3 text-left transition-all hover:border-leather-300/55 hover:bg-stone-950/80"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-leather-400/30 bg-stone-950/80 text-leather-200 transition-colors group-hover:text-bone">
+                        <PenSquare size={14} />
+                      </span>
+                      <span className="text-[0.9rem] leading-snug text-bone-muted group-hover:text-bone">
+                        {intention}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            ))}
+            ) : null}
           </div>
-        </article>
+        </section>
+      ) : null}
+
+      {/* YEAR NARRATIVE — editorial prose */}
+      <section className="px-2 md:px-4">
+        <p className="shell-kicker mb-3">This year</p>
+        <h2 className="shell-section-title mb-6 max-w-2xl">
+          {areaYearNarrative.theme}
+        </h2>
+        <p className="shell-prose">
+          {areaYearNarrative.direction ||
+            profileRes.data?.year_vision ||
+            'Kiaros will synthesize your natal chart, house rulers, and yearly transits into a focused narrative for this area.'}
+        </p>
+        <p className="shell-prose mt-4">
+          {category.success || area.plannerPrompt}
+        </p>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
-        <article className="shell-panel px-6 py-6">
-          <p className="shell-kicker">Houses</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">Where this lives in the chart</h2>
-          <div className="mt-5 grid gap-3">
-            {houseDetails.length > 0 ? (
-              houseDetails.map((detail) => (
-                <div key={detail.house} className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-bone">House {detail.house}</p>
+      {/* CHART ANCHORS — inline reference */}
+      <section>
+        <div className="mb-4 flex items-baseline justify-between">
+          <div>
+            <p className="shell-kicker">In your chart</p>
+            <h2 className="mt-1 shell-subsection-title">Where this area lives</h2>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <p className="shell-eyebrow mb-3">Houses</p>
+            <div className="space-y-2">
+              {houseDetails.length > 0 ? (
+                houseDetails.map((detail) => (
+                  <div
+                    key={detail.house}
+                    className="shell-panel-inline flex items-center justify-between gap-4 px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-bone">House {detail.house}</p>
+                      {detail.ruler ? (
+                        <p className="mt-0.5 text-xs text-bone-muted/80">Ruled by {detail.ruler}</p>
+                      ) : null}
+                    </div>
                     {detail.sign ? <span className="shell-pill">{detail.sign}</span> : null}
                   </div>
-                  <p className="mt-2 text-sm text-bone-muted">
-                    {detail.ruler ? `Ruled by ${detail.ruler}.` : 'The chart-specific house sign will appear here once birth data is complete.'}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm text-bone-muted">
-                This custom area is not mapped to houses yet. The next phase can let you assign or generate that mapping.
-              </div>
-            )}
-          </div>
-        </article>
-
-        <article className="shell-panel px-6 py-6">
-          <p className="shell-kicker">Natal Placements</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">Planets already living here</h2>
-          <div className="mt-5 grid gap-3">
-            {natalPlacements.length > 0 ? (
-              natalPlacements.map((placement) => (
-                <div key={`${placement.planet}-${placement.house}`} className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4">
-                  <p className="text-sm font-semibold text-bone">
-                    {placement.planet} in {placement.sign}
-                  </p>
-                  <p className="mt-2 text-sm text-bone-muted">
-                    House {placement.house} at {placement.degree.toFixed(1)} deg. This placement should become one of the anchors for future area-specific transit interpretation.
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm text-bone-muted">
-                No natal planets fall directly inside the primary houses for this area. House rulers and yearly transits can still make it active.
-              </div>
-            )}
-          </div>
-        </article>
-      </section>
-
-      <section className="shell-panel px-6 py-6">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="shell-kicker">Timeline</p>
-            <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">Yearly timing windows</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-bone-muted">
-              These windows are being derived from the existing blueprint focus weeks for this area. The next phase can deepen them with exact transit-to-house-ruler interpretations and planner event generation.
-            </p>
-          </div>
-          {currentWindow ? (
-            <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">
-              Current emphasis: {currentWindow.theme}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
-          {nextWindows.length > 0 ? (
-            nextWindows.map((week) => (
-              <article key={`${week.startDate}-${week.weekNumber}`} className="rounded-[1.1rem] border border-border/70 bg-stone-950/60 px-5 py-5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-lg font-semibold text-bone">{week.theme}</p>
-                  <span className="shell-pill">Week {week.weekNumber}</span>
-                </div>
-                <p className="mt-2 text-sm text-bone-muted">
-                  {week.startDate} to {week.endDate}
+                ))
+              ) : (
+                <p className="shell-panel-inline px-4 py-3 text-sm text-bone-muted">
+                  Not mapped to houses yet.
                 </p>
-                <p className="mt-4 text-sm leading-7 text-bone-muted">{week.cosmicContext}</p>
-                {week.intentions.length > 0 ? (
-                  <div className="mt-4">
-                    <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-bone-muted/55">
-                      Click a prompt to start a journal entry
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                    {week.intentions.map((intention) => (
-                      <Link
-                        key={intention}
-                        href={buildJournalHref({
-                          area: category.name,
-                          theme: week.theme,
-                          intention,
-                          weekNumber: week.weekNumber,
-                          startDate: week.startDate,
-                          endDate: week.endDate,
-                          cosmicContext: week.cosmicContext,
-                        })}
-                        className="group inline-flex min-h-[3rem] max-w-full items-center gap-2 rounded-full border border-leather-400/25 bg-leather-500/8 px-3 py-2 text-left text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-bone-muted transition-all hover:border-leather-400/50 hover:bg-leather-500/14 hover:text-bone"
-                      >
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-leather-400/20 bg-stone-950/75 text-leather-200 transition-colors group-hover:border-leather-300/40 group-hover:text-bone">
-                          <PenSquare size={13} />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-[0.6rem] tracking-[0.2em] text-leather-200/85">
-                            Journal this
-                          </span>
-                          <span className="block text-bone-muted group-hover:text-bone">{intention}</span>
-                        </span>
-                      </Link>
-                    ))}
+              )}
+            </div>
+          </div>
+          <div>
+            <p className="shell-eyebrow mb-3">Natal placements</p>
+            <div className="space-y-2">
+              {natalPlacements.length > 0 ? (
+                natalPlacements.map((placement) => (
+                  <div
+                    key={`${placement.planet}-${placement.house}`}
+                    className="shell-panel-inline flex items-center justify-between gap-4 px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-bone">
+                        {placement.planet} in {placement.sign}
+                      </p>
+                      <p className="mt-0.5 text-xs text-bone-muted/80">
+                        House {placement.house} · {placement.degree.toFixed(1)}°
+                      </p>
                     </div>
                   </div>
-                ) : null}
-              </article>
-            ))
-          ) : (
-            <div className="rounded-[1.1rem] border border-border/70 bg-stone-950/60 px-5 py-5 text-sm text-bone-muted xl:col-span-2">
-              No dedicated timing windows have been generated for this area yet.
+                ))
+              ) : (
+                <p className="shell-panel-inline px-4 py-3 text-sm text-bone-muted">
+                  No natal planets live directly in this area&rsquo;s houses. House rulers and transits still activate it.
+                </p>
+              )}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TIMING WINDOWS */}
+      {upcomingWindows.length > 0 ? (
+        <section>
+          <div className="mb-5 flex items-baseline justify-between">
+            <div>
+              <p className="shell-kicker">Ahead</p>
+              <h2 className="mt-1 shell-subsection-title">Upcoming timing windows</h2>
+            </div>
+            <p className="hidden text-xs text-bone-muted/70 md:block">
+              {upcomingWindows.length} of {activeWeeks.length}
+            </p>
+          </div>
+          <div className="space-y-3">
+            {upcomingWindows.map((week) => (
+              <article
+                key={`${week.startDate}-${week.weekNumber}`}
+                className="shell-panel-inline px-5 py-4 transition-colors hover:border-leather-400/30"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <p className="text-[0.95rem] font-medium text-bone">{week.theme}</p>
+                      <p className="text-xs text-bone-muted/80">
+                        Week {week.weekNumber} · {formatDateRange(week.startDate, week.endDate)}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-sm leading-[1.65] text-bone-muted">{week.cosmicContext}</p>
+                  </div>
+                  {week.intentions.length > 0 ? (
+                    <Link
+                      href={buildJournalHref({
+                        area: category.name,
+                        theme: week.theme,
+                        intention: week.intentions[0],
+                        weekNumber: week.weekNumber,
+                        startDate: week.startDate,
+                        endDate: week.endDate,
+                        cosmicContext: week.cosmicContext,
+                      })}
+                      className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-border/60 bg-stone-950/60 px-3 py-1.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+                    >
+                      <PenSquare size={12} />
+                      Journal
+                    </Link>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* STRATEGY + BEST MONTHS */}
+      <section className="grid gap-8 md:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="shell-kicker mb-3">How to work with the energy</p>
+          <h2 className="shell-subsection-title mb-5">Supporting practices</h2>
+          <ul className="space-y-3">
+            {area.supportStrategies.map((strategy) => (
+              <li key={strategy} className="flex gap-3">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-leather-400/60" />
+                <span className="text-[0.95rem] leading-[1.7] text-bone-muted/95">{strategy}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="shell-kicker mb-3">Best months to act</p>
+          <h2 className="shell-subsection-title mb-5">Planner lens</h2>
+          {activeMonths.length > 0 ? (
+            <div className="space-y-2">
+              {activeMonths.slice(0, 3).map((month) => (
+                <div key={month.month} className="shell-panel-inline px-4 py-3">
+                  <p className="text-sm font-medium text-bone">{month.name}</p>
+                  <p className="mt-1.5 text-sm leading-[1.6] text-bone-muted/90">{month.energyArc}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="shell-panel-inline px-4 py-3 text-sm text-bone-muted">
+              Month-level recommendations appear here once timing windows translate into planner events.
+            </p>
           )}
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
-        <article className="shell-panel px-6 py-6">
-          <p className="shell-kicker">Goals</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">What you want to build here</h2>
-          <div className="mt-5 rounded-[1.1rem] border border-dashed border-leather-400/35 bg-leather-500/6 px-5 py-5 text-sm leading-7 text-bone-muted">
-            Goal storage is the next build slice. This section is where users will create area-specific goals and link them to timing windows that then appear in the planner.
-          </div>
-        </article>
-
-        <article className="shell-panel px-6 py-6">
-          <p className="shell-kicker">Planner Lens</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">Best times to act</h2>
-          <div className="mt-5 space-y-3">
-            {activeMonths.slice(0, 3).map((month) => (
-              <div key={month.month} className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4">
-                <p className="text-sm font-semibold text-bone">{month.name}</p>
-                <p className="mt-2 text-sm text-bone-muted">{month.energyArc}</p>
-              </div>
-            ))}
-            {activeMonths.length === 0 ? (
-              <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm text-bone-muted">
-                Planner recommendations will appear here as soon as area timing windows are translated into event suggestions.
-              </div>
-            ) : null}
-          </div>
-        </article>
+      {/* GOALS PLACEHOLDER — quieter callout */}
+      <section className="rounded-[1.2rem] border border-dashed border-leather-400/25 bg-leather-500/4 px-6 py-5">
+        <p className="shell-eyebrow mb-2">Coming next</p>
+        <p className="text-sm leading-[1.65] text-bone-muted">
+          Area-specific goals will live here, linked to the timing windows above so they flow straight into your planner.
+        </p>
       </section>
     </div>
   )

@@ -76,15 +76,20 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "Inter",
+          "var(--font-body)",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
         serif: [
+          "var(--font-display)",
           "\"Iowan Old Style\"",
-          "\"Palatino Linotype\"",
-          "\"Book Antiqua\"",
+          "Georgia",
+          "serif",
+        ],
+        display: [
+          "var(--font-display)",
+          "\"Iowan Old Style\"",
           "Georgia",
           "serif",
         ],
