@@ -203,7 +203,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const today = todayISO()
   const currentYear = new Date().getFullYear()
 
-  const [profileRes, blueprintRes, ephemerisRes, categoriesRes] = await Promise.all([
+  const [profileRes, blueprintRes, ephemerisRes, categoriesRes, oracleMemoryRes] = await Promise.all([
     supabase.from('user_profiles').select('display_name, birth_date, plan_year, word_of_year, year_vision, what_to_release, study_focus, natal_chart').maybeSingle(),
     supabase
       .from('blueprints')
@@ -215,11 +215,14 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
       .maybeSingle(),
     supabase.from('ephemeris_cache').select('data').eq('year', currentYear).maybeSingle(),
     supabase.from('goal_categories').select('id, name, icon_key, sort_order').order('sort_order', { ascending: true }),
+    supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('oracle_memory', true),
   ])
 
   const profile = profileRes.data
   const categories = categoriesRes.data ?? []
   const blueprintRow = blueprintRes.data
+  const oracleMemoryCount = oracleMemoryRes.error ? 0 : (oracleMemoryRes.count ?? 0)
+  const natalChart = (profile?.natal_chart as NatalChart | null) ?? null
   const yearEphemeris = (ephemerisRes.data?.data as YearEphemeris | null) ?? null
   const weeks = (blueprintRow?.weeks as unknown as WeekBlueprint[]) ?? []
   const months = (blueprintRow?.months as unknown as MonthBlueprint[]) ?? []
@@ -354,7 +357,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 icon: Orbit,
               },
               {
-                kicker: 'Maintenance',
+                kicker: 'Tending',
                 value: maintenanceLane,
                 percent: '30%',
                 body: currentWeek?.cosmicContext || currentMonth?.energyArc || 'Steady support systems keep the year map usable in real life.',
@@ -362,7 +365,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 icon: Activity,
               },
               {
-                kicker: 'Incubation',
+                kicker: 'Depth',
                 value: incubationLane,
                 percent: '10%',
                 body: profile?.study_focus || 'Curriculum, reading paths, and deeper custom inputs can layer onto the system next.',
@@ -642,6 +645,91 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 )}
               </div>
             </article>
+          </section>
+
+          <section className="shell-panel px-6 py-6 md:px-8">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="shell-kicker">Oracle context</p>
+                <h2 className="mt-2 font-serif text-[1.8rem] text-bone">What the Oracle already knows about you</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-bone-muted">
+                  Every Oracle conversation starts here — your chart, your goals, and any journal entries you&apos;ve chosen to include. You control what it remembers.
+                </p>
+              </div>
+              <Link href="/oracle" className="hidden items-center gap-2 rounded-2xl border border-border/80 bg-stone-950/70 px-4 py-2 text-sm text-bone-muted hover:text-bone md:inline-flex">
+                Ask the Oracle
+                <ArrowRight size={15} />
+              </Link>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              {/* Natal chart */}
+              <div className="rounded-[1.15rem] border border-leather-400/25 bg-leather-500/8 p-5">
+                <p className="shell-eyebrow mb-3 text-leather-200/80">Natal chart · permanent</p>
+                {natalChart ? (
+                  <div className="space-y-2">
+                    <p className="text-base font-semibold text-bone">
+                      {natalChart.sun.sign} Sun
+                      {!natalChart.birthTimeUnknown && ` · ${natalChart.rising} Rising`}
+                    </p>
+                    <p className="text-sm text-bone-muted">{natalChart.moon.sign} Moon · House {natalChart.moon.house}</p>
+                    {natalChart.birthTimeUnknown && (
+                      <p className="text-xs text-bone-muted/60">Birth time unknown — houses approximate</p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {(['mercury', 'venus', 'mars', 'jupiter', 'saturn'] as const).map((p) => (
+                        <span key={p} className="shell-pill">
+                          {p.charAt(0).toUpperCase() + p.slice(1)} in {natalChart[p].sign}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-bone-muted">Complete onboarding to add your natal chart.</p>
+                )}
+              </div>
+
+              {/* Goals */}
+              <div className="rounded-[1.15rem] border border-moss-500/25 bg-moss-500/8 p-5">
+                <p className="shell-eyebrow mb-3 text-moss-200/80">Your goals · from onboarding</p>
+                {categories.length > 0 ? (
+                  <ul className="space-y-2">
+                    {categories.slice(0, 5).map((cat) => (
+                      <li key={cat.id} className="flex items-center gap-2 text-sm text-bone">
+                        {cat.icon_key && <span>{cat.icon_key}</span>}
+                        <span>{cat.name}</span>
+                      </li>
+                    ))}
+                    {categories.length > 5 && (
+                      <li className="text-xs text-bone-muted/60">+{categories.length - 5} more</li>
+                    )}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-bone-muted">Your goals will appear here after onboarding.</p>
+                )}
+              </div>
+
+              {/* Journal memory */}
+              <div className="rounded-[1.15rem] border border-plum-400/25 bg-plum-400/8 p-5">
+                <p className="shell-eyebrow mb-3 text-plum-300/80">Journal memory · your choice</p>
+                {oracleMemoryCount > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-3xl font-semibold text-bone">{oracleMemoryCount}</p>
+                    <p className="text-sm text-bone-muted">
+                      {oracleMemoryCount === 1 ? 'entry' : 'entries'} in Oracle memory
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-bone-muted">
+                    No entries yet. Open the journal and toggle &ldquo;Add to Oracle memory&rdquo; on any entry.
+                  </p>
+                )}
+                <Link href="/journal" className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-bone-muted hover:text-bone transition-colors">
+                  Open journal
+                  <ArrowRight size={12} />
+                </Link>
+              </div>
+            </div>
           </section>
 
           <section className="flex flex-wrap gap-3">

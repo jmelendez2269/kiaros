@@ -80,8 +80,9 @@ export default function OnboardingGeneratingPage() {
 
         if (status === "ready" || status === "error") {
           clearInterval(poll);
-          ["kiaros_onboarding_step1","kiaros_onboarding_step2","kiaros_onboarding_step3","kiaros_onboarding_step4"]
-            .forEach((k) => sessionStorage.removeItem(k));
+          ["kiaros_onboarding_step1", "kiaros_onboarding_step2", "kiaros_onboarding_step3", "kiaros_onboarding_step4"].forEach((k) =>
+            sessionStorage.removeItem(k)
+          );
 
           if (status === "error") {
             setErrorDetail(error || "");
@@ -104,7 +105,7 @@ export default function OnboardingGeneratingPage() {
     if (hasFired.current) return;
     hasFired.current = true;
     startGeneration();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleRetry() {
@@ -122,7 +123,7 @@ export default function OnboardingGeneratingPage() {
           <div className="text-5xl text-bone-muted">*</div>
           <h2 className="font-serif text-3xl text-bone">Something went wrong</h2>
           <p className="text-bone-muted">
-            Your blueprint couldn&apos;t be generated right now. This sometimes happens with network
+            Your planner couldn&apos;t be generated right now. This sometimes happens with network
             hiccups, and it&apos;s worth trying again.
           </p>
           {errorDetail && (
@@ -146,7 +147,7 @@ export default function OnboardingGeneratingPage() {
       <div className="shell-panel max-w-sm space-y-6 px-6 py-10 text-center">
         <div className="text-5xl animate-pulse text-bone-muted">*</div>
         <p className="shell-kicker">Generating</p>
-        <h2 className="font-serif text-3xl text-bone">Creating your Life OS blueprint</h2>
+        <h2 className="font-serif text-3xl text-bone">Creating your personalized planner</h2>
         <p className="min-h-[1.5rem] text-bone-muted transition-all duration-500">
           {MESSAGES[messageIndex]}
         </p>
@@ -159,7 +160,10 @@ export default function OnboardingGeneratingPage() {
             />
           ))}
         </div>
-        <p className="text-xs text-bone-muted">This usually takes about 30 seconds.</p>
+        <p className="text-xs text-bone-muted">
+          Kiaros is reading your chart, mapping the timing, and weaving in the life areas and
+          themes that matter most to you.
+        </p>
       </div>
     </div>
   );

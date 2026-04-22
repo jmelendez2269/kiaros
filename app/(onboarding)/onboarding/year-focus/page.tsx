@@ -18,11 +18,11 @@ type FormValues = z.infer<typeof schema>;
 
 interface AstrologicalWordResponse {
   astrological_word_of_year: {
-    word: string
-    profectionHouse: number
-    profectionSign: string
-    rationale: string
-  } | null
+    word: string;
+    profectionHouse: number;
+    profectionSign: string;
+    rationale: string;
+  } | null;
 }
 
 function ordinalSuffix(value: number) {
@@ -37,7 +37,8 @@ function ordinalSuffix(value: number) {
 
 export default function OnboardingYearFocusPage() {
   const router = useRouter();
-  const [astrologicalWord, setAstrologicalWord] = useState<AstrologicalWordResponse["astrological_word_of_year"]>(null);
+  const [astrologicalWord, setAstrologicalWord] =
+    useState<AstrologicalWordResponse["astrological_word_of_year"]>(null);
 
   const {
     register,
@@ -101,10 +102,13 @@ export default function OnboardingYearFocusPage() {
         <p className="shell-kicker">Step 4</p>
         <h2 className="font-serif text-3xl text-bone">Shape the customization layer</h2>
         <p className="leading-relaxed text-bone-muted">
-          Your chart gives Kiaros the timing framework. This step tells it what this year is
-          actually about for you: the atmosphere you want, what you&apos;re moving toward, and
-          what you want this season to hold.
+          What do you want this year to feel like and mean? Kiaros works best when it understands
+          not just what you want to do, but what kind of year you are trying to live.
         </p>
+        <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
+          <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
+          Anchors your Oracle to this season of your life
+        </div>
         <p className="text-sm italic text-bone-muted/80">
           Messy, honest answers make better blueprints than polished ones.
         </p>
@@ -145,7 +149,8 @@ export default function OnboardingYearFocusPage() {
               ) : null}
             </div>
             <p className="mt-3 text-sm leading-7 text-bone-muted">
-              {astrologicalWord?.rationale || "Once your chart data is available, Kiaros will suggest a word based on your yearly astrology."}
+              {astrologicalWord?.rationale ||
+                "Once your chart data is available, Kiaros will suggest a word based on your yearly astrology."}
             </p>
             <p className="mt-3 text-xs text-bone-muted">
               Keep this as your astrology-derived anchor, add your own word below, or use both.

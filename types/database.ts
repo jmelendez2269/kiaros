@@ -398,6 +398,7 @@ export type Database = {
           lunar_phase: string | null
           lunar_sign: string | null
           mood_tag: string | null
+          oracle_memory: boolean
           title: string | null
           transit_context: Json | null
           updated_at: string | null
@@ -414,6 +415,7 @@ export type Database = {
           lunar_phase?: string | null
           lunar_sign?: string | null
           mood_tag?: string | null
+          oracle_memory?: boolean
           title?: string | null
           transit_context?: Json | null
           updated_at?: string | null
@@ -430,6 +432,7 @@ export type Database = {
           lunar_phase?: string | null
           lunar_sign?: string | null
           mood_tag?: string | null
+          oracle_memory?: boolean
           title?: string | null
           transit_context?: Json | null
           updated_at?: string | null
@@ -574,6 +577,7 @@ export type Database = {
           onboarding_completed_at: string | null
           plan_year: number | null
           study_focus: string | null
+          theme: string
           updated_at: string | null
           what_to_release: string | null
           word_of_year: string | null
@@ -600,6 +604,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           plan_year?: number | null
           study_focus?: string | null
+          theme?: string
           updated_at?: string | null
           what_to_release?: string | null
           word_of_year?: string | null
@@ -626,6 +631,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           plan_year?: number | null
           study_focus?: string | null
+          theme?: string
           updated_at?: string | null
           what_to_release?: string | null
           word_of_year?: string | null

@@ -3,47 +3,57 @@
 @tailwind utilities;
 
 @layer base {
+  /* ─── Obsidian (default) — Void ──────────────────────────────────────────── */
+  /* Near-true-black, cool undertone. Electric violet as the single hero accent. */
   :root {
-    --background: 26 18% 6%;
-    --foreground: 32 22% 92%;
-    --card: 26 16% 11%;
-    --card-foreground: 32 22% 92%;
-    --popover: 26 16% 10%;
-    --popover-foreground: 32 22% 92%;
-    --muted: 25 12% 17%;
-    --muted-foreground: 28 10% 65%;
-    --accent: 34 28% 61%;
-    --accent-foreground: 0 0% 3.9%;
+    --background: 237 30% 6%;
+    --foreground: 235 22% 91%;
+    --card: 237 28% 10%;
+    --card-foreground: 235 22% 91%;
+    --popover: 237 28% 9%;
+    --popover-foreground: 235 22% 91%;
+    --muted: 235 22% 16%;
+    --muted-foreground: 232 10% 60%;
+    --accent: 252 72% 68%;
+    --accent-foreground: 0 0% 4%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 28 14% 22%;
-    --input: 28 14% 18%;
-    --primary: 32 22% 92%;
-    --primary-foreground: 0 0% 3.9%;
-    --secondary: 26 13% 18%;
-    --secondary-foreground: 32 22% 92%;
-    --ring: 34 28% 61%;
+    --border: 237 20% 16%;
+    --input: 237 20% 13%;
+    --primary: 235 22% 91%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 237 25% 14%;
+    --secondary-foreground: 235 22% 91%;
+    --ring: 252 72% 68%;
     --radius: 1rem;
 
-    --bone: 30 26% 92%;
-    --bone-muted: 28 12% 76%;
-    --stone-950: 26 18% 5%;
-    --stone-900: 24 16% 8%;
-    --stone-850: 26 14% 12%;
-    --stone-800: 25 12% 16%;
-    --stone-700: 28 10% 25%;
-    --leather-500: 31 23% 44%;
-    --leather-400: 32 24% 58%;
-    --leather-300: 31 27% 74%;
-    --leather-200: 30 28% 83%;
-    --moss-500: 114 12% 39%;
-    --moss-400: 110 13% 55%;
-    --moss-300: 108 15% 70%;
-    --moss-200: 106 18% 82%;
-    --ember-400: 22 74% 57%;
-    --ember-300: 26 80% 71%;
-    --plum-400: 286 24% 55%;
-    --plum-300: 289 26% 74%;
+    --bone: 235 20% 91%;
+    --bone-muted: 233 12% 67%;
+    --stone-950: 237 32% 5%;
+    --stone-900: 237 30% 8%;
+    --stone-850: 236 26% 12%;
+    --stone-800: 235 22% 16%;
+    --stone-700: 234 18% 24%;
+
+    /* Primary accent — electric violet */
+    --leather-500: 252 55% 46%;
+    --leather-400: 252 65% 62%;
+    --leather-300: 252 70% 76%;
+    --leather-200: 252 72% 86%;
+
+    /* Secondary — steel blue */
+    --moss-500: 208 42% 38%;
+    --moss-400: 208 48% 52%;
+    --moss-300: 206 50% 66%;
+    --moss-200: 204 52% 78%;
+
+    /* Tertiary — amber */
+    --ember-400: 40 68% 58%;
+    --ember-300: 42 72% 72%;
+
+    /* Quaternary — deep plum */
+    --plum-400: 280 44% 55%;
+    --plum-300: 278 46% 70%;
   }
 
   html {
@@ -53,8 +63,8 @@
   body {
     min-height: 100vh;
     background:
-      radial-gradient(circle at top, rgba(189, 165, 136, 0.08), transparent 30%),
-      radial-gradient(circle at 80% 20%, rgba(110, 130, 108, 0.08), transparent 22%),
+      radial-gradient(ellipse at top, rgba(110, 88, 220, 0.10), transparent 38%),
+      radial-gradient(ellipse at 85% 15%, rgba(70, 110, 210, 0.06), transparent 28%),
       hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
@@ -70,7 +80,7 @@
   }
 
   ::selection {
-    background: rgba(189, 165, 136, 0.26);
+    background: rgba(120, 96, 220, 0.26);
     color: hsl(var(--foreground));
   }
 }
@@ -85,13 +95,13 @@
   }
 
   .shell-panel-hero {
-    @apply relative overflow-hidden rounded-[1.75rem] border border-leather-500/25 bg-gradient-to-br from-stone-900/90 via-card/95 to-stone-950/95 shadow-panel backdrop-blur-sm;
+    @apply relative overflow-hidden rounded-[1.75rem] border border-leather-500/20 bg-gradient-to-br from-stone-900/90 via-card/95 to-stone-950/95 shadow-panel backdrop-blur-sm;
   }
 
   .shell-panel-hero::before {
     content: "";
-    @apply pointer-events-none absolute inset-0 opacity-60;
-    background: radial-gradient(circle at 0% 0%, rgba(189, 165, 136, 0.14), transparent 55%);
+    @apply pointer-events-none absolute inset-0 opacity-50;
+    background: radial-gradient(ellipse at 0% 0%, rgba(130, 100, 240, 0.12), transparent 55%);
   }
 
   .shell-panel {
@@ -157,8 +167,142 @@
   }
 
   .shell-grid-card:hover {
-    @apply border-leather-500/50 bg-stone-850/90;
+    @apply border-leather-500/45 bg-stone-850/90;
   }
+}
+
+/* ─── Celestial — Star Chart ─────────────────────────────────────────────── */
+/* Deep navy foundation. Amber gold accent — the colors of celestial navigation. */
+html[data-theme="celestial"] {
+  --background: 215 65% 7%;
+  --foreground: 212 42% 92%;
+  --card: 215 60% 11%;
+  --card-foreground: 212 42% 92%;
+  --popover: 215 60% 10%;
+  --popover-foreground: 212 42% 92%;
+  --muted: 213 40% 17%;
+  --muted-foreground: 210 14% 60%;
+  --accent: 42 78% 58%;
+  --accent-foreground: 0 0% 4%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 215 36% 18%;
+  --input: 215 36% 14%;
+  --primary: 212 42% 92%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 215 45% 16%;
+  --secondary-foreground: 212 42% 92%;
+  --ring: 42 78% 58%;
+
+  --bone: 212 38% 92%;
+  --bone-muted: 210 16% 68%;
+  --stone-950: 215 68% 5%;
+  --stone-900: 215 64% 8%;
+  --stone-850: 214 56% 12%;
+  --stone-800: 213 48% 16%;
+  --stone-700: 212 36% 24%;
+
+  /* Primary accent — amber gold */
+  --leather-500: 42 55% 42%;
+  --leather-400: 42 68% 56%;
+  --leather-300: 40 74% 70%;
+  --leather-200: 38 76% 82%;
+
+  /* Secondary — teal */
+  --moss-500: 175 36% 36%;
+  --moss-400: 175 42% 50%;
+  --moss-300: 174 44% 64%;
+  --moss-200: 172 46% 76%;
+
+  /* Tertiary — coral */
+  --ember-400: 18 68% 60%;
+  --ember-300: 22 72% 73%;
+
+  /* Quaternary — indigo */
+  --plum-400: 252 50% 58%;
+  --plum-300: 250 52% 72%;
+}
+
+html[data-theme="celestial"] body {
+  background:
+    radial-gradient(ellipse at top, rgba(212, 163, 78, 0.09), transparent 36%),
+    radial-gradient(ellipse at 82% 18%, rgba(40, 90, 200, 0.08), transparent 28%),
+    hsl(var(--background));
+}
+
+html[data-theme="celestial"] .shell-panel-hero::before {
+  background: radial-gradient(ellipse at 0% 0%, rgba(212, 163, 78, 0.10), transparent 55%);
+}
+
+html[data-theme="celestial"] ::selection {
+  background: rgba(212, 163, 78, 0.28);
+}
+
+/* ─── Dawn — Solstice ────────────────────────────────────────────────────── */
+/* Deep amber-infused near-black. Warm amber accent — candlelight on ancient stone. */
+html[data-theme="dawn"] {
+  --background: 30 50% 5%;
+  --foreground: 34 50% 91%;
+  --card: 30 46% 8%;
+  --card-foreground: 34 50% 91%;
+  --popover: 30 46% 7%;
+  --popover-foreground: 34 50% 91%;
+  --muted: 28 30% 15%;
+  --muted-foreground: 28 10% 61%;
+  --accent: 34 84% 60%;
+  --accent-foreground: 0 0% 4%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 28 28% 17%;
+  --input: 28 28% 14%;
+  --primary: 34 50% 91%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 29 34% 14%;
+  --secondary-foreground: 34 50% 91%;
+  --ring: 34 84% 60%;
+
+  --bone: 34 46% 92%;
+  --bone-muted: 30 14% 68%;
+  --stone-950: 30 52% 4%;
+  --stone-900: 30 48% 7%;
+  --stone-850: 29 42% 11%;
+  --stone-800: 28 36% 15%;
+  --stone-700: 27 26% 23%;
+
+  /* Primary accent — warm amber */
+  --leather-500: 34 55% 44%;
+  --leather-400: 34 70% 58%;
+  --leather-300: 33 74% 72%;
+  --leather-200: 32 76% 83%;
+
+  /* Secondary — sage */
+  --moss-500: 102 18% 38%;
+  --moss-400: 100 20% 52%;
+  --moss-300: 98 22% 66%;
+  --moss-200: 96 24% 78%;
+
+  /* Tertiary — ember orange */
+  --ember-400: 22 80% 58%;
+  --ember-300: 26 84% 72%;
+
+  /* Quaternary — mauve */
+  --plum-400: 315 24% 52%;
+  --plum-300: 312 26% 68%;
+}
+
+html[data-theme="dawn"] body {
+  background:
+    radial-gradient(ellipse at top, rgba(218, 148, 60, 0.09), transparent 36%),
+    radial-gradient(ellipse at 82% 18%, rgba(180, 110, 40, 0.06), transparent 28%),
+    hsl(var(--background));
+}
+
+html[data-theme="dawn"] .shell-panel-hero::before {
+  background: radial-gradient(ellipse at 0% 0%, rgba(218, 148, 60, 0.10), transparent 55%);
+}
+
+html[data-theme="dawn"] ::selection {
+  background: rgba(218, 148, 60, 0.28);
 }
 
 /* Smooth transitions */

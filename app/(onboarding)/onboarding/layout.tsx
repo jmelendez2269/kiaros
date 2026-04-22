@@ -10,12 +10,11 @@ export default async function OnboardingLayout({
       <div className="w-full max-w-3xl">
         <div className="mb-10 text-center">
           <p className="shell-kicker mb-3">Life OS Setup</p>
-          <h1 className="font-serif text-4xl text-bone md:text-5xl">
-            Build your timing system first.
-          </h1>
+          <h1 className="font-serif text-4xl text-bone md:text-5xl">Build your timing system.</h1>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-bone-muted">
-            Kiaros starts with your chart and yearly transits, then layers your goals,
-            study themes, and personal customization on top.
+            This planner is meant to be personal. Not generic. Not one-size-fits-all. These next
+            steps help Kiaros understand your timing, your focus, and what this season of life is
+            actually asking of you.
           </p>
           <OnboardingProgressBar />
         </div>

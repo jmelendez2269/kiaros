@@ -169,13 +169,17 @@ export default function OnboardingBirthPage() {
         <p className="shell-kicker">Step 1</p>
         <h2 className="font-serif text-3xl text-bone">Set the timing foundation</h2>
         <p className="leading-relaxed text-bone-muted">
-          The moment and place you were born is the base layer of the planner. This is what
-          lets Kiaros build a year map from your chart and real transits instead of giving
-          you a generic productivity system.
+          Let&apos;s start with your timing foundation. This planner is built around your birth
+          chart, which is why Kiaros begins with the date, time, and place you were born. This is
+          what allows it to create something more personal than a generic planner or astrology app.
         </p>
         <p className="text-sm italic text-bone-muted/80">
           Your answers are private and used only to generate your personal blueprint.
         </p>
+        <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
+          <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
+          Builds your Oracle&apos;s permanent chart foundation
+        </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

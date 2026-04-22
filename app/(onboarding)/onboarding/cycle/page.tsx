@@ -41,7 +41,7 @@ export default function OnboardingCyclePage() {
       body: JSON.stringify(payload),
     });
 
-    router.push("/onboarding/generating");
+    router.push("/onboarding/theme");
   };
 
   const skip = async () => {
@@ -52,7 +52,7 @@ export default function OnboardingCyclePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cycle_enabled: false }),
     });
-    router.push("/onboarding/generating");
+    router.push("/onboarding/theme");
   };
 
   return (
@@ -63,9 +63,9 @@ export default function OnboardingCyclePage() {
           Add an optional energy layer <span className="text-base font-normal text-bone-muted">(optional)</span>
         </h2>
         <p className="leading-relaxed text-bone-muted">
-          Kiaros can layer your menstrual cycle phases into your calendar and tracker -
-          helping you plan with your energy, not against it. This is entirely optional
-          and you can enable or change it anytime in settings.
+          Would you like to include another layer of timing? If it supports you, Kiaros can also
+          take your cycle into account as part of your planning rhythm. This is optional, and you
+          can always change it later.
         </p>
       </div>
 
@@ -78,7 +78,9 @@ export default function OnboardingCyclePage() {
         ].map(({ phase, days, desc }) => (
           <div key={phase} className="rounded-xl border border-border/70 bg-stone-950/55 p-3">
             <p className="font-medium text-bone">{phase}</p>
-            <p className="text-xs text-bone-muted">{days} - {desc}</p>
+            <p className="text-xs text-bone-muted">
+              {days} - {desc}
+            </p>
           </div>
         ))}
       </div>

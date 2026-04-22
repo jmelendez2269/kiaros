@@ -98,10 +98,14 @@ export default function OnboardingGoalsPage() {
         <p className="shell-kicker">Step 2</p>
         <h2 className="font-serif text-3xl text-bone">Choose your focus layers</h2>
         <p className="leading-relaxed text-bone-muted">
-          These are the life areas Kiaros should weave into the chart-driven planner.
-          This is also where learning themes can begin to show up: if a topic matters this
-          year, include it here or describe it in the success notes below.
+          What parts of your life matter most right now? Choose the areas you want this planner to
+          support. These are the places where you want more clarity, alignment, support, or
+          movement this year.
         </p>
+        <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
+          <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
+          Your Oracle knows your goals by name and what success looks like to you
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -149,7 +153,8 @@ export default function OnboardingGoalsPage() {
         <div className="space-y-4">
           <p className="text-sm font-medium text-bone">What does success look like in each area?</p>
           <p className="text-xs text-bone-muted">
-            Optional - keep this focused on what success in each life area would feel or look like for you.
+            Optional. Keep this focused on what success in each life area would feel or look like
+            for you.
           </p>
           {selected.map((cat) => (
             <div key={cat.name} className="space-y-1.5">

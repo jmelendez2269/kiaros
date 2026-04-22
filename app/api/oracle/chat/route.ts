@@ -63,8 +63,9 @@ export async function POST(req: Request) {
     supabase
       .from('journal_entries')
       .select('entry_date, title, body, mood_tag, is_ritual')
+      .eq('oracle_memory', true)
       .order('entry_date', { ascending: false })
-      .limit(5),
+      .limit(20),
     supabase
       .from('quarterly_reviews')
       .select('quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, created_at')
@@ -126,8 +127,8 @@ export async function POST(req: Request) {
   // Gateway in prod (Vercel OIDC), direct Anthropic SDK for local dev.
   // Same pattern as lib/ai/blueprint-generator.ts.
   const model = process.env.VERCEL
-    ? gateway('anthropic/claude-sonnet-4-6')
-    : anthropic('claude-sonnet-4-6')
+    ? gateway('anthropic/claude-sonnet-4.6')
+    : anthropic('claude-sonnet-4.6')
 
   const result = streamText({
     model,

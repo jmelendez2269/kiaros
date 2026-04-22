@@ -57,6 +57,16 @@ export async function PATCH(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Persist theme in a cookie so the root layout can apply it server-side.
+  const response = NextResponse.json({ success: true });
+  if (typeof body.theme === "string") {
+    response.cookies.set("kiaros-theme", body.theme, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  }
+
   // If this update includes birth data, recompute the natal chart.
   // We need the full birth record (some fields may already be stored).
   const birthFields = ["birth_date", "birth_lat", "birth_lng", "birth_time", "birth_tz", "birth_time_unknown"];
@@ -92,5 +102,5 @@ export async function PATCH(req: Request) {
     }
   }
 
-  return NextResponse.json({ success: true });
+  return response;
 }

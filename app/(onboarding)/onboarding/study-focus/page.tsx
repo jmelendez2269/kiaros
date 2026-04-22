@@ -53,12 +53,11 @@ export default function OnboardingStudyFocusPage() {
         <p className="shell-kicker">Step 3</p>
         <h2 className="font-serif text-3xl text-bone">Name your study layer</h2>
         <p className="leading-relaxed text-bone-muted">
-          This is where themes, books, skills, and broader outcomes get their own space.
-          Think of it as the curriculum or learning layer Kiaros should remember while shaping the year.
+          What are you learning, deepening, or becoming? This can include topics you&apos;re
+          studying, skills you want to build, books you want to move through, or larger themes
+          that are shaping this season of your life.
         </p>
-        <p className="text-sm italic text-bone-muted/80">
-          This can stay loose. A few threads are enough.
-        </p>
+        <p className="text-sm italic text-bone-muted/80">This can stay loose. A few threads are enough.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -67,7 +66,8 @@ export default function OnboardingStudyFocusPage() {
             What themes, books, skills, or outcomes do you want this planner to support?
           </label>
           <p className="text-xs text-bone-muted">
-            You can list topics to study, books to move through, skills to strengthen, or longer arcs you want Kiaros to keep in view.
+            You can list topics to study, books to move through, skills to strengthen, or longer
+            arcs you want Kiaros to keep in view.
           </p>
           <textarea
             placeholder="e.g., Depth psychology, astrology fundamentals, music theory, a reading rhythm for The Secret Doctrine, writing practice, and steadier long-form learning..."
