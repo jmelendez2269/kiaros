@@ -14,7 +14,7 @@ export default async function JournalPage({
     .select('id, title, body, entry_date, is_ritual, created_at')
     .order('entry_date', { ascending: false })
     .order('created_at', { ascending: false })
-    .limit(6)
+    .limit(12)
 
   function value(key: string) {
     const raw = params[key]

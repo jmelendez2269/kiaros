@@ -236,8 +236,17 @@ export function JournalComposer({
         </article>
 
         <article className="shell-panel px-6 py-6">
-          <p className="shell-kicker">Recent entries</p>
-          <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">What Oracle can already draw from</h2>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="shell-kicker">Journal history</p>
+              <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">Your saved reflections</h2>
+              <p className="mt-3 text-sm leading-7 text-bone-muted">
+                Revisit past entries, rituals, and timing-window notes in one place.
+              </p>
+            </div>
+            <span className="shell-pill">{recentEntries.length} loaded</span>
+          </div>
+
           <div className="mt-5 space-y-3">
             {recentEntries.length > 0 ? (
               recentEntries.map((entry) => (

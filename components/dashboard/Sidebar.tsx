@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
+import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, FileText, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { slugifyAreaName } from '@/lib/areas'
 import { cn } from '@/lib/utils'
@@ -20,6 +20,7 @@ const NAV_LINKS = [
   { href: '/blueprint', label: 'Blueprint', detail: 'Celestial architecture', icon: BookOpen },
   { href: '/areas', label: 'Areas', detail: 'Chart-specific paths', icon: Orbit },
   { href: '/curriculum', label: 'Curriculum', detail: 'AI study tracks', icon: Brain },
+  { href: '/journal', label: 'Journal', detail: 'History and entries', icon: FileText },
   { href: '/oracle', label: 'Oracle', detail: 'Guidance channel', icon: MessageSquare },
 ] as const
 
