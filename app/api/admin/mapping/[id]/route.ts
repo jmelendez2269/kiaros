@@ -12,15 +12,16 @@ function isAdminSession(sessionClaims: unknown): boolean {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const result = await getMapping(params.id);
+  const result = await getMapping(id);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 404 });
@@ -31,9 +32,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -41,7 +43,7 @@ export async function PATCH(
 
   const body: UpdateMappingPayload = await req.json();
 
-  const result = await updateMapping(params.id, body);
+  const result = await updateMapping(id, body);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });
@@ -52,15 +54,16 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const result = await deleteMapping(params.id);
+  const result = await deleteMapping(id);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });

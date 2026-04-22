@@ -12,15 +12,16 @@ function isAdminSession(sessionClaims: unknown): boolean {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const result = await getCard(params.id);
+  const result = await getCard(id);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 404 });
@@ -31,9 +32,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -41,7 +43,7 @@ export async function PATCH(
 
   const body: UpdateCardPayload = await req.json();
 
-  const result = await updateCard(params.id, body);
+  const result = await updateCard(id, body);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });
@@ -52,15 +54,16 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const result = await deleteCard(params.id);
+  const result = await deleteCard(id);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });

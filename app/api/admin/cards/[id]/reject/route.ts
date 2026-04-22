@@ -11,15 +11,16 @@ function isAdminSession(sessionClaims: unknown): boolean {
 
 export async function POST(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const result = await rejectCard(params.id);
+  const result = await rejectCard(id);
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });

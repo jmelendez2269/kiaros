@@ -11,7 +11,7 @@ function isAdminSession(sessionClaims: unknown): boolean {
 }
 
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

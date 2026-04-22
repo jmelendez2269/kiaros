@@ -19,6 +19,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .select('id, name, icon_key, sort_order')
     .order('sort_order', { ascending: true })
 
+  // Supabase rows can carry prototypes React won't serialize into Client Components.
+  const sidebarCategories = (categories ?? []).map((category) => ({
+    id: category.id,
+    name: category.name,
+    icon_key: category.icon_key,
+  }))
+
   if (!profile?.onboarding_completed_at) {
     redirect('/onboarding')
   }
@@ -26,10 +33,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-stone-950 bg-shell-glow text-bone">
       <div className="flex min-h-screen">
-        <Sidebar categories={categories ?? []} />
+        <Sidebar categories={sidebarCategories} />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <main className="flex-1 px-4 pb-8 pt-5 md:px-8 md:pb-10 md:pt-8 xl:px-10">
-            {children}
+          <main className="flex-1 px-4 pb-8 pt-5 md:px-6 md:pb-10 md:pt-6 xl:px-8">
+            <div className="mx-auto w-full max-w-[1440px]">
+              {children}
+            </div>
           </main>
         </div>
       </div>

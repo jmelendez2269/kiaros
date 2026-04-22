@@ -41,7 +41,7 @@ export function AdminSidebar() {
       </nav>
 
       <div className="flex h-14 shrink-0 items-center border-t border-border px-4">
-        <UserButton afterSignOutUrl="/" />
+        <UserButton />
       </div>
     </aside>
   );

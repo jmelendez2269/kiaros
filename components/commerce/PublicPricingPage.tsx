@@ -232,7 +232,7 @@ export function PublicPricingPage({
             </div>
 
             <div className="grid gap-4">
-              <div className="shell-panel-soft p-5">
+              <div className="shell-panel-soft p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <p className="shell-eyebrow">Built for you, not your sign</p>
                 <p className="mt-2 text-lg font-semibold text-bone">A full natal chart. Not a horoscope.</p>
                 <p className="mt-3 text-sm leading-7 text-bone-muted">
@@ -240,7 +240,7 @@ export function PublicPricingPage({
                   with real ephemeris data into a year-long blueprint that is specifically yours.
                 </p>
               </div>
-              <div className="shell-panel-soft p-5">
+              <div className="shell-panel-soft p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                 <p className="shell-eyebrow">Grounded in orbital mechanics</p>
                 <p className="mt-2 text-lg font-semibold text-bone">Real data. Real cycles.</p>
                 <p className="mt-3 text-sm leading-7 text-bone-muted">
@@ -340,7 +340,7 @@ export function PublicPricingPage({
                 border: "border-ember-400/25",
               },
             ].map(({ step, title, body, accent, border }) => (
-              <div key={step} className={`shell-panel-inline border p-5 ${border}`}>
+              <div key={step} className={`shell-panel-inline border p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] ${border}`}>
                 <p className={`font-display text-3xl font-semibold leading-none ${accent} opacity-50`}>{step}</p>
                 <p className="mt-4 text-sm font-semibold text-bone">{title}</p>
                 <p className="mt-3 text-xs leading-6 text-bone-muted">{body}</p>
@@ -349,7 +349,7 @@ export function PublicPricingPage({
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="rounded-[1rem] border border-border/50 bg-stone-950/40 p-5">
+            <div className="rounded-[1rem] border border-border/50 bg-stone-950/50 p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
               <p className="shell-eyebrow mb-3">What you tell Kiaros during onboarding</p>
               <ul className="space-y-2">
                 {[
@@ -359,14 +359,14 @@ export function PublicPricingPage({
                   "What you're studying or reading this year",
                   "How your energy naturally cycles (7, 14, or 28-day rhythms)",
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-xs leading-6 text-bone-muted">
+                  <li key={item} className="flex items-start gap-2.5 text-sm leading-7 text-bone-muted">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-leather-300/60" />
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="rounded-[1rem] border border-border/50 bg-stone-950/40 p-5">
+            <div className="rounded-[1rem] border border-border/50 bg-stone-950/50 p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
               <p className="shell-eyebrow mb-3">What the engine understands from those answers</p>
               <ul className="space-y-2">
                 {[
@@ -376,7 +376,7 @@ export function PublicPricingPage({
                   "What kind of language to use in your weekly intentions — your voice, your priorities",
                   "When to schedule activation windows versus when your chart is asking for rest",
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-xs leading-6 text-bone-muted">
+                  <li key={item} className="flex items-start gap-2.5 text-sm leading-7 text-bone-muted">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-moss-300/60" />
                     {item}
                   </li>
@@ -408,8 +408,29 @@ export function PublicPricingPage({
             </Link>
           </div>
 
+          {/* ── Demo viewport ── */}
+          <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-leather-500/20 bg-stone-950/75 backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_0_0_1px_rgba(0,0,0,0.25)]">
+            {/* Chrome bar */}
+            <div className="flex items-center justify-between border-b border-white/[0.05] bg-black/30 px-5 py-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-stone-700" />
+                  <span className="h-2 w-2 rounded-full bg-stone-700" />
+                  <span className="h-2 w-2 rounded-full bg-stone-700" />
+                </div>
+                <p className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-bone-muted/30">
+                  Kiaros · Your Dashboard
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-leather-400/25 bg-leather-500/10 px-2.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-leather-200/70">
+                <span className="h-1 w-1 animate-pulse rounded-full bg-leather-300/80" />
+                Demo preview
+              </span>
+            </div>
+            <div className="p-5 md:p-6">
+
           {/* Demo: Hero bar */}
-          <div className="mt-6 rounded-[1.35rem] border border-border/80 bg-card/95 px-6 py-6 md:px-8">
+          <div className="rounded-[1.35rem] border border-border/80 bg-card/95 px-6 py-6 md:px-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
                 <p className="shell-kicker mb-3">Kiaros Life OS · Demo</p>
@@ -450,7 +471,7 @@ export function PublicPricingPage({
             {DEMO_LANES.map((lane) => {
               const Icon = lane.Icon;
               return (
-                <article key={lane.kicker} className={`shell-panel px-6 py-6 ${lane.tone}`}>
+                <article key={lane.kicker} className={`shell-panel px-6 py-6 backdrop-blur-sm ${lane.tone}`}>
                   <div className="mb-5 flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -668,6 +689,8 @@ export function PublicPricingPage({
               </div>
             </div>
           </div>
+            </div>{/* /demo inner */}
+          </div>{/* /demo viewport */}
         </section>
 
         {/* ── Journal section ───────────────────────────────────────────────── */}

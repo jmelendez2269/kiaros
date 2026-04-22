@@ -3,6 +3,7 @@ import { Activity, ArrowRight, Brain, CalendarDays, Compass, Orbit, Stars } from
 import { deriveAstrologicalYearWord } from '@/lib/astrology/year-word'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { DailySignalsGuide } from '@/components/dashboard/DailySignalsGuide'
+import { DashboardHeroInsights } from '@/components/dashboard/DashboardHeroInsights'
 import { MoonPhaseIcon } from '@/components/shared/MoonPhaseIcon'
 import { getAreaDefinition, slugifyAreaName } from '@/lib/areas'
 import type { BlueprintOutput, EphemerisDay, MonthBlueprint, NatalChart, WeekBlueprint, YearEphemeris } from '@/types/blueprint'
@@ -26,6 +27,49 @@ const DAY_SIGNAL_STYLES = [
   'bg-plum-300',
   'bg-moss-300',
 ] as const
+
+const ENERGY_WEEK_GUIDANCE: Record<
+  string,
+  {
+    title: string
+    approach: string
+    bestUse: string
+  }
+> = {
+  push: {
+    title: 'Move it forward',
+    approach: 'This is a week for visible movement, firmer decisions, and putting weight behind what is already alive.',
+    bestUse: 'Best use: choose one meaningful push instead of scattering yourself across five starts.',
+  },
+  rest: {
+    title: 'Protect your reserves',
+    approach: 'This is a week for maintenance, pacing, and protecting your energy so the larger cycle can keep unfolding.',
+    bestUse: 'Best use: simplify, restore, and only keep the promises that still feel supportive.',
+  },
+  reflect: {
+    title: 'Review and recalibrate',
+    approach: 'This is a week for edits, reflection, and noticing what wants a gentler or wiser adjustment.',
+    bestUse: 'Best use: revise the plan, rethink the approach, and let clarity catch up before pushing harder.',
+  },
+  initiate: {
+    title: 'Start the thread',
+    approach: 'This is a week for brave beginnings, first moves, and opening a door that has been waiting for attention.',
+    bestUse: 'Best use: make one clean start, then protect enough space for it to take root.',
+  },
+}
+
+type GoalCategorySummary = {
+  id: string
+  name: string
+  description?: string | null
+  success?: string | null
+  icon_key?: string | null
+}
+
+type SabianMoonSymbol = {
+  symbol: string
+  degreeLabel: string
+}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -63,9 +107,39 @@ function deriveWeekDates(week: WeekBlueprint | null, today: string): string[] {
   })
 }
 
+function phaseLabel(phase: string) {
+  return phase
+    .split('-')
+    .map((part) => sentenceCase(part))
+    .join(' ')
+}
+
 function sentenceCase(text: string): string {
   if (!text) return text
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+function compactWhitespace(text: string) {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+function ensureSentence(text: string) {
+  const normalized = compactWhitespace(text)
+  if (!normalized) return ''
+  return /[.!?]$/.test(normalized) ? normalized : `${normalized}.`
+}
+
+function firstSentence(text: string) {
+  const normalized = compactWhitespace(text)
+  if (!normalized) return ''
+
+  const match = normalized.match(/.*?[.!?](?:\s|$)/)
+  return match ? match[0].trim() : normalized
+}
+
+function lowercaseFirst(text: string) {
+  if (!text) return text
+  return text.charAt(0).toLowerCase() + text.slice(1)
 }
 
 function softenIntentionLanguage(text: string): string {
@@ -86,6 +160,86 @@ function monthForWeek(months: MonthBlueprint[], week: WeekBlueprint | null): Mon
 
 function clampSignal(value: number) {
   return Math.max(0.14, Math.min(value, 1))
+}
+
+function intentionToAction(text: string) {
+  const softened = softenIntentionLanguage(text)
+  const withoutLead = compactWhitespace(softened).replace(/^I\s+/i, '')
+
+  return withoutLead ? lowercaseFirst(withoutLead) : ''
+}
+
+function formatList(items: string[]) {
+  const cleaned = [...new Set(items.map((item) => compactWhitespace(item)).filter(Boolean))]
+
+  if (cleaned.length === 0) return ''
+  if (cleaned.length === 1) return cleaned[0]
+  if (cleaned.length === 2) return `${cleaned[0]} and ${cleaned[1]}`
+
+  return `${cleaned.slice(0, -1).join(', ')}, and ${cleaned.at(-1)}`
+}
+
+function summarizeStudyFocus(text: string | null | undefined) {
+  if (!text) return null
+
+  const items = text
+    .split(/[,;]+/)
+    .map((item) => compactWhitespace(item))
+    .filter(Boolean)
+
+  if (items.length >= 2) {
+    return {
+      label: `${items[0]} + ${items[1]}`,
+      detail: formatList(items.slice(0, 2)),
+    }
+  }
+
+  const normalized = compactWhitespace(text)
+  return {
+    label: normalized.length > 34 ? `${normalized.slice(0, 31).trimEnd()}...` : normalized,
+    detail: normalized,
+  }
+}
+
+function categoryDetail(name: string, categories: GoalCategorySummary[]) {
+  const category = categories.find((item) => item.name.toLowerCase() === name.toLowerCase())
+  const fallback = getAreaDefinition(name)
+
+  return {
+    icon: category?.icon_key ?? null,
+    summary: ensureSentence(firstSentence(category?.success || category?.description || fallback.plannerPrompt)),
+  }
+}
+
+async function fetchCurrentMoonSabianSymbol(): Promise<SabianMoonSymbol | null> {
+  try {
+    const response = await fetch('https://blog.astrologyweekly.com/sabian-symbols/sabian-symbol-moon.php', {
+      next: { revalidate: 60 * 60 * 6 },
+    })
+
+    if (!response.ok) return null
+
+    const html = await response.text()
+    const plainText = html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    const symbolMatch = plainText.match(/Current Sabian Symbol for the Moon\s+(.+?)\s+Sabian Symbol for/i)
+    const degreeMatch = plainText.match(/Sabian Symbol for\s+(\d+º\s+[A-Za-z]+)/i)
+
+    if (!symbolMatch?.[1]) return null
+
+    return {
+      symbol: ensureSentence(symbolMatch[1].trim()),
+      degreeLabel: degreeMatch?.[1]?.trim() ?? 'Current Moon',
+    }
+  } catch {
+    return null
+  }
 }
 
 function computeDaySignals(ephemeris: EphemerisDay) {
@@ -194,6 +348,124 @@ function buildLunarMessage(ephemeris: EphemerisDay) {
   return `${phaseLead} Today is good for days when you ${signLead}.`
 }
 
+function buildTransitHighlight(ephemeris: EphemerisDay | null) {
+  if (!ephemeris) {
+    return 'Today’s transit pattern will settle in once your ephemeris is available.'
+  }
+
+  if (ephemeris.transits.length === 0) {
+    return 'The sky is relatively quiet today, so your pacing matters more than forcing momentum.'
+  }
+
+  const mostExactTransit = [...ephemeris.transits].sort((a, b) => a.orb - b.orb)[0]
+  const aspectLabel = sentenceCase(mostExactTransit.aspect)
+  const applyingLabel = mostExactTransit.applying ? 'applying' : 'separating'
+
+  return `${mostExactTransit.planet} ${aspectLabel.toLowerCase()} natal ${mostExactTransit.natalPlanet} is the tightest thread today (${applyingLabel}, ${mostExactTransit.orb.toFixed(1)}° orb).`
+}
+
+function formatTransitLine(transit: EphemerisDay['transits'][number]) {
+  return `${transit.planet} ${transit.aspect} natal ${transit.natalPlanet} (${transit.applying ? 'applying' : 'separating'}, ${transit.orb.toFixed(1)}° orb)`
+}
+
+function buildActiveTransitItems(ephemeris: EphemerisDay | null) {
+  if (!ephemeris || ephemeris.transits.length === 0) {
+    return []
+  }
+
+  return [...ephemeris.transits]
+    .sort((a, b) => a.orb - b.orb)
+    .slice(0, 4)
+    .map(formatTransitLine)
+}
+
+function buildUpcomingTransitItems(yearEphemeris: YearEphemeris, today: string) {
+  const upcomingItems: string[] = []
+  const seenTransitKeys = new Set<string>()
+
+  const nextMoonPhase = yearEphemeris.moonPhases.find((phase) => phase.date > today)
+  if (nextMoonPhase) {
+    upcomingItems.push(
+      `${phaseLabel(nextMoonPhase.phase)} Moon in ${nextMoonPhase.sign} on ${new Date(`${nextMoonPhase.date}T12:00:00`).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })}`
+    )
+  }
+
+  for (const day of yearEphemeris.days) {
+    if (day.date <= today) continue
+
+    const sortedTransits = [...day.transits].sort((a, b) => a.orb - b.orb)
+    for (const transit of sortedTransits) {
+      const key = `${transit.planet}-${transit.aspect}-${transit.natalPlanet}`
+      if (seenTransitKeys.has(key)) continue
+
+      seenTransitKeys.add(key)
+      upcomingItems.push(
+        `${transit.planet} ${transit.aspect} natal ${transit.natalPlanet} on ${new Date(`${day.date}T12:00:00`).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        })} (${transit.orb.toFixed(1)}° orb)`
+      )
+
+      if (upcomingItems.length >= 4) {
+        return upcomingItems
+      }
+    }
+  }
+
+  return upcomingItems
+}
+
+function buildDailyPhaseSummary({
+  ephemeris,
+  daySignals,
+  currentWeek,
+}: {
+  ephemeris: EphemerisDay | null
+  daySignals: ReturnType<typeof computeDaySignals> | null
+  currentWeek: WeekBlueprint | null
+}) {
+  if (!ephemeris || !daySignals) {
+    return {
+      label: 'Orientation day',
+      title: 'Listen before you organize the day',
+      description: 'Your dashboard will name the day’s energetic tone once today’s sky data is loaded.',
+      support: 'Use the morning to notice what feels open, heavy, or unfinished before you commit your energy.',
+    }
+  }
+
+  if (daySignals.dominant.key === 'activation') {
+    return {
+      label: 'Action day',
+      title: 'The day favors movement and outward traction',
+      description: 'Momentum is easier to access today, so decisions, outreach, and forward steps have more support behind them.',
+      support: currentWeek?.intentions[0]
+        ? `Best use: ${intentionToAction(currentWeek.intentions[0])}.`
+        : 'Best use: choose one visible move and give it the strongest part of your energy.',
+    }
+  }
+
+  if (daySignals.dominant.key === 'review') {
+    return {
+      label: 'Recalibration day',
+      title: 'The day wants edits, review, and better positioning',
+      description: 'Frictive or reflective energy is louder today, which makes revision, cleanup, and quieter course-correction more useful than brute force.',
+      support: 'Best use: refine the plan, revisit the details, and let clarity arrive before pushing the next step.',
+    }
+  }
+
+  return {
+    label: 'Lunar day',
+    title: `${phaseLabel(ephemeris.moon.lunarPhase)} mood with ${ephemeris.moon.sign} emphasis`,
+    description: buildLunarMessage(ephemeris),
+    support: ephemeris.moonPhaseEvent
+      ? `The ${phaseLabel(ephemeris.moonPhaseEvent.phase)} intensifies the emotional weather today.`
+      : 'Best use: leave more room for intuition, feeling, and atmosphere to shape the pace.',
+  }
+}
+
 interface DashboardOverviewProps {
   firstName: string | null
 }
@@ -203,7 +475,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const today = todayISO()
   const currentYear = new Date().getFullYear()
 
-  const [profileRes, blueprintRes, ephemerisRes, categoriesRes, oracleMemoryRes] = await Promise.all([
+  const [profileRes, blueprintRes, ephemerisRes, categoriesRes, oracleMemoryRes, sabianMoonSymbol] = await Promise.all([
     supabase.from('user_profiles').select('display_name, birth_date, plan_year, word_of_year, year_vision, what_to_release, study_focus, natal_chart').maybeSingle(),
     supabase
       .from('blueprints')
@@ -214,12 +486,13 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
       .limit(1)
       .maybeSingle(),
     supabase.from('ephemeris_cache').select('data').eq('year', currentYear).maybeSingle(),
-    supabase.from('goal_categories').select('id, name, icon_key, sort_order').order('sort_order', { ascending: true }),
+    supabase.from('goal_categories').select('id, name, description, success, icon_key, sort_order').order('sort_order', { ascending: true }),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('oracle_memory', true),
+    fetchCurrentMoonSabianSymbol(),
   ])
 
   const profile = profileRes.data
-  const categories = categoriesRes.data ?? []
+  const categories = (categoriesRes.data ?? []) as GoalCategorySummary[]
   const blueprintRow = blueprintRes.data
   const oracleMemoryCount = oracleMemoryRes.error ? 0 : (oracleMemoryRes.count ?? 0)
   const natalChart = (profile?.natal_chart as NatalChart | null) ?? null
@@ -239,9 +512,25 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   })
   const primaryLane = currentWeek?.goalCategoryFocus[0] || categories[0]?.name || 'Core alignment'
   const maintenanceLane = currentWeek?.energyType
-    ? `${ENERGY_TYPE_LABELS[currentWeek.energyType] ?? sentenceCase(currentWeek.energyType)} rhythm`
+    ? ENERGY_WEEK_GUIDANCE[currentWeek.energyType]?.title || `${ENERGY_TYPE_LABELS[currentWeek.energyType] ?? sentenceCase(currentWeek.energyType)} rhythm`
     : 'Tend the vessel'
-  const incubationLane = profile?.study_focus || profile?.word_of_year || profile?.year_vision || 'Future curriculum and reading tracks'
+  const studyFocusSummary = summarizeStudyFocus(profile?.study_focus)
+  const secondaryAreas = (currentWeek?.goalCategoryFocus ?? []).slice(1, 3)
+  const incubationLane =
+    secondaryAreas.length > 0
+      ? formatList(secondaryAreas)
+      : studyFocusSummary?.label || profile?.word_of_year || profile?.year_vision || 'Long-range thread'
+  const primaryDetail = categoryDetail(primaryLane, categories)
+  const secondaryDetails = secondaryAreas.map((areaName) => categoryDetail(areaName, categories).summary)
+  const primaryAction = currentWeek?.intentions[0]
+    ? `Focus on ${intentionToAction(currentWeek.intentions[0])}.`
+    : 'Focus on the part of life that is asking for your clearest attention.'
+  const energyGuidance = currentWeek?.energyType ? ENERGY_WEEK_GUIDANCE[currentWeek.energyType] : null
+  const secondarySupport = secondaryDetails[0]
+    ? ensureSentence(firstSentence(secondaryDetails[0]))
+    : studyFocusSummary
+      ? `Let ${studyFocusSummary.detail.toLowerCase()} stay exploratory and low-pressure.`
+      : 'Keep this lane steady in the background instead of turning it into another main push.'
   const focusedAreas = (currentWeek?.goalCategoryFocus ?? []).slice(0, 3).map((areaName) => {
     const category = categories.find((item) => item.name.toLowerCase() === areaName.toLowerCase())
     const definition = getAreaDefinition(areaName)
@@ -267,6 +556,75 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
     }
   })
   const todayPulseSignals = weekPulse.find((day) => day.isToday)?.daySignals ?? null
+  const dailyPhase = buildDailyPhaseSummary({
+    ephemeris: todayEphemeris,
+    daySignals: todayPulseSignals,
+    currentWeek,
+  })
+  const transitHighlight = buildTransitHighlight(todayEphemeris)
+  const moonPreview = todayEphemeris
+    ? `${phaseLabel(todayEphemeris.moon.lunarPhase)} in ${todayEphemeris.moon.sign}`
+    : 'Moon insight pending'
+  const moonDetail = todayEphemeris
+    ? [
+        `${phaseLabel(todayEphemeris.moon.lunarPhase)} in ${todayEphemeris.moon.sign} sets the emotional weather today.`,
+        `Illumination is ${Math.round(todayEphemeris.moon.illumination * 100)}%.`,
+        buildLunarMessage(todayEphemeris),
+        sabianMoonSymbol ? `Sabian symbol: ${sabianMoonSymbol.symbol}` : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : 'Today\'s moon signature will appear here once your ephemeris is available.'
+  const customizationTitle = profile?.word_of_year
+    ? `${profile.word_of_year}${astrologicalWord ? ` + ${astrologicalWord.word}` : ''}`
+    : astrologicalWord?.word || 'Word of year not set yet'
+  const weekStartLabel = currentWeek
+    ? new Date(`${currentWeek.startDate}T12:00:00`).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
+    : new Date(`${today}T12:00:00`).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
+  const activeTransitItems = buildActiveTransitItems(todayEphemeris)
+  const upcomingTransitItems = yearEphemeris ? buildUpcomingTransitItems(yearEphemeris, today) : []
+  const heroInsights = [
+    {
+      id: 'daily-phase',
+      kicker: 'Daily phase',
+      title: dailyPhase.title,
+      preview: dailyPhase.label,
+      detail: `${dailyPhase.description} ${dailyPhase.support}`,
+      accent: 'leather' as const,
+    },
+    {
+      id: 'transit-emphasis',
+      kicker: 'Transit emphasis',
+      title: currentWeek?.theme || 'Today\'s weather',
+      preview: currentWeek?.energyType ? sentenceCase(currentWeek.energyType) : 'Sky pattern',
+      detail: `${transitHighlight} ${ensureSentence(currentWeek?.cosmicContext || currentMonth?.energyArc || 'This section translates the sky into pacing, emphasis, and timing.')}`,
+      accent: 'plum' as const,
+    },
+    {
+      id: 'moon-of-day',
+      kicker: 'Moon of the day',
+      title: moonPreview,
+      preview: sabianMoonSymbol?.degreeLabel || `${todayEphemeris?.moon.sign || 'Moon'} tone`,
+      detail: moonDetail,
+      accent: 'default' as const,
+    },
+    {
+      id: 'customization',
+      kicker: 'Customization',
+      title: customizationTitle,
+      preview: profile?.year_vision ? firstSentence(profile.year_vision) : 'Personal layer',
+      detail: astrologicalWord?.rationale || profile?.year_vision || 'Your onboarding choices become the second layer that personalizes the system.',
+      accent: 'default' as const,
+    },
+  ]
   const architectureCards = quarters.slice(0, 4).map((quarter) => ({
     id: quarter.quarter,
     title: quarter.theme,
@@ -277,48 +635,83 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   return (
     <div className="space-y-8">
       <section className="shell-panel overflow-hidden px-6 py-7 md:px-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="shell-kicker mb-3">Kiaros Life OS</p>
-            <h1 className="shell-section-title text-[2.4rem] md:text-[3rem]">
-              {profileName}, your year runs on timing first and customization second.
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-bone-muted">
-              {blueprintRow?.year_theme || 'Your planner is shaped by your birth chart, current transits, and the choices you want this season to hold.'}
-            </p>
-          </div>
+        <div className="mb-5 flex items-center gap-3">
+          <CalendarDays size={18} className="text-bone-muted" />
+          <p className="font-serif text-[1.65rem] tracking-[0.03em] text-bone">Weekly Execution Map</p>
+        </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[24rem]">
-            <div className="shell-panel-soft px-4 py-4">
-              <p className="shell-kicker mb-2">Today</p>
-              {todayEphemeris ? (
-                <>
-                  <div className="flex items-center gap-2 text-bone">
-                    <MoonPhaseIcon phase={todayEphemeris.moon.lunarPhase} size={18} />
-                    <span className="text-sm font-medium">
-                      Moon in {todayEphemeris.moon.sign} - {todayEphemeris.moon.degree.toFixed(0)} deg
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-bone-muted">
-                    Sun in {todayEphemeris.sun.sign} - {todayEphemeris.transits.length} active transit
-                    {todayEphemeris.transits.length === 1 ? '' : 's'}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-bone-muted">Today&apos;s ephemeris will appear here once your year map is generated.</p>
-              )}
+        <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-stone-950/35">
+          <div className="grid gap-0 xl:grid-cols-[18rem_minmax(0,1fr)]">
+            <div className="border-b border-border/70 px-6 py-6 xl:border-b-0 xl:border-r">
+              <p className="font-serif text-[2.4rem] leading-none text-bone">
+                Week {currentWeek?.weekNumber ?? '--'}
+              </p>
+              <p className="mt-4 text-base text-bone-muted">{weekStartLabel}</p>
+
+              <div className="mt-8 max-w-[16rem] rounded-[0.9rem] border border-border/70 bg-stone-900/75 px-4 py-3">
+                <p className="text-sm leading-6 text-bone-muted">
+                  {firstSentence(currentWeek?.cosmicContext || currentMonth?.energyArc || transitHighlight)}
+                </p>
+              </div>
+
+              <div className="mt-28">
+                <p className="shell-kicker text-bone-muted/60">Climate</p>
+                <p className="mt-4 max-w-[11rem] font-serif text-[1.05rem] italic leading-9 text-bone/92">
+                  "{dailyPhase.label}"
+                </p>
+              </div>
             </div>
 
-            <div className="shell-panel-soft px-4 py-4">
-              <p className="shell-kicker mb-2">Customization</p>
-              <p className="text-sm font-medium text-bone">
-                {profile?.word_of_year
-                  ? `${profile.word_of_year}${astrologicalWord ? ` + ${astrologicalWord.word}` : ''}`
-                  : astrologicalWord?.word || 'Word of year not set yet'}
-              </p>
-              <p className="mt-2 text-sm text-bone-muted">
-                {astrologicalWord?.rationale || profile?.year_vision || 'Your onboarding choices become the second layer that personalizes the system.'}
-              </p>
+            <div className="px-6 py-6">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                <article className="rounded-[1rem] border border-border/70 bg-stone-900/80 px-5 py-5">
+                  <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-leather-200/75">
+                    Current active transits
+                  </p>
+                  {activeTransitItems.length > 0 ? (
+                    <div className="mt-5 space-y-4">
+                      {activeTransitItems.map((transit, index) => (
+                        <div key={`${transit}-${index}`} className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-bone-muted/35 text-[0.8rem] text-bone-muted">
+                            {index + 1}
+                          </span>
+                          <p className="text-[1.05rem] font-medium leading-7 text-bone">{transit}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-5 max-w-[36rem] text-[1rem] leading-7 text-bone-muted">
+                      The sky is relatively quiet today, so the strongest signal is pacing and follow-through rather than a major exact hit.
+                    </p>
+                  )}
+                </article>
+
+                <article className="rounded-[1rem] border border-border/70 bg-stone-900/80 px-5 py-5">
+                  <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-moss-200/75">
+                    Upcoming transits
+                  </p>
+                  {upcomingTransitItems.length > 0 ? (
+                    <div className="mt-5 space-y-4">
+                      {upcomingTransitItems.map((transit, index) => (
+                        <div key={`${transit}-${index}`} className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-bone-muted/35 text-[0.8rem] text-bone-muted">
+                            {index + 1}
+                          </span>
+                          <p className="text-[1.05rem] font-medium leading-7 text-bone">{transit}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-5 max-w-[36rem] text-[1rem] leading-7 text-bone-muted">
+                      The next meaningful transit window will appear here once the upcoming sky pattern is available.
+                    </p>
+                  )}
+                </article>
+              </div>
+
+              <div className="mt-4">
+                <DashboardHeroInsights insights={heroInsights} />
+              </div>
             </div>
           </div>
         </div>
@@ -348,47 +741,64 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             {[
               {
                 kicker: 'Primary lane',
-                value: primaryLane,
+                value: primaryDetail.icon ? `${primaryDetail.icon} ${primaryLane}` : primaryLane,
                 percent: '60%',
-                body: currentWeek?.intentions[0]
-                  ? softenIntentionLanguage(currentWeek.intentions[0])
-                  : blueprintRow.year_summary || 'This is the workstream the year is asking you to protect first.',
+                body: [
+                  `Put most of your weekly energy into ${primaryLane.toLowerCase()}.`,
+                  primaryAction,
+                  primaryDetail.summary,
+                ]
+                  .filter(Boolean)
+                  .join(' '),
                 tone: 'border-leather-500/35 bg-gradient-to-br from-leather-500/12 to-stone-900',
                 icon: Orbit,
               },
               {
-                kicker: 'Tending',
+                kicker: 'How to work it',
                 value: maintenanceLane,
                 percent: '30%',
-                body: currentWeek?.cosmicContext || currentMonth?.energyArc || 'Steady support systems keep the year map usable in real life.',
+                body: [
+                  energyGuidance?.approach,
+                  ensureSentence(currentWeek?.cosmicContext || currentMonth?.energyArc || 'Let the sky set the pacing instead of forcing a rhythm that is not there.'),
+                  energyGuidance?.bestUse,
+                ]
+                  .filter(Boolean)
+                  .join(' '),
                 tone: 'border-moss-500/30 bg-gradient-to-br from-moss-500/10 to-stone-900',
                 icon: Activity,
               },
               {
-                kicker: 'Depth',
+                kicker: 'Background thread',
                 value: incubationLane,
                 percent: '10%',
-                body: profile?.study_focus || 'Curriculum, reading paths, and deeper custom inputs can layer onto the system next.',
+                body: [
+                  secondaryAreas.length > 0
+                    ? `Keep ${formatList(secondaryAreas).toLowerCase()} moving with a lighter touch while ${primaryLane.toLowerCase()} gets the strongest push.`
+                    : 'Keep this as a quieter, longer-range thread rather than another urgent project.',
+                  secondarySupport,
+                ]
+                  .filter(Boolean)
+                  .join(' '),
                 tone: 'border-border/70 bg-gradient-to-br from-stone-850 to-stone-900',
                 icon: Brain,
               },
             ].map((lane) => {
               const Icon = lane.icon
               return (
-                <article key={lane.kicker} className={`shell-panel px-6 py-6 ${lane.tone}`}>
-                  <div className="mb-5 flex items-start justify-between gap-3">
+                <article key={lane.kicker} className={`shell-panel px-5 py-5 md:px-6 md:py-6 ${lane.tone}`}>
+                  <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="shell-kicker">{lane.kicker}</p>
                         <span className="shell-pill border-white/10 bg-black/25 text-bone">{lane.percent}</span>
                       </div>
-                      <h2 className="mt-4 text-[2rem] font-semibold leading-tight text-bone">{lane.value}</h2>
+                      <h2 className="mt-3 text-[1.55rem] font-semibold leading-[1.08] text-bone md:text-[1.8rem]">{lane.value}</h2>
                     </div>
                     <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-black/15 text-bone-muted">
                       <Icon size={18} />
                     </div>
                   </div>
-                  <p className="border-t border-border/70 pt-4 text-sm leading-7 text-bone-muted">{lane.body}</p>
+                  <p className="border-t border-border/70 pt-4 text-[0.96rem] leading-7 text-bone-muted">{lane.body}</p>
                 </article>
               )
             })}

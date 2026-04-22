@@ -29,8 +29,7 @@ class YouTubeTranscriptFetcher implements TranscriptFetcher {
     const videoId = this.extractVideoId(url);
 
     try {
-      const transcript = await YoutubeTranscript.fetchTranscript({
-        videoId,
+      const transcript = await YoutubeTranscript.fetchTranscript(videoId, {
         lang: "en",
       });
 

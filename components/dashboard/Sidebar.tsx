@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { BookOpen, Brain, CalendarDays, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
-import { useState } from 'react'
+import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { slugifyAreaName } from '@/lib/areas'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +23,8 @@ const NAV_LINKS = [
   { href: '/oracle', label: 'Oracle', detail: 'Guidance channel', icon: MessageSquare },
 ] as const
 
+const DESKTOP_SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
+
 interface SidebarProps {
   categories: CategorySummary[]
 }
@@ -30,31 +32,53 @@ interface SidebarProps {
 function NavigationContent({
   pathname,
   categories,
+  isCollapsed,
   onNavigate,
+  onToggleDesktop,
 }: {
   pathname: string
   categories: CategorySummary[]
+  isCollapsed: boolean
   onNavigate?: () => void
+  onToggleDesktop?: () => void
 }) {
   const isLinkActive = (href: string) => (href === '/areas' ? pathname === href || pathname.startsWith('/areas/') : pathname === href)
 
   return (
     <>
-      <div className="border-b border-border/80 px-6 pb-6 pt-7">
+      <div className={cn('border-b border-border/80 pb-5 pt-6', isCollapsed ? 'px-3' : 'px-5')}>
         <Link href="/dashboard" onClick={onNavigate} className="block">
-          <div className="flex items-center gap-3">
+          <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-leather-500/30 bg-stone-950/80 text-leather-300 shadow-panel">
               <Orbit size={18} />
             </div>
-            <div>
-              <p className="font-serif text-[2rem] leading-none text-bone">Life OS</p>
-              <p className="mt-1 text-sm text-bone-muted">Kiaros - Personalized planning</p>
-            </div>
+            {!isCollapsed ? (
+              <div>
+                <p className="font-serif text-[1.7rem] leading-none text-bone">Life OS</p>
+                <p className="mt-1 text-xs text-bone-muted">Kiaros - Personalized planning</p>
+              </div>
+            ) : null}
           </div>
         </Link>
+
+        {onToggleDesktop ? (
+          <button
+            type="button"
+            onClick={onToggleDesktop}
+            className={cn(
+              'mt-4 hidden h-10 items-center rounded-xl border border-border/80 bg-stone-950/75 text-bone-muted transition-colors hover:text-bone md:inline-flex',
+              isCollapsed ? 'w-full justify-center' : 'w-full justify-between px-3'
+            )}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {!isCollapsed ? <span className="text-xs font-medium uppercase tracking-[0.16em]">Collapse</span> : null}
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        ) : null}
       </div>
 
-      <div className="px-4 py-5">
+      <div className={cn('py-5', isCollapsed ? 'px-2.5' : 'px-3.5')}>
         <div className="space-y-2">
           {NAV_LINKS.map(({ href, label, detail, icon: Icon }) => {
             const active = isLinkActive(href)
@@ -63,8 +87,10 @@ function NavigationContent({
                 key={href}
                 href={href}
                 onClick={onNavigate}
+                title={isCollapsed ? label : undefined}
                 className={cn(
-                  'group flex items-center gap-3 rounded-2xl border px-4 py-3.5 transition-all duration-200',
+                  'group flex rounded-2xl border transition-all duration-200',
+                  isCollapsed ? 'justify-center px-2 py-3' : 'items-center gap-3 px-4 py-3',
                   active
                     ? 'border-leather-400/60 bg-leather-500/42 text-bone shadow-glow'
                     : 'border-transparent text-bone-muted hover:border-border/80 hover:bg-stone-850/80 hover:text-bone'
@@ -80,18 +106,20 @@ function NavigationContent({
                 >
                   <Icon size={18} />
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-base font-semibold">{label}</p>
-                  <p className={cn('truncate text-xs', active ? 'text-bone/80' : 'text-bone-muted/70')}>
-                    {detail}
-                  </p>
-                </div>
+                {!isCollapsed ? (
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{label}</p>
+                    <p className={cn('truncate text-[11px]', active ? 'text-bone/80' : 'text-bone-muted/70')}>
+                      {detail}
+                    </p>
+                  </div>
+                ) : null}
               </Link>
             )
           })}
         </div>
 
-        {categories.length > 0 && (
+        {!isCollapsed && categories.length > 0 && (
           <div className="mt-8">
             <p className="shell-kicker mb-3 px-2 text-bone-muted/70">Areas</p>
             <div className="space-y-1.5">
@@ -125,13 +153,15 @@ function NavigationContent({
         )}
       </div>
 
-      <div className="mt-auto border-t border-border/80 px-5 py-4">
-        <div className="mb-3 flex items-center justify-between text-xs text-bone-muted">
-          <div>
-            <p className="shell-kicker text-bone-muted/70">Custom Year</p>
-            <p className="mt-1">Birth chart first - customization next</p>
-          </div>
-          <UserButton afterSignOutUrl="/" />
+      <div className={cn('mt-auto border-t border-border/80 py-4', isCollapsed ? 'px-3' : 'px-5')}>
+        <div className={cn('mb-1 flex items-center text-xs text-bone-muted', isCollapsed ? 'justify-center' : 'justify-between')}>
+          {!isCollapsed ? (
+            <div>
+              <p className="shell-kicker text-bone-muted/70">Custom Year</p>
+              <p className="mt-1">Birth chart first - customization next</p>
+            </div>
+          ) : null}
+          <UserButton />
         </div>
       </div>
     </>
@@ -141,11 +171,31 @@ function NavigationContent({
 export function Sidebar({ categories }: SidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+
+  useEffect(() => {
+    const savedPreference = window.localStorage.getItem(DESKTOP_SIDEBAR_STORAGE_KEY)
+    setDesktopCollapsed(savedPreference === 'true')
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem(DESKTOP_SIDEBAR_STORAGE_KEY, desktopCollapsed ? 'true' : 'false')
+  }, [desktopCollapsed])
 
   return (
     <>
-      <aside className="hidden w-[18.75rem] shrink-0 border-r border-border/80 bg-stone-900/85 bg-shell-glow md:flex md:min-h-screen md:flex-col">
-        <NavigationContent pathname={pathname} categories={categories} />
+      <aside
+        className={cn(
+          'hidden shrink-0 border-r border-border/80 bg-stone-900/85 bg-shell-glow transition-[width] duration-300 md:flex md:min-h-screen md:flex-col',
+          desktopCollapsed ? 'w-[5.5rem]' : 'w-[15.5rem]'
+        )}
+      >
+        <NavigationContent
+          pathname={pathname}
+          categories={categories}
+          isCollapsed={desktopCollapsed}
+          onToggleDesktop={() => setDesktopCollapsed((collapsed) => !collapsed)}
+        />
       </aside>
 
       <div className="sticky top-0 z-40 border-b border-border/80 bg-stone-900/90 px-4 py-4 backdrop-blur md:hidden">
@@ -168,7 +218,7 @@ export function Sidebar({ categories }: SidebarProps) {
       {mobileOpen && (
         <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden">
           <div className="h-full w-[88%] max-w-[22rem] border-r border-border/80 bg-stone-900/96">
-            <NavigationContent pathname={pathname} categories={categories} onNavigate={() => setMobileOpen(false)} />
+            <NavigationContent pathname={pathname} categories={categories} isCollapsed={false} onNavigate={() => setMobileOpen(false)} />
           </div>
         </div>
       )}

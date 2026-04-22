@@ -3,33 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const MESSAGES = [
-  "Reading your natal chart...",
-  "Mapping planetary transits for your year...",
-  "Building your timing framework...",
-  "Weaving your focus layers into the planner...",
-  "Shaping your quarterly rhythms...",
-  "Aligning activation windows and rest windows...",
-  "Almost there...",
-];
-
 export default function OnboardingGeneratingPage() {
   const router = useRouter();
   const hasFired = useRef(false);
-  const [messageIndex, setMessageIndex] = useState(0);
   const [failed, setFailed] = useState(false);
   const [, setRetrying] = useState(false);
   const [errorDetail, setErrorDetail] = useState<string>("");
 
   const POLL_TIMEOUT_MS = 5 * 60 * 1000;
   const POLL_INTERVAL_MS = 5000;
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setMessageIndex((i) => (i + 1) % MESSAGES.length);
-    }, 3000);
-    return () => clearInterval(id);
-  }, []);
 
   async function startGeneration() {
     try {
@@ -144,26 +126,35 @@ export default function OnboardingGeneratingPage() {
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="shell-panel max-w-sm space-y-6 px-6 py-10 text-center">
-        <div className="text-5xl animate-pulse text-bone-muted">*</div>
+      <div className="shell-panel max-w-md space-y-6 px-6 py-10 text-center">
         <p className="shell-kicker">Generating</p>
         <h2 className="font-serif text-3xl text-bone">Creating your personalized planner</h2>
-        <p className="min-h-[1.5rem] text-bone-muted transition-all duration-500">
-          {MESSAGES[messageIndex]}
+        <p className="text-bone-muted">
+          Your chart, timing windows, and focus layers are being woven into a planner that feels
+          like yours from the start.
         </p>
-        <div className="flex justify-center gap-1 pt-2">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-2 w-2 animate-pulse rounded-full bg-leather-400"
-              style={{ animationDelay: `${i * 0.25}s` }}
-            />
-          ))}
+        <div className="space-y-3">
+          <div className="h-3 overflow-hidden rounded-full bg-stone-900/90 ring-1 ring-white/10">
+            <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-leather-500 via-leather-300 to-leather-500 animate-[loading-bar_1.8s_ease-in-out_infinite]" />
+          </div>
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-bone-muted/70">
+            <span>Reading your timing</span>
+            <span>Shaping your year</span>
+          </div>
         </div>
         <p className="text-xs text-bone-muted">
-          Kiaros is reading your chart, mapping the timing, and weaving in the life areas and
-          themes that matter most to you.
+          This usually only takes a moment.
         </p>
+        <style jsx>{`
+          @keyframes loading-bar {
+            0% {
+              transform: translateX(-110%);
+            }
+            100% {
+              transform: translateX(210%);
+            }
+          }
+        `}</style>
       </div>
     </div>
   );

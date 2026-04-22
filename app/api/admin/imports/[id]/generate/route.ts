@@ -4,6 +4,7 @@ import { getImport, updateImportStatus } from "@/lib/admin/imports";
 import { getSource } from "@/lib/admin/sources";
 import { createCard } from "@/lib/admin/cards";
 import { generateDraftCards } from "@/lib/admin/card-generator";
+import type { AdminSource } from "@/types/admin";
 
 export const maxDuration = 300;
 
@@ -16,23 +17,25 @@ function isAdminSession(sessionClaims: unknown): boolean {
 
 export async function POST(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = auth();
+  const { userId, sessionClaims } = await auth();
+  const { id } = await params;
 
   if (!userId || !isAdminSession(sessionClaims)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const importResult = await getImport(params.id);
+  const importResult = await getImport(id);
 
   if (!importResult.success) {
     return NextResponse.json({ error: importResult.error }, { status: 404 });
   }
 
   const imp = importResult.data;
+  const cleanedContent = imp.cleaned_content;
 
-  if (!imp.cleaned_content) {
+  if (!cleanedContent) {
     return NextResponse.json(
       {
         error:
@@ -45,7 +48,10 @@ export async function POST(
   // Kick off generation post-response
   after(async () => {
     try {
-      let sourceMeta = {
+      let sourceMeta: Pick<
+        AdminSource,
+        "source_name" | "astrologer_name" | "trust_level"
+      > = {
         source_name: imp.title ?? "Unknown",
         astrologer_name: null as string | null,
         trust_level: "medium" as const,
@@ -64,10 +70,10 @@ export async function POST(
         }
       }
 
-      const result = await generateDraftCards(imp.cleaned_content, sourceMeta);
+      const result = await generateDraftCards(cleanedContent, sourceMeta);
 
       if (!result.success) {
-        await updateImportStatus(params.id, "failed", result.error);
+        await updateImportStatus(id, "failed", result.error);
         return;
       }
 
@@ -75,17 +81,18 @@ export async function POST(
       for (const draft of result.data) {
         await createCard({
           ...draft,
-          import_id: params.id,
+          import_id: id,
           status: "draft",
           editor_notes: null,
+          source_refs: imp.url ? [imp.url] : [],
         });
       }
 
       // Mark import as processed
-      await updateImportStatus(params.id, "processed");
+      await updateImportStatus(id, "processed");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await updateImportStatus(params.id, "failed", message);
+      await updateImportStatus(id, "failed", message);
     }
   });
 
