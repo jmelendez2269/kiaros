@@ -475,7 +475,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const today = todayISO()
   const currentYear = new Date().getFullYear()
 
-  const [profileRes, blueprintRes, ephemerisRes, categoriesRes, oracleMemoryRes, sabianMoonSymbol] = await Promise.all([
+  const [profileRes, blueprintRes, ephemerisRes, categoriesRes, oracleMemoryRes, journalEntriesRes, sabianMoonSymbol] = await Promise.all([
     supabase.from('user_profiles').select('display_name, birth_date, plan_year, word_of_year, year_vision, what_to_release, study_focus, natal_chart').maybeSingle(),
     supabase
       .from('blueprints')
@@ -488,6 +488,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
     supabase.from('ephemeris_cache').select('data').eq('year', currentYear).maybeSingle(),
     supabase.from('goal_categories').select('id, name, description, success, icon_key, sort_order').order('sort_order', { ascending: true }),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('oracle_memory', true),
+    supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
     fetchCurrentMoonSabianSymbol(),
   ])
 
@@ -495,6 +496,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const categories = (categoriesRes.data ?? []) as GoalCategorySummary[]
   const blueprintRow = blueprintRes.data
   const oracleMemoryCount = oracleMemoryRes.error ? 0 : (oracleMemoryRes.count ?? 0)
+  const journalEntriesCount = journalEntriesRes.error ? 0 : (journalEntriesRes.count ?? 0)
   const natalChart = (profile?.natal_chart as NatalChart | null) ?? null
   const yearEphemeris = (ephemerisRes.data?.data as YearEphemeris | null) ?? null
   const weeks = (blueprintRow?.weeks as unknown as WeekBlueprint[]) ?? []
@@ -575,9 +577,6 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
         .filter(Boolean)
         .join(' ')
     : 'Today\'s moon signature will appear here once your ephemeris is available.'
-  const customizationTitle = profile?.word_of_year
-    ? `${profile.word_of_year}${astrologicalWord ? ` + ${astrologicalWord.word}` : ''}`
-    : astrologicalWord?.word || 'Word of year not set yet'
   const weekStartLabel = currentWeek
     ? new Date(`${currentWeek.startDate}T12:00:00`).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -616,14 +615,6 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
       detail: moonDetail,
       accent: 'default' as const,
     },
-    {
-      id: 'customization',
-      kicker: 'Customization',
-      title: customizationTitle,
-      preview: profile?.year_vision ? firstSentence(profile.year_vision) : 'Personal layer',
-      detail: astrologicalWord?.rationale || profile?.year_vision || 'Your onboarding choices become the second layer that personalizes the system.',
-      accent: 'default' as const,
-    },
   ]
   const architectureCards = quarters.slice(0, 4).map((quarter) => ({
     id: quarter.quarter,
@@ -635,9 +626,53 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   return (
     <div className="space-y-8">
       <section className="shell-panel overflow-hidden px-6 py-7 md:px-8">
-        <div className="mb-5 flex items-center gap-3">
-          <CalendarDays size={18} className="text-bone-muted" />
-          <p className="font-serif text-[1.65rem] tracking-[0.03em] text-bone">Weekly Execution Map</p>
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <CalendarDays size={18} className="text-bone-muted" />
+              <p className="font-serif text-[1.65rem] tracking-[0.03em] text-bone">Weekly Execution Map</p>
+            </div>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-bone-muted">
+              Start with the week’s energetic read, then jump into the places where your reflections, memory, and deeper architecture already live.
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[32rem]">
+            <Link
+              href="/journal"
+              className="rounded-[1rem] border border-leather-400/35 bg-leather-500/10 px-4 py-3 transition-colors hover:bg-leather-500/18"
+            >
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-leather-200/85">Journal</p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <p className="text-sm font-medium text-bone">Journal entries</p>
+                <span className="shell-pill border-leather-300/25 bg-black/20 text-leather-100">
+                  {journalEntriesCount}
+                </span>
+              </div>
+            </Link>
+            <Link
+              href="/oracle"
+              className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-4 py-3 transition-colors hover:bg-plum-400/16"
+            >
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Oracle</p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <p className="text-sm font-medium text-bone">Memory saved</p>
+                <span className="shell-pill border-plum-300/20 bg-black/20 text-plum-200">
+                  {oracleMemoryCount}
+                </span>
+              </div>
+            </Link>
+            <Link
+              href="/blueprint"
+              className="rounded-[1rem] border border-border/80 bg-stone-900/80 px-4 py-3 transition-colors hover:border-leather-400/25 hover:bg-stone-900 hover:text-bone"
+            >
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/75">Architecture</p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <p className="text-sm font-medium text-bone-muted">Annual blueprint</p>
+                <ArrowRight size={14} className="shrink-0 text-bone-muted" />
+              </div>
+            </Link>
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-stone-950/35">
@@ -663,6 +698,10 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             </div>
 
             <div className="px-6 py-6">
+              <div className="mb-4">
+                <DashboardHeroInsights insights={heroInsights} />
+              </div>
+
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
                 <article className="rounded-[1rem] border border-border/70 bg-stone-900/80 px-5 py-5">
                   <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-leather-200/75">
@@ -707,10 +746,6 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                     </p>
                   )}
                 </article>
-              </div>
-
-              <div className="mt-4">
-                <DashboardHeroInsights insights={heroInsights} />
               </div>
             </div>
           </div>
