@@ -107,6 +107,18 @@ function deriveWeekDates(week: WeekBlueprint | null, today: string): string[] {
   })
 }
 
+function getISOWeekNumber(dateValue: string) {
+  const date = new Date(`${dateValue}T12:00:00`)
+  const day = date.getDay() || 7
+
+  date.setDate(date.getDate() + 4 - day)
+
+  const yearStart = new Date(Date.UTC(date.getFullYear(), 0, 1))
+  const current = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+
+  return Math.ceil(((current - yearStart.getTime()) / 86400000 + 1) / 7)
+}
+
 function phaseLabel(phase: string) {
   return phase
     .split('-')
@@ -588,6 +600,25 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
         month: '2-digit',
         day: '2-digit',
       })
+  const displayWeekNumber = getISOWeekNumber(currentWeek?.startDate ?? today)
+  const weekRangeLabel = (() => {
+    const weekStart = new Date(`${currentWeek?.startDate ?? today}T12:00:00`)
+    const weekEnd = new Date(`${currentWeek?.endDate ?? today}T12:00:00`)
+
+    const sameMonth = weekStart.getMonth() === weekEnd.getMonth() && weekStart.getFullYear() === weekEnd.getFullYear()
+    if (sameMonth) {
+      return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${weekEnd.toLocaleDateString('en-US', {
+        day: 'numeric',
+        year: 'numeric',
+      })}`
+    }
+
+    return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${weekEnd.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })}`
+  })()
   const activeTransitItems = buildActiveTransitItems(todayEphemeris)
   const upcomingTransitItems = yearEphemeris ? buildUpcomingTransitItems(yearEphemeris, today) : []
   const heroInsights = [
@@ -625,28 +656,51 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
 
   return (
     <div className="space-y-8">
-      <section className="shell-panel overflow-hidden px-6 py-7 md:px-8">
-        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
+      <section className="shell-panel overflow-hidden px-4 py-5 md:px-6">
+        <div className="mb-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_28rem] xl:items-stretch">
+          <div className="rounded-[1.1rem] border border-border/60 bg-stone-950/32 px-4 py-4">
             <div className="flex items-center gap-3">
               <CalendarDays size={18} className="text-bone-muted" />
               <p className="font-serif text-[1.65rem] tracking-[0.03em] text-bone">Weekly Execution Map</p>
             </div>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-bone-muted">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-bone-muted">
               Start with the week’s energetic read, then jump into the places where your reflections, memory, and deeper architecture already live.
             </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="shell-pill border-leather-400/30 bg-leather-500/12 text-leather-200">
+                Week {displayWeekNumber}
+              </span>
+              <span className="shell-pill border-border/70 bg-stone-950/70 text-bone-muted">
+                {weekRangeLabel}
+              </span>
+              <span className="shell-pill border-border/70 bg-stone-950/70 text-bone-muted">
+                {maintenanceLane}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="rounded-[0.95rem] border border-border/60 bg-stone-900/60 px-3.5 py-3">
+                <p className="text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-bone-muted/65">Operating layer</p>
+                <p className="mt-2 text-base font-medium text-bone">{maintenanceLane}</p>
+                <p className="mt-1 text-sm leading-6 text-bone-muted">{firstSentence(currentWeek?.cosmicContext || currentMonth?.energyArc || transitHighlight)}</p>
+              </div>
+              <div className="rounded-[0.95rem] border border-border/60 bg-stone-900/60 px-3.5 py-3">
+                <p className="text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-bone-muted/65">Primary focus</p>
+                <p className="mt-2 text-base font-medium text-bone">{primaryLane}</p>
+                <p className="mt-1 text-sm leading-6 text-bone-muted">{primaryAction}</p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[32rem]">
-            <div className="rounded-[1rem] border border-leather-400/35 bg-leather-500/10 px-4 py-3">
+          <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[28rem] xl:max-w-[32rem]">
+            <div className="rounded-[1rem] border border-leather-400/35 bg-leather-500/10 px-3.5 py-3">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-leather-200/85">Journal</p>
-              <div className="mt-3 flex items-end justify-between gap-3">
+              <div className="mt-2.5 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-bone">Journal entries</p>
                 <span className="shell-pill border-leather-300/25 bg-black/20 text-leather-100">
                   {journalEntriesCount}
                 </span>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href="/journal"
                   className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/75 px-3 py-2 text-xs font-medium text-bone-muted transition-colors hover:text-bone"
@@ -661,15 +715,15 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 </Link>
               </div>
             </div>
-            <div className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-4 py-3">
+            <div className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-3.5 py-3">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Oracle</p>
-              <div className="mt-3 flex items-end justify-between gap-3">
+              <div className="mt-2.5 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-bone">Memory saved</p>
                 <span className="shell-pill border-plum-300/20 bg-black/20 text-plum-200">
                   {oracleMemoryCount}
                 </span>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href="/oracle"
                   className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/75 px-3 py-2 text-xs font-medium text-bone-muted transition-colors hover:text-bone"
@@ -684,13 +738,13 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 </Link>
               </div>
             </div>
-            <div className="rounded-[1rem] border border-border/80 bg-stone-900/80 px-4 py-3">
+            <div className="rounded-[1rem] border border-border/80 bg-stone-900/80 px-3.5 py-3 sm:col-span-2">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/75">Architecture</p>
-              <div className="mt-3 flex items-end justify-between gap-3">
+              <div className="mt-2.5 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-bone-muted">Annual blueprint</p>
                 <ArrowRight size={14} className="shrink-0 text-bone-muted" />
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href="/blueprint"
                   className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/75 px-3 py-2 text-xs font-medium text-bone-muted transition-colors hover:text-bone"
@@ -709,29 +763,31 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
         </div>
 
         <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-stone-950/35">
-          <div className="grid gap-0 xl:grid-cols-[18rem_minmax(0,1fr)]">
-            <div className="border-b border-border/70 px-6 py-6 xl:border-b-0 xl:border-r">
-              <p className="font-serif text-[2.4rem] leading-none text-bone">
-                Week {currentWeek?.weekNumber ?? '--'}
+          <div className="grid gap-0 xl:grid-cols-[15rem_minmax(0,1fr)]">
+            <div className="border-b border-border/70 px-5 py-5 xl:border-b-0 xl:border-r">
+              <p className="font-serif text-[2rem] leading-none text-bone">
+                Week {displayWeekNumber}
               </p>
-              <p className="mt-4 text-base text-bone-muted">{weekStartLabel}</p>
+              <p className="mt-3 text-sm uppercase tracking-[0.16em] text-bone-muted/72">Week of year</p>
+              <p className="mt-1 text-base text-bone-muted">{weekRangeLabel}</p>
+              <p className="mt-1 text-sm text-bone-muted/70">Starts {weekStartLabel}</p>
 
-              <div className="mt-8 max-w-[16rem] rounded-[0.9rem] border border-border/70 bg-stone-900/75 px-4 py-3">
+              <div className="mt-6 max-w-[13rem] rounded-[0.9rem] border border-border/70 bg-stone-900/75 px-3.5 py-3">
                 <p className="text-sm leading-6 text-bone-muted">
                   {firstSentence(currentWeek?.cosmicContext || currentMonth?.energyArc || transitHighlight)}
                 </p>
               </div>
 
-              <div className="mt-28">
+              <div className="mt-8">
                 <p className="shell-kicker text-bone-muted/60">Climate</p>
-                <p className="mt-4 max-w-[11rem] font-serif text-[1.05rem] italic leading-9 text-bone/92">
+                <p className="mt-3 max-w-[11rem] font-serif text-[1rem] italic leading-8 text-bone/92">
                   "{dailyPhase.label}"
                 </p>
               </div>
             </div>
 
-            <div className="px-6 py-6">
-              <div className="mb-4">
+            <div className="px-5 py-5">
+              <div className="mb-3">
                 <DashboardHeroInsights insights={heroInsights} />
               </div>
 

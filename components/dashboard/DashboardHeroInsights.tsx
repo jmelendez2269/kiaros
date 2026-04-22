@@ -28,7 +28,7 @@ export function DashboardHeroInsights({ insights }: DashboardHeroInsightsProps) 
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   return (
-    <div className="grid gap-3 xl:grid-cols-3">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {insights.map((insight) => {
         const expanded = expandedId === insight.id
 
@@ -44,28 +44,28 @@ export function DashboardHeroInsights({ insights }: DashboardHeroInsightsProps) 
             )}
             aria-expanded={expanded}
           >
-            <div className="flex min-h-[12.25rem] flex-col px-5 py-5">
+            <div className="flex min-h-[9.75rem] flex-col px-4 py-4">
               <div>
                 <p className={cn('text-[0.68rem] font-semibold uppercase tracking-[0.18em]', ACCENT_STYLES[insight.accent ?? 'default'])}>
                   {insight.kicker}
                 </p>
-                <h3 className="mt-4 text-[1rem] font-semibold leading-7 text-bone md:text-[1.08rem]">
+                <h3 className="mt-3 text-[1rem] font-semibold leading-7 text-bone md:text-[1.06rem]">
                   {insight.title}
                 </h3>
               </div>
 
-              <div className="mt-5 flex-1">
-                <p className="text-sm leading-7 text-bone-muted/88">
+              <div className="mt-4 flex-1">
+                <p className="text-sm leading-6 text-bone-muted/88">
                   {insight.preview}
                 </p>
                 {expanded ? (
-                  <div className="mt-4 border-t border-border/60 pt-4">
-                    <p className="text-sm leading-7 text-bone-muted">{insight.detail}</p>
+                  <div className="mt-3 border-t border-border/60 pt-3">
+                    <p className="text-sm leading-6 text-bone-muted">{insight.detail}</p>
                   </div>
                 ) : null}
               </div>
 
-              <span className="mt-5 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-bone-muted/55">
+              <span className="mt-4 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-bone-muted/55">
                 {expanded ? 'Tap to collapse' : 'Tap for more'}
               </span>
             </div>
