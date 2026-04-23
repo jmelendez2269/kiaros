@@ -657,13 +657,13 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   return (
     <div className="space-y-8">
       <section className="shell-panel overflow-hidden px-4 py-5 md:px-6">
-        <div className="mb-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_28rem] xl:items-stretch">
-          <div className="rounded-[1.1rem] border border-border/60 bg-stone-950/32 px-4 py-4">
+        <div className="mb-3 flex flex-col gap-3 border-b border-border/60 pb-3 xl:flex-row xl:items-start xl:justify-between">
+          <div>
             <div className="flex items-center gap-3">
-              <CalendarDays size={18} className="text-bone-muted" />
-              <p className="font-serif text-[1.65rem] tracking-[0.03em] text-bone">Weekly Execution Map</p>
+              <CalendarDays size={16} className="text-bone-muted" />
+              <p className="font-serif text-[1.4rem] tracking-[0.03em] text-bone">Weekly Execution Map</p>
             </div>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-bone-muted">
+            <p className="hidden">
               Start with the week’s energetic read, then jump into the places where your reflections, memory, and deeper architecture already live.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -673,11 +673,11 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
               <span className="shell-pill border-border/70 bg-stone-950/70 text-bone-muted">
                 {weekRangeLabel}
               </span>
-              <span className="shell-pill border-border/70 bg-stone-950/70 text-bone-muted">
+              <span className="hidden">
                 {maintenanceLane}
               </span>
             </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <div className="hidden">
               <div className="rounded-[0.95rem] border border-border/60 bg-stone-900/60 px-3.5 py-3">
                 <p className="text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-bone-muted/65">Operating layer</p>
                 <p className="mt-2 text-base font-medium text-bone">{maintenanceLane}</p>
@@ -691,69 +691,69 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[28rem] xl:max-w-[32rem]">
-            <div className="rounded-[1rem] border border-leather-400/35 bg-leather-500/10 px-3.5 py-3">
+          <div className="grid gap-2 sm:grid-cols-3 xl:min-w-[26rem] xl:max-w-[30rem]">
+            <div className="rounded-[0.95rem] border border-leather-400/35 bg-leather-500/10 px-3 py-2.5">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-leather-200/85">Journal</p>
-              <div className="mt-2.5 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-bone">Journal entries</p>
-                <span className="shell-pill border-leather-300/25 bg-black/20 text-leather-100">
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-[0.9rem] font-medium text-bone">Journal entries</p>
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-leather-300/25 bg-black/20 px-2 text-[0.68rem] font-semibold text-leather-100">
                   {journalEntriesCount}
                 </span>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 <Link
                   href="/journal"
-                  className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/75 px-3 py-2 text-xs font-medium text-bone-muted transition-colors hover:text-bone"
+                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:text-bone"
                 >
                   Open history
                 </Link>
                 <Link
                   href="/journal"
-                  className="inline-flex items-center rounded-xl border border-leather-400/45 bg-leather-500/20 px-3 py-2 text-xs font-medium text-bone transition-colors hover:bg-leather-500/30"
+                  className="inline-flex items-center rounded-lg border border-leather-400/45 bg-leather-500/20 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone transition-colors hover:bg-leather-500/30"
                 >
                   New entry
                 </Link>
               </div>
             </div>
-            <div className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-3.5 py-3">
+            <div className="rounded-[0.95rem] border border-plum-400/30 bg-plum-400/8 px-3 py-2.5">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Oracle</p>
-              <div className="mt-2.5 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-bone">Memory saved</p>
-                <span className="shell-pill border-plum-300/20 bg-black/20 text-plum-200">
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-[0.9rem] font-medium text-bone">Memory saved</p>
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-plum-300/20 bg-black/20 px-2 text-[0.68rem] font-semibold text-plum-200">
                   {oracleMemoryCount}
                 </span>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 <Link
                   href="/oracle"
-                  className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/75 px-3 py-2 text-xs font-medium text-bone-muted transition-colors hover:text-bone"
+                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:text-bone"
                 >
                   Open Oracle
                 </Link>
                 <Link
                   href="/journal?prompt=What%20feels%20worth%20keeping%20in%20memory%20right%20now%3F"
-                  className="inline-flex items-center rounded-xl border border-plum-400/40 bg-plum-400/18 px-3 py-2 text-xs font-medium text-bone transition-colors hover:bg-plum-400/26"
+                  className="inline-flex items-center rounded-lg border border-plum-400/40 bg-plum-400/18 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone transition-colors hover:bg-plum-400/26"
                 >
                   New entry
                 </Link>
               </div>
             </div>
-            <div className="rounded-[1rem] border border-border/80 bg-stone-900/80 px-3.5 py-3 sm:col-span-2">
+            <div className="rounded-[0.95rem] border border-border/80 bg-stone-900/80 px-3 py-2.5">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/75">Architecture</p>
-              <div className="mt-2.5 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-bone-muted">Annual blueprint</p>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-[0.9rem] font-medium text-bone-muted">Annual blueprint</p>
                 <ArrowRight size={14} className="shrink-0 text-bone-muted" />
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 <Link
                   href="/blueprint"
-                  className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/75 px-3 py-2 text-xs font-medium text-bone-muted transition-colors hover:text-bone"
+                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:text-bone"
                 >
                   Open blueprint
                 </Link>
                 <Link
                   href="/journal?prompt=What%20part%20of%20the%20annual%20blueprint%20am%20I%20living%20right%20now%3F"
-                  className="inline-flex items-center rounded-xl border border-leather-400/35 bg-leather-500/16 px-3 py-2 text-xs font-medium text-bone transition-colors hover:bg-leather-500/24"
+                  className="inline-flex items-center rounded-lg border border-leather-400/35 bg-leather-500/16 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone transition-colors hover:bg-leather-500/24"
                 >
                   New entry
                 </Link>

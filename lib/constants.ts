@@ -58,23 +58,23 @@ export const THEMES: {
   {
     id: "obsidian",
     name: "Obsidian",
-    tagline: "Deep void & electric violet",
-    description: "Cool near-black with a single electric violet accent. Precise, clean, like reading the sky through a telescope.",
-    swatches: ["#0c0b1f", "#8b78f0", "#4d8ab5", "#d4a552"],
+    tagline: "Deep void & moonlit periwinkle",
+    description: "Cool near-black with layered lilac, periwinkle, and powder-blue accents. Precise, calm, and more atmospheric than stark.",
+    swatches: ["#0c0b1f", "#9b86f7", "#84c4f2", "#c9b7ff"],
   },
   {
     id: "celestial",
     name: "Celestial",
-    tagline: "Deep navy & amber gold",
-    description: "The color language of star charts and celestial navigation. Navy foundation, amber gold accent.",
-    swatches: ["#050e1d", "#d4a44e", "#3a8a88", "#6054a0"],
+    tagline: "Deep navy, starlight gold & sky blue",
+    description: "The color language of star charts with more starlight in the mix: navy foundation, gold navigation marks, and luminous blue-violet atmosphere.",
+    swatches: ["#050e1d", "#d8b266", "#84c2f2", "#9f92f7"],
   },
   {
     id: "dawn",
     name: "Dawn",
-    tagline: "Warm amber & ancient stone",
-    description: "Amber-infused near-black with a single warm gold accent. Candlelight on stone.",
-    swatches: ["#0e0804", "#d4922a", "#789060", "#c07040"],
+    tagline: "Dusky stone & lavender sky",
+    description: "A warmer near-black, but with dawn-sky lilac, soft orchid, and pale blue threaded through the shadows.",
+    swatches: ["#0e0804", "#a995f4", "#8fc6f2", "#d8a8d9"],
   },
 ];
 
