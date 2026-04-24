@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 type RecentJournalEntry = {
   id: string
@@ -24,7 +24,9 @@ interface JournalComposerProps {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10)
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+  }).format(new Date())
 }
 
 function truncate(value: string, max = 220) {
@@ -42,12 +44,16 @@ export function JournalComposer({
   recentEntries,
 }: JournalComposerProps) {
   const [title, setTitle] = useState(initialPrompt ? truncate(initialPrompt, 120) : '')
-  const [entryDate, setEntryDate] = useState(todayISO())
+  const [entryDate, setEntryDate] = useState('')
   const [body, setBody] = useState(initialPrompt ? `${initialPrompt}\n\n` : '')
   const [isRitual, setIsRitual] = useState(Boolean(initialPrompt))
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    setEntryDate(todayISO())
+  }, [])
 
   const contextSummary = useMemo(() => {
     const parts: string[] = []

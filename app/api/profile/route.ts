@@ -13,7 +13,7 @@ export async function GET() {
   const admin = createAdminSupabase();
   const { data: profile, error } = await admin
     .from("user_profiles")
-    .select("birth_date, natal_chart, plan_year, word_of_year, year_vision, what_to_release")
+    .select("display_name, theme, birth_date, birth_time, birth_time_unknown, birth_city, birth_tz, natal_chart, plan_year, word_of_year, year_vision, what_to_release, study_focus")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 

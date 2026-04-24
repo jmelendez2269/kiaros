@@ -77,7 +77,7 @@ export function OracleChat({ today }: Props) {
 
           {error && (
             <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
-              Something went wrong reaching the Oracle. Try again in a moment.
+              {error.message || 'Something went wrong reaching the Oracle. Try again in a moment.'}
             </div>
           )}
         </div>

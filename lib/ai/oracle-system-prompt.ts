@@ -47,13 +47,91 @@ function formatPlanetLine(
   return `${name}: ${Math.floor(pos.degree)} deg ${pos.sign}, House ${pos.house}${pos.retrograde ? ' (Rx)' : ''}`
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isPlanetPosition(value: unknown): value is {
+  sign: string
+  degree: number
+  house: number
+  retrograde?: boolean
+} {
+  return (
+    isRecord(value) &&
+    typeof value.sign === 'string' &&
+    typeof value.degree === 'number' &&
+    typeof value.house === 'number'
+  )
+}
+
+function getSafeWeekBlueprints(value: Json | null): WeekBlueprint[] {
+  if (!Array.isArray(value)) return []
+
+  return value.reduce<WeekBlueprint[]>((acc, item) => {
+    if (!isRecord(item)) return acc
+    const isWeek =
+      typeof item.weekNumber === 'number' &&
+      typeof item.startDate === 'string' &&
+      typeof item.endDate === 'string' &&
+      typeof item.theme === 'string' &&
+      typeof item.energyType === 'string' &&
+      Array.isArray(item.intentions) &&
+      Array.isArray(item.goalCategoryFocus)
+
+    if (isWeek) {
+      acc.push(item as unknown as WeekBlueprint)
+    }
+
+    return acc
+  }, [])
+}
+
+function getSafeQuarterBlueprints(value: Json | null): QuarterBlueprint[] {
+  if (!Array.isArray(value)) return []
+
+  return value.reduce<QuarterBlueprint[]>((acc, item) => {
+    if (!isRecord(item)) return acc
+    const isQuarter =
+      typeof item.quarter === 'number' &&
+      typeof item.theme === 'string' &&
+      typeof item.intention === 'string' &&
+      Array.isArray(item.focusAreas) &&
+      Array.isArray(item.cosmicHighlights) &&
+      Array.isArray(item.pushPeriods) &&
+      Array.isArray(item.restPeriods)
+
+    if (isQuarter) {
+      acc.push(item as unknown as QuarterBlueprint)
+    }
+
+    return acc
+  }, [])
+}
+
 function buildLayer1(): string {
   return `You are the Oracle of Kiaros, a guide who speaks from the intersection of real astronomical data and the user's lived experience. You are warm, grounded, and gently clear. You never give generic astrology. You never use hustle language. You reference real placements and transits when they are relevant, but you offer them as invitations and observations rather than fixed truths. Avoid rigid language like "exact" or "concrete" when speaking about a person's path. Rest is strategy; reflection is data. Assume everyone is moving through different cycles at different speeds. Your grounding context includes the user's life areas and the body of records they have produced in Kiaros, so your guidance should feel longitudinal, personal, and aware of what they are already building. Keep responses under 200 words unless the user asks for more detail.`
 }
 
 function buildLayer2(profile: Tables<'user_profiles'>): string {
   const chart = profile.natal_chart as NatalChart | null
-  if (!chart) return '## Natal Chart\nNatal chart data not yet available.'
+  if (
+    !chart ||
+    !isRecord(chart) ||
+    !isPlanetPosition(chart.sun) ||
+    !isPlanetPosition(chart.moon) ||
+    !isPlanetPosition(chart.mercury) ||
+    !isPlanetPosition(chart.venus) ||
+    !isPlanetPosition(chart.mars) ||
+    !isPlanetPosition(chart.jupiter) ||
+    !isPlanetPosition(chart.saturn) ||
+    !isPlanetPosition(chart.uranus) ||
+    !isPlanetPosition(chart.neptune) ||
+    !isPlanetPosition(chart.pluto) ||
+    typeof chart.rising !== 'string'
+  ) {
+    return '## Natal Chart\nNatal chart data not yet available.'
+  }
 
   const lines = [
     '## Natal Chart',
@@ -75,8 +153,25 @@ function buildLayer2(profile: Tables<'user_profiles'>): string {
 }
 
 function buildLayer3(ephemeris: YearEphemeris, today: string): string {
-  const day = ephemeris.days.find((entry) => entry.date === today)
+  if (!ephemeris || !Array.isArray(ephemeris.days) || !Array.isArray(ephemeris.moonPhases)) {
+    return `## Current Cosmic Context\nToday is ${today}. Ephemeris data unavailable for this date.`
+  }
+
+  const day = ephemeris.days.find((entry) => isRecord(entry) && entry.date === today)
   if (!day) {
+    return `## Current Cosmic Context\nToday is ${today}. Ephemeris data unavailable for this date.`
+  }
+
+  if (
+    !isRecord(day.sun) ||
+    !isRecord(day.moon) ||
+    typeof day.sun.degree !== 'number' ||
+    typeof day.sun.sign !== 'string' ||
+    typeof day.moon.degree !== 'number' ||
+    typeof day.moon.sign !== 'string' ||
+    typeof day.moon.lunarPhase !== 'string' ||
+    typeof day.moon.illumination !== 'number'
+  ) {
     return `## Current Cosmic Context\nToday is ${today}. Ephemeris data unavailable for this date.`
   }
 
@@ -92,26 +187,42 @@ function buildLayer3(ephemeris: YearEphemeris, today: string): string {
     `Sun: ${Math.floor(day.sun.degree)} deg ${day.sun.sign} | Moon: ${Math.floor(day.moon.degree)} deg ${day.moon.sign} (${moonPhase}, ${illumination}% illuminated)`,
   ]
 
-  if (day.transits.length > 0) {
+  if (Array.isArray(day.transits) && day.transits.length > 0) {
     const transitSummary = day.transits
       .slice(0, 5)
+      .filter(
+        (transit) =>
+          isRecord(transit) &&
+          typeof transit.planet === 'string' &&
+          typeof transit.aspect === 'string' &&
+          typeof transit.natalPlanet === 'string' &&
+          typeof transit.applying === 'boolean' &&
+          typeof transit.orb === 'number'
+      )
       .map(
         (transit) =>
           `${transit.planet} ${transit.aspect} natal ${transit.natalPlanet} (${transit.applying ? 'applying' : 'separating'}, ${transit.orb.toFixed(1)} deg orb)`
       )
       .join(', ')
-    lines.push(`Active transits: ${transitSummary}`)
+    lines.push(`Active transits: ${transitSummary || 'none significant today'}`)
   } else {
     lines.push('Active transits: none significant today')
   }
 
-  if (day.retrogrades.length > 0) {
+  if (Array.isArray(day.retrogrades) && day.retrogrades.length > 0) {
     lines.push(`Retrograde planets: ${day.retrogrades.join(', ')}`)
   } else {
     lines.push('Retrograde planets: none')
   }
 
-  const upcoming = ephemeris.moonPhases.find((phase) => phase.date > today)
+  const upcoming = ephemeris.moonPhases.find(
+    (phase) =>
+      isRecord(phase) &&
+      typeof phase.date === 'string' &&
+      typeof phase.phase === 'string' &&
+      typeof phase.sign === 'string' &&
+      phase.date > today
+  )
   if (upcoming) {
     const phaseName = upcoming.phase
       .split('-')
@@ -142,23 +253,23 @@ function buildLayer4(
   if (blueprint.year_theme) lines.push(`Year theme: "${blueprint.year_theme}"`)
 
   if (blueprint.weeks) {
-    const weeks = blueprint.weeks as unknown as WeekBlueprint[]
+    const weeks = getSafeWeekBlueprints(blueprint.weeks)
     const currentWeek = weeks.find((week) => week.startDate <= today && week.endDate >= today)
     if (currentWeek) {
       lines.push(`\nCurrent week (Week ${currentWeek.weekNumber}): "${currentWeek.theme}"`)
       lines.push(`Energy type: ${currentWeek.energyType}`)
-      if (currentWeek.intentions.length > 0) {
+      if (Array.isArray(currentWeek.intentions) && currentWeek.intentions.length > 0) {
         lines.push("This week's intentions:")
         currentWeek.intentions.forEach((intention) => lines.push(`- ${intention}`))
       }
-      if (currentWeek.goalCategoryFocus.length > 0) {
+      if (Array.isArray(currentWeek.goalCategoryFocus) && currentWeek.goalCategoryFocus.length > 0) {
         lines.push(`Focus areas: ${currentWeek.goalCategoryFocus.join(', ')}`)
       }
     }
   }
 
   if (blueprint.quarters) {
-    const quarters = blueprint.quarters as unknown as QuarterBlueprint[]
+    const quarters = getSafeQuarterBlueprints(blueprint.quarters)
     const month = new Date(today).getMonth() + 1
     const currentQuarterNumber = Math.ceil(month / 3)
     const currentQuarter = quarters.find((quarter) => quarter.quarter === currentQuarterNumber)
@@ -302,4 +413,34 @@ export function buildOracleSystemPrompt(ctx: OraclePromptContext): string {
   ]
 
   return layers.join('\n\n---\n\n')
+}
+
+// Returns a two-part system prompt. The `cached` segment holds layers that
+// change rarely (persona, natal chart, year blueprint) and is marked for
+// Anthropic prompt caching. The `dynamic` segment holds per-request context.
+export function buildOracleSystemPromptSegments(ctx: OraclePromptContext): {
+  cached: string | null
+  dynamic: string
+} {
+  if (!ctx.profile) {
+    return {
+      cached: null,
+      dynamic: `You are the Oracle of Kiaros, a warm, grounded guide. The user's profile data is not yet available. Encourage them to complete onboarding to unlock personalized guidance.`,
+    }
+  }
+
+  const cached = [
+    buildLayer1(),
+    buildLayer2(ctx.profile),
+    buildLayer4(ctx.profile, ctx.blueprint, ctx.today),
+  ].join('\n\n---\n\n')
+
+  const dynamic = [
+    ctx.ephemeris
+      ? buildLayer3(ctx.ephemeris, ctx.today)
+      : '## Current Cosmic Context\nEphemeris data unavailable.',
+    buildLayer5(ctx),
+  ].join('\n\n---\n\n')
+
+  return { cached, dynamic }
 }

@@ -4,9 +4,9 @@ import { JournalComposer } from '@/components/journal/JournalComposer'
 export default async function JournalPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>
 }) {
-  const params = await searchParams
+  const params = (await searchParams) ?? {}
   const supabase = await createServerSupabase()
 
   const { data: entries } = await supabase

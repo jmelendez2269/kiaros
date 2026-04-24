@@ -1,8 +1,9 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Brain, CalendarDays, CheckCircle2, Loader2, Sparkles } from 'lucide-react'
+import { ArrowRight, Brain, CalendarDays, CheckCircle2, Loader2, PenSquare, Sparkles } from 'lucide-react'
 import type { CurriculumIntensity, CurriculumPlanRow } from '@/types/curriculum'
 
 interface CurriculumWorkspaceProps {
@@ -50,6 +51,27 @@ function niceDate(date: string | null) {
   })
 }
 
+function buildJournalHref(plan: CurriculumPlanRow) {
+  const outcomes = plan.outcomes.slice(0, 3).join('; ')
+  const objectives = plan.objectives.slice(0, 2).join('; ')
+  const context = [
+    plan.summary,
+    outcomes ? `Suggested outcomes: ${outcomes}` : null,
+    objectives ? `Key objectives: ${objectives}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+
+  const params = new URLSearchParams({
+    area: 'Study',
+    theme: plan.title,
+    prompt: `What feels most worth noting after receiving this curriculum feedback on ${plan.topic}?`,
+    context,
+  })
+
+  return `/journal?${params.toString()}`
+}
+
 export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: CurriculumWorkspaceProps) {
   const router = useRouter()
   const [isGenerating, startGenerating] = useTransition()
@@ -65,6 +87,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
   )
 
   const approvedPlans = plans.filter((plan) => plan.status === 'approved')
+  const historyPlans = latestDraft ? plans.filter((plan) => plan.id !== latestDraft.id) : plans
 
   function updateField<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -290,9 +313,9 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
       </section>
 
       {latestDraft ? (
-        <section className="shell-panel px-6 py-6 md:px-8">
-          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div className="max-w-3xl">
+        <section className="shell-panel px-6 py-8 md:px-8 md:py-9">
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-4xl">
               <p className="shell-kicker mb-2">Draft review</p>
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-[2rem] font-semibold text-bone">{latestDraft.title}</h2>
@@ -300,21 +323,30 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
                   {latestDraft.status}
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-7 text-bone-muted">{latestDraft.summary}</p>
+              <p className="mt-4 max-w-3xl text-[1rem] leading-8 text-bone-muted">{latestDraft.summary}</p>
             </div>
 
-            <button
-              type="button"
-              disabled={isApproving || latestDraft.status === 'approved'}
-              onClick={() => handleApprove(latestDraft.id)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-moss-500/40 bg-moss-500/20 px-5 py-3 text-sm font-semibold text-bone disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isApproving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {latestDraft.status === 'approved' ? 'Already approved' : 'Approve and add to planner'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href={buildJournalHref(latestDraft)}
+                className="inline-flex items-center gap-2 rounded-2xl border border-border/80 bg-stone-950/80 px-5 py-3 text-sm font-semibold text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+              >
+                <PenSquare size={16} />
+                Journal this feedback
+              </Link>
+              <button
+                type="button"
+                disabled={isApproving || latestDraft.status === 'approved'}
+                onClick={() => handleApprove(latestDraft.id)}
+                className="inline-flex items-center gap-2 rounded-2xl border border-moss-500/40 bg-moss-500/20 px-5 py-3 text-sm font-semibold text-bone disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isApproving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                {latestDraft.status === 'approved' ? 'Already approved' : 'Approve and add to planner'}
+              </button>
+            </div>
           </div>
 
-          <div className="mb-5 grid gap-4 md:grid-cols-3">
+          <div className="mb-8 grid gap-4 md:grid-cols-3">
             <div className="rounded-[1.1rem] border border-border/70 bg-stone-950/60 p-4">
               <p className="shell-kicker mb-2">Length</p>
               <p className="text-lg font-semibold text-bone">{latestDraft.duration_weeks} weeks</p>
@@ -329,7 +361,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
             </div>
           </div>
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+          <div className="grid gap-5 lg:grid-cols-2">
             <div className="space-y-4">
               <div className="rounded-[1.1rem] border border-border/70 bg-stone-950/60 p-4">
                 <p className="shell-kicker mb-3">Objectives</p>
@@ -355,28 +387,47 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
                 </ul>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-3">
+          <div className="mt-8 rounded-[1.25rem] border border-border/70 bg-stone-950/40 p-5 md:p-6">
+            <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-3xl">
+                <p className="shell-kicker mb-2">Week-by-week path</p>
+                <h3 className="text-[1.45rem] font-semibold text-bone">The reading room version</h3>
+                <p className="mt-2 text-sm leading-7 text-bone-muted">
+                  Open each week when you want the fuller rationale, deliverable, and session structure without the page feeling compressed.
+                </p>
+              </div>
+              <Link
+                href={buildJournalHref(latestDraft)}
+                className="inline-flex items-center gap-2 self-start rounded-full border border-border/70 bg-stone-950/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+              >
+                Reflect in journal
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            <div className="space-y-4">
               {latestDraft.curriculum.weeks.map((week) => (
-                <details key={week.weekNumber} className="rounded-[1.1rem] border border-border/70 bg-stone-950/60 p-4" open={week.weekNumber <= 2}>
+                <details key={week.weekNumber} className="rounded-[1.1rem] border border-border/70 bg-stone-950/60 p-5" open={week.weekNumber <= 2}>
                   <summary className="cursor-pointer list-none">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
+                      <div className="max-w-3xl">
                         <p className="shell-kicker mb-2">Week {week.weekNumber}</p>
                         <h3 className="text-lg font-semibold text-bone">{week.theme}</h3>
-                        <p className="mt-2 text-sm text-bone-muted">{week.goal}</p>
+                        <p className="mt-3 text-sm leading-7 text-bone-muted">{week.goal}</p>
                       </div>
                       <span className="shell-pill">{week.sessions.length} sessions</span>
                     </div>
                   </summary>
 
-                  <div className="mt-4 space-y-3 border-t border-border/70 pt-4">
-                    <div className="rounded-2xl border border-border/60 bg-black/10 p-3 text-sm text-bone-muted">
+                  <div className="mt-5 space-y-4 border-t border-border/70 pt-5">
+                    <div className="rounded-2xl border border-border/60 bg-black/10 p-4 text-sm leading-7 text-bone-muted">
                       <span className="font-semibold text-bone">Deliverable:</span> {week.deliverable}
                     </div>
 
                     {week.sessions.map((session, index) => (
-                      <div key={`${week.weekNumber}-${index}`} className="rounded-2xl border border-border/60 bg-black/10 p-3">
+                      <div key={`${week.weekNumber}-${index}`} className="rounded-2xl border border-border/60 bg-black/10 p-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-semibold text-bone">{session.title}</p>
                           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-bone-muted">
@@ -384,7 +435,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
                             <span>{session.minutes} min</span>
                           </div>
                         </div>
-                        <p className="mt-2 text-sm leading-6 text-bone-muted">{session.description}</p>
+                        <p className="mt-3 text-sm leading-7 text-bone-muted">{session.description}</p>
                       </div>
                     ))}
                   </div>
@@ -398,8 +449,8 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="shell-kicker mb-2">Library</p>
-            <h2 className="text-[1.9rem] font-semibold text-bone">Saved curricula</h2>
+            <p className="shell-kicker mb-2">History</p>
+            <h2 className="text-[1.9rem] font-semibold text-bone">Previous curriculum drafts and approvals</h2>
           </div>
           <div className="inline-flex items-center gap-2 rounded-2xl border border-border/80 bg-stone-900/70 px-4 py-2 text-sm text-bone-muted">
             <CalendarDays size={15} />
@@ -407,14 +458,14 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
           </div>
         </div>
 
-        {plans.length === 0 ? (
+        {historyPlans.length === 0 ? (
           <div className="shell-panel px-6 py-10 text-center">
             <Brain className="mx-auto mb-4 text-bone-muted" size={24} />
-            <p className="text-bone-muted">No curricula yet. Generate one above to start building your study layer.</p>
+            <p className="text-bone-muted">No previous curricula yet. Generate one above to start building your study layer.</p>
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
-            {plans.map((plan) => (
+            {historyPlans.map((plan) => (
               <article key={plan.id} className="shell-panel px-6 py-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -450,6 +501,16 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
                       {skill}
                     </span>
                   ))}
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href={buildJournalHref(plan)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-stone-950/70 px-4 py-2 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+                  >
+                    <PenSquare size={14} />
+                    Journal this feedback
+                  </Link>
                 </div>
               </article>
             ))}
