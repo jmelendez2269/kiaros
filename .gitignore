@@ -36,7 +36,12 @@ yarn-error.log*
 .claude/handoffs/
 .env.local
 .vercel
+.agents/
+.playwright-mcp/
 
 # OS
 Thumbs.db
 .DS_Store
+
+# Local tooling
+supabase/.temp/
