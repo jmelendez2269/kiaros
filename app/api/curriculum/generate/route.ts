@@ -13,7 +13,7 @@ const requestSchema = z.object({
   constraints: z.string().max(800).optional(),
 })
 
-export const maxDuration = 180
+export const maxDuration = 60
 
 export async function POST(req: Request) {
   try {

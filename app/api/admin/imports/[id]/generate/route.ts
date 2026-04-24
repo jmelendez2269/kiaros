@@ -6,7 +6,7 @@ import { createCard } from "@/lib/admin/cards";
 import { generateDraftCards } from "@/lib/admin/card-generator";
 import type { AdminSource } from "@/types/admin";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 function isAdminSession(sessionClaims: unknown): boolean {
   return (

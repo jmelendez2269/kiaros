@@ -4,7 +4,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 export async function POST() {
   const { userId } = await auth();

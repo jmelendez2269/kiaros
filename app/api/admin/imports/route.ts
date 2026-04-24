@@ -4,7 +4,7 @@ import { listImports, createImport, updateImportStatus } from "@/lib/admin/impor
 import { getTranscriptFetcher } from "@/lib/admin/transcript-ingestion";
 import type { CreateImportPayload } from "@/types/admin";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 function isAdminSession(sessionClaims: unknown): boolean {
   return (
