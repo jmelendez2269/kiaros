@@ -2,18 +2,57 @@
 
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { AccentCopy } from './AccentCopy'
 import { MonthSection } from './MonthSection'
-import type { QuarterBlueprint, MonthBlueprint } from '@/types/blueprint'
+import type { MonthBlueprint, QuarterBlueprint } from '@/types/blueprint'
 import { cn } from '@/lib/utils'
 
 const QUARTER_NAMES = ['', 'Q1', 'Q2', 'Q3', 'Q4']
-const QUARTER_MONTHS = ['', 'Jan–Mar', 'Apr–Jun', 'Jul–Sep', 'Oct–Dec']
+const QUARTER_MONTHS = ['', 'Jan-Mar', 'Apr-Jun', 'Jul-Sep', 'Oct-Dec']
 
-const QUARTER_TONES: Record<number, { border: string; bg: string; accent: string }> = {
-  1: { border: 'border-plum-400/25', bg: 'bg-plum-400/6', accent: 'text-plum-300' },
-  2: { border: 'border-leather-400/30', bg: 'bg-leather-500/8', accent: 'text-leather-200' },
-  3: { border: 'border-ember-400/25', bg: 'bg-ember-400/6', accent: 'text-ember-300' },
-  4: { border: 'border-moss-500/30', bg: 'bg-moss-500/8', accent: 'text-moss-200' },
+const QUARTER_TONES: Record<
+  number,
+  {
+    border: string
+    bg: string
+    accent: string
+    marker: string
+    panel: string
+    tone: 'plum' | 'leather' | 'ember' | 'moss'
+  }
+> = {
+  1: {
+    border: 'border-plum-400/25',
+    bg: 'bg-plum-400/6',
+    accent: 'text-plum-300',
+    marker: 'bg-plum-300/85',
+    panel: 'border-plum-400/15 bg-plum-400/8',
+    tone: 'plum',
+  },
+  2: {
+    border: 'border-leather-400/30',
+    bg: 'bg-leather-500/8',
+    accent: 'text-leather-200',
+    marker: 'bg-leather-300/85',
+    panel: 'border-leather-400/15 bg-leather-500/8',
+    tone: 'leather',
+  },
+  3: {
+    border: 'border-ember-400/25',
+    bg: 'bg-ember-400/6',
+    accent: 'text-ember-300',
+    marker: 'bg-ember-300/85',
+    panel: 'border-ember-400/15 bg-ember-400/8',
+    tone: 'ember',
+  },
+  4: {
+    border: 'border-moss-500/30',
+    bg: 'bg-moss-500/8',
+    accent: 'text-moss-200',
+    marker: 'bg-moss-300/85',
+    panel: 'border-moss-500/15 bg-moss-500/8',
+    tone: 'moss',
+  },
 }
 
 interface QuarterSectionProps {
@@ -32,12 +71,12 @@ export function QuarterSection({ quarter, months, isCurrentQuarter }: QuarterSec
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full px-6 py-5 text-left transition-colors hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400/40"
+        className="w-full px-5 py-4 text-left transition-colors hover:bg-white/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400/40 md:px-6"
         aria-expanded={open}
       >
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className={cn('shell-kicker', tone.accent)}>
                 {QUARTER_NAMES[quarter.quarter]} · {QUARTER_MONTHS[quarter.quarter]}
               </span>
@@ -48,16 +87,22 @@ export function QuarterSection({ quarter, months, isCurrentQuarter }: QuarterSec
                 </span>
               )}
             </div>
-            <h3 className="font-display text-[1.6rem] leading-tight text-bone md:text-[1.8rem]">
+            <h3 className="font-display text-[1.35rem] leading-tight text-bone md:text-[1.6rem]">
               {quarter.theme}
             </h3>
+            <div className="mt-3 max-w-3xl text-sm leading-7">
+              <AccentCopy
+                text={quarter.intention}
+                tone={tone.tone}
+                showMarker
+                leadClassName="text-bone"
+                restClassName="text-bone-muted/90"
+              />
+            </div>
             {!open && quarter.focusAreas.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                {quarter.focusAreas.map((area) => (
-                  <span
-                    key={area}
-                    className="shell-pill"
-                  >
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {quarter.focusAreas.slice(0, 4).map((area) => (
+                  <span key={area} className="shell-pill">
                     {area}
                   </span>
                 ))}
@@ -81,64 +126,76 @@ export function QuarterSection({ quarter, months, isCurrentQuarter }: QuarterSec
         )}
         style={open ? { maxHeight: 'none' } : {}}
       >
-        <div className="space-y-6 border-t border-border/50 px-6 pb-7 pt-5">
-          {quarter.intention && (
-            <p className="shell-prose max-w-3xl">{quarter.intention}</p>
-          )}
-
-          {quarter.focusAreas.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {quarter.focusAreas.map((area) => (
-                <span key={area} className="shell-pill">{area}</span>
-              ))}
-            </div>
-          )}
-
-          {quarter.cosmicHighlights.length > 0 && (
-            <div>
-              <p className="shell-eyebrow mb-3">Cosmic highlights</p>
-              <ul className="space-y-2">
-                {quarter.cosmicHighlights.map((h, i) => (
-                  <li key={i} className="flex gap-3 text-sm leading-[1.65] text-bone-muted">
-                    <span className="mt-[0.4rem] h-1 w-1 shrink-0 rounded-full bg-bone-muted/35" />
-                    {h}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {(quarter.pushPeriods.length > 0 || quarter.restPeriods.length > 0) && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {quarter.pushPeriods.length > 0 && (
-                <div className="shell-panel-inline px-4 py-3">
-                  <p className="shell-eyebrow mb-2 text-leather-200/80">Activation windows</p>
-                  {quarter.pushPeriods.map((p, i) => (
-                    <div key={i} className="text-xs text-bone-muted">
-                      <span className="font-medium text-bone">{p.startDate} – {p.endDate}</span>
-                      {p.reason && <span className="ml-1.5">{p.reason}</span>}
-                    </div>
+        <div className="space-y-5 border-t border-border/50 px-5 pb-5 pt-4 md:px-6 md:pb-6">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+            <div className={cn('shell-panel-inline px-4 py-4', tone.panel)}>
+              {quarter.focusAreas.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-1.5">
+                  {quarter.focusAreas.map((area) => (
+                    <span key={area} className="shell-pill">
+                      {area}
+                    </span>
                   ))}
                 </div>
               )}
-              {quarter.restPeriods.length > 0 && (
-                <div className="shell-panel-inline px-4 py-3">
-                  <p className="shell-eyebrow mb-2 text-moss-200/80">Rest periods</p>
-                  {quarter.restPeriods.map((p, i) => (
-                    <div key={i} className="text-xs text-bone-muted">
-                      <span className="font-medium text-bone">{p.startDate} – {p.endDate}</span>
-                      {p.reason && <span className="ml-1.5">{p.reason}</span>}
-                    </div>
-                  ))}
+
+              {quarter.cosmicHighlights.length > 0 && (
+                <div>
+                  <p className={cn('shell-eyebrow mb-3', tone.accent)}>Cosmic highlights</p>
+                  <ul className="space-y-3">
+                    {quarter.cosmicHighlights.map((highlight, i) => (
+                      <li key={i} className="text-sm leading-[1.7]">
+                        <AccentCopy
+                          text={highlight}
+                          tone={tone.tone}
+                          showMarker
+                          leadClassName="text-bone"
+                          restClassName="text-bone-muted/88"
+                          markerClassName="w-7"
+                        />
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
-          )}
+
+            {(quarter.pushPeriods.length > 0 || quarter.restPeriods.length > 0) && (
+              <div className="grid gap-3">
+                {quarter.pushPeriods.length > 0 && (
+                  <div className="shell-panel-inline border-leather-400/15 bg-leather-500/8 px-4 py-3">
+                    <p className="shell-eyebrow mb-2 text-leather-200/80">Activation windows</p>
+                    <div className="space-y-2">
+                      {quarter.pushPeriods.map((p, i) => (
+                        <div key={i} className="rounded-2xl border border-leather-400/15 bg-black/10 px-3 py-2 text-xs leading-5">
+                          <span className="font-medium text-bone">{p.startDate} - {p.endDate}</span>
+                          {p.reason ? <span className="ml-1.5 text-bone-muted/88">{p.reason}</span> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {quarter.restPeriods.length > 0 && (
+                  <div className="shell-panel-inline border-moss-500/15 bg-moss-500/8 px-4 py-3">
+                    <p className="shell-eyebrow mb-2 text-moss-200/80">Rest periods</p>
+                    <div className="space-y-2">
+                      {quarter.restPeriods.map((p, i) => (
+                        <div key={i} className="rounded-2xl border border-moss-500/15 bg-black/10 px-3 py-2 text-xs leading-5">
+                          <span className="font-medium text-bone">{p.startDate} - {p.endDate}</span>
+                          {p.reason ? <span className="ml-1.5 text-bone-muted/88">{p.reason}</span> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {quarterMonths.length > 0 && (
-            <div className="space-y-4 border-t border-border/50 pt-5">
+            <div className="grid gap-3 border-t border-border/50 pt-4 md:grid-cols-2 xl:grid-cols-3">
               {quarterMonths.map((month) => (
-                <MonthSection key={month.month} month={month} />
+                <MonthSection key={month.month} month={month} tone={tone.tone} />
               ))}
             </div>
           )}

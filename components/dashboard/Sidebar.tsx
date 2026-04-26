@@ -15,13 +15,97 @@ type CategorySummary = {
 }
 
 const NAV_LINKS = [
-  { href: '/dashboard', label: 'Dashboard', detail: 'Life OS home', icon: Sparkles },
-  { href: '/calendar', label: 'Cosmic Plan', detail: 'Your year map', icon: CalendarDays },
-  { href: '/blueprint', label: 'Blueprint', detail: 'Celestial architecture', icon: BookOpen },
-  { href: '/areas', label: 'Areas', detail: 'Chart-specific paths', icon: Orbit },
-  { href: '/curriculum', label: 'Curriculum', detail: 'AI study tracks', icon: Brain },
-  { href: '/journal', label: 'Journal', detail: 'History and entries', icon: FileText },
-  { href: '/oracle', label: 'Oracle', detail: 'Guidance channel', icon: MessageSquare },
+  {
+    href: '/dashboard',
+    label: 'Dashboard',
+    detailLead: 'Life OS',
+    detailTrail: 'home',
+    icon: Sparkles,
+    tone: {
+      active: 'border-leather-400/60 bg-leather-500/18 text-bone shadow-glow',
+      accent: 'bg-leather-300',
+      icon: 'border-leather-300/30 bg-leather-500/12 text-leather-200',
+      detail: 'text-leather-200',
+    },
+  },
+  {
+    href: '/calendar',
+    label: 'Cosmic Plan',
+    detailLead: 'Your year',
+    detailTrail: 'map',
+    icon: CalendarDays,
+    tone: {
+      active: 'border-plum-400/60 bg-plum-400/18 text-bone shadow-glow',
+      accent: 'bg-plum-300',
+      icon: 'border-plum-300/30 bg-plum-400/12 text-plum-300',
+      detail: 'text-plum-300',
+    },
+  },
+  {
+    href: '/blueprint',
+    label: 'Blueprint',
+    detailLead: 'Celestial',
+    detailTrail: 'architecture',
+    icon: BookOpen,
+    tone: {
+      active: 'border-moss-400/60 bg-moss-500/18 text-bone shadow-glow',
+      accent: 'bg-moss-300',
+      icon: 'border-moss-300/30 bg-moss-500/12 text-moss-200',
+      detail: 'text-moss-200',
+    },
+  },
+  {
+    href: '/areas',
+    label: 'Areas',
+    detailLead: 'Chart-specific',
+    detailTrail: 'paths',
+    icon: Orbit,
+    tone: {
+      active: 'border-leather-400/60 bg-leather-500/18 text-bone shadow-glow',
+      accent: 'bg-leather-300',
+      icon: 'border-leather-300/30 bg-leather-500/12 text-leather-200',
+      detail: 'text-leather-200',
+    },
+  },
+  {
+    href: '/curriculum',
+    label: 'Curriculum',
+    detailLead: 'AI study',
+    detailTrail: 'tracks',
+    icon: Brain,
+    tone: {
+      active: 'border-plum-400/60 bg-plum-400/18 text-bone shadow-glow',
+      accent: 'bg-plum-300',
+      icon: 'border-plum-300/30 bg-plum-400/12 text-plum-300',
+      detail: 'text-plum-300',
+    },
+  },
+  {
+    href: '/journal',
+    label: 'Journal',
+    detailLead: 'History',
+    detailTrail: 'and entries',
+    icon: FileText,
+    tone: {
+      active: 'border-moss-400/60 bg-moss-500/18 text-bone shadow-glow',
+      accent: 'bg-moss-300',
+      icon: 'border-moss-300/30 bg-moss-500/12 text-moss-200',
+      detail: 'text-moss-200',
+    },
+  },
+  {
+    href: '/oracle',
+    label: 'Oracle',
+    detailLead: 'Guidance',
+    detailTrail: 'channel',
+    icon: MessageSquare,
+    tone: {
+      active: 'border-leather-400/60 bg-leather-500/18 text-bone shadow-glow',
+      accent: 'bg-leather-300',
+      icon: 'border-leather-300/30 bg-leather-500/12 text-leather-200',
+      detail: 'text-leather-200',
+    },
+  },
 ] as const
 
 const DESKTOP_SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
@@ -47,7 +131,7 @@ function NavigationContent({
 
   return (
     <>
-      <div className={cn('border-b border-border/80 pb-5 pt-6', isCollapsed ? 'px-3' : 'px-5')}>
+      <div className={cn('border-b border-border/80 pb-4 pt-5', isCollapsed ? 'px-3' : 'px-5')}>
         <Link href="/dashboard" onClick={onNavigate} className="block">
           <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-leather-500/30 bg-stone-950/80 text-leather-300 shadow-panel">
@@ -56,7 +140,10 @@ function NavigationContent({
             {!isCollapsed ? (
               <div>
                 <p className="font-serif text-[1.7rem] leading-none text-bone">Life OS</p>
-                <p className="mt-1 text-xs text-bone-muted">Kiaros - Personalized planning</p>
+                <p className="mt-1 text-xs text-bone-muted">
+                  <span className="text-leather-200">Kiaros</span>
+                  <span className="text-bone-muted/70"> · Personalized planning</span>
+                </p>
               </div>
             ) : null}
           </div>
@@ -67,7 +154,7 @@ function NavigationContent({
             type="button"
             onClick={onToggleDesktop}
             className={cn(
-              'mt-4 hidden h-10 items-center rounded-xl border border-border/80 bg-stone-950/75 text-bone-muted transition-colors hover:text-bone md:inline-flex',
+              'mt-3 hidden h-10 items-center rounded-xl border border-border/80 bg-stone-950/75 text-bone-muted transition-colors hover:text-bone md:inline-flex',
               isCollapsed ? 'w-full justify-center' : 'w-full justify-between px-3'
             )}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -79,9 +166,9 @@ function NavigationContent({
         ) : null}
       </div>
 
-      <div className={cn('py-5', isCollapsed ? 'px-2.5' : 'px-3.5')}>
-        <div className="space-y-2">
-          {NAV_LINKS.map(({ href, label, detail, icon: Icon }) => {
+      <div className={cn('py-4', isCollapsed ? 'px-2.5' : 'px-3.5')}>
+        <div className="space-y-1.5">
+          {NAV_LINKS.map(({ href, label, detailLead, detailTrail, icon: Icon, tone }) => {
             const active = isLinkActive(href)
             return (
               <Link
@@ -91,27 +178,38 @@ function NavigationContent({
                 title={isCollapsed ? label : undefined}
                 className={cn(
                   'group flex rounded-2xl border transition-all duration-200',
-                  isCollapsed ? 'justify-center px-2 py-3' : 'items-center gap-3 px-4 py-3',
+                  isCollapsed ? 'justify-center px-2 py-3' : 'items-center gap-3 px-3 py-2.5',
                   active
-                    ? 'border-leather-400/60 bg-leather-500/42 text-bone shadow-glow'
+                    ? tone.active
                     : 'border-transparent text-bone-muted hover:border-border/80 hover:bg-stone-850/80 hover:text-bone'
                 )}
               >
+                {!isCollapsed ? (
+                  <span
+                    className={cn(
+                      'hidden h-10 w-1 shrink-0 rounded-full transition-opacity md:block',
+                      active ? tone.accent : 'bg-transparent opacity-0 group-hover:opacity-100'
+                    )}
+                  />
+                ) : null}
                 <div
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-xl border transition-colors',
+                    'flex h-9 w-9 items-center justify-center rounded-xl border transition-colors',
                     active
-                      ? 'border-leather-300/30 bg-black/15 text-bone'
+                      ? tone.icon
                       : 'border-border/60 bg-stone-950/65 text-bone-muted group-hover:text-bone'
                   )}
                 >
-                  <Icon size={18} />
+                  <Icon size={17} />
                 </div>
                 {!isCollapsed ? (
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{label}</p>
-                    <p className={cn('truncate text-[11px]', active ? 'text-bone/80' : 'text-bone-muted/70')}>
-                      {detail}
+                    <p className={cn('truncate text-[11px] leading-5', active ? 'text-bone/80' : 'text-bone-muted/70')}>
+                      <span className={cn('font-medium', active ? tone.detail : 'text-bone/90')}>
+                        {detailLead}
+                      </span>
+                      <span className="text-bone-muted/68"> {detailTrail}</span>
                     </p>
                   </div>
                 ) : null}

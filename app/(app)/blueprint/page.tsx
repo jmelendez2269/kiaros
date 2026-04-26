@@ -1,7 +1,76 @@
 import Link from 'next/link'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { BlueprintView } from '@/components/blueprint/BlueprintView'
-import type { BlueprintOutput } from '@/types/blueprint'
+import type { BlueprintOutput, MoonPhase } from '@/types/blueprint'
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : []
+}
+
+function sanitizePeriodRanges(value: unknown): BlueprintOutput['pushPeriods'] {
+  return asArray<Record<string, unknown>>(value).map((item) => ({
+    startDate: typeof item.startDate === 'string' ? item.startDate : '',
+    endDate: typeof item.endDate === 'string' ? item.endDate : '',
+    reason: typeof item.reason === 'string' ? item.reason : '',
+  }))
+}
+
+function sanitizeMoonPhase(value: unknown): MoonPhase {
+  return value === 'new' || value === 'first-quarter' || value === 'full' || value === 'last-quarter'
+    ? value
+    : 'new'
+}
+
+function sanitizeMonths(value: unknown): BlueprintOutput['months'] {
+  return asArray<Record<string, unknown>>(value).map((item, index) => ({
+    month: typeof item.month === 'number' ? item.month : index + 1,
+    name: typeof item.name === 'string' ? item.name : `Month ${index + 1}`,
+    theme: typeof item.theme === 'string' ? item.theme : '',
+    intentions: asStringArray(item.intentions),
+    keyTransits: asStringArray(item.keyTransits),
+    moonPhases: asArray<Record<string, unknown>>(item.moonPhases).map((phase) => ({
+      phase: sanitizeMoonPhase(phase.phase),
+      date: typeof phase.date === 'string' ? phase.date : '',
+      significance: typeof phase.significance === 'string' ? phase.significance : '',
+    })),
+    energyArc: typeof item.energyArc === 'string' ? item.energyArc : '',
+  }))
+}
+
+function sanitizeQuarters(value: unknown): BlueprintOutput['quarters'] {
+  return asArray<Record<string, unknown>>(value).map((item, index) => ({
+    quarter: typeof item.quarter === 'number' ? item.quarter : index + 1,
+    theme: typeof item.theme === 'string' ? item.theme : `Quarter ${index + 1}`,
+    intention: typeof item.intention === 'string' ? item.intention : '',
+    focusAreas: asStringArray(item.focusAreas),
+    cosmicHighlights: asStringArray(item.cosmicHighlights),
+    pushPeriods: sanitizePeriodRanges(item.pushPeriods),
+    restPeriods: sanitizePeriodRanges(item.restPeriods),
+  }))
+}
+
+function sanitizeWeeks(value: unknown): BlueprintOutput['weeks'] {
+  return asArray<Record<string, unknown>>(value).map((item, index) => ({
+    weekNumber: typeof item.weekNumber === 'number' ? item.weekNumber : index + 1,
+    startDate: typeof item.startDate === 'string' ? item.startDate : '',
+    endDate: typeof item.endDate === 'string' ? item.endDate : '',
+    theme: typeof item.theme === 'string' ? item.theme : '',
+    intentions: asStringArray(item.intentions),
+    energyType:
+      item.energyType === 'push' ||
+      item.energyType === 'rest' ||
+      item.energyType === 'reflect' ||
+      item.energyType === 'initiate'
+        ? item.energyType
+        : 'reflect',
+    cosmicContext: typeof item.cosmicContext === 'string' ? item.cosmicContext : '',
+    goalCategoryFocus: asStringArray(item.goalCategoryFocus),
+  }))
+}
 
 export default async function BlueprintPage() {
   const supabase = await createServerSupabase()
@@ -40,11 +109,11 @@ export default async function BlueprintPage() {
   const blueprint: BlueprintOutput = {
     yearTheme: row.year_theme ?? '',
     yearSummary: row.year_summary ?? '',
-    quarters: (row.quarters as unknown as BlueprintOutput['quarters']) ?? [],
-    months: (row.months as unknown as BlueprintOutput['months']) ?? [],
-    weeks: (row.weeks as unknown as BlueprintOutput['weeks']) ?? [],
-    pushPeriods: (row.push_periods as unknown as BlueprintOutput['pushPeriods']) ?? [],
-    restPeriods: (row.rest_periods as unknown as BlueprintOutput['restPeriods']) ?? [],
+    quarters: sanitizeQuarters(row.quarters),
+    months: sanitizeMonths(row.months),
+    weeks: sanitizeWeeks(row.weeks),
+    pushPeriods: sanitizePeriodRanges(row.push_periods),
+    restPeriods: sanitizePeriodRanges(row.rest_periods),
   }
 
   return <BlueprintView blueprint={blueprint} planYear={row.plan_year} />
