@@ -181,7 +181,7 @@ export interface ComputeYearEphemerisOptions {
   userId: string
   natalChart: NatalChart
   birthDate: string    // YYYY-MM-DD (for Pluto lookup)
-  startDate: string    // YYYY-MM-DD (start of current planning week if partial year)
+  startDate: string    // YYYY-MM-DD (start of planning year)
   year: number
 }
 

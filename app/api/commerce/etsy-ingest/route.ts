@@ -72,6 +72,7 @@ export async function POST(request: Request) {
         listingKey: parsed.data.listing_key ?? null,
         listingId: parsed.data.listing_id ?? null,
         sku: parsed.data.sku ?? null,
+        accessPlan: "yearly",
         productTier: tier.key,
         plannerYear: parsed.data.planner_year ?? tier.plannerYear ?? CURRENT_PLANNER_YEAR,
         oracleEnabled: tier.oracleEnabled,

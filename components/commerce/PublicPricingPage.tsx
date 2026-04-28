@@ -205,10 +205,13 @@ export function PublicPricingPage({
                 The planets move on their own schedule. Your year should too.
               </h1>
               <p className="shell-prose-lead mt-5">
+                Your personalized {CURRENT_PLANNER_YEAR} blueprint, built from your natal chart
+                and this year&apos;s real planetary transits.
+              </p>
+              <p className="mt-4 max-w-3xl text-base leading-7 text-bone-muted">
                 I built Kiaros because it genuinely changed how I moved through a year — and I
-                wanted to share it. This is a planner built from your actual birth chart and the
-                real astronomical transits happening above you right now. I made it for myself
-                first, and then realized it was too useful to keep to myself.
+                wanted to share it. I made it for myself first, and then realized it was too
+                useful to keep to myself.
               </p>
               <p className="mt-4 max-w-3xl text-base leading-7 text-bone-muted">
                 Whether you approach astrology as a meaningful system or simply as a structured
@@ -851,10 +854,35 @@ export function PublicPricingPage({
           </div>
         ) : null}
 
+        <section className="mt-8 shell-panel p-6 md:p-7">
+          <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+            <div>
+              <p className="shell-kicker mb-3">Choose your rhythm</p>
+              <h2 className="shell-section-title max-w-3xl">
+                Start with the way you want to pay, not the way you think you should.
+              </h2>
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
+                Kiaros is built to guide you throughout the year, so the pricing can be flexible
+                too: monthly for accessibility, annual for the best value, and Etsy annual access
+                for people who prefer a marketplace checkout.
+              </p>
+            </div>
+            <div className="rounded-[1.1rem] border border-leather-500/25 bg-leather-500/10 px-5 py-4">
+              <p className="text-sm font-semibold text-bone">Current checkout status</p>
+              <p className="mt-2 text-sm leading-7 text-bone-muted">
+                Direct annual checkout is live now. Monthly direct access is the next commerce
+                expansion, so the pricing below reflects the new structure while annual access
+                remains the active checkout path today.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* ── Tiers ────────────────────────────────────────────────────────── */}
         <section id="tiers" className="mt-8 grid gap-5 lg:grid-cols-2">
           {COMMERCE_TIERS.map((tier) => {
-            const savings = tier.etsyPriceCents - tier.directPriceCents;
+            const annualSavings = tier.monthlyPriceCents * 12 - tier.annualPriceCents;
+            const etsyDelta = tier.etsyPriceCents - tier.annualPriceCents;
             const isPremium = tier.oracleEnabled;
 
             return (
@@ -883,13 +911,19 @@ export function PublicPricingPage({
                 <div className="mt-6 flex flex-wrap items-end gap-4">
                   <div>
                     <p className="text-3xl font-semibold text-bone">
-                      {formatUsd(tier.directPriceCents)}
+                      {formatUsd(tier.monthlyPriceCents)}
                     </p>
-                    <p className="text-sm text-bone-muted">Direct purchase</p>
+                    <p className="text-sm text-bone-muted">Monthly direct access</p>
                   </div>
                   <div className="text-sm leading-6 text-bone-muted">
-                    <p>Etsy: {formatUsd(tier.etsyPriceCents)}</p>
-                    <p className="text-leather-300/80">Direct saves {formatUsd(savings)}</p>
+                    <p>Annual: {formatUsd(tier.annualPriceCents)}</p>
+                    <p className="text-leather-300/80">Save {formatUsd(annualSavings)} per year</p>
+                  </div>
+                  <div className="text-sm leading-6 text-bone-muted">
+                    <p>Etsy annual: {formatUsd(tier.etsyPriceCents)}</p>
+                    <p className="text-bone-muted/70">
+                      Marketplace convenience adds {formatUsd(etsyDelta)}
+                    </p>
                   </div>
                 </div>
 
@@ -906,9 +940,13 @@ export function PublicPricingPage({
                 </ul>
 
                 <div className="mt-7 flex flex-wrap gap-3">
+                  <span className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone-muted">
+                    Monthly direct coming soon
+                  </span>
                   {isSignedIn ? (
                     <CheckoutButton
                       tierKey={tier.key}
+                      label="Buy annual direct"
                       className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950 disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   ) : (
@@ -916,7 +954,7 @@ export function PublicPricingPage({
                       href="/sign-up"
                       className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
                     >
-                      Create account to buy direct
+                      Create account to buy annual direct
                     </Link>
                   )}
                   <Link
@@ -944,7 +982,7 @@ export function PublicPricingPage({
               {
                 step: "2",
                 title: "Choose your planner",
-                body: "Pick Planner or Planner + Oracle, then complete payment via Stripe.",
+                body: "Pick Planner or Planner + Oracle, then choose the payment path that fits you best.",
               },
               {
                 step: "3",
@@ -986,16 +1024,17 @@ export function PublicPricingPage({
             <article className="shell-panel p-6 md:p-7">
               <p className="shell-kicker mb-3">Why this ladder</p>
               <h2 className="shell-section-title">
-                The planner is the core product. Oracle is the deeper reflective layer.
+                The planner is the core relationship. Oracle is the deeper reflective layer.
               </h2>
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
-                  Kiaros is a one-time purchase because the planner itself is the promise: a full
-                  year of personalized planning built around your chart, your timing, and your life.
+                  Kiaros already gives guidance throughout the year, so a monthly option makes
+                  sense for people who need a more accessible way in. Annual access is still the
+                  clearest best-value commitment for people who know they want the full year.
                 </p>
                 <p>
-                  Oracle adds a higher-touch reflective layer for people who want more guidance and
-                  ongoing conversation as the year unfolds.
+                  Oracle adds the higher-touch layer for people who want more interpretation,
+                  reflection, and dialogue as the year unfolds.
                 </p>
               </div>
             </article>
@@ -1007,9 +1046,9 @@ export function PublicPricingPage({
                   <p className="text-sm font-semibold text-bone">Buy direct if you want</p>
                   <ul className="mt-3 space-y-2 text-sm leading-7 text-bone-muted">
                     {[
-                      "The best available price",
-                      "Immediate Stripe Checkout",
-                      "Activation on return from checkout",
+                      "The best annual value",
+                      "A future monthly access path",
+                      "Immediate Stripe checkout and activation",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
                         <CheckIcon />
@@ -1022,9 +1061,9 @@ export function PublicPricingPage({
                   <p className="text-sm font-semibold text-bone">Choose Etsy if you want</p>
                   <ul className="mt-3 space-y-2 text-sm leading-7 text-bone-muted">
                     {[
-                      "Marketplace purchasing and gifting familiarity",
-                      "A generic activation PDF after purchase",
-                      "The same Kiaros entitlement once imported and activated",
+                      "Marketplace familiarity and gifting convenience",
+                      "A one-time annual purchase only",
+                      "The same Kiaros access once imported and activated",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
                         <CheckIcon />
@@ -1042,7 +1081,7 @@ export function PublicPricingPage({
               <div>
                 <p className="shell-kicker mb-2">The ladder</p>
                 <h2 className="shell-section-title">
-                  Direct keeps the planner primary and Oracle premium.
+                  Direct makes room for flexibility while keeping Oracle premium.
                 </h2>
               </div>
               <Link

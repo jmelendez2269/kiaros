@@ -3,6 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { gateway } from '@ai-sdk/gateway'
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { buildOracleSystemPromptSegments } from '@/lib/ai/oracle-system-prompt'
 import {
@@ -74,6 +75,7 @@ export async function POST(req: Request) {
       dailyLogsRes,
       journalEntriesRes,
       quarterlyReviewsRes,
+      entitlementsRes,
     ] = await Promise.all([
       supabase.from('user_profiles').select('*').maybeSingle(),
       supabase.from('ephemeris_cache').select('data').eq('year', currentYear).maybeSingle(),
@@ -117,7 +119,23 @@ export async function POST(req: Request) {
         .eq('plan_year', currentYear)
         .order('quarter', { ascending: false })
         .limit(2),
+      supabase
+        .from('product_entitlements')
+        .select('id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan')
+        .eq('user_id', profileId)
+        .neq('status', 'revoked'),
     ])
+
+    const access = resolveUserAccess((entitlementsRes.data ?? []) as ProductEntitlementRecord[])
+    if (!access.hasOracleAccess) {
+      return NextResponse.json(
+        {
+          error: 'oracle_upgrade_required',
+          message: 'Oracle is available with an active Planner + Oracle entitlement.',
+        },
+        { status: 403 }
+      )
+    }
 
     const { cached, dynamic } = buildOracleSystemPromptSegments({
       profile: profileRes.data,

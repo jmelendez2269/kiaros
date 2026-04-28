@@ -31,20 +31,53 @@ import type { NatalChart, YearEphemeris, BlueprintOutput } from '@/types/bluepri
 interface GenerateBlueprintOptions {
   blueprintId: string
   userId: string       // Supabase user UUID (not Clerk ID)
+  planYear: number
 }
 
-function derivePlanningWeekStart(today: string): string {
-  const date = new Date(`${today}T12:00:00Z`)
-  const dayOfWeek = date.getUTCDay()
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  date.setUTCDate(date.getUTCDate() + mondayOffset)
-  return date.toISOString().slice(0, 10)
+function derivePlanYearStart(planYear: number): string {
+  return `${planYear}-01-01`
+}
+
+function validateFullYearBlueprint(blueprint: BlueprintOutput, planYear: number) {
+  if (!Array.isArray(blueprint.quarters) || blueprint.quarters.length !== 4) {
+    throw new Error(`Blueprint must contain exactly 4 quarters for ${planYear}`)
+  }
+
+  const quarterNumbers = new Set(blueprint.quarters.map((quarter) => quarter.quarter))
+  for (const expectedQuarter of [1, 2, 3, 4]) {
+    if (!quarterNumbers.has(expectedQuarter)) {
+      throw new Error(`Blueprint is missing quarter ${expectedQuarter} for ${planYear}`)
+    }
+  }
+
+  if (!Array.isArray(blueprint.months) || blueprint.months.length !== 12) {
+    throw new Error(`Blueprint must contain exactly 12 months for ${planYear}`)
+  }
+
+  const monthNumbers = new Set(blueprint.months.map((month) => month.month))
+  for (let expectedMonth = 1; expectedMonth <= 12; expectedMonth += 1) {
+    if (!monthNumbers.has(expectedMonth)) {
+      throw new Error(`Blueprint is missing month ${expectedMonth} for ${planYear}`)
+    }
+  }
+
+  if (!Array.isArray(blueprint.weeks) || blueprint.weeks.length === 0) {
+    throw new Error(`Blueprint must contain weeks for ${planYear}`)
+  }
+
+  const sortedWeeks = [...blueprint.weeks].sort((a, b) => a.startDate.localeCompare(b.startDate))
+  if (sortedWeeks[0]?.startDate !== `${planYear}-01-01`) {
+    throw new Error(`Blueprint must start on ${planYear}-01-01, received ${sortedWeeks[0]?.startDate ?? 'none'}`)
+  }
+  if (sortedWeeks[sortedWeeks.length - 1]?.endDate !== `${planYear}-12-31`) {
+    throw new Error(`Blueprint must end on ${planYear}-12-31, received ${sortedWeeks[sortedWeeks.length - 1]?.endDate ?? 'none'}`)
+  }
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────
 
 export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Promise<void> {
-  const { blueprintId, userId } = opts
+  const { blueprintId, userId, planYear } = opts
   const admin = createAdminSupabase()
   const t0 = Date.now()
   const log = (msg: string) =>
@@ -78,10 +111,8 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       .order('sort_order', { ascending: true })
     log(`goals loaded (${goals?.length ?? 0})`)
 
-    // ── 3. Resolve plan_year and startDate ────────────────────────────
-    const today = new Date().toISOString().slice(0, 10)
-    const planYear = new Date(today).getFullYear()
-    const startDate = derivePlanningWeekStart(today)  // Partial year: from the current planning week to Dec 31
+    // ── 3. Resolve plan_year and full-year date range ─────────────────
+    const startDate = derivePlanYearStart(planYear)
 
     // ── 4. Compute or load natal chart ────────────────────────────────
     let natalChart: NatalChart
@@ -118,7 +149,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       .maybeSingle()
 
     const cachedEphemeris = (cached?.data as YearEphemeris | undefined) ?? null
-    const shouldRefreshEphemeris = !cachedEphemeris || cachedEphemeris.startDate > startDate
+    const shouldRefreshEphemeris = !cachedEphemeris || cachedEphemeris.startDate !== startDate
 
     if (!shouldRefreshEphemeris && cachedEphemeris) {
       ephemeris = cachedEphemeris
@@ -131,7 +162,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
         year: planYear,
       })
 
-      // Refresh the cache when it's missing or starts too late for the visible planning week.
+      // Refresh the cache when it's missing or does not cover the full planning year.
       await admin.from('ephemeris_cache').upsert({
         user_id: userId,
         year: planYear,
@@ -193,9 +224,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     if (!blueprint.yearTheme || !blueprint.yearSummary) {
       throw new Error('Blueprint missing required yearTheme or yearSummary')
     }
-    if (!Array.isArray(blueprint.weeks) || blueprint.weeks.length === 0) {
-      throw new Error('Blueprint has no weeks')
-    }
+    validateFullYearBlueprint(blueprint, planYear)
     log(`parsed ok (${blueprint.weeks.length} weeks, ${blueprint.months?.length ?? 0} months, ${blueprint.quarters?.length ?? 0} quarters)`)
 
     // ── 9. Write to blueprints table ──────────────────────────────────

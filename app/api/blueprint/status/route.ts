@@ -8,11 +8,10 @@ export async function GET() {
 
   try {
     const supabase = await createServerSupabase();
-    const plan_year = new Date().getFullYear();
 
     const { data: profile, error: profileError } = await supabase
       .from("user_profiles")
-      .select("id")
+      .select("id, plan_year")
       .eq("clerk_user_id", userId)
       .single();
 
@@ -20,6 +19,8 @@ export async function GET() {
       console.error("[status] Profile lookup failed:", profileError);
       return NextResponse.json({ status: "error" });
     }
+
+    const plan_year = profile.plan_year ?? new Date().getFullYear();
 
     const { data: blueprint, error: blueprintError } = await supabase
       .from("blueprints")

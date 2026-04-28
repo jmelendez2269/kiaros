@@ -12,12 +12,11 @@ export async function POST() {
 
   try {
     const supabase = await createServerSupabase();
-    const plan_year = new Date().getFullYear();
 
     // Get user's Supabase UUID
     const { data: profile, error: profileError } = await supabase
       .from("user_profiles")
-      .select("id")
+      .select("id, plan_year")
       .eq("clerk_user_id", userId)
       .single();
 
@@ -25,6 +24,8 @@ export async function POST() {
       console.error("[generate] Profile lookup failed:", profileError);
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
+
+    const plan_year = profile.plan_year ?? new Date().getFullYear();
 
     // Compute next version number
     const { data: latest } = await supabase
@@ -61,6 +62,7 @@ export async function POST() {
       runBlueprintGeneration({
         blueprintId: blueprint.id,
         userId: profile.id,
+        planYear: plan_year,
       })
     );
 

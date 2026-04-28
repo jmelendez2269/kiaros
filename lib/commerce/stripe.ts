@@ -3,6 +3,7 @@ import "server-only";
 import Stripe from "stripe";
 
 import {
+  AccessPlan,
   buildTierMetadata,
   CommerceTier,
   getCommerceTier,
@@ -10,6 +11,7 @@ import {
   NEXT_PLANNER_YEAR,
   parseCommerceTierKey,
 } from "@/lib/commerce/config";
+import { buildAnnualEntitlementRecord } from "@/lib/commerce/entitlements";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -30,11 +32,13 @@ export function getStripeClient() {
 
 export async function createCheckoutSession(params: {
   tier: CommerceTier;
+  accessPlan?: AccessPlan;
   clerkUserId: string;
   customerEmail: string;
 }) {
   const stripe = getStripeClient();
   const appUrl = getAppUrl();
+  const accessPlan = params.accessPlan ?? "yearly";
 
   return stripe.checkout.sessions.create({
     mode: "payment",
@@ -54,14 +58,14 @@ export async function createCheckoutSession(params: {
           product_data: {
             name: params.tier.name,
             description: params.tier.description,
-            metadata: buildTierMetadata(params.tier),
+            metadata: buildTierMetadata(params.tier, accessPlan),
           },
         },
       },
     ],
-    metadata: buildTierMetadata(params.tier),
+    metadata: buildTierMetadata(params.tier, accessPlan),
     payment_intent_data: {
-      metadata: buildTierMetadata(params.tier),
+      metadata: buildTierMetadata(params.tier, accessPlan),
     },
   });
 }
@@ -93,6 +97,7 @@ export async function finalizeCheckoutSession(params: {
   }
 
   const tier = getCommerceTier(tierKey);
+  const accessPlan = session.metadata?.access_plan === "monthly" ? "monthly" : "yearly";
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profiles")
@@ -116,6 +121,7 @@ export async function finalizeCheckoutSession(params: {
     product_tier: tier.key,
     planner_year: tier.plannerYear,
     oracle_enabled: tier.oracleEnabled,
+    access_plan: accessPlan,
     stripe_checkout_session_id: session.id,
     stripe_payment_intent_id:
       typeof session.payment_intent === "string" ? session.payment_intent : null,
@@ -130,6 +136,7 @@ export async function finalizeCheckoutSession(params: {
       checkout_session_id: session.id,
       payment_status: session.payment_status,
       customer_email: session.customer_details?.email ?? session.customer_email ?? null,
+      access_plan: accessPlan,
     },
   };
 
@@ -143,17 +150,15 @@ export async function finalizeCheckoutSession(params: {
     throw new Error("We couldn't save your purchase record yet.");
   }
 
-  const entitlementPayload = {
+  const entitlementPayload = buildAnnualEntitlementRecord({
     user_id: profile.id,
     source: "stripe",
     source_order_id: order.id,
     product_tier: tier.key,
     planner_year: tier.plannerYear,
     oracle_enabled: tier.oracleEnabled,
-    starts_at: new Date().toISOString().slice(0, 10),
-    ends_at: `${tier.plannerYear}-12-31`,
-    status: "active",
-  };
+    startAt: purchasedAt,
+  });
 
   const { error: entitlementError } = await supabase
     .from("product_entitlements")

@@ -21,6 +21,7 @@ const createJournalEntrySchema = z.object({
   body: z.string().trim().min(1).max(12000),
   entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   is_ritual: z.boolean().optional(),
+  oracle_memory: z.boolean().optional(),
   transit_context: transitContextSchema,
 })
 
@@ -51,9 +52,10 @@ export async function POST(req: Request) {
         body: body.body,
         entry_date: body.entry_date,
         is_ritual: body.is_ritual ?? false,
+        oracle_memory: body.oracle_memory ?? false,
         transit_context: body.transit_context ?? null,
       })
-      .select('id, title, body, entry_date, is_ritual, created_at')
+      .select('id, title, body, entry_date, is_ritual, created_at, oracle_memory')
       .single()
 
     if (error) {

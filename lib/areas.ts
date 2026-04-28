@@ -91,7 +91,7 @@ const AREA_DEFINITIONS: AreaDefinition[] = [
     primaryHouses: [10, 6, 2],
     secondaryHouses: [11, 1],
     supportStrategies: [
-      'Use activation windows for launches, asks, applications, or leadership moves.',
+      'Use active windows for launches, asks, applications, or leadership moves.',
       'Use maintenance windows to improve systems, routines, and energy management.',
       'Use reflective windows to realign ambition with the work that actually matters.',
     ],

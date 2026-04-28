@@ -6,7 +6,7 @@ import { PublicPricingPage } from "@/components/commerce/PublicPricingPage";
 export const metadata: Metadata = {
   title: "Pricing | Kiaros",
   description:
-    "Compare the Kiaros Planner and Kiaros Planner + Oracle tiers, plus direct-vs-Etsy purchase paths.",
+    "Compare monthly, annual, and Etsy access for the Kiaros Planner and Kiaros Planner + Oracle tiers.",
 };
 
 interface Props {

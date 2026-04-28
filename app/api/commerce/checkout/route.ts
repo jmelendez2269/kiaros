@@ -40,6 +40,7 @@ export async function POST(request: Request) {
   try {
     const session = await createCheckoutSession({
       tier,
+      accessPlan: "yearly",
       clerkUserId: userId,
       customerEmail: profile.email,
     });

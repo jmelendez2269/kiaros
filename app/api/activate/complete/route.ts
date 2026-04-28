@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { LOYALTY_REWARD_AMOUNT_OFF_CENTS, NEXT_PLANNER_YEAR } from "@/lib/commerce/config";
+import { buildAnnualEntitlementRecord } from "@/lib/commerce/entitlements";
 import { activationCompleteSchema } from "@/lib/commerce/activation";
 import { createServerSupabase } from "@/lib/supabase";
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
 
   const { data: order, error: orderError } = await supabase
     .from("marketplace_orders")
-    .select("id, planner_year, product_tier, oracle_enabled")
+    .select("id, planner_year, product_tier, oracle_enabled, purchased_at")
     .eq("id", claim.marketplace_order_id)
     .single();
 
@@ -76,17 +77,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const entitlementPayload = {
+  const entitlementPayload = buildAnnualEntitlementRecord({
     user_id: profile.id,
     source: "etsy",
     source_order_id: order.id,
     product_tier: order.product_tier,
     planner_year: order.planner_year,
     oracle_enabled: order.oracle_enabled,
-    starts_at: new Date().toISOString().slice(0, 10),
-    ends_at: `${order.planner_year}-12-31`,
-    status: "active",
-  };
+    startAt: order.purchased_at ?? new Date(),
+  });
 
   const { error: entitlementError } = await supabase
     .from("product_entitlements")

@@ -150,14 +150,14 @@ export function QuarterPanel({ quarter, months, weeks, isCurrentQuarter }: Quart
               <div>
                 <div className="mb-3 flex items-center gap-2 text-ember-300">
                   <CalendarRange size={15} />
-                  <p className="shell-eyebrow text-ember-300/85">Activation &amp; Rest Windows</p>
+                  <p className="shell-eyebrow text-ember-300/85">Active &amp; Passive Windows</p>
                 </div>
                 <ul className="space-y-2.5">
                   {quarter.pushPeriods.map((p, i) => (
                     <li key={`push-${i}`} className="flex items-start gap-2.5 text-[0.9rem] leading-6">
                       <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-leather-300/85" />
                       <span>
-                        <span className="font-medium text-leather-200">Push</span>
+                        <span className="font-medium text-leather-200">Active</span>
                         <span className="text-bone-muted/80"> · </span>
                         <span className="text-bone">
                           {p.startDate} – {p.endDate}
@@ -172,7 +172,7 @@ export function QuarterPanel({ quarter, months, weeks, isCurrentQuarter }: Quart
                     <li key={`rest-${i}`} className="flex items-start gap-2.5 text-[0.9rem] leading-6">
                       <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-moss-300/85" />
                       <span>
-                        <span className="font-medium text-moss-200">Rest</span>
+                        <span className="font-medium text-moss-200">Passive</span>
                         <span className="text-bone-muted/80"> · </span>
                         <span className="text-bone">
                           {p.startDate} – {p.endDate}

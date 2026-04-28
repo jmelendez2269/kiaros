@@ -1,4 +1,5 @@
 export type CommerceTierKey = "planner" | "planner_oracle";
+export type AccessPlan = "monthly" | "yearly";
 
 export interface CommerceTier {
   key: CommerceTierKey;
@@ -6,6 +7,8 @@ export interface CommerceTier {
   shortName: string;
   tagline: string;
   description: string;
+  monthlyPriceCents: number;
+  annualPriceCents: number;
   directPriceCents: number;
   etsyPriceCents: number;
   oracleEnabled: boolean;
@@ -24,18 +27,20 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     key: "planner",
     name: "Kiaros Planner",
     shortName: "Planner",
-    tagline: "The complete annual planner system, without recurring fees.",
+    tagline: "The personalized planning system for people who want guidance without the full upfront leap.",
     description:
-      "A one-time purchase for the full Kiaros planning system, built to meet you in your current season and carry the rest of the year with you.",
-    directPriceCents: 9600,
-    etsyPriceCents: 11200,
+      "A personalized planning system built from your chart, your goals, and your real timing, with ongoing guidance as the year unfolds.",
+    monthlyPriceCents: 1400,
+    annualPriceCents: 14000,
+    directPriceCents: 14000,
+    etsyPriceCents: 15600,
     oracleEnabled: false,
     plannerYear: CURRENT_PLANNER_YEAR,
     features: [
-      "Full Kiaros planner access for the current planner year",
-      "Onboarding that adapts to where you are now in the year",
-      "Blueprint, calendar, journal, tracker, and curriculum workspace",
-      "Future loyalty reward reserved for next year's planner",
+      "Personalized blueprint, calendar, journal, tracker, and curriculum workspace",
+      "Guidance that adapts to where you are now in the year",
+      "Monthly access path for flexibility, annual path for best value",
+      "Annual Etsy purchase remains available for marketplace buyers",
     ],
     checkoutHeadline: "Start with the core Kiaros planner",
     listingMatchers: ["planner", "core", "annual"],
@@ -44,18 +49,20 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     key: "planner_oracle",
     name: "Kiaros Planner + Oracle",
     shortName: "Planner + Oracle",
-    tagline: "The planner plus the premium reflective layer for deeper guidance.",
+    tagline: "The planner plus the premium reflective layer for deeper, ongoing conversation.",
     description:
-      "Everything in the Planner tier, plus Oracle access for higher-touch prompting and guidance when you want more interpretation inside the system.",
-    directPriceCents: 14400,
-    etsyPriceCents: 16200,
+      "Everything in the Planner tier, plus Oracle access for higher-touch interpretation, reflection, and decision support throughout the year.",
+    monthlyPriceCents: 2200,
+    annualPriceCents: 22000,
+    directPriceCents: 22000,
+    etsyPriceCents: 24000,
     oracleEnabled: true,
     plannerYear: CURRENT_PLANNER_YEAR,
     features: [
       "Everything in Kiaros Planner",
-      "Oracle access included for the current planner year",
-      "Higher-touch guidance layer for reflection and planning moments",
-      "Future loyalty reward reserved for next year's planner",
+      "Oracle guidance for reflection, interpretation, and decision support",
+      "A premium layer designed for ongoing use across the year",
+      "Monthly access path for flexibility, annual path for best value",
     ],
     checkoutHeadline: "Choose the full Kiaros planner with Oracle included",
     listingMatchers: ["oracle", "bundle", "premium", "full access"],
@@ -98,10 +105,11 @@ export function inferTierFromListingText(value: string) {
   return getCommerceTier("planner");
 }
 
-export function buildTierMetadata(tier: CommerceTier) {
+export function buildTierMetadata(tier: CommerceTier, accessPlan: AccessPlan = "yearly") {
   return {
     product_tier: tier.key,
     planner_year: String(tier.plannerYear),
     oracle_enabled: String(tier.oracleEnabled),
+    access_plan: accessPlan,
   };
 }

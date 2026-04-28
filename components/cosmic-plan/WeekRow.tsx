@@ -7,11 +7,11 @@ type Tone = 'plum' | 'leather' | 'ember' | 'moss'
 const ENERGY_TONES: Record<EnergyType, { chip: string; label: string }> = {
   push: {
     chip: 'border-leather-400/35 bg-leather-500/15 text-leather-200',
-    label: 'Push',
+    label: 'Active',
   },
   rest: {
     chip: 'border-moss-500/35 bg-moss-500/12 text-moss-200',
-    label: 'Rest',
+    label: 'Passive',
   },
   reflect: {
     chip: 'border-plum-400/35 bg-plum-400/12 text-plum-300',

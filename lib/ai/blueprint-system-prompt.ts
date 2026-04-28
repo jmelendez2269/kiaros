@@ -32,7 +32,7 @@ interface BlueprintPromptContext {
   whatToRelease: string | null
   studyFocus: string | null
   planYear: number
-  startDate: string   // YYYY-MM-DD (today if partial year)
+  startDate: string   // YYYY-MM-DD (start of planning year)
 }
 
 // ─── Natal chart → readable summary ──────────────────────────────────────
@@ -107,12 +107,7 @@ function goalsToText(goals: GoalCategory[]): string {
 
 function generateWeekList(startDate: string, year: number): Array<{ weekNumber: number; start: string; end: string }> {
   const weeks: Array<{ weekNumber: number; start: string; end: string }> = []
-  // Start from the Monday on or before startDate
   const start = new Date(`${startDate}T00:00:00Z`)
-  const dayOfWeek = start.getUTCDay()  // 0=Sun, 1=Mon, ...
-  const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  start.setUTCDate(start.getUTCDate() + daysToMonday)
-
   const yearEnd = new Date(`${year}-12-31T23:59:59Z`)
 
   let weekNum = 1
@@ -121,7 +116,7 @@ function generateWeekList(startDate: string, year: number): Array<{ weekNumber: 
     const weekStart = cur.toISOString().slice(0, 10)
     const weekEndDate = new Date(cur)
     weekEndDate.setUTCDate(weekEndDate.getUTCDate() + 6)
-    const weekEnd = weekEndDate.toISOString().slice(0, 10)
+    const weekEnd = weekEndDate > yearEnd ? `${year}-12-31` : weekEndDate.toISOString().slice(0, 10)
     weeks.push({ weekNumber: weekNum++, start: weekStart, end: weekEnd })
     cur.setUTCDate(cur.getUTCDate() + 7)
   }
@@ -150,7 +145,6 @@ export function assembleBlueprintUserPrompt(ctx: BlueprintPromptContext): string
 
   const transitSummary = summariseTransitWindows(ephemeris)
   const weeks = generateWeekList(startDate, planYear)
-  const isPartialYear = startDate > `${planYear}-01-01`
 
   const weekListText = weeks
     .map(w => `  Week ${w.weekNumber}: ${w.start} to ${w.end}`)
@@ -159,7 +153,7 @@ export function assembleBlueprintUserPrompt(ctx: BlueprintPromptContext): string
   const prompt = `
 Generate a personalised ${planYear} yearly blueprint for ${userName}.
 
-${isPartialYear ? `This is a PARTIAL-YEAR blueprint from ${startDate} to ${planYear}-12-31.` : `This covers the full year ${planYear}.`}
+This blueprint must cover the full calendar year ${planYear}, from ${planYear}-01-01 to ${planYear}-12-31.
 
 ═══════════════════════════════════════════
 NATAL CHART (real astronomical positions at birth)
@@ -209,17 +203,18 @@ OUTPUT BUDGET: You have ~16,000 tokens. Favor clarity, resonance, and flexibilit
 
 Rules:
 1. yearTheme (≤12 words) and yearSummary (3–5 sentences) must reference ${userName}'s actual natal placements (e.g. "with your ${natalChart.moon.sign} Moon in House ${natalChart.moon.house}...") and actual transits listed above.
-2. quarters: generate exactly ${Math.ceil(weeks.length / 13)} quarters relevant to the date range. theme ≤10 words, intention 1 sentence, cosmicHighlights 2–4 items of ≤12 words each.
-3. months: one per calendar month in the plan period. theme ≤10 words, 2–3 intentions, keyTransits ≤4 items, energyArc 1 sentence.
+2. quarters: generate exactly 4 quarters for the year. Use quarter numbers 1, 2, 3, and 4. theme ≤10 words, intention 1 sentence, cosmicHighlights 2–4 items of ≤12 words each.
+3. months: generate exactly 12 months covering January through December. Use month numbers 1 through 12. theme ≤10 words, 2–3 intentions, keyTransits ≤4 items, energyArc 1 sentence.
 4. weeks: one per week in the week grid above. theme ≤8 words, 2–3 intentions (≤10 words each), cosmicContext ONE sentence referencing the actual transit/moon/retrograde that week. energyType reflects the actual planetary energy.
 5. pushPeriods / restPeriods: reason ≤1 sentence each.
-   Treat pushPeriods as activation windows, not commands. They mark moments when the sky may feel more supportive of effort or forward motion, while fully honoring the user's free will, energy, capacity, and changing circumstances.
+   Treat pushPeriods as active windows (an invitation toward forward motion), not commands. They mark moments when the sky may feel more supportive of effort or movement, while fully honoring the user's free will, energy, capacity, and changing circumstances. Treat restPeriods as passive windows (an invitation toward integration, repair, listening) — never framed as failure or absence.
 6. Never invent transit dates not listed above. Never assign a transit to a week unless its date range overlaps.
 7. goalCategoryFocus in each week must use the exact goal category names listed above.
 8. Write intentions in first person (e.g. "I tend to..." not "You will...").
 9. Intention language must stay suggestive, spacious, and non-prescriptive. Prefer phrases like "I explore," "I notice," "I make room for," "I experiment with," or "I gently return to."
 10. Do not make identity claims or promises of outcomes. Speak as if each theme is a timely suggestion, not a command.
 11. Never imply the user must act during a pushPeriods window. Frame those periods as invitations, openings, or supportive currents they may choose to engage with.
+12. Do not omit early-year months or weeks even if the user signs up later in the year. The output is always a full-year blueprint.
 
 JSON schema:
 {

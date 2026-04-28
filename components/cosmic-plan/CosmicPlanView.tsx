@@ -169,17 +169,17 @@ function YearAtAGlance({ blueprint, planYear, currentQuarter, onSelectQuarter }:
             />
             <MetricTile
               icon={<CalendarRange size={15} />}
-              eyebrow="Activation windows"
+              eyebrow="Active windows"
               value={String(blueprint.pushPeriods.length)}
               accent="leather"
-              copy="High-momentum spans for action and visibility"
+              copy="Spans the sky invites toward action and visibility"
             />
             <MetricTile
               icon={<MoonStar size={15} />}
-              eyebrow="Rest periods"
+              eyebrow="Passive windows"
               value={String(blueprint.restPeriods.length)}
               accent="moss"
-              copy="Recovery windows for consolidation and review"
+              copy="Spans the sky invites toward consolidation and review"
             />
           </div>
         </div>
@@ -248,7 +248,7 @@ function YearAtAGlance({ blueprint, planYear, currentQuarter, onSelectQuarter }:
           <div className="grid gap-3 border-t border-border/40 pt-4 lg:grid-cols-2">
             {blueprint.pushPeriods.length > 0 && (
               <div>
-                <p className="shell-eyebrow mb-2 text-leather-200/80">Activation windows</p>
+                <p className="shell-eyebrow mb-2 text-leather-200/80">Active windows</p>
                 <div className="flex flex-wrap gap-2">
                   {blueprint.pushPeriods.map((p, i) => (
                     <span
@@ -267,7 +267,7 @@ function YearAtAGlance({ blueprint, planYear, currentQuarter, onSelectQuarter }:
             )}
             {blueprint.restPeriods.length > 0 && (
               <div>
-                <p className="shell-eyebrow mb-2 text-moss-200/80">Rest periods</p>
+                <p className="shell-eyebrow mb-2 text-moss-200/80">Passive windows</p>
                 <div className="flex flex-wrap gap-2">
                   {blueprint.restPeriods.map((p, i) => (
                     <span

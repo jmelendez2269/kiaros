@@ -298,7 +298,7 @@ We're mid-flight. Call what's done "Phase 0 — Beta Shell" and renumber from he
 
 ## 10. Open Decisions (flag when touching them)
 
-1. **`plan_year` semantics for rolling-entry users.** ✅ **DECIDED: (c)** — generate a partial-year blueprint from signup date to Dec 31. In November, prompt to generate next year's full blueprint.
+1. **`plan_year` semantics for rolling-entry users.** Updated: generate a full calendar-year blueprint for the selected `plan_year` (Jan 1 to Dec 31), even for users who join later in the year.
 2. **Pluto.** ✅ **DECIDED: hard-code slow positions via birth-year lookup table.** Pluto is product-critical. Moves ~1 sign per 15–20 years so a lookup table by birth year is accurate enough. Build `lib/ephemeris/pluto-table.ts`.
 3. **House system.** ✅ **DECIDED: Whole Sign as default.** Simpler to compute, no birth-time dependency (graceful for unknown-time users), increasingly standard in modern astrology. Placidus can be a post-beta settings option.
 4. **Cycle data sensitivity.** Menstrual data is health data. Do we need anything beyond RLS (e.g. separate encryption at rest)? **Recommendation: RLS-only for v1, revisit before public launch.**

@@ -3,6 +3,7 @@ import "server-only";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
 export interface MarketplaceOrderUpsertInput {
+  accessPlan?: "monthly" | "yearly";
   externalOrderId: string;
   purchaserEmail: string;
   purchaserName: string | null;
@@ -49,6 +50,7 @@ export async function upsertMarketplaceOrders(records: MarketplaceOrderUpsertInp
     product_tier: record.productTier,
     planner_year: record.plannerYear,
     oracle_enabled: record.oracleEnabled,
+    access_plan: record.accessPlan ?? "yearly",
     status: existingOrderMap.get(record.externalOrderId) ?? "imported",
     purchased_at: record.purchasedAt,
     metadata: record.metadata,

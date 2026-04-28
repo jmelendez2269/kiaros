@@ -102,7 +102,7 @@ export default async function AreasPage() {
                     <p className="mt-2 text-sm leading-6 text-bone-muted">
                       {currentWindow
                         ? `${currentWindow.startDate} to ${currentWindow.endDate}. ${currentWindow.cosmicContext}`
-                        : 'This page will surface area-specific activation windows as soon as they are generated from your yearly blueprint.'}
+                        : 'This page will surface area-specific active windows as soon as they are generated from your yearly blueprint.'}
                     </p>
                   </div>
                 </div>

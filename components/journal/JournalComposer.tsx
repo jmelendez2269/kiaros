@@ -9,6 +9,7 @@ type RecentJournalEntry = {
   body: string
   entry_date: string
   is_ritual: boolean | null
+  oracle_memory: boolean | null
   created_at: string | null
 }
 
@@ -20,6 +21,9 @@ interface JournalComposerProps {
   initialStart: string
   initialEnd: string
   initialContext: string
+  journalEntriesCount: number
+  oracleMemoryCount: number
+  blueprintYear: number | null
   recentEntries: RecentJournalEntry[]
 }
 
@@ -41,12 +45,19 @@ export function JournalComposer({
   initialStart,
   initialEnd,
   initialContext,
+  journalEntriesCount,
+  oracleMemoryCount,
+  blueprintYear,
   recentEntries,
 }: JournalComposerProps) {
+  const [entries, setEntries] = useState(recentEntries)
+  const [entryCount, setEntryCount] = useState(journalEntriesCount)
+  const [memoryCount, setMemoryCount] = useState(oracleMemoryCount)
   const [title, setTitle] = useState(initialPrompt ? truncate(initialPrompt, 120) : '')
   const [entryDate, setEntryDate] = useState('')
   const [body, setBody] = useState(initialPrompt ? `${initialPrompt}\n\n` : '')
   const [isRitual, setIsRitual] = useState(Boolean(initialPrompt))
+  const [addToOracleMemory, setAddToOracleMemory] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
@@ -81,6 +92,7 @@ export function JournalComposer({
           body,
           entry_date: entryDate,
           is_ritual: isRitual,
+          oracle_memory: addToOracleMemory,
           transit_context:
             initialPrompt || initialArea || initialTheme || initialContext
               ? {
@@ -96,15 +108,27 @@ export function JournalComposer({
         }),
       })
 
-      const payload = (await response.json()) as { error?: string }
+      const payload = (await response.json()) as (RecentJournalEntry & { error?: string })
 
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to save journal entry')
       }
 
-      setSavedMessage('Saved. This entry can now inform Oracle grounding.')
+      setEntries((current) => [payload, ...current].slice(0, 12))
+      setEntryCount((current) => current + 1)
+      if (payload.oracle_memory) {
+        setMemoryCount((current) => current + 1)
+      }
+
+      setSavedMessage(
+        addToOracleMemory
+          ? 'Saved. This entry is now part of Oracle memory.'
+          : 'Saved. This entry can stay in your journal without being added to Oracle memory.'
+      )
       setBody(initialPrompt ? `${initialPrompt}\n\n` : '')
       setTitle(initialPrompt ? truncate(initialPrompt, 120) : '')
+      setIsRitual(Boolean(initialPrompt))
+      setAddToOracleMemory(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save journal entry')
     } finally {
@@ -115,17 +139,77 @@ export function JournalComposer({
   return (
     <div className="space-y-8">
       <section className="shell-panel px-6 py-7 md:px-8">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-3xl">
-            <p className="shell-kicker mb-3">Journal</p>
-            <h1 className="shell-section-title">Capture the prompt while the window is open</h1>
-            <p className="mt-4 text-base leading-7 text-bone-muted">
-              Save a reflection from a timing window, ritual, or live question. Oracle already uses recent journal
-              entries as grounding, so this can become part of that context automatically.
-            </p>
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-3xl">
+              <p className="shell-kicker mb-3">Journal</p>
+              <h1 className="shell-section-title">Capture the prompt while the window is open</h1>
+              <p className="mt-4 text-base leading-7 text-bone-muted">
+                Save a reflection from a timing window, ritual, or live question. This is also where you decide what
+                the Oracle should carry forward as memory.
+              </p>
+            </div>
+            <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">
+              {initialPrompt ? 'Prompt-loaded entry' : 'Open reflection'}
+            </div>
           </div>
-          <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">
-            {initialPrompt ? 'Prompt-loaded entry' : 'Open reflection'}
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-[1rem] border border-leather-400/30 bg-leather-500/10 px-4 py-4">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-leather-200/85">Journal</p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-bone">Saved entries</p>
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-leather-300/25 bg-black/20 px-2 text-[0.68rem] font-semibold text-leather-100">
+                  {entryCount}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-bone-muted">Everything you’ve captured lives here, with your latest reflections below.</p>
+            </div>
+
+            <div className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-4 py-4">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Oracle</p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-bone">Memory saved</p>
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-plum-300/20 bg-black/20 px-2 text-[0.68rem] font-semibold text-plum-200">
+                  {memoryCount}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href="/oracle"
+                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-3 py-1.5 text-[0.78rem] font-medium text-bone-muted transition-colors hover:text-bone"
+                >
+                  Open Oracle
+                </Link>
+                <Link
+                  href="/journal?prompt=What%20feels%20worth%20keeping%20in%20memory%20right%20now%3F"
+                  className="inline-flex items-center rounded-lg border border-plum-400/40 bg-plum-400/18 px-3 py-1.5 text-[0.78rem] font-medium text-bone transition-colors hover:bg-plum-400/26"
+                >
+                  Memory prompt
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[1rem] border border-border/80 bg-stone-900/80 px-4 py-4">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/75">Architecture</p>
+              <p className="mt-2 text-sm font-medium text-bone-muted">
+                {blueprintYear ? `${blueprintYear} blueprint ready` : 'Annual blueprint'}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href="/blueprint"
+                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-3 py-1.5 text-[0.78rem] font-medium text-bone-muted transition-colors hover:text-bone"
+                >
+                  Open blueprint
+                </Link>
+                <Link
+                  href="/journal?prompt=What%20part%20of%20the%20annual%20blueprint%20am%20I%20living%20right%20now%3F"
+                  className="inline-flex items-center rounded-lg border border-leather-400/35 bg-leather-500/16 px-3 py-1.5 text-[0.78rem] font-medium text-bone transition-colors hover:bg-leather-500/24"
+                >
+                  Blueprint prompt
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -211,6 +295,16 @@ export function JournalComposer({
               Mark this as a ritual or intentional grounding entry
             </label>
 
+            <label className="flex items-center gap-3 rounded-[1rem] border border-plum-400/25 bg-plum-400/8 px-4 py-3 text-sm text-bone-muted">
+              <input
+                type="checkbox"
+                checked={addToOracleMemory}
+                onChange={(event) => setAddToOracleMemory(event.target.checked)}
+                className="h-4 w-4 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
+              />
+              Add this entry to Oracle memory so future conversations can draw from it
+            </label>
+
             {error ? (
               <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                 {error}
@@ -250,16 +344,19 @@ export function JournalComposer({
                 Revisit past entries, rituals, and timing-window notes in one place.
               </p>
             </div>
-            <span className="shell-pill">{recentEntries.length} loaded</span>
+            <span className="shell-pill">{entries.length} loaded</span>
           </div>
 
           <div className="mt-5 space-y-3">
-            {recentEntries.length > 0 ? (
-              recentEntries.map((entry) => (
+            {entries.length > 0 ? (
+              entries.map((entry) => (
                 <div key={entry.id} className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-bone">{entry.title || 'Untitled entry'}</p>
-                    {entry.is_ritual ? <span className="shell-pill">Ritual</span> : null}
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      {entry.oracle_memory ? <span className="shell-pill">In Oracle memory</span> : null}
+                      {entry.is_ritual ? <span className="shell-pill">Ritual</span> : null}
+                    </div>
                   </div>
                   <p className="mt-2 text-xs uppercase tracking-[0.16em] text-bone-muted/55">{entry.entry_date}</p>
                   <p className="mt-3 text-sm leading-7 text-bone-muted">{truncate(entry.body, 180)}</p>

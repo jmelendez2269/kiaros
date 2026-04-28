@@ -13,8 +13,8 @@ const ENERGY_STYLES: Record<string, string> = {
 }
 
 const ENERGY_LABELS: Record<string, string> = {
-  push: 'Push',
-  rest: 'Rest',
+  push: 'Active',
+  rest: 'Passive',
   reflect: 'Reflect',
   initiate: 'Initiate',
 }

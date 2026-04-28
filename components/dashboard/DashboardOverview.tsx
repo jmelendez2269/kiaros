@@ -657,7 +657,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   return (
     <div className="space-y-8">
       <section className="shell-panel overflow-hidden px-4 py-5 md:px-6">
-        <div className="mb-3 flex flex-col gap-3 border-b border-border/60 pb-3 xl:flex-row xl:items-start xl:justify-between">
+        <div className="mb-3 border-b border-border/60 pb-3">
           <div>
             <div className="flex items-center gap-3">
               <CalendarDays size={16} className="text-bone-muted" />
@@ -687,76 +687,6 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 <p className="text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-bone-muted/65">Primary focus</p>
                 <p className="mt-2 text-base font-medium text-bone">{primaryLane}</p>
                 <p className="mt-1 text-sm leading-6 text-bone-muted">{primaryAction}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-3 xl:min-w-[26rem] xl:max-w-[30rem]">
-            <div className="rounded-[0.95rem] border border-leather-400/35 bg-leather-500/10 px-3 py-2.5">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-leather-200/85">Journal</p>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <p className="text-[0.9rem] font-medium text-bone">Journal entries</p>
-                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-leather-300/25 bg-black/20 px-2 text-[0.68rem] font-semibold text-leather-100">
-                  {journalEntriesCount}
-                </span>
-              </div>
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                <Link
-                  href="/journal"
-                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:text-bone"
-                >
-                  Open history
-                </Link>
-                <Link
-                  href="/journal"
-                  className="inline-flex items-center rounded-lg border border-leather-400/45 bg-leather-500/20 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone transition-colors hover:bg-leather-500/30"
-                >
-                  New entry
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-[0.95rem] border border-plum-400/30 bg-plum-400/8 px-3 py-2.5">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Oracle</p>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <p className="text-[0.9rem] font-medium text-bone">Memory saved</p>
-                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-plum-300/20 bg-black/20 px-2 text-[0.68rem] font-semibold text-plum-200">
-                  {oracleMemoryCount}
-                </span>
-              </div>
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                <Link
-                  href="/oracle"
-                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:text-bone"
-                >
-                  Open Oracle
-                </Link>
-                <Link
-                  href="/journal?prompt=What%20feels%20worth%20keeping%20in%20memory%20right%20now%3F"
-                  className="inline-flex items-center rounded-lg border border-plum-400/40 bg-plum-400/18 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone transition-colors hover:bg-plum-400/26"
-                >
-                  New entry
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-[0.95rem] border border-border/80 bg-stone-900/80 px-3 py-2.5">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/75">Architecture</p>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <p className="text-[0.9rem] font-medium text-bone-muted">Annual blueprint</p>
-                <ArrowRight size={14} className="shrink-0 text-bone-muted" />
-              </div>
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                <Link
-                  href="/blueprint"
-                  className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:text-bone"
-                >
-                  Open blueprint
-                </Link>
-                <Link
-                  href="/journal?prompt=What%20part%20of%20the%20annual%20blueprint%20am%20I%20living%20right%20now%3F"
-                  className="inline-flex items-center rounded-lg border border-leather-400/35 bg-leather-500/16 px-2.5 py-1.5 text-[0.72rem] font-medium text-bone transition-colors hover:bg-leather-500/24"
-                >
-                  New entry
-                </Link>
               </div>
             </div>
           </div>
