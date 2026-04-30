@@ -168,7 +168,7 @@ export function PublicPricingPage({
     <div className="page-wrapper">
       <header className="container flex items-center justify-between py-5">
         <Link href="/" className="font-display text-xl text-bone tracking-wide">
-          Kiaros
+          Kairos
         </Link>
         <nav className="flex items-center gap-4 text-sm">
           {isSignedIn ? (
@@ -209,7 +209,7 @@ export function PublicPricingPage({
                 and this year&apos;s real planetary transits.
               </p>
               <p className="mt-4 max-w-3xl text-base leading-7 text-bone-muted">
-                I built Kiaros because it genuinely changed how I moved through a year — and I
+                I built Kairos because it genuinely changed how I moved through a year — and I
                 wanted to share it. I made it for myself first, and then realized it was too
                 useful to keep to myself.
               </p>
@@ -239,7 +239,7 @@ export function PublicPricingPage({
                 <p className="shell-eyebrow">Built for you, not your sign</p>
                 <p className="mt-2 text-lg font-semibold text-bone">A full natal chart. Not a horoscope.</p>
                 <p className="mt-3 text-sm leading-7 text-bone-muted">
-                  Your sun sign is one placement among ten. Kiaros uses all of them — synthesized
+                  Your sun sign is one placement among ten. Kairos uses all of them — synthesized
                   with real ephemeris data into a year-long blueprint that is specifically yours.
                 </p>
               </div>
@@ -249,7 +249,7 @@ export function PublicPricingPage({
                 <p className="mt-3 text-sm leading-7 text-bone-muted">
                   Saturn returns at approximately 29 years. Jupiter orbits every 12. The moon
                   cycles every 29.5 days. These aren&apos;t metaphors — they&apos;re measurable,
-                  and Kiaros maps them to your year.
+                  and Kairos maps them to your year.
                 </p>
               </div>
             </div>
@@ -272,7 +272,7 @@ export function PublicPricingPage({
                 are and when you were born.
               </p>
               <p>
-                In an era where everyone is telling you to push constantly, Kiaros exists to offer
+                In an era where everyone is telling you to push constantly, Kairos exists to offer
                 a different read: one that distinguishes the seasons in your life, honors the ones
                 that ask for rest, and names the ones that are genuinely yours for movement.
               </p>
@@ -291,7 +291,7 @@ export function PublicPricingPage({
                 none of them knew anything about me specifically.
               </p>
               <p>
-                Kiaros knows your chart, your actual transits, your goals in your own words, and
+                Kairos knows your chart, your actual transits, your goals in your own words, and
                 the season of life you&apos;re in. The blueprint it generates is the thing I
                 wished existed. I built it and then realized I had to share it.
               </p>
@@ -307,7 +307,7 @@ export function PublicPricingPage({
           </h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
             Most planners ask for your goals and ignore your timing. Most astrology apps read your
-            chart and ignore your goals. Kiaros feeds both to the same synthesis layer, so the
+            chart and ignore your goals. Kairos feeds both to the same synthesis layer, so the
             output reflects the intersection of who you actually are and what the year is actually
             offering.
           </p>
@@ -324,7 +324,7 @@ export function PublicPricingPage({
               {
                 step: "02",
                 title: "Your year → live transits",
-                body: "Kiaros calculates the actual planetary positions for every day of your year. Where is Saturn right now relative to your natal Venus? When does Jupiter cross your Moon? These transit windows become the timing architecture of your blueprint.",
+                body: "Kairos calculates the actual planetary positions for every day of your year. Where is Saturn right now relative to your natal Venus? When does Jupiter cross your Moon? These transit windows become the timing architecture of your blueprint.",
                 accent: "text-plum-300",
                 border: "border-plum-400/25",
               },
@@ -353,7 +353,7 @@ export function PublicPricingPage({
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="rounded-[1rem] border border-border/50 bg-stone-950/50 p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-              <p className="shell-eyebrow mb-3">What you tell Kiaros during onboarding</p>
+              <p className="shell-eyebrow mb-3">What you tell Kairos during onboarding</p>
               <ul className="space-y-2">
                 {[
                   "Birth date, time, and city of birth",
@@ -422,7 +422,7 @@ export function PublicPricingPage({
                   <span className="h-2 w-2 rounded-full bg-stone-700" />
                 </div>
                 <p className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-bone-muted/30">
-                  Kiaros · Your Dashboard
+                  Kairos · Your Dashboard
                 </p>
               </div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-leather-400/25 bg-leather-500/10 px-2.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-leather-200/70">
@@ -436,7 +436,7 @@ export function PublicPricingPage({
           <div className="rounded-[1.35rem] border border-border/80 bg-card/95 px-6 py-6 md:px-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
-                <p className="shell-kicker mb-3">Kiaros Life OS · Demo</p>
+                <p className="shell-kicker mb-3">Kairos Life OS · Demo</p>
                 <h3 className="font-display text-[2rem] leading-tight text-bone md:text-[2.4rem]">
                   Alex, your year runs on timing first and customization second.
                 </h3>
@@ -706,7 +706,7 @@ export function PublicPricingPage({
               </h2>
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
-                  Every area, timing window, and week in Kiaros links directly to the journal with
+                  Every area, timing window, and week in Kairos links directly to the journal with
                   a prompt already written for that specific moment. The prompt reflects what&apos;s
                   happening cosmically and in your goals simultaneously — not a generic question,
                   but one that knows you&apos;re in a Jupiter window and your Creative Projects
@@ -779,7 +779,7 @@ export function PublicPricingPage({
                     },
                     {
                       label: "A smarter next-year calendar",
-                      detail: "The more you journal, the more evidence Kiaros has about what certain skies tend to bring up for you, so the next calendar can be shaped by your actual lived history.",
+                      detail: "The more you journal, the more evidence Kairos has about what certain skies tend to bring up for you, so the next calendar can be shaped by your actual lived history.",
                     },
                   ].map(({ label, detail }) => (
                     <li key={label} className="flex gap-3">
@@ -870,7 +870,7 @@ export function PublicPricingPage({
                 Start with the way you want to pay, not the way you think you should.
               </h2>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
-                Kiaros is built to guide you throughout the year, so the pricing can be flexible
+                Kairos is built to guide you throughout the year, so the pricing can be flexible
                 too: monthly for accessibility, annual for the best value, and Etsy annual access
                 for people who prefer a marketplace checkout. Oracle intelligence is tied to the
                 Planner + Oracle tier no matter which checkout path you use.
@@ -991,7 +991,7 @@ export function PublicPricingPage({
               {
                 step: "1",
                 title: "Create your account",
-                body: "Sign up, then tell Kiaros your birth data, your goals in your own words, and where you are in your life right now.",
+                body: "Sign up, then tell Kairos your birth data, your goals in your own words, and where you are in your life right now.",
               },
               {
                 step: "2",
@@ -1001,7 +1001,7 @@ export function PublicPricingPage({
               {
                 step: "3",
                 title: "Your blueprint generates",
-                body: "Kiaros runs your natal chart, calculates your 2026 transits, and generates a full year-long blueprint built specifically for you.",
+                body: "Kairos runs your natal chart, calculates your 2026 transits, and generates a full year-long blueprint built specifically for you.",
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex gap-4">
@@ -1042,7 +1042,7 @@ export function PublicPricingPage({
               </h2>
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
-                  Kiaros already gives guidance throughout the year, so a monthly option makes
+                  Kairos already gives guidance throughout the year, so a monthly option makes
                   sense for people who need a more accessible way in. Annual access is still the
                   clearest best-value commitment for people who know they want the full year.
                 </p>
