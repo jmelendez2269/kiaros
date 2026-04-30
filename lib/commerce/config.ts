@@ -39,8 +39,9 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     features: [
       "Personalized blueprint, calendar, journal, tracker, and curriculum workspace",
       "Guidance that adapts to where you are now in the year",
+      "Private journal entries with lunar and timing context saved to your planner",
       "Monthly access path for flexibility, annual path for best value",
-      "Annual Etsy purchase remains available for marketplace buyers",
+      "Oracle memory and pattern intelligence are available in Planner + Oracle",
     ],
     checkoutHeadline: "Start with the core Kiaros planner",
     listingMatchers: ["planner", "core", "annual"],
@@ -51,7 +52,7 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     shortName: "Planner + Oracle",
     tagline: "The planner plus the premium reflective layer for deeper, ongoing conversation.",
     description:
-      "Everything in the Planner tier, plus Oracle access for higher-touch interpretation, reflection, and decision support throughout the year.",
+      "Everything in the Planner tier, plus Oracle access with journal memory, astrological pattern recognition, and higher-touch decision support throughout the year.",
     monthlyPriceCents: 2200,
     annualPriceCents: 22000,
     directPriceCents: 22000,
@@ -60,8 +61,9 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     plannerYear: CURRENT_PLANNER_YEAR,
     features: [
       "Everything in Kiaros Planner",
-      "Oracle guidance for reflection, interpretation, and decision support",
-      "A premium layer designed for ongoing use across the year",
+      "Oracle guidance grounded in your chart, goals, current transits, and selected journal entries",
+      "Journal intelligence that tracks lunar phases, signs, retrogrades, and transit aspects per entry",
+      "Pattern insights that can shape Oracle conversations and next year's calendar personalization",
       "Monthly access path for flexibility, annual path for best value",
     ],
     checkoutHeadline: "Choose the full Kiaros planner with Oracle included",
@@ -91,6 +93,14 @@ export function parseCommerceTierKey(value: string | null | undefined): Commerce
   if (!value) return null;
 
   return COMMERCE_TIERS.some((tier) => tier.key === value) ? (value as CommerceTierKey) : null;
+}
+
+export function parseAccessPlan(value: string | null | undefined): AccessPlan | null {
+  return value === "monthly" || value === "yearly" ? value : null;
+}
+
+export function getTierPriceCents(tier: CommerceTier, accessPlan: AccessPlan) {
+  return accessPlan === "monthly" ? tier.monthlyPriceCents : tier.annualPriceCents;
 }
 
 export function inferTierFromListingText(value: string) {

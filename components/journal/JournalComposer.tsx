@@ -10,6 +10,9 @@ type RecentJournalEntry = {
   entry_date: string
   is_ritual: boolean | null
   oracle_memory: boolean | null
+  lunar_phase: string | null
+  lunar_sign: string | null
+  transit_context: unknown
   created_at: string | null
 }
 
@@ -76,6 +79,16 @@ export function JournalComposer({
 
     return parts
   }, [initialArea, initialTheme, initialWeek, initialStart, initialEnd])
+
+  function getSkyLabel(entry: RecentJournalEntry) {
+    if (entry.lunar_phase && entry.lunar_sign) {
+      return `${entry.lunar_phase} Moon in ${entry.lunar_sign}`
+    }
+
+    if (entry.lunar_phase) return `${entry.lunar_phase} Moon`
+    if (entry.lunar_sign) return `Moon in ${entry.lunar_sign}`
+    return null
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -354,6 +367,7 @@ export function JournalComposer({
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-bone">{entry.title || 'Untitled entry'}</p>
                     <div className="flex flex-wrap items-center justify-end gap-2">
+                      {getSkyLabel(entry) ? <span className="shell-pill">{getSkyLabel(entry)}</span> : null}
                       {entry.oracle_memory ? <span className="shell-pill">In Oracle memory</span> : null}
                       {entry.is_ritual ? <span className="shell-pill">Ritual</span> : null}
                     </div>

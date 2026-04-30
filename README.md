@@ -86,7 +86,8 @@ kiaros/
    Then fill in:
    - Clerk keys (from clerk.com)
    - Supabase URL and keys (from supabase.com)
-   - OpenAI API key (from openai.com)
+   - Anthropic API key (from console.anthropic.com)
+   - Stripe secret key and webhook secret (from dashboard.stripe.com)
 
 3. **Start development server**
    ```bash

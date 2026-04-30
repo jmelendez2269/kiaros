@@ -8,7 +8,7 @@ import { OracleInput } from './OracleInput'
 
 const SUGGESTED_PROMPTS = [
   'What should I focus on this week?',
-  'What does this full moon mean for me?',
+  'What patterns are showing up in my journal?',
   'Where is my energy best spent right now?',
 ]
 
@@ -36,7 +36,7 @@ export function OracleChat({ today }: Props) {
           <div>
             <h1 className="shell-section-title">Guidance grounded in your chart and the current sky</h1>
             <p className="mt-3 text-sm leading-7 text-bone-muted">
-              Ask about the year, this week, a transit, or how to direct your energy.
+              Ask about the year, this week, a transit, your journal patterns, or how to direct your energy.
             </p>
           </div>
           <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">{today}</div>
@@ -48,7 +48,7 @@ export function OracleChat({ today }: Props) {
           {messages.length === 0 ? (
             <div className="space-y-6 pt-12">
               <p className="text-center text-sm text-bone-muted">
-                Ask the Oracle anything grounded in your chart, your current transits, or your path this year.
+                Ask the Oracle anything grounded in your chart, current transits, selected journal memory, or recurring sky patterns.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SUGGESTED_PROMPTS.map((prompt) => (

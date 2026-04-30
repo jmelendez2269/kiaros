@@ -42,6 +42,10 @@ interface Props {
   isSignedIn: boolean;
 }
 
+function formatTierLabel(productTier: string) {
+  return productTier === "planner_oracle" ? "Planner + Oracle" : "Planner";
+}
+
 export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
   const router = useRouter();
   const [orderNumber, setOrderNumber] = useState("");
@@ -120,8 +124,8 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
         <p className="shell-kicker mb-4">Etsy Activation</p>
         <h1 className="shell-hero-title max-w-2xl">Unlock your Kiaros planner</h1>
         <p className="shell-prose-lead mt-4">
-          Your Etsy purchase includes full access to Kiaros. Verify your order below, then create your
-          account to begin with a planner experience that starts from where you are now.
+          Your Etsy purchase activates the Kiaros tier you bought. Verify your order below, then
+          create your account to begin with a planner experience that starts from where you are now.
         </p>
 
         {!claimReady ? (
@@ -208,9 +212,13 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
         <section className="shell-panel p-6">
           <p className="shell-eyebrow">What is included</p>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-bone-muted">
-            <li>Full access is included with your Etsy purchase.</li>
+            <li>Your Etsy order unlocks its matching Kiaros tier after activation.</li>
             <li>Your planner begins from your current season in the year.</li>
             <li>Your wider annual context remains available as you move through the rest of the year.</li>
+            <li>
+              Planner + Oracle purchases include Oracle conversations, journal memory, and sky-pattern
+              intelligence.
+            </li>
           </ul>
         </section>
 
@@ -230,10 +238,18 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
                 Planner year: <span className="text-bone">{preview.plannerYear}</span>
               </p>
               <p>
-                Tier: <span className="text-bone">{preview.productTier}</span>
+                Tier: <span className="text-bone">{formatTierLabel(preview.productTier)}</span>
               </p>
               <p>
                 Oracle included: <span className="text-bone">{preview.oracleEnabled ? "Yes" : "No"}</span>
+              </p>
+              <p>
+                Intelligence layer:{" "}
+                <span className="text-bone">
+                  {preview.oracleEnabled
+                    ? "Oracle memory and pattern recognition included"
+                    : "Core planner only for this Etsy order"}
+                </span>
               </p>
             </div>
           </section>

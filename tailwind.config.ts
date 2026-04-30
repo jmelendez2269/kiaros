@@ -100,8 +100,8 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(189, 165, 136, 0.18), 0 24px 60px rgba(0, 0, 0, 0.38)",
-        panel: "0 18px 40px rgba(0, 0, 0, 0.28)",
+        glow: "0 0 0 1px rgba(189, 165, 136, 0.14), 0 18px 42px rgba(0, 0, 0, 0.28)",
+        panel: "0 12px 28px rgba(0, 0, 0, 0.2)",
       },
       backgroundImage: {
         "shell-glow":

@@ -74,6 +74,7 @@ export async function POST(req: Request) {
       curriculumSessionsRes,
       dailyLogsRes,
       journalEntriesRes,
+      patternInsightsRes,
       quarterlyReviewsRes,
       entitlementsRes,
     ] = await Promise.all([
@@ -113,6 +114,11 @@ export async function POST(req: Request) {
         .eq('oracle_memory', true)
         .order('entry_date', { ascending: false })
         .limit(5),
+      supabase
+        .from('user_pattern_insights')
+        .select('pattern_type, pattern_key, sample_size, confidence, first_seen, last_seen, summary, evidence')
+        .order('updated_at', { ascending: false })
+        .limit(8),
       supabase
         .from('quarterly_reviews')
         .select('quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, created_at')
@@ -161,6 +167,10 @@ export async function POST(req: Request) {
       journalEntries: (journalEntriesRes.data ?? []) as Pick<
         Tables<'journal_entries'>,
         'entry_date' | 'title' | 'body' | 'mood_tag' | 'is_ritual'
+      >[],
+      patternInsights: (patternInsightsRes.data ?? []) as Pick<
+        Tables<'user_pattern_insights'>,
+        'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
       >[],
       quarterlyReviews: (quarterlyReviewsRes.data ?? []) as Pick<
         Tables<'quarterly_reviews'>,

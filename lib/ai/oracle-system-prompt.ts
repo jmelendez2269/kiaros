@@ -33,6 +33,10 @@ export interface OraclePromptContext {
   >[]
   dailyLogs: Pick<Tables<'daily_logs'>, 'log_date' | 'energy_level' | 'mood_tag' | 'notes'>[]
   journalEntries: Pick<Tables<'journal_entries'>, 'entry_date' | 'title' | 'body' | 'mood_tag' | 'is_ritual'>[]
+  patternInsights: Pick<
+    Tables<'user_pattern_insights'>,
+    'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
+  >[]
   quarterlyReviews: Pick<
     Tables<'quarterly_reviews'>,
     'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots' | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
@@ -300,6 +304,29 @@ function summarizeText(text: string | null | undefined, maxLength = 140): string
   return normalized.length <= maxLength ? normalized : `${normalized.slice(0, maxLength - 1)}...`
 }
 
+function formatPatternLabel(patternType: string, patternKey: string): string {
+  if (patternType === 'aspect') return patternKey.split(':').join(' ')
+  if (patternType === 'lunar_phase') return `${patternKey} Moon`
+  if (patternType === 'lunar_sign') return `Moon in ${patternKey}`
+  if (patternType === 'retrograde') return `${patternKey} retrograde`
+  return patternKey
+}
+
+function summarizeEvidence(value: Json): string | null {
+  if (!Array.isArray(value)) return null
+
+  const entries = value
+    .map((item) => {
+      if (!isRecord(item) || typeof item.entry_date !== 'string') return null
+      const title = typeof item.title === 'string' && item.title.trim() ? item.title.trim() : 'Untitled'
+      return `${item.entry_date}: ${summarizeText(title, 48) ?? 'Untitled'}`
+    })
+    .filter(Boolean)
+    .slice(0, 3)
+
+  return entries.length > 0 ? entries.join('; ') : null
+}
+
 function buildLayer5(ctx: OraclePromptContext): string {
   const lines = ['## Produced Context']
 
@@ -371,6 +398,25 @@ function buildLayer5(ctx: OraclePromptContext): string {
     })
   }
 
+  if (ctx.patternInsights.length > 0) {
+    lines.push('\nRecognized journal patterns:')
+    ctx.patternInsights.forEach((pattern) => {
+      const label = formatPatternLabel(pattern.pattern_type, pattern.pattern_key)
+      const parts = [
+        `${label}`,
+        `${pattern.sample_size} entries`,
+        `confidence ${Math.round(pattern.confidence * 100)}%`,
+      ]
+      if (pattern.first_seen && pattern.last_seen) parts.push(`${pattern.first_seen} to ${pattern.last_seen}`)
+      parts.push(pattern.summary)
+
+      const evidence = summarizeEvidence(pattern.evidence)
+      if (evidence) parts.push(`evidence: ${evidence}`)
+
+      lines.push(`- ${parts.join(' | ')}`)
+    })
+  }
+
   if (ctx.quarterlyReviews.length > 0) {
     lines.push('\nQuarterly reviews:')
     ctx.quarterlyReviews.forEach((review) => {
@@ -391,7 +437,7 @@ function buildLayer5(ctx: OraclePromptContext): string {
   }
 
   lines.push(
-    '\nUse this produced context as memory. When helpful, tie your guidance back to the user\'s declared life areas, active curriculum, recent patterns, and reflected wins or challenges.'
+    '\nUse this produced context as memory. When helpful, tie your guidance back to the user\'s declared life areas, active curriculum, recognized journal patterns, and reflected wins or challenges. Treat patterns as observed tendencies, not fate.'
   )
 
   return lines.join('\n')

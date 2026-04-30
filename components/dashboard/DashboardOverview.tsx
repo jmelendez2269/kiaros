@@ -655,13 +655,13 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   }))
 
   return (
-    <div className="space-y-8">
-      <section className="shell-panel overflow-hidden px-4 py-5 md:px-6">
+    <div className="mx-auto max-w-[1320px] space-y-6">
+      <section className="shell-panel overflow-hidden px-4 py-4 md:px-5 md:py-5">
         <div className="mb-3 border-b border-border/60 pb-3">
           <div>
             <div className="flex items-center gap-3">
               <CalendarDays size={16} className="text-bone-muted" />
-              <p className="font-serif text-[1.4rem] tracking-[0.03em] text-bone">Weekly Execution Map</p>
+              <p className="font-serif text-[1.25rem] tracking-[0.03em] text-bone md:text-[1.35rem]">Weekly Execution Map</p>
             </div>
             <p className="hidden">
               Start with the week’s energetic read, then jump into the places where your reflections, memory, and deeper architecture already live.
@@ -692,75 +692,75 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[1.25rem] border border-border/70 bg-stone-950/35">
-          <div className="grid gap-0 xl:grid-cols-[15rem_minmax(0,1fr)]">
-            <div className="border-b border-border/70 px-5 py-5 xl:border-b-0 xl:border-r">
-              <p className="font-serif text-[2rem] leading-none text-bone">
+        <div className="overflow-hidden rounded-[1.15rem] border border-border/70 bg-stone-950/35">
+          <div className="grid gap-0 xl:grid-cols-[14rem_minmax(0,1fr)]">
+            <div className="border-b border-border/70 px-4 py-4 xl:border-b-0 xl:border-r md:px-5 md:py-5">
+              <p className="font-serif text-[1.8rem] leading-none text-bone md:text-[1.95rem]">
                 Week {displayWeekNumber}
               </p>
-              <p className="mt-3 text-sm uppercase tracking-[0.16em] text-bone-muted/72">Week of year</p>
-              <p className="mt-1 text-base text-bone-muted">{weekRangeLabel}</p>
+              <p className="mt-2.5 text-[0.78rem] uppercase tracking-[0.16em] text-bone-muted/72">Week of year</p>
+              <p className="mt-1 text-[0.95rem] text-bone-muted">{weekRangeLabel}</p>
               <p className="mt-1 text-sm text-bone-muted/70">Starts {weekStartLabel}</p>
 
-              <div className="mt-6 max-w-[13rem] rounded-[0.9rem] border border-border/70 bg-stone-900/75 px-3.5 py-3">
-                <p className="text-sm leading-6 text-bone-muted">
+              <div className="mt-5 max-w-[12.5rem] rounded-[0.9rem] border border-border/70 bg-stone-900/75 px-3 py-2.5">
+                <p className="text-[0.9rem] leading-6 text-bone-muted">
                   {firstSentence(currentWeek?.cosmicContext || currentMonth?.energyArc || transitHighlight)}
                 </p>
               </div>
 
-              <div className="mt-8">
+              <div className="mt-6">
                 <p className="shell-kicker text-bone-muted/60">Climate</p>
-                <p className="mt-3 max-w-[11rem] font-serif text-[1rem] italic leading-8 text-bone/92">
+                <p className="mt-2.5 max-w-[10.5rem] font-serif text-[0.95rem] italic leading-7 text-bone/92">
                   "{dailyPhase.label}"
                 </p>
               </div>
             </div>
 
-            <div className="px-5 py-5">
-              <div className="mb-3">
+            <div className="px-4 py-4 md:px-5 md:py-5">
+              <div className="mb-2.5">
                 <DashboardHeroInsights insights={heroInsights} />
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-                <article className="rounded-[1rem] border border-border/70 bg-stone-900/80 px-5 py-5">
-                  <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-leather-200/75">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)]">
+                <article className="rounded-[1rem] border border-border/70 bg-stone-900/80 px-4 py-4">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-leather-200/75">
                     Current active transits
                   </p>
                   {activeTransitItems.length > 0 ? (
-                    <div className="mt-5 space-y-4">
+                    <div className="mt-4 space-y-3.5">
                       {activeTransitItems.map((transit, index) => (
                         <div key={`${transit}-${index}`} className="flex items-start gap-3">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-bone-muted/35 text-[0.8rem] text-bone-muted">
+                          <span className="mt-0.5 flex h-[1.375rem] w-[1.375rem] shrink-0 items-center justify-center rounded-full border border-bone-muted/35 text-[0.72rem] text-bone-muted">
                             {index + 1}
                           </span>
-                          <p className="text-[1.05rem] font-medium leading-7 text-bone">{transit}</p>
+                          <p className="text-[0.98rem] font-medium leading-[1.625rem] text-bone">{transit}</p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-5 max-w-[36rem] text-[1rem] leading-7 text-bone-muted">
+                    <p className="mt-4 max-w-[34rem] text-[0.95rem] leading-[1.625rem] text-bone-muted">
                       The sky is relatively quiet today, so the strongest signal is pacing and follow-through rather than a major exact hit.
                     </p>
                   )}
                 </article>
 
-                <article className="rounded-[1rem] border border-border/70 bg-stone-900/80 px-5 py-5">
-                  <p className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-moss-200/75">
+                <article className="rounded-[1rem] border border-border/70 bg-stone-900/80 px-4 py-4">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-moss-200/75">
                     Upcoming transits
                   </p>
                   {upcomingTransitItems.length > 0 ? (
-                    <div className="mt-5 space-y-4">
+                    <div className="mt-4 space-y-3.5">
                       {upcomingTransitItems.map((transit, index) => (
                         <div key={`${transit}-${index}`} className="flex items-start gap-3">
-                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-bone-muted/35 text-[0.8rem] text-bone-muted">
+                          <span className="mt-0.5 flex h-[1.375rem] w-[1.375rem] shrink-0 items-center justify-center rounded-full border border-bone-muted/35 text-[0.72rem] text-bone-muted">
                             {index + 1}
                           </span>
-                          <p className="text-[1.05rem] font-medium leading-7 text-bone">{transit}</p>
+                          <p className="text-[0.98rem] font-medium leading-[1.625rem] text-bone">{transit}</p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-5 max-w-[36rem] text-[1rem] leading-7 text-bone-muted">
+                    <p className="mt-4 max-w-[34rem] text-[0.95rem] leading-[1.625rem] text-bone-muted">
                       The next meaningful transit window will appear here once the upcoming sky pattern is available.
                     </p>
                   )}
@@ -772,7 +772,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
       </section>
 
       {!blueprintRow ? (
-        <section className="shell-panel px-6 py-10 text-center md:px-8">
+        <section className="shell-panel px-6 py-9 text-center md:px-8">
           <div className="mx-auto max-w-2xl">
             <p className="shell-kicker mb-3">Awaiting architecture</p>
             <h2 className="shell-section-title text-[2rem]">Your Life OS is waiting for its first chart-driven blueprint.</h2>
@@ -791,7 +791,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
         </section>
       ) : (
         <>
-          <section className="grid gap-5 xl:grid-cols-3">
+          <section className="grid gap-4 xl:grid-cols-3">
             {[
               {
                 kicker: 'Primary lane',
@@ -839,30 +839,30 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             ].map((lane) => {
               const Icon = lane.icon
               return (
-                <article key={lane.kicker} className={`shell-panel px-5 py-5 md:px-6 md:py-6 ${lane.tone}`}>
-                  <div className="mb-4 flex items-start justify-between gap-3">
+                <article key={lane.kicker} className={`shell-panel px-4 py-4 md:px-5 md:py-5 ${lane.tone}`}>
+                  <div className="mb-3.5 flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="shell-kicker">{lane.kicker}</p>
                         <span className="shell-pill border-white/10 bg-black/25 text-bone">{lane.percent}</span>
                       </div>
-                      <h2 className="mt-3 text-[1.55rem] font-semibold leading-[1.08] text-bone md:text-[1.8rem]">{lane.value}</h2>
+                      <h2 className="mt-2.5 text-[1.35rem] font-semibold leading-[1.1] text-bone md:text-[1.55rem]">{lane.value}</h2>
                     </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-black/15 text-bone-muted">
-                      <Icon size={18} />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[1rem] border border-border/70 bg-black/15 text-bone-muted">
+                      <Icon size={16} />
                     </div>
                   </div>
-                  <p className="border-t border-border/70 pt-4 text-[0.96rem] leading-7 text-bone-muted">{lane.body}</p>
+                  <p className="border-t border-border/70 pt-3.5 text-[0.92rem] leading-[1.625rem] text-bone-muted">{lane.body}</p>
                 </article>
               )
             })}
           </section>
 
-          <section className="shell-panel px-6 py-6 md:px-8">
-            <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <section className="shell-panel px-5 py-5 md:px-6 md:py-6">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="shell-kicker">The Week Pulse</p>
-                <h2 className="mt-2 font-serif text-[2rem] text-bone">{currentWeek ? currentWeek.theme : 'Current week'}</h2>
+                <h2 className="mt-2 font-serif text-[1.75rem] text-bone md:text-[1.9rem]">{currentWeek ? currentWeek.theme : 'Current week'}</h2>
               </div>
               {currentWeek?.energyType && (
                 <span className={`shell-pill ${ENERGY_TYPE_PILLS[currentWeek.energyType] ?? ''}`}>
@@ -871,27 +871,27 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
               )}
             </div>
 
-            <div className="grid gap-3 md:grid-cols-7">
+            <div className="grid gap-2 md:grid-cols-7">
               {weekPulse.map(({ date, ephemeris, isToday, daySignals }) => {
                 const display = new Date(`${date}T12:00:00`)
                 return (
                   <div
                     key={date}
-                    className={`rounded-[1.1rem] border px-3 py-4 ${isToday ? 'border-leather-400/50 bg-leather-500/18 shadow-glow' : 'border-border/70 bg-stone-950/60'}`}
+                    className={`rounded-[0.95rem] border px-2.5 py-3 ${isToday ? 'border-leather-400/50 bg-leather-500/18 shadow-glow' : 'border-border/70 bg-stone-950/60'}`}
                   >
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bone-muted">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-bone-muted">
                       {display.toLocaleDateString('en-US', { weekday: 'short' })}
                     </p>
-                    <p className="mt-2 text-2xl font-semibold text-bone">{display.toLocaleDateString('en-US', { day: 'numeric' })}</p>
-                    <p className="text-sm text-bone-muted">{display.toLocaleDateString('en-US', { month: 'short' })}</p>
+                    <p className="mt-1 text-[1.35rem] font-semibold text-bone">{display.toLocaleDateString('en-US', { day: 'numeric' })}</p>
+                    <p className="text-[0.82rem] text-bone-muted">{display.toLocaleDateString('en-US', { month: 'short' })}</p>
 
                     {ephemeris ? (
                       <>
-                        <div className="mt-4 flex items-center gap-2 text-sm text-bone">
-                          <MoonPhaseIcon phase={ephemeris.moon.lunarPhase} size={16} />
+                        <div className="mt-2.5 flex items-center gap-1.5 text-[0.8rem] text-bone">
+                          <MoonPhaseIcon phase={ephemeris.moon.lunarPhase} size={14} />
                           <span>{ephemeris.moon.sign}</span>
                         </div>
-                        <div className="mt-4 space-y-1.5">
+                        <div className="mt-2.5 space-y-1.5">
                           {daySignals ? (
                             daySignals.signals.map((signal, index) => (
                               <div
@@ -910,14 +910,14 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                             </>
                           )}
                         </div>
-                        {daySignals ? (
-                          <p className="mt-2 text-[0.72rem] leading-5 text-bone-muted/75">
+                        {daySignals && isToday ? (
+                          <p className="mt-2 text-[0.64rem] leading-[1.125rem] text-bone-muted/75">
                             {buildLunarMessage(ephemeris)}
                           </p>
                         ) : null}
                       </>
                     ) : (
-                      <p className="mt-6 text-xs text-bone-muted">Cosmic timing will settle in here shortly.</p>
+                      <p className="mt-4 text-[0.72rem] text-bone-muted">Cosmic timing will settle in here shortly.</p>
                     )}
                   </div>
                 )
@@ -943,7 +943,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             />
 
             {focusedAreas.length > 0 ? (
-              <div className="mt-5">
+              <div className="mt-[1.125rem]">
                 <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <p className="text-xs font-medium uppercase tracking-[0.16em] text-bone-muted/55">
                     Top life areas activated this week
@@ -952,12 +952,12 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                     Open an area to see the timing window, chart context, and deeper guidance.
                   </p>
                 </div>
-                <div className="grid gap-3 lg:grid-cols-3">
+                <div className="grid gap-2.5 lg:grid-cols-3">
                 {focusedAreas.map((area) => (
                   <Link
                     key={area.name}
                     href={area.href}
-                    className="group rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 transition-all hover:border-leather-400/40 hover:bg-leather-500/8"
+                    className="group rounded-[0.95rem] border border-border/70 bg-stone-950/60 px-4 py-3.5 transition-all hover:border-leather-400/40 hover:bg-leather-500/8"
                   >
                     <p className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-leather-200/85">
                       Most affected area
@@ -967,7 +967,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                         <p className="text-base font-semibold text-bone">
                           {area.icon ? `${area.icon} ${area.name}` : area.name}
                         </p>
-                        <p className="mt-2 text-sm leading-7 text-bone-muted group-hover:text-bone">
+                        <p className="mt-2 text-sm leading-[1.625rem] text-bone-muted group-hover:text-bone">
                           {area.summary}
                         </p>
                       </div>
@@ -975,7 +975,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                         Open
                       </span>
                     </div>
-                    <p className="mt-3 border-t border-border/70 pt-3 text-sm leading-6 text-bone-muted/80">
+                    <p className="mt-3 border-t border-border/70 pt-3 text-[0.92rem] leading-6 text-bone-muted/80">
                       {area.prompt}
                     </p>
                   </Link>
@@ -985,11 +985,11 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             ) : null}
           </section>
 
-          <section className="shell-panel px-6 py-6 md:px-8">
-            <div className="mb-6 flex items-start justify-between gap-4">
+          <section className="shell-panel px-5 py-5 md:px-6 md:py-6">
+            <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <p className="shell-kicker">Celestial Architecture</p>
-                <h2 className="mt-2 font-serif text-[2rem] text-bone">{blueprintRow.plan_year} house activations and annual structure</h2>
+                <h2 className="mt-2 font-serif text-[1.7rem] text-bone md:text-[1.9rem]">{blueprintRow.plan_year} house activations and annual structure</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-bone-muted">
                   Blueprint themes become the backbone of the year. The shell below mirrors the proof-of-concept structure, but it is now driven by your real Kiaros blueprint.
                 </p>
@@ -1000,7 +1000,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
               </Link>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-3 lg:grid-cols-2">
               {architectureCards.length > 0 ? (
                 architectureCards.map((card) => (
                   <article key={card.id} className="shell-grid-card">
@@ -1026,11 +1026,12 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             </div>
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-3">
-            <article className="shell-panel px-6 py-6">
+          <section className="grid gap-4 xl:grid-cols-[0.86fr_1.14fr]">
+            <div className="grid gap-4">
+            <article className="shell-panel-soft px-5 py-5">
               <p className="shell-kicker">Customization Layer</p>
-              <h2 className="mt-2 text-[1.7rem] font-semibold text-bone">Words of the year</h2>
-              <div className="mt-4 flex flex-wrap gap-3">
+              <h2 className="mt-2 text-[1.3rem] font-semibold text-bone">Words of the year</h2>
+              <div className="mt-3.5 flex flex-wrap gap-2.5">
                 {astrologicalWord ? (
                   <div className="rounded-[1rem] border border-leather-400/30 bg-leather-500/10 px-4 py-3">
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-leather-200/85">Astrological</p>
@@ -1047,7 +1048,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                   <p className="text-lg text-leather-200">Add during onboarding</p>
                 ) : null}
               </div>
-              <p className="mt-3 text-sm leading-7 text-bone-muted">
+              <p className="mt-3 text-sm leading-[1.625rem] text-bone-muted">
                 {astrologicalWord?.rationale || profile?.what_to_release || 'This area will hold release themes, pivots, and other user-defined yearly anchors.'}
               </p>
               {profile?.what_to_release ? (
@@ -1057,10 +1058,10 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
               ) : null}
             </article>
 
-            <article className="shell-panel px-6 py-6">
+            <article className="shell-panel-soft px-5 py-5">
               <p className="shell-kicker">Curriculum</p>
-              <h2 className="mt-2 text-[1.7rem] font-semibold text-bone">Study tracks and reading</h2>
-              <p className="mt-4 text-sm leading-7 text-bone-muted">
+              <h2 className="mt-2 text-[1.3rem] font-semibold text-bone">Study tracks and reading</h2>
+              <p className="mt-3.5 text-sm leading-[1.625rem] text-bone-muted">
                 {profile?.study_focus || 'Curriculum topics, books, and skill arcs can live here as their own layer instead of being folded into your goal-success prompts.'}
               </p>
               {!profile?.study_focus ? (
@@ -1073,17 +1074,21 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 <ArrowRight size={15} />
               </Link>
             </article>
+            </div>
 
-            <article className="shell-panel px-6 py-6">
+            <article className="shell-panel px-5 py-5 md:px-6">
               <p className="shell-kicker">Focus Areas</p>
-              <h2 className="mt-2 text-[1.7rem] font-semibold text-bone">Life areas in motion</h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <h2 className="mt-2 text-[1.55rem] font-semibold text-bone">Life areas in motion</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-[1.625rem] text-bone-muted">
+                These are the parts of life you’ll actually move through most often. Open a lane to see its timing windows, chart context, and journal prompts.
+              </p>
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
                 {categories.length > 0 ? (
                   categories.slice(0, 6).map((category) => (
                     <Link
                       key={category.id}
                       href={`/areas/${slugifyAreaName(category.name)}`}
-                      className={`group rounded-[1rem] border px-4 py-4 transition-all ${
+                      className={`group rounded-[0.95rem] border px-4 py-3.5 transition-all ${
                         activeCategoryNames.has(category.name.toLowerCase())
                           ? 'border-leather-400/50 bg-leather-500/14 shadow-glow'
                           : 'border-border/70 bg-stone-950/60 hover:border-leather-400/35 hover:bg-leather-500/8'
@@ -1111,11 +1116,11 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             </article>
           </section>
 
-          <section className="shell-panel px-6 py-6 md:px-8">
-            <div className="mb-5 flex items-start justify-between gap-4">
+          <section className="shell-panel px-5 py-5 md:px-6 md:py-6">
+            <div className="mb-[1.125rem] flex items-start justify-between gap-4">
               <div>
                 <p className="shell-kicker">Oracle context</p>
-                <h2 className="mt-2 font-serif text-[1.8rem] text-bone">What the Oracle already knows about you</h2>
+                <h2 className="mt-2 font-serif text-[1.6rem] text-bone md:text-[1.75rem]">What the Oracle already knows about you</h2>
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-bone-muted">
                   Every Oracle conversation starts here — your chart, your goals, and any journal entries you&apos;ve chosen to include. You control what it remembers.
                 </p>
@@ -1126,9 +1131,9 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
               </Link>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid gap-3 lg:grid-cols-3">
               {/* Natal chart */}
-              <div className="rounded-[1.15rem] border border-leather-400/25 bg-leather-500/8 p-5">
+              <div className="rounded-[1rem] border border-leather-400/25 bg-leather-500/8 p-[1.125rem]">
                 <p className="shell-eyebrow mb-3 text-leather-200/80">Natal chart · permanent</p>
                 {natalChart ? (
                   <div className="space-y-2">
@@ -1154,7 +1159,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
               </div>
 
               {/* Goals */}
-              <div className="rounded-[1.15rem] border border-moss-500/25 bg-moss-500/8 p-5">
+              <div className="rounded-[1rem] border border-moss-500/25 bg-moss-500/8 p-[1.125rem]">
                 <p className="shell-eyebrow mb-3 text-moss-200/80">Your goals · from onboarding</p>
                 {categories.length > 0 ? (
                   <ul className="space-y-2">
@@ -1174,7 +1179,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
               </div>
 
               {/* Journal memory */}
-              <div className="rounded-[1.15rem] border border-plum-400/25 bg-plum-400/8 p-5">
+              <div className="rounded-[1rem] border border-plum-400/25 bg-plum-400/8 p-[1.125rem]">
                 <p className="shell-eyebrow mb-3 text-plum-300/80">Journal memory · your choice</p>
                 {oracleMemoryCount > 0 ? (
                   <div className="space-y-1">
@@ -1196,7 +1201,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             </div>
           </section>
 
-          <section className="flex flex-wrap gap-3">
+          <section className="flex flex-wrap gap-2.5">
             <Link href="/calendar" className="inline-flex items-center gap-2 rounded-2xl border border-leather-400/45 bg-leather-500/25 px-5 py-3 text-sm font-semibold text-bone shadow-glow">
               <CalendarDays size={16} />
               Open cosmic plan

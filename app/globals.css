@@ -77,7 +77,8 @@
   h4,
   .font-display {
     font-family: var(--font-display), "Iowan Old Style", Georgia, serif;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
   }
 
   ::selection {
@@ -96,7 +97,7 @@
   }
 
   .shell-panel-hero {
-    @apply relative overflow-hidden rounded-[1.75rem] border border-leather-500/20 bg-gradient-to-br from-stone-900/90 via-card/95 to-stone-950/95 shadow-panel backdrop-blur-sm;
+    @apply relative overflow-hidden rounded-[1.65rem] border border-leather-500/20 bg-gradient-to-br from-stone-900/90 via-card/95 to-stone-950/95 shadow-panel backdrop-blur-sm;
   }
 
   .shell-panel-hero::before {
@@ -108,35 +109,35 @@
   }
 
   .shell-panel {
-    @apply rounded-[1.35rem] border border-border/80 bg-card/95 shadow-panel backdrop-blur-sm;
+    @apply rounded-[1.25rem] border border-border/70 bg-card/95 shadow-panel backdrop-blur-sm;
   }
 
   .shell-panel-soft {
-    @apply rounded-[1.15rem] border border-border/60 bg-stone-900/70 shadow-panel backdrop-blur-sm;
+    @apply rounded-[1.05rem] border border-border/60 bg-stone-900/60 shadow-panel backdrop-blur-sm;
   }
 
   .shell-panel-inline {
-    @apply rounded-[1rem] border border-border/55 bg-stone-950/40;
+    @apply rounded-[0.95rem] border border-border/50 bg-stone-950/40;
   }
 
   .shell-hero-title {
-    @apply font-display text-[2.4rem] leading-[1.05] text-bone md:text-[2.9rem];
+    @apply font-display text-[2.15rem] leading-[1.02] text-bone md:text-[2.65rem];
   }
 
   .shell-section-title {
-    @apply font-display text-[1.65rem] leading-tight text-bone md:text-[1.8rem];
+    @apply font-display text-[1.5rem] leading-[1.08] text-bone md:text-[1.68rem];
   }
 
   .shell-subsection-title {
-    @apply font-display text-[1.2rem] leading-snug text-bone md:text-[1.35rem];
+    @apply font-display text-[1.1rem] leading-[1.15] text-bone md:text-[1.24rem];
   }
 
   .shell-kicker {
-    @apply text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-leather-300/85;
+    @apply text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-leather-300/80;
   }
 
   .shell-eyebrow {
-    @apply text-[0.62rem] font-semibold uppercase tracking-[0.26em] text-bone-muted/55;
+    @apply text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-bone-muted/60;
   }
 
   .shell-pill {
@@ -156,17 +157,17 @@
   }
 
   .shell-prose {
-    @apply text-[0.98rem] leading-[1.7] text-bone-muted/95;
+    @apply text-[0.96rem] leading-[1.68] text-bone-muted/90;
     max-width: 62ch;
   }
 
   .shell-prose-lead {
-    @apply font-display text-[1.15rem] leading-[1.55] text-bone/95 md:text-[1.25rem];
+    @apply font-display text-[1.08rem] leading-[1.5] text-bone/95 md:text-[1.18rem];
     max-width: 58ch;
   }
 
   .shell-grid-card {
-    @apply rounded-[1.15rem] border border-border/70 bg-stone-900/80 p-5 shadow-panel transition duration-200;
+    @apply rounded-[1.05rem] border border-border/70 bg-stone-900/80 p-[1.125rem] shadow-panel transition duration-200;
   }
 
   .shell-grid-card:hover {

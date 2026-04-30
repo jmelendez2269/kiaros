@@ -11,6 +11,7 @@
  */
 
 import type { NatalChart, YearEphemeris } from '@/types/blueprint'
+import type { Json, Tables } from '@/types/database'
 import { summariseTransitWindows } from '@/lib/ephemeris/transit-calculator'
 
 interface GoalCategory {
@@ -27,6 +28,10 @@ interface BlueprintPromptContext {
   natalChart: NatalChart
   ephemeris: YearEphemeris
   goals: GoalCategory[]
+  journalPatterns: Pick<
+    Tables<'user_pattern_insights'>,
+    'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
+  >[]
   yearVision: string | null
   wordOfYear: string | null
   whatToRelease: string | null
@@ -105,6 +110,46 @@ function goalsToText(goals: GoalCategory[]): string {
 
 // ─── Week list for the year ───────────────────────────────────────────────
 
+function patternLabel(patternType: string, patternKey: string): string {
+  if (patternType === 'aspect') return patternKey.split(':').join(' ')
+  if (patternType === 'lunar_phase') return `${patternKey} Moon`
+  if (patternType === 'lunar_sign') return `Moon in ${patternKey}`
+  if (patternType === 'retrograde') return `${patternKey} retrograde`
+  return patternKey
+}
+
+function evidenceToText(value: Json): string {
+  if (!Array.isArray(value)) return ''
+
+  const entries = value
+    .map((item) => {
+      if (typeof item !== 'object' || item === null || Array.isArray(item)) return null
+      const entryDate = typeof item.entry_date === 'string' ? item.entry_date : null
+      const title = typeof item.title === 'string' && item.title.trim() ? item.title.trim() : 'Untitled'
+      return entryDate ? `${entryDate}: ${title}` : null
+    })
+    .filter(Boolean)
+    .slice(0, 3)
+
+  return entries.length > 0 ? ` Evidence entries: ${entries.join('; ')}.` : ''
+}
+
+function journalPatternsToText(patterns: BlueprintPromptContext['journalPatterns']): string {
+  if (patterns.length === 0) {
+    return '  No journal pattern history yet. Generate the blueprint from natal chart, transits, goals, and year vision.'
+  }
+
+  return patterns
+    .map((pattern) => {
+      const confidence = Math.round(pattern.confidence * 100)
+      const seenRange =
+        pattern.first_seen && pattern.last_seen ? `${pattern.first_seen} to ${pattern.last_seen}` : 'date range unavailable'
+
+      return `  ${patternLabel(pattern.pattern_type, pattern.pattern_key)}: ${pattern.sample_size} entries, ${confidence}% confidence, ${seenRange}. ${pattern.summary}${evidenceToText(pattern.evidence)}`
+    })
+    .join('\n')
+}
+
 function generateWeekList(startDate: string, year: number): Array<{ weekNumber: number; start: string; end: string }> {
   const weeks: Array<{ weekNumber: number; start: string; end: string }> = []
   const start = new Date(`${startDate}T00:00:00Z`)
@@ -141,7 +186,19 @@ Tone principles:
 }
 
 export function assembleBlueprintUserPrompt(ctx: BlueprintPromptContext): string {
-  const { userName, natalChart, ephemeris, goals, yearVision, wordOfYear, whatToRelease, studyFocus, planYear, startDate } = ctx
+  const {
+    userName,
+    natalChart,
+    ephemeris,
+    goals,
+    journalPatterns,
+    yearVision,
+    wordOfYear,
+    whatToRelease,
+    studyFocus,
+    planYear,
+    startDate,
+  } = ctx
 
   const transitSummary = summariseTransitWindows(ephemeris)
   const weeks = generateWeekList(startDate, planYear)
@@ -189,6 +246,11 @@ RETROGRADE PERIODS ${planYear}
 ${retrogradeToText(ephemeris)}
 
 ═══════════════════════════════════════════
+OBSERVED JOURNAL PATTERNS
+===========================================================
+${journalPatternsToText(journalPatterns)}
+
+===========================================================
 WEEK GRID (for weekly blueprint)
 ═══════════════════════════════════════════
 ${weekListText}
@@ -215,6 +277,7 @@ Rules:
 10. Do not make identity claims or promises of outcomes. Speak as if each theme is a timely suggestion, not a command.
 11. Never imply the user must act during a pushPeriods window. Frame those periods as invitations, openings, or supportive currents they may choose to engage with.
 12. Do not omit early-year months or weeks even if the user signs up later in the year. The output is always a full-year blueprint.
+13. Use observed journal patterns as personalization evidence when they are relevant to matching transits, moons, retrogrades, or rest/push choices. Do not overfit them or present them as fate; use them as lived-history hints.
 
 JSON schema:
 {

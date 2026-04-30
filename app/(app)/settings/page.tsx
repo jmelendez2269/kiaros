@@ -70,6 +70,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [isBillingPending, setIsBillingPending] = useState(false);
   const [oracleUsage, setOracleUsage] = useState<{
     messageCount: number;
     limit: number;
@@ -170,6 +172,27 @@ export default function SettingsPage() {
         }));
       }
     });
+  };
+
+  const handleBillingPortal = async () => {
+    setBillingError(null);
+    setIsBillingPending(true);
+
+    try {
+      const res = await fetch("/api/commerce/portal", { method: "POST" });
+      const payload = (await res.json()) as { url?: string; error?: string };
+
+      if (!res.ok || !payload.url) {
+        setBillingError(payload.error ?? "Billing management is not available yet.");
+        return;
+      }
+
+      window.location.assign(payload.url);
+    } catch {
+      setBillingError("Billing management is not available yet.");
+    } finally {
+      setIsBillingPending(false);
+    }
   };
 
   const astrologicalWord = profile?.word_of_year;
@@ -441,6 +464,14 @@ export default function SettingsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleBillingPortal}
+              disabled={isBillingPending}
+              className="rounded-xl border border-border/80 bg-stone-950/75 px-4 py-2.5 text-sm font-medium text-bone-muted transition-colors hover:text-bone disabled:opacity-50"
+            >
+              {isBillingPending ? "Opening billing..." : "Manage billing"}
+            </button>
             <Link
               href="/blueprint"
               className="rounded-xl border border-border/80 bg-stone-950/75 px-4 py-2.5 text-sm font-medium text-bone-muted transition-colors hover:text-bone"
@@ -462,6 +493,7 @@ export default function SettingsPage() {
               {isPending ? "Saving…" : "Save settings"}
             </button>
             {saved ? <p className="text-sm text-moss-300">Saved</p> : null}
+            {billingError ? <p className="text-sm text-red-200">{billingError}</p> : null}
           </div>
         </div>
       </section>

@@ -111,6 +111,14 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       .order('sort_order', { ascending: true })
     log(`goals loaded (${goals?.length ?? 0})`)
 
+    const { data: journalPatterns } = await admin
+      .from('user_pattern_insights')
+      .select('pattern_type, pattern_key, sample_size, confidence, first_seen, last_seen, summary, evidence')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+      .limit(12)
+    log(`journal patterns loaded (${journalPatterns?.length ?? 0})`)
+
     // ── 3. Resolve plan_year and full-year date range ─────────────────
     const startDate = derivePlanYearStart(planYear)
 
@@ -179,6 +187,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       natalChart,
       ephemeris,
       goals: goals ?? [],
+      journalPatterns: journalPatterns ?? [],
       yearVision: profile.year_vision ?? null,
       wordOfYear: profile.word_of_year ?? null,
       whatToRelease: profile.what_to_release ?? null,

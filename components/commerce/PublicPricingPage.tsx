@@ -757,7 +757,7 @@ export function PublicPricingPage({
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
                   The Oracle isn&apos;t a general astrology assistant. When you open a conversation,
-                  it already knows three things about you:
+                  it already knows the living context around your year:
                 </p>
                 <ul className="space-y-3">
                   {[
@@ -772,6 +772,14 @@ export function PublicPricingPage({
                     {
                       label: "Journal entries you've added to memory",
                       detail: "You control what the Oracle knows from your journal. Mark an entry and it becomes available context. The Oracle won't reference it without your permission.",
+                    },
+                    {
+                      label: "Your personal sky patterns",
+                      detail: "Planner + Oracle tracks the lunar phase, moon sign, retrogrades, and transit-to-natal aspects around each journal entry, then turns repeated themes into compact pattern insights.",
+                    },
+                    {
+                      label: "A smarter next-year calendar",
+                      detail: "The more you journal, the more evidence Kiaros has about what certain skies tend to bring up for you, so the next calendar can be shaped by your actual lived history.",
                     },
                   ].map(({ label, detail }) => (
                     <li key={label} className="flex gap-3">
@@ -864,15 +872,15 @@ export function PublicPricingPage({
               <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
                 Kiaros is built to guide you throughout the year, so the pricing can be flexible
                 too: monthly for accessibility, annual for the best value, and Etsy annual access
-                for people who prefer a marketplace checkout.
+                for people who prefer a marketplace checkout. Oracle intelligence is tied to the
+                Planner + Oracle tier no matter which checkout path you use.
               </p>
             </div>
             <div className="rounded-[1.1rem] border border-leather-500/25 bg-leather-500/10 px-5 py-4">
               <p className="text-sm font-semibold text-bone">Current checkout status</p>
               <p className="mt-2 text-sm leading-7 text-bone-muted">
-                Direct annual checkout is live now. Monthly direct access is the next commerce
-                expansion, so the pricing below reflects the new structure while annual access
-                remains the active checkout path today.
+                Direct monthly subscriptions and annual checkout are live now. Etsy annual access
+                still activates through the marketplace claim flow.
               </p>
             </div>
           </div>
@@ -940,21 +948,27 @@ export function PublicPricingPage({
                 </ul>
 
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <span className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone-muted">
-                    Monthly direct coming soon
-                  </span>
                   {isSignedIn ? (
-                    <CheckoutButton
-                      tierKey={tier.key}
-                      label="Buy annual direct"
-                      className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950 disabled:cursor-not-allowed disabled:opacity-60"
-                    />
+                    <>
+                      <CheckoutButton
+                        tierKey={tier.key}
+                        accessPlan="monthly"
+                        label="Start monthly"
+                        className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                      <CheckoutButton
+                        tierKey={tier.key}
+                        accessPlan="yearly"
+                        label="Buy annual direct"
+                        className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </>
                   ) : (
                     <Link
                       href="/sign-up"
                       className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
                     >
-                      Create account to buy annual direct
+                      Create account to choose checkout
                     </Link>
                   )}
                   <Link
@@ -1034,7 +1048,9 @@ export function PublicPricingPage({
                 </p>
                 <p>
                   Oracle adds the higher-touch layer for people who want more interpretation,
-                  reflection, and dialogue as the year unfolds.
+                  reflection, and dialogue as the year unfolds. It is also where the journal
+                  intelligence lives: entries can become evidence for recurring lunar, retrograde,
+                  and transit patterns instead of staying as isolated notes.
                 </p>
               </div>
             </article>
@@ -1063,7 +1079,8 @@ export function PublicPricingPage({
                     {[
                       "Marketplace familiarity and gifting convenience",
                       "A one-time annual purchase only",
-                      "The same Kiaros access once imported and activated",
+                      "The same purchased tier once imported and activated",
+                      "Oracle intelligence when the Etsy purchase is Planner + Oracle",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
                         <CheckIcon />

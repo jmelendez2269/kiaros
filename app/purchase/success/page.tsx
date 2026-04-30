@@ -52,8 +52,9 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
             <p className="shell-kicker mb-4">Purchase Complete</p>
             <h1 className="shell-hero-title max-w-3xl">Your {result.tier.shortName} access is live.</h1>
             <p className="shell-prose-lead mt-4">
-              Checkout is complete, your entitlement is active, and your loyalty reward for next
-              year has been reserved for {result.email}.
+              {result.accessPlan === "monthly"
+                ? `Checkout is complete, your monthly subscription is active, and your Kiaros access is linked to ${result.email}.`
+                : `Checkout is complete, your annual entitlement is active, and your loyalty reward for next year has been reserved for ${result.email}.`}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link

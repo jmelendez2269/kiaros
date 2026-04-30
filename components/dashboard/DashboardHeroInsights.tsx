@@ -28,7 +28,7 @@ export function DashboardHeroInsights({ insights }: DashboardHeroInsightsProps) 
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
       {insights.map((insight) => {
         const expanded = expandedId === insight.id
 
@@ -38,34 +38,34 @@ export function DashboardHeroInsights({ insights }: DashboardHeroInsightsProps) 
             type="button"
             onClick={() => setExpandedId((current) => (current === insight.id ? null : insight.id))}
             className={cn(
-              'rounded-[1rem] border border-border/70 bg-black/15 text-left transition-all duration-200',
+              'rounded-[0.95rem] border border-border/70 bg-black/15 text-left transition-all duration-200',
               insight.span === 'wide' ? 'md:col-span-2 xl:col-span-1' : '',
               expanded ? 'border-leather-400/35 bg-stone-900/92 shadow-glow' : 'hover:border-leather-400/30 hover:bg-stone-900/82'
             )}
             aria-expanded={expanded}
           >
-            <div className="flex min-h-[9.75rem] flex-col px-4 py-4">
+            <div className="flex min-h-[8.75rem] flex-col px-3.5 py-3.5">
               <div>
                 <p className={cn('text-[0.68rem] font-semibold uppercase tracking-[0.18em]', ACCENT_STYLES[insight.accent ?? 'default'])}>
                   {insight.kicker}
                 </p>
-                <h3 className="mt-3 text-[1rem] font-semibold leading-7 text-bone md:text-[1.06rem]">
+                <h3 className="mt-2.5 text-[0.95rem] font-semibold leading-6 text-bone md:text-[1rem]">
                   {insight.title}
                 </h3>
               </div>
 
-              <div className="mt-4 flex-1">
-                <p className="text-sm leading-6 text-bone-muted/88">
+              <div className="mt-3 flex-1">
+                <p className="text-[0.9rem] leading-6 text-bone-muted/88">
                   {insight.preview}
                 </p>
                 {expanded ? (
                   <div className="mt-3 border-t border-border/60 pt-3">
-                    <p className="text-sm leading-6 text-bone-muted">{insight.detail}</p>
+                    <p className="text-[0.9rem] leading-6 text-bone-muted">{insight.detail}</p>
                   </div>
                 ) : null}
               </div>
 
-              <span className="mt-4 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-bone-muted/55">
+              <span className="mt-3 text-[0.66rem] font-medium uppercase tracking-[0.16em] text-bone-muted/55">
                 {expanded ? 'Tap to collapse' : 'Tap for more'}
               </span>
             </div>

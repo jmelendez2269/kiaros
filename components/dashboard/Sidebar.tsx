@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, FileText, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
+import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, FileText, LockKeyhole, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { slugifyAreaName } from '@/lib/areas'
 import { cn } from '@/lib/utils'
@@ -112,6 +112,7 @@ const DESKTOP_SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
 
 interface SidebarProps {
   categories: CategorySummary[]
+  hasOracleAccess?: boolean
 }
 
 function NavigationContent({
@@ -120,27 +121,29 @@ function NavigationContent({
   isCollapsed,
   onNavigate,
   onToggleDesktop,
+  hasOracleAccess = false,
 }: {
   pathname: string
   categories: CategorySummary[]
   isCollapsed: boolean
   onNavigate?: () => void
   onToggleDesktop?: () => void
+  hasOracleAccess?: boolean
 }) {
   const isLinkActive = (href: string) => (href === '/areas' ? pathname === href || pathname.startsWith('/areas/') : pathname === href)
 
   return (
     <>
-      <div className={cn('border-b border-border/80 pb-4 pt-5', isCollapsed ? 'px-3' : 'px-5')}>
+      <div className={cn('border-b border-border/70 pb-3.5 pt-[1.125rem]', isCollapsed ? 'px-3' : 'px-[1.125rem]')}>
         <Link href="/dashboard" onClick={onNavigate} className="block">
           <div className={cn('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-leather-500/30 bg-stone-950/80 text-leather-300 shadow-panel">
-              <Orbit size={18} />
+            <div className="flex h-9 w-9 items-center justify-center rounded-[1rem] border border-leather-500/24 bg-stone-950/70 text-leather-300 shadow-panel">
+              <Orbit size={17} />
             </div>
             {!isCollapsed ? (
               <div>
-                <p className="font-serif text-[1.7rem] leading-none text-bone">Life OS</p>
-                <p className="mt-1 text-xs text-bone-muted">
+                <p className="font-serif text-[1.5rem] leading-none text-bone">Life OS</p>
+                <p className="mt-1 text-[11px] text-bone-muted">
                   <span className="text-leather-200">Kiaros</span>
                   <span className="text-bone-muted/70"> · Personalized planning</span>
                 </p>
@@ -154,7 +157,7 @@ function NavigationContent({
             type="button"
             onClick={onToggleDesktop}
             className={cn(
-              'mt-3 hidden h-10 items-center rounded-xl border border-border/80 bg-stone-950/75 text-bone-muted transition-colors hover:text-bone md:inline-flex',
+              'mt-3 hidden h-9 items-center rounded-xl border border-border/70 bg-stone-950/65 text-bone-muted transition-colors hover:text-bone md:inline-flex',
               isCollapsed ? 'w-full justify-center' : 'w-full justify-between px-3'
             )}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -166,50 +169,53 @@ function NavigationContent({
         ) : null}
       </div>
 
-      <div className={cn('py-4', isCollapsed ? 'px-2.5' : 'px-3.5')}>
-        <div className="space-y-1.5">
+      <div className={cn('py-3.5', isCollapsed ? 'px-2.5' : 'px-3')}>
+        <div className="space-y-1">
           {NAV_LINKS.map(({ href, label, detailLead, detailTrail, icon: Icon, tone }) => {
+            const isOracleLocked = href === '/oracle' && !hasOracleAccess
+            const linkHref = isOracleLocked ? '/pricing' : href
+            const DisplayIcon = isOracleLocked ? LockKeyhole : Icon
             const active = isLinkActive(href)
             return (
               <Link
                 key={href}
-                href={href}
+                href={linkHref}
                 onClick={onNavigate}
-                title={isCollapsed ? label : undefined}
+                title={isCollapsed ? (isOracleLocked ? 'Upgrade Oracle' : label) : undefined}
                 className={cn(
-                  'group flex rounded-2xl border transition-all duration-200',
-                  isCollapsed ? 'justify-center px-2 py-3' : 'items-center gap-3 px-3 py-2.5',
+                  'group flex rounded-[1rem] border transition-all duration-200',
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'items-center gap-2.5 px-2.5 py-2.5',
                   active
                     ? tone.active
-                    : 'border-transparent text-bone-muted hover:border-border/80 hover:bg-stone-850/80 hover:text-bone'
+                    : 'border-transparent text-bone-muted hover:border-border/70 hover:bg-stone-850/65 hover:text-bone'
                 )}
               >
                 {!isCollapsed ? (
                   <span
                     className={cn(
-                      'hidden h-10 w-1 shrink-0 rounded-full transition-opacity md:block',
+                      'hidden h-8 w-1 shrink-0 rounded-full transition-opacity md:block',
                       active ? tone.accent : 'bg-transparent opacity-0 group-hover:opacity-100'
                     )}
                   />
                 ) : null}
                 <div
                   className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-xl border transition-colors',
+                    'flex h-8 w-8 items-center justify-center rounded-[0.9rem] border transition-colors',
                     active
                       ? tone.icon
                       : 'border-border/60 bg-stone-950/65 text-bone-muted group-hover:text-bone'
                   )}
                 >
-                  <Icon size={17} />
+                  <DisplayIcon size={16} />
                 </div>
                 {!isCollapsed ? (
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{label}</p>
-                    <p className={cn('truncate text-[11px] leading-5', active ? 'text-bone/80' : 'text-bone-muted/70')}>
+                    <p className="truncate text-[0.92rem] font-semibold">{label}</p>
+                    <p className={cn('truncate text-[10px] leading-[1.125rem]', active ? 'text-bone/80' : 'text-bone-muted/70')}>
                       <span className={cn('font-medium', active ? tone.detail : 'text-bone/90')}>
-                        {detailLead}
+                        {isOracleLocked ? 'Upgrade' : detailLead}
                       </span>
-                      <span className="text-bone-muted/68"> {detailTrail}</span>
+                      <span className="text-bone-muted/68"> {isOracleLocked ? 'required' : detailTrail}</span>
                     </p>
                   </div>
                 ) : null}
@@ -219,22 +225,22 @@ function NavigationContent({
         </div>
 
         {!isCollapsed && categories.length > 0 && (
-          <div className="mt-8">
+          <div className="mt-6">
             <p className="shell-kicker mb-3 px-2 text-bone-muted/70">Areas</p>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {categories.slice(0, 6).map((category) => (
                 <Link
                   key={category.id}
                   href={`/areas/${slugifyAreaName(category.name)}`}
                   onClick={onNavigate}
                   className={cn(
-                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                    'flex items-center gap-3 rounded-[0.95rem] px-3 py-2 text-sm transition-colors',
                     pathname === `/areas/${slugifyAreaName(category.name)}`
                       ? 'bg-leather-500/15 text-bone'
-                      : 'text-bone-muted hover:bg-stone-850/70 hover:text-bone'
+                      : 'text-bone-muted hover:bg-stone-850/60 hover:text-bone'
                   )}
                 >
-                  <span className="w-5 text-center text-base leading-none">{category.icon_key ?? '-'}</span>
+                  <span className="w-5 text-center text-[0.95rem] leading-none">{category.icon_key ?? '-'}</span>
                   <span className="truncate">{category.name}</span>
                 </Link>
               ))}
@@ -243,7 +249,7 @@ function NavigationContent({
               <Link
                 href="/areas"
                 onClick={onNavigate}
-                className="inline-flex w-full items-center justify-center rounded-xl border border-leather-400/25 bg-leather-500/10 px-3 py-2.5 text-sm font-medium text-leather-200 transition-colors hover:border-leather-400/40 hover:bg-leather-500/16"
+                className="inline-flex w-full items-center justify-center rounded-[0.95rem] border border-leather-400/22 bg-leather-500/8 px-3 py-2.5 text-sm font-medium text-leather-200 transition-colors hover:border-leather-400/35 hover:bg-leather-500/14"
               >
                 Add areas
               </Link>
@@ -252,7 +258,7 @@ function NavigationContent({
         )}
       </div>
 
-      <div className={cn('mt-auto border-t border-border/80 py-4', isCollapsed ? 'px-3' : 'px-5')}>
+      <div className={cn('mt-auto border-t border-border/70 py-3.5', isCollapsed ? 'px-3' : 'px-[1.125rem]')}>
         <div className={cn('mb-1 flex items-center text-xs text-bone-muted', isCollapsed ? 'justify-center' : 'justify-between')}>
           {!isCollapsed ? (
             <div>
@@ -267,7 +273,7 @@ function NavigationContent({
   )
 }
 
-export function Sidebar({ categories }: SidebarProps) {
+export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
@@ -285,23 +291,24 @@ export function Sidebar({ categories }: SidebarProps) {
     <>
       <aside
         className={cn(
-          'hidden shrink-0 border-r border-border/80 bg-stone-900/85 bg-shell-glow transition-[width] duration-300 md:flex md:min-h-screen md:flex-col',
-          desktopCollapsed ? 'w-[5.5rem]' : 'w-[15.5rem]'
+          'hidden shrink-0 border-r border-border/70 bg-stone-900/72 bg-shell-glow transition-[width] duration-300 md:flex md:min-h-screen md:flex-col',
+          desktopCollapsed ? 'w-[5.25rem]' : 'w-[14.5rem]'
         )}
       >
         <NavigationContent
           pathname={pathname}
           categories={categories}
           isCollapsed={desktopCollapsed}
+          hasOracleAccess={hasOracleAccess}
           onToggleDesktop={() => setDesktopCollapsed((collapsed) => !collapsed)}
         />
       </aside>
 
-      <div className="sticky top-0 z-40 border-b border-border/80 bg-stone-900/90 px-4 py-4 backdrop-blur md:hidden">
+      <div className="sticky top-0 z-40 border-b border-border/70 bg-stone-900/88 px-4 py-4 backdrop-blur md:hidden">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-serif text-2xl text-bone">Life OS</p>
-            <p className="text-xs text-bone-muted">Kiaros planning shell</p>
+            <p className="font-serif text-[1.8rem] text-bone">Life OS</p>
+            <p className="text-[11px] text-bone-muted">Kiaros planning shell</p>
           </div>
           <button
             type="button"
@@ -317,7 +324,7 @@ export function Sidebar({ categories }: SidebarProps) {
       {mobileOpen && (
         <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden">
           <div className="h-full w-[88%] max-w-[22rem] border-r border-border/80 bg-stone-900/96">
-            <NavigationContent pathname={pathname} categories={categories} isCollapsed={false} onNavigate={() => setMobileOpen(false)} />
+            <NavigationContent pathname={pathname} categories={categories} isCollapsed={false} hasOracleAccess={hasOracleAccess} onNavigate={() => setMobileOpen(false)} />
           </div>
         </div>
       )}

@@ -2,15 +2,16 @@
 
 import { startTransition, useState } from "react";
 
-import { CommerceTierKey } from "@/lib/commerce/config";
+import { AccessPlan, CommerceTierKey } from "@/lib/commerce/config";
 
 interface Props {
   tierKey: CommerceTierKey;
+  accessPlan?: AccessPlan;
   className?: string;
   label?: string;
 }
 
-export function CheckoutButton({ tierKey, className, label = "Buy direct" }: Props) {
+export function CheckoutButton({ tierKey, accessPlan = "yearly", className, label = "Buy direct" }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -23,7 +24,7 @@ export function CheckoutButton({ tierKey, className, label = "Buy direct" }: Pro
         const response = await fetch("/api/commerce/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tierKey }),
+          body: JSON.stringify({ tierKey, accessPlan }),
         });
 
         const payload = (await response.json()) as { url?: string; error?: string };

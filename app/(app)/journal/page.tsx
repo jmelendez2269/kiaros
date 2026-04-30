@@ -13,7 +13,7 @@ export default async function JournalPage({
   const [entriesRes, oracleMemoryRes, journalEntriesRes, blueprintRes] = await Promise.all([
     supabase
       .from('journal_entries')
-      .select('id, title, body, entry_date, is_ritual, created_at, oracle_memory')
+      .select('id, title, body, entry_date, is_ritual, created_at, oracle_memory, lunar_phase, lunar_sign, transit_context')
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(12),

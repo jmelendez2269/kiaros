@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { getCommerceTier, parseCommerceTierKey } from "@/lib/commerce/config";
+import { getCommerceTier, parseAccessPlan, parseCommerceTierKey } from "@/lib/commerce/config";
 import { createCheckoutSession } from "@/lib/commerce/stripe";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
@@ -16,6 +16,7 @@ export async function POST(request: Request) {
 
   const payload = await request.json().catch(() => null);
   const tierKey = parseCommerceTierKey(payload?.tierKey);
+  const accessPlan = parseAccessPlan(payload?.accessPlan) ?? "yearly";
 
   if (!tierKey) {
     return NextResponse.json({ error: "Choose a valid tier first." }, { status: 400 });
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
   try {
     const session = await createCheckoutSession({
       tier,
-      accessPlan: "yearly",
+      accessPlan,
       clerkUserId: userId,
       customerEmail: profile.email,
     });
