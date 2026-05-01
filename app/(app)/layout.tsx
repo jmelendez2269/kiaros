@@ -42,11 +42,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-stone-950 bg-shell-glow text-bone">
-      <div className="flex min-h-screen">
+    <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
+      <div className="flex min-h-screen flex-col md:flex-row">
         <Sidebar categories={sidebarCategories} hasOracleAccess={access.hasOracleAccess} />
-        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <main className="flex-1 px-4 pb-8 pt-5 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
+          <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
             <div className="mx-auto w-full max-w-[1480px]">
               {children}
             </div>

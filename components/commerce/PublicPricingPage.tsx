@@ -951,19 +951,36 @@ export function PublicPricingPage({
                   ) : null}
                 </div>
 
-                <div className="mt-6 flex flex-wrap items-end gap-4">
-                  <div>
+                <div className="mt-6 grid gap-3 sm:grid-cols-3 sm:items-stretch">
+                  <div className="py-3">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/70">
+                      Monthly
+                    </p>
                     <p className="text-3xl font-semibold text-bone">
                       {formatUsd(tier.monthlyPriceCents)}
                     </p>
-                    <p className="text-sm text-bone-muted">Monthly direct access</p>
+                    <p className="text-sm text-bone-muted">Direct access</p>
                   </div>
-                  <div className="text-sm leading-6 text-bone-muted">
-                    <p>Annual: {formatUsd(tier.annualPriceCents)}</p>
-                    <p className="text-leather-300/80">Save {formatUsd(annualSavings)} per year</p>
+                  <div className="rounded-[1rem] border border-leather-300/45 bg-leather-300/12 px-4 py-3 shadow-[0_0_24px_rgba(216,180,151,0.08)]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-leather-200">
+                        Annual direct
+                      </p>
+                      <span className="rounded-full bg-leather-300 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.12em] text-stone-950">
+                        Best value
+                      </span>
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold text-bone">
+                      {formatUsd(tier.annualPriceCents)}
+                    </p>
+                    <p className="text-sm font-medium text-leather-200">
+                      Save {formatUsd(annualSavings)} per year
+                    </p>
                   </div>
-                  <div className="text-sm leading-6 text-bone-muted">
-                    <p>Etsy annual: {formatUsd(tier.etsyPriceCents)}</p>
+                  <div className="py-3 text-sm leading-6 text-bone-muted">
+                    <p className="font-medium text-bone-muted">
+                      Etsy annual: {formatUsd(tier.etsyPriceCents)}
+                    </p>
                     <p className="text-bone-muted/70">
                       Marketplace convenience adds {formatUsd(etsyDelta)}
                     </p>

@@ -287,6 +287,30 @@ export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
     window.localStorage.setItem(DESKTOP_SIDEBAR_STORAGE_KEY, desktopCollapsed ? 'true' : 'false')
   }, [desktopCollapsed])
 
+  useEffect(() => {
+    if (!mobileOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileOpen])
+
+  useEffect(() => {
+    if (!mobileOpen) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setMobileOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mobileOpen])
+
   return (
     <>
       <aside
@@ -304,7 +328,7 @@ export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
         />
       </aside>
 
-      <div className="sticky top-0 z-40 border-b border-border/70 bg-stone-900/88 px-4 py-4 backdrop-blur md:hidden">
+      <div className="sticky top-0 z-50 w-full border-b border-border/70 bg-stone-900/88 px-4 py-4 backdrop-blur md:hidden">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-serif text-[1.8rem] text-bone">Life OS</p>
@@ -314,7 +338,9 @@ export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
             type="button"
             onClick={() => setMobileOpen((open) => !open)}
             className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border/80 bg-stone-950/80 text-bone"
-            aria-label="Toggle navigation"
+            aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -322,8 +348,18 @@ export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
       </div>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden">
-          <div className="h-full w-[88%] max-w-[22rem] border-r border-border/80 bg-stone-900/96">
+        <div
+          className="fixed inset-x-0 bottom-0 top-[5.5rem] z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileOpen(false)}
+        >
+          <div
+            id="mobile-navigation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation"
+            className="flex h-full w-[min(22rem,88vw)] flex-col overflow-y-auto border-r border-border/80 bg-stone-900/96 pb-[env(safe-area-inset-bottom)]"
+            onClick={(event) => event.stopPropagation()}
+          >
             <NavigationContent pathname={pathname} categories={categories} isCollapsed={false} hasOracleAccess={hasOracleAccess} onNavigate={() => setMobileOpen(false)} />
           </div>
         </div>
