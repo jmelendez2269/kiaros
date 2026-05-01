@@ -17,9 +17,9 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "Kiaros",
+  title: "Kairos — Your 2026 planner, built from your natal chart",
   description:
-    "A personalized planning system built around your goals, timing, and natural cycles.",
+    "A personalized year-long blueprint built from your real natal chart and the actual planetary transits of your year.",
 };
 
 export default async function RootLayout({

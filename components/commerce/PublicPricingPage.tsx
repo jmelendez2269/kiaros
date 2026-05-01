@@ -164,34 +164,69 @@ export function PublicPricingPage({
 }: Props) {
   const isFullPage = mode === "pricing";
 
+  const navLinks: { href: string; label: string }[] = [
+    { href: "#how-it-works", label: "How it works" },
+    { href: "#demo", label: "Demo" },
+    { href: "#oracle", label: "Oracle" },
+    { href: "#tiers", label: "Pricing" },
+  ];
+
   return (
     <div className="page-wrapper">
-      <header className="container flex items-center justify-between py-5">
-        <Link href="/" className="font-display text-xl text-bone tracking-wide">
-          Kairos
-        </Link>
-        <nav className="flex items-center gap-4 text-sm">
-          {isSignedIn ? (
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-sm font-semibold text-stone-950"
-            >
-              Go to dashboard
-            </Link>
-          ) : (
-            <>
-              <Link href="/sign-in" className="text-bone-muted transition-colors hover:text-bone">
-                Sign in
-              </Link>
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-stone-950/70 backdrop-blur-md supports-[backdrop-filter]:bg-stone-950/55">
+        <div className="container flex items-center justify-between gap-6 py-4">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-display text-xl tracking-wide text-bone transition-colors hover:text-leather-200"
+          >
+            <span
+              aria-hidden
+              className="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-br from-leather-300 to-plum-300 shadow-[0_0_12px_2px_rgba(216,180,151,0.35)]"
+            />
+            Kairos
+          </Link>
+
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-7 text-sm text-bone-muted md:flex"
+          >
+            {navLinks.map((link) => (
               <Link
-                href="/sign-up"
-                className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-sm font-semibold text-stone-950"
+                key={link.label}
+                href={link.href}
+                className="transition-colors hover:text-bone"
               >
-                Create account
+                {link.label}
               </Link>
-            </>
-          )}
-        </nav>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            {isSignedIn ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90"
+              >
+                Go to dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="hidden text-sm text-bone-muted transition-colors hover:text-bone sm:inline-flex"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/sign-up"
+                  className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90"
+                >
+                  Create account
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </header>
 
       <div className="container pb-14">
@@ -300,7 +335,7 @@ export function PublicPricingPage({
         </section>
 
         {/* ── How the engine works ─────────────────────────────────────────── */}
-        <section className="mt-5 shell-panel p-6 md:p-8">
+        <section id="how-it-works" className="mt-5 scroll-mt-24 shell-panel p-6 md:p-8">
           <p className="shell-kicker mb-3">How it works</p>
           <h2 className="shell-section-title max-w-3xl">
             Your birth data and your answers go through the same engine — together.
@@ -390,7 +425,7 @@ export function PublicPricingPage({
         </section>
 
         {/* ── Demo Planner ─────────────────────────────────────────────────── */}
-        <section id="demo" className="mt-5 shell-panel p-6 md:p-8">
+        <section id="demo" className="mt-5 scroll-mt-24 shell-panel p-6 md:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="max-w-3xl">
               <p className="shell-kicker mb-3">Full demo planner</p>
@@ -697,7 +732,7 @@ export function PublicPricingPage({
         </section>
 
         {/* ── Journal section ───────────────────────────────────────────────── */}
-        <section className="mt-5 shell-panel p-6 md:p-8">
+        <section id="journal" className="mt-5 scroll-mt-24 shell-panel p-6 md:p-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:items-start">
             <div>
               <p className="shell-kicker mb-3">The journal</p>
@@ -747,7 +782,7 @@ export function PublicPricingPage({
         </section>
 
         {/* ── Oracle section ────────────────────────────────────────────────── */}
-        <section className="mt-5 shell-panel p-6 md:p-8">
+        <section id="oracle" className="mt-5 scroll-mt-24 shell-panel p-6 md:p-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr] lg:items-start">
             <div>
               <p className="shell-kicker mb-3">The Oracle</p>
@@ -887,7 +922,7 @@ export function PublicPricingPage({
         </section>
 
         {/* ── Tiers ────────────────────────────────────────────────────────── */}
-        <section id="tiers" className="mt-8 grid gap-5 lg:grid-cols-2">
+        <section id="tiers" className="mt-8 scroll-mt-24 grid gap-5 lg:grid-cols-2">
           {COMMERCE_TIERS.map((tier) => {
             const annualSavings = tier.monthlyPriceCents * 12 - tier.annualPriceCents;
             const etsyDelta = tier.etsyPriceCents - tier.annualPriceCents;
@@ -1111,6 +1146,58 @@ export function PublicPricingPage({
           </section>
         )}
       </div>
+
+      <footer className="mt-10 border-t border-border/50 bg-stone-950/40">
+        <div className="container flex flex-col gap-6 py-8 md:flex-row md:items-start md:justify-between">
+          <div className="max-w-sm">
+            <Link href="/" className="flex items-center gap-2 font-display text-lg text-bone">
+              <span
+                aria-hidden
+                className="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-br from-leather-300 to-plum-300 shadow-[0_0_12px_2px_rgba(216,180,151,0.35)]"
+              />
+              Kairos
+            </Link>
+            <p className="mt-3 text-sm leading-6 text-bone-muted">
+              Personalized yearly planning, built from your real natal chart and the actual
+              planetary transits of your year.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm sm:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <p className="shell-eyebrow mb-1">Product</p>
+              <Link href="#how-it-works" className="text-bone-muted transition-colors hover:text-bone">How it works</Link>
+              <Link href="#demo" className="text-bone-muted transition-colors hover:text-bone">Demo</Link>
+              <Link href="#oracle" className="text-bone-muted transition-colors hover:text-bone">Oracle</Link>
+              <Link href="#tiers" className="text-bone-muted transition-colors hover:text-bone">Pricing</Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="shell-eyebrow mb-1">Account</p>
+              {isSignedIn ? (
+                <Link href="/dashboard" className="text-bone-muted transition-colors hover:text-bone">Dashboard</Link>
+              ) : (
+                <>
+                  <Link href="/sign-in" className="text-bone-muted transition-colors hover:text-bone">Sign in</Link>
+                  <Link href="/sign-up" className="text-bone-muted transition-colors hover:text-bone">Create account</Link>
+                </>
+              )}
+              <Link href="/activate" className="text-bone-muted transition-colors hover:text-bone">Activate Etsy purchase</Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="shell-eyebrow mb-1">Legal</p>
+              <Link href="/privacy" className="text-bone-muted transition-colors hover:text-bone">Privacy</Link>
+              <Link href="/terms" className="text-bone-muted transition-colors hover:text-bone">Terms</Link>
+              <Link href="/contact" className="text-bone-muted transition-colors hover:text-bone">Contact</Link>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-border/40">
+          <div className="container flex flex-col gap-2 py-4 text-xs text-bone-muted/70 sm:flex-row sm:items-center sm:justify-between">
+            <p>© {new Date().getFullYear()} Kairos. Built with intention.</p>
+            <p className="italic">The planets move on their own schedule. Your year should too.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
