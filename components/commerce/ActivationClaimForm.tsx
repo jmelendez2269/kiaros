@@ -37,6 +37,8 @@ type EntitlementPreview = {
   oracleEnabled: boolean;
 };
 
+const SUPPORT_EMAIL = "support@kairosplanner.xyz";
+
 interface Props {
   initialClaimToken?: string;
   isSignedIn: boolean;
@@ -206,6 +208,14 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
             {completionMessage}
           </p>
         ) : null}
+
+        <p className="mt-5 text-sm leading-6 text-bone-muted">
+          Need help activating? Email{" "}
+          <a className="text-bone transition-colors hover:text-leather-300" href={`mailto:${SUPPORT_EMAIL}`}>
+            {SUPPORT_EMAIL}
+          </a>{" "}
+          with your Etsy order number.
+        </p>
       </section>
 
       <aside className="grid gap-5">
