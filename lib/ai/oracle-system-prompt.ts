@@ -33,6 +33,10 @@ export interface OraclePromptContext {
   >[]
   dailyLogs: Pick<Tables<'daily_logs'>, 'log_date' | 'energy_level' | 'mood_tag' | 'notes'>[]
   journalEntries: Pick<Tables<'journal_entries'>, 'entry_date' | 'title' | 'body' | 'mood_tag' | 'is_ritual'>[]
+  oracleCaptures: Pick<
+    Tables<'oracle_captures'>,
+    'captured_text' | 'source_role' | 'include_in_insights' | 'include_in_planner' | 'created_at'
+  >[]
   patternInsights: Pick<
     Tables<'user_pattern_insights'>,
     'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
@@ -395,6 +399,15 @@ function buildLayer5(ctx: OraclePromptContext): string {
       if (entry.is_ritual) parts.push('ritual')
       if (summary) parts.push(summary)
       lines.push(`- ${parts.join(' | ')}`)
+    })
+  }
+
+  if (ctx.oracleCaptures.length > 0) {
+    lines.push('\nOracle captures selected for insight context:')
+    ctx.oracleCaptures.forEach((capture) => {
+      const parts = [capture.created_at.slice(0, 10), summarizeText(capture.captured_text, 140)]
+      if (capture.include_in_planner) parts.push('also marked for planner')
+      lines.push(`- ${parts.filter(Boolean).join(' | ')}`)
     })
   }
 

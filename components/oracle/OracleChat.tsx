@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { OracleMessage } from './OracleMessage'
 import { OracleInput } from './OracleInput'
 
@@ -20,12 +20,45 @@ export function OracleChat({ today }: Props) {
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/oracle/chat' }), [])
 
   const { messages, sendMessage, status, error } = useChat({ transport })
+  const [captureError, setCaptureError] = useState<string | null>(null)
 
   const isLoading = status === 'streaming' || status === 'submitted'
   const lastRole = messages[messages.length - 1]?.role
 
   function handleSend(text: string) {
+    setCaptureError(null)
     sendMessage({ text })
+  }
+
+  async function handleCapture(capture: {
+    capturedText: string
+    sourceMessageId: string
+    sourceRole: 'user' | 'assistant' | 'system'
+    sourceExcerpt: string
+    includeInInsights: boolean
+    includeInPlanner: boolean
+  }) {
+    setCaptureError(null)
+
+    const response = await fetch('/api/oracle/captures', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        captured_text: capture.capturedText,
+        source_message_id: capture.sourceMessageId,
+        source_role: capture.sourceRole,
+        source_excerpt: capture.sourceExcerpt,
+        include_in_insights: capture.includeInInsights,
+        include_in_planner: capture.includeInPlanner,
+      }),
+    })
+
+    const payload = (await response.json()) as { error?: string }
+    if (!response.ok) {
+      const message = payload.error || 'Failed to save Oracle capture.'
+      setCaptureError(message)
+      throw new Error(message)
+    }
   }
 
   return (
@@ -64,7 +97,7 @@ export function OracleChat({ today }: Props) {
               </div>
             </div>
           ) : (
-            messages.map((message) => <OracleMessage key={message.id} message={message} />)
+            messages.map((message) => <OracleMessage key={message.id} message={message} onCapture={handleCapture} />)
           )}
 
           {isLoading && lastRole === 'user' && (
@@ -80,6 +113,12 @@ export function OracleChat({ today }: Props) {
               {error.message || 'Something went wrong reaching the Oracle. Try again in a moment.'}
             </div>
           )}
+
+          {captureError ? (
+            <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
+              {captureError}
+            </div>
+          ) : null}
         </div>
 
         <OracleInput onSend={handleSend} isLoading={isLoading} />

@@ -32,6 +32,7 @@ interface BlueprintPromptContext {
     Tables<'user_pattern_insights'>,
     'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
   >[]
+  oraclePlannerCaptures: Pick<Tables<'oracle_captures'>, 'captured_text' | 'created_at' | 'include_in_insights'>[]
   yearVision: string | null
   wordOfYear: string | null
   whatToRelease: string | null
@@ -150,6 +151,25 @@ function journalPatternsToText(patterns: BlueprintPromptContext['journalPatterns
     .join('\n')
 }
 
+function compactText(value: string, maxLength = 180): string {
+  const normalized = value.replace(/\s+/g, ' ').trim()
+  return normalized.length <= maxLength ? normalized : `${normalized.slice(0, maxLength - 1)}...`
+}
+
+function oraclePlannerCapturesToText(captures: BlueprintPromptContext['oraclePlannerCaptures']): string {
+  if (captures.length === 0) {
+    return '  No Oracle captures have been marked for planner context yet.'
+  }
+
+  return captures
+    .map((capture) => {
+      const date = capture.created_at.slice(0, 10)
+      const alsoInsights = capture.include_in_insights ? ' Also marked for insight memory.' : ''
+      return `  ${date}: ${compactText(capture.captured_text)}${alsoInsights}`
+    })
+    .join('\n')
+}
+
 function generateWeekList(startDate: string, year: number): Array<{ weekNumber: number; start: string; end: string }> {
   const weeks: Array<{ weekNumber: number; start: string; end: string }> = []
   const start = new Date(`${startDate}T00:00:00Z`)
@@ -192,6 +212,7 @@ export function assembleBlueprintUserPrompt(ctx: BlueprintPromptContext): string
     ephemeris,
     goals,
     journalPatterns,
+    oraclePlannerCaptures,
     yearVision,
     wordOfYear,
     whatToRelease,
@@ -251,6 +272,11 @@ OBSERVED JOURNAL PATTERNS
 ${journalPatternsToText(journalPatterns)}
 
 ===========================================================
+ORACLE CAPTURES MARKED FOR PLANNER CONTEXT
+===========================================================
+${oraclePlannerCapturesToText(oraclePlannerCaptures)}
+
+===========================================================
 WEEK GRID (for weekly blueprint)
 ═══════════════════════════════════════════
 ${weekListText}
@@ -277,7 +303,7 @@ Rules:
 10. Do not make identity claims or promises of outcomes. Speak as if each theme is a timely suggestion, not a command.
 11. Never imply the user must act during a pushPeriods window. Frame those periods as invitations, openings, or supportive currents they may choose to engage with.
 12. Do not omit early-year months or weeks even if the user signs up later in the year. The output is always a full-year blueprint.
-13. Use observed journal patterns as personalization evidence when they are relevant to matching transits, moons, retrogrades, or rest/push choices. Do not overfit them or present them as fate; use them as lived-history hints.
+13. Use observed journal patterns and Oracle captures marked for planner context as personalization evidence when they are relevant to matching transits, moons, retrogrades, or rest/push choices. Do not overfit them or present them as fate; use them as lived-history hints.
 
 JSON schema:
 {
