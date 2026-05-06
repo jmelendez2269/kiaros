@@ -16,6 +16,15 @@ type RecentJournalEntry = {
   created_at: string | null
 }
 
+type OracleCapture = {
+  id: string
+  captured_text: string
+  source_role: string
+  include_in_insights: boolean
+  include_in_planner: boolean
+  created_at: string
+}
+
 interface JournalComposerProps {
   initialPrompt: string
   initialArea: string
@@ -28,6 +37,7 @@ interface JournalComposerProps {
   oracleMemoryCount: number
   blueprintYear: number | null
   recentEntries: RecentJournalEntry[]
+  oracleCaptures: OracleCapture[]
 }
 
 function todayISO() {
@@ -52,6 +62,7 @@ export function JournalComposer({
   oracleMemoryCount,
   blueprintYear,
   recentEntries,
+  oracleCaptures,
 }: JournalComposerProps) {
   const [entries, setEntries] = useState(recentEntries)
   const [entryCount, setEntryCount] = useState(journalEntriesCount)
@@ -382,6 +393,50 @@ export function JournalComposer({
                 composer.
               </div>
             )}
+          </div>
+
+          <div className="mt-8 border-t border-border/70 pt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="shell-kicker">Oracle captures</p>
+                <h3 className="mt-2 text-[1.25rem] font-semibold text-bone">Conversation fragments</h3>
+                <p className="mt-2 text-sm leading-7 text-bone-muted">
+                  Highlighted Oracle moments stay separate from journal entries, and anything marked for insights is
+                  included in future Oracle context.
+                </p>
+              </div>
+              <span className="shell-pill">{oracleCaptures.length} loaded</span>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {oracleCaptures.length > 0 ? (
+                oracleCaptures.map((capture) => (
+                  <div key={capture.id} className="rounded-[1rem] border border-plum-400/25 bg-plum-400/8 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs uppercase tracking-[0.16em] text-bone-muted/55">
+                        {new Date(capture.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {capture.include_in_insights ? <span className="shell-pill">Insights</span> : null}
+                        {capture.include_in_planner ? <span className="shell-pill">Planner</span> : null}
+                        {!capture.include_in_insights && !capture.include_in_planner ? (
+                          <span className="shell-pill">Saved</span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <p className="mt-3 text-sm leading-7 text-bone-muted">{truncate(capture.captured_text, 220)}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm leading-7 text-bone-muted">
+                  No Oracle captures yet. In a conversation, highlight the text you want to keep and use Capture.
+                </div>
+              )}
+            </div>
           </div>
         </article>
       </section>

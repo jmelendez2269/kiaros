@@ -119,6 +119,15 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       .limit(12)
     log(`journal patterns loaded (${journalPatterns?.length ?? 0})`)
 
+    const { data: oraclePlannerCaptures } = await admin
+      .from('oracle_captures')
+      .select('captured_text, created_at, include_in_insights')
+      .eq('user_id', userId)
+      .eq('include_in_planner', true)
+      .order('created_at', { ascending: false })
+      .limit(12)
+    log(`oracle planner captures loaded (${oraclePlannerCaptures?.length ?? 0})`)
+
     // ── 3. Resolve plan_year and full-year date range ─────────────────
     const startDate = derivePlanYearStart(planYear)
 
@@ -188,6 +197,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       ephemeris,
       goals: goals ?? [],
       journalPatterns: journalPatterns ?? [],
+      oraclePlannerCaptures: oraclePlannerCaptures ?? [],
       yearVision: profile.year_vision ?? null,
       wordOfYear: profile.word_of_year ?? null,
       whatToRelease: profile.what_to_release ?? null,

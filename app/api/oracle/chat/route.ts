@@ -74,6 +74,7 @@ export async function POST(req: Request) {
       curriculumSessionsRes,
       dailyLogsRes,
       journalEntriesRes,
+      oracleCapturesRes,
       patternInsightsRes,
       quarterlyReviewsRes,
       entitlementsRes,
@@ -114,6 +115,12 @@ export async function POST(req: Request) {
         .eq('oracle_memory', true)
         .order('entry_date', { ascending: false })
         .limit(5),
+      supabase
+        .from('oracle_captures')
+        .select('captured_text, source_role, include_in_insights, include_in_planner, created_at')
+        .eq('include_in_insights', true)
+        .order('created_at', { ascending: false })
+        .limit(8),
       supabase
         .from('user_pattern_insights')
         .select('pattern_type, pattern_key, sample_size, confidence, first_seen, last_seen, summary, evidence')
@@ -167,6 +174,10 @@ export async function POST(req: Request) {
       journalEntries: (journalEntriesRes.data ?? []) as Pick<
         Tables<'journal_entries'>,
         'entry_date' | 'title' | 'body' | 'mood_tag' | 'is_ritual'
+      >[],
+      oracleCaptures: (oracleCapturesRes.data ?? []) as Pick<
+        Tables<'oracle_captures'>,
+        'captured_text' | 'source_role' | 'include_in_insights' | 'include_in_planner' | 'created_at'
       >[],
       patternInsights: (patternInsightsRes.data ?? []) as Pick<
         Tables<'user_pattern_insights'>,
