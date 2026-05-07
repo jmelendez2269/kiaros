@@ -4,6 +4,7 @@ import { createServerSupabase } from '@/lib/supabase/server'
 import { MoonPhaseIcon } from '@/components/shared/MoonPhaseIcon'
 import { slugifyAreaName } from '@/lib/areas'
 import type { BlueprintOutput, EphemerisDay, MonthBlueprint, NatalChart, WeekBlueprint, YearEphemeris } from '@/types/blueprint'
+import type { Tables } from '@/types/database'
 
 type GoalCategorySummary = {
   id: string
@@ -16,6 +17,17 @@ type GoalCategorySummary = {
 type SabianMoonSymbol = {
   symbol: string
   degreeLabel: string
+}
+
+type PatternInsightSummary = Pick<
+  Tables<'user_pattern_insights'>,
+  'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'summary' | 'evidence'
+>
+
+type DailyInsightEvidence = {
+  label: string
+  value: string
+  detail: string
 }
 
 function todayISO(): string {
@@ -96,6 +108,12 @@ function monthForWeek(months: MonthBlueprint[], week: WeekBlueprint | null): Mon
   if (!week) return null
   const monthNumber = Number.parseInt(week.startDate.slice(5, 7), 10)
   return months.find((month) => month.month === monthNumber) ?? null
+}
+
+function quarterForDate(quarters: BlueprintOutput['quarters'], today: string) {
+  const monthNumber = Number.parseInt(today.slice(5, 7), 10)
+  const quarterNumber = Math.ceil(monthNumber / 3)
+  return quarters.find((quarter) => quarter.quarter === quarterNumber) ?? null
 }
 
 function clampSignal(value: number) {
@@ -233,6 +251,230 @@ function buildActiveTransitChips(ephemeris: EphemerisDay | null) {
     }))
 }
 
+function transitPhrase(transit: EphemerisDay['transits'][number] | null) {
+  if (!transit) {
+    return {
+      title: 'Let the day reveal its usable pattern',
+      detail: 'No exact personal transit is leading the day, so the moon carries more of the practical guidance.',
+      tone: 'orientation',
+    }
+  }
+
+  const planetTone: Record<string, string> = {
+    Jupiter: 'growth',
+    Saturn: 'structure',
+    Uranus: 'change',
+    Neptune: 'imagination',
+    Pluto: 'deep pattern work',
+  }
+  const aspectTone: Record<string, string> = {
+    trine: 'support',
+    sextile: 'opportunity',
+    conjunction: 'concentration',
+    square: 'friction',
+    opposition: 'perspective',
+  }
+
+  return {
+    title: `${planetTone[transit.planet] ?? transit.planet.toLowerCase()} through ${aspectTone[transit.aspect] ?? transit.aspect}`,
+    detail: `${transit.planet} ${transit.aspect} natal ${transit.natalPlanet} is the tightest active personal transit at ${transit.orb.toFixed(1)} deg orb.`,
+    tone: aspectTone[transit.aspect] ?? 'pattern',
+  }
+}
+
+function buildPatternKey(transit: EphemerisDay['transits'][number]) {
+  return `${transit.planet}:${transit.aspect}:${transit.natalPlanet}`
+}
+
+function formatPatternLabel(pattern: PatternInsightSummary) {
+  if (pattern.pattern_type === 'lunar_phase') return `${pattern.pattern_key} Moon`
+  if (pattern.pattern_type === 'lunar_sign') return `Moon in ${pattern.pattern_key}`
+  if (pattern.pattern_type === 'retrograde') return `${pattern.pattern_key} retrograde`
+  return pattern.pattern_key.replace(/:/g, ' ')
+}
+
+function findRelevantPatternInsight(ephemeris: EphemerisDay | null, patterns: PatternInsightSummary[]) {
+  if (!ephemeris || patterns.length === 0) return null
+
+  const activeAspectKeys = new Set(ephemeris.transits.map(buildPatternKey))
+  const activeRetrogrades = new Set<string>(ephemeris.retrogrades)
+  const lunarPhase = phaseLabel(ephemeris.moon.lunarPhase)
+
+  return patterns
+    .filter((pattern) => {
+      if (pattern.confidence < 0.2 || pattern.sample_size < 1) return false
+      if (pattern.pattern_type === 'aspect') return activeAspectKeys.has(pattern.pattern_key)
+      if (pattern.pattern_type === 'lunar_phase') return pattern.pattern_key === lunarPhase
+      if (pattern.pattern_type === 'lunar_sign') return pattern.pattern_key === ephemeris.moon.sign
+      if (pattern.pattern_type === 'retrograde') return activeRetrogrades.has(pattern.pattern_key)
+      return false
+    })
+    .sort((a, b) => b.confidence - a.confidence || b.sample_size - a.sample_size)[0] ?? null
+}
+
+function chooseDailyTitle(params: {
+  ephemeris: EphemerisDay
+  tightestTransit: EphemerisDay['transits'][number] | null
+  pattern: PatternInsightSummary | null
+}) {
+  const { ephemeris, tightestTransit, pattern } = params
+  const sign = ephemeris.moon.sign
+  const phase = ephemeris.moon.lunarPhase
+  const planet = tightestTransit?.planet
+  const aspect = tightestTransit?.aspect
+  const choose = (options: string[]) => options[Number.parseInt(ephemeris.date.slice(8, 10), 10) % options.length]
+
+  if (pattern) {
+    if (pattern.pattern_type === 'aspect') {
+      return choose([
+        'Work with a pattern you have evidence for',
+        'Let the familiar signal become useful',
+        'Meet the repeating pattern with new choices',
+      ])
+    }
+    if (pattern.pattern_type === 'lunar_phase') {
+      return choose([
+        `Let the ${phaseLabel(phase).toLowerCase()} rhythm teach you again`,
+        `Use what this ${phaseLabel(phase).toLowerCase()} moon keeps revealing`,
+        `Return to the evidence this moon has gathered`,
+      ])
+    }
+    if (pattern.pattern_type === 'lunar_sign') {
+      return choose([
+        `Return to what ${sign} keeps showing you`,
+        `Let the ${sign} pattern become practical`,
+        `Use the ${sign} evidence already in your life`,
+      ])
+    }
+  }
+
+  if (phase === 'new') {
+    return choose([
+      `Begin from the ${sign} part of you`,
+      `Plant the ${sign} intention quietly`,
+      `Let ${sign} name the clean beginning`,
+    ])
+  }
+  if (phase === 'full') {
+    return choose([
+      `Let the ${sign} signal come into view`,
+      `Notice what ${sign} has made visible`,
+      `Hold the full picture with ${sign} clarity`,
+    ])
+  }
+  if (phase === 'last-quarter') {
+    return choose([
+      `Edit the plan with ${sign} honesty`,
+      `Release what ${sign} no longer needs to carry`,
+      `Let ${sign} simplify the next move`,
+    ])
+  }
+  if (phase === 'first-quarter') {
+    return choose([
+      `Choose the ${sign} step that proves it`,
+      `Let ${sign} turn intention into motion`,
+      `Make the brave move ${sign} can stand behind`,
+    ])
+  }
+  if (phase === 'waning-gibbous') {
+    return choose([
+      `Turn the ${sign} lesson into something usable`,
+      `Share the ${sign} truth with practical care`,
+      `Let ${sign} give the week its working shape`,
+    ])
+  }
+  if (phase === 'waxing-gibbous') {
+    return choose([
+      `Refine the ${sign} shape before it is seen`,
+      `Let ${sign} improve what is almost ready`,
+      `Keep building the ${sign} version that can hold`,
+    ])
+  }
+  if (phase === 'waning-crescent') {
+    return choose([
+      `Clear room for the next ${sign} beginning`,
+      `Let ${sign} close the loop gently`,
+      `Rest the part of you that ${sign} has been carrying`,
+    ])
+  }
+  if (phase === 'waxing-crescent') {
+    return choose([
+      `Give the ${sign} beginning a little traction`,
+      `Protect the small ${sign} signal`,
+      `Let ${sign} help the first step take root`,
+    ])
+  }
+
+  if (planet === 'Saturn' && (aspect === 'trine' || aspect === 'sextile')) return 'Give the work a shape it can keep'
+  if (planet === 'Neptune' && (aspect === 'trine' || aspect === 'sextile')) return 'Let the softer vision find a form'
+  if (planet === 'Jupiter' && (aspect === 'trine' || aspect === 'sextile')) return 'Grow through the door already opening'
+  if (planet === 'Uranus') return 'Make room for the useful disruption'
+  if (planet === 'Pluto') return 'Meet the deeper pattern with steadiness'
+
+  return 'Let the day reveal its usable pattern'
+}
+
+function buildDailyInsight(params: {
+  ephemeris: EphemerisDay | null
+  daySignals: ReturnType<typeof computeDaySignals> | null
+  patternInsights: PatternInsightSummary[]
+}) {
+  const { ephemeris, daySignals, patternInsights } = params
+
+  if (!ephemeris || !daySignals) {
+    return {
+      label: 'Daily orientation',
+      title: 'Listen before you organize the day',
+      description: "Today's personal sky data is still loading, so this space is staying open rather than guessing.",
+      evidence: [] as DailyInsightEvidence[],
+    }
+  }
+
+  const tightestTransit = ephemeris.transits.length > 0
+    ? [...ephemeris.transits].sort((a, b) => a.orb - b.orb)[0]
+    : null
+  const pattern = findRelevantPatternInsight(ephemeris, patternInsights)
+  const transit = transitPhrase(tightestTransit)
+  const title = chooseDailyTitle({ ephemeris, tightestTransit, pattern })
+  const lunarDescription = buildLunarMessage(ephemeris)
+  const patternDescription = pattern
+    ? `Your opted-in journal patterns also recognize ${formatPatternLabel(pattern).toLowerCase()} across ${pattern.sample_size} ${pattern.sample_size === 1 ? 'entry' : 'entries'}.`
+    : 'No matching opted-in journal pattern is leading this reading yet, so the headline stays grounded in today\'s sky.'
+
+  const evidence: DailyInsightEvidence[] = [
+    {
+      label: 'Moon',
+      value: `${phaseLabel(ephemeris.moon.lunarPhase)} in ${ephemeris.moon.sign}`,
+      detail: `${Math.round(ephemeris.moon.illumination * 100)}% illuminated. ${lunarDescription}`,
+    },
+    {
+      label: 'Transit tone',
+      value: transit.title,
+      detail: transit.detail,
+    },
+    {
+      label: 'Signal',
+      value: daySignals.dominant.label,
+      detail: `Activation ${Math.round(daySignals.signals[0].value * 100)}%, review ${Math.round(daySignals.signals[1].value * 100)}%, lunar ${Math.round(daySignals.signals[2].value * 100)}%.`,
+    },
+  ]
+
+  if (pattern) {
+    evidence.push({
+      label: 'Journal pattern',
+      value: formatPatternLabel(pattern),
+      detail: `${Math.round(pattern.confidence * 100)}% confidence from ${pattern.sample_size} opted-in ${pattern.sample_size === 1 ? 'entry' : 'entries'}. ${firstSentence(pattern.summary)}`,
+    })
+  }
+
+  return {
+    label: pattern ? 'Today with memory' : 'Daily orientation',
+    title,
+    description: `${lunarDescription} ${patternDescription}`,
+    evidence,
+  }
+}
+
 function buildNextMoonPhasePreview(yearEphemeris: YearEphemeris | null, today: string) {
   if (!yearEphemeris) return null
   const next = yearEphemeris.moonPhases.find((p) => p.date > today)
@@ -303,7 +545,16 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const today = todayISO()
   const currentYear = new Date().getFullYear()
 
-  const [profileRes, blueprintRes, ephemerisRes, categoriesRes, oracleMemoryRes, journalEntriesRes, sabianMoonSymbol] =
+  const [
+    profileRes,
+    blueprintRes,
+    ephemerisRes,
+    categoriesRes,
+    oracleMemoryRes,
+    journalEntriesRes,
+    patternInsightsRes,
+    sabianMoonSymbol,
+  ] =
     await Promise.all([
       supabase
         .from('user_profiles')
@@ -324,6 +575,11 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
         .order('sort_order', { ascending: true }),
       supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('oracle_memory', true),
       supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
+      supabase
+        .from('user_pattern_insights')
+        .select('pattern_type, pattern_key, sample_size, confidence, summary, evidence')
+        .order('updated_at', { ascending: false })
+        .limit(12),
       fetchCurrentMoonSabianSymbol(),
     ])
 
@@ -337,8 +593,8 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const yearEphemeris = (ephemerisRes.data?.data as YearEphemeris | null) ?? null
   const weeks = (blueprintRow?.weeks as unknown as WeekBlueprint[]) ?? []
   const months = (blueprintRow?.months as unknown as MonthBlueprint[]) ?? []
-  const _quarters = (blueprintRow?.quarters as unknown as BlueprintOutput['quarters']) ?? []
-  void _quarters
+  const quarters = (blueprintRow?.quarters as unknown as BlueprintOutput['quarters']) ?? []
+  const patternInsights = (patternInsightsRes.data ?? []) as PatternInsightSummary[]
   const profileName = profile?.display_name?.trim() || firstName?.trim() || 'Architect'
 
   if (!blueprintRow) {
@@ -376,10 +632,13 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
 
   const currentWeek = findCurrentWeek(weeks, today)
   const todayEphemeris = yearEphemeris ? findTodayEphemeris(yearEphemeris, today) : null
-  const currentMonth = monthForWeek(months, currentWeek)
+  const currentMonth =
+    months.find((month) => month.month === Number.parseInt(today.slice(5, 7), 10)) ?? monthForWeek(months, currentWeek)
+  const currentQuarter = quarterForDate(quarters, today)
   const weekDates = deriveWeekDates(currentWeek, today)
   const todayDaySignals = todayEphemeris ? computeDaySignals(todayEphemeris) : null
   const dailyPhase = buildDailyPhaseSummary({ ephemeris: todayEphemeris, daySignals: todayDaySignals })
+  const dailyInsight = buildDailyInsight({ ephemeris: todayEphemeris, daySignals: todayDaySignals, patternInsights })
   const transitHighlight = buildTransitHighlight(todayEphemeris)
   const transitChips = buildActiveTransitChips(todayEphemeris)
   const nextMoonPreview = buildNextMoonPhasePreview(yearEphemeris, today)
@@ -412,6 +671,36 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const oracleSuggestion = transitHighlight
     ? `Ask about ${transitHighlight.split(' (')[0]}`
     : "Ask about today's pattern"
+  const temporalThemes = [
+    blueprintRow.year_theme
+      ? {
+          label: 'Year theme',
+          value: blueprintRow.year_theme,
+          detail: firstSentence(blueprintRow.year_summary ?? ''),
+        }
+      : null,
+    currentQuarter
+      ? {
+          label: `Q${currentQuarter.quarter} theme`,
+          value: currentQuarter.theme,
+          detail: currentQuarter.intention,
+        }
+      : null,
+    currentMonth
+      ? {
+          label: 'Month theme',
+          value: currentMonth.theme,
+          detail: firstSentence(currentMonth.energyArc),
+        }
+      : null,
+    currentWeek
+      ? {
+          label: 'Week theme',
+          value: currentWeek.theme,
+          detail: firstSentence(currentWeek.cosmicContext),
+        }
+      : null,
+  ].filter(Boolean) as Array<{ label: string; value: string; detail: string }>
 
   const cards = [
     {
@@ -429,7 +718,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
       icon: Activity,
       title: 'Tracker',
       kicker: 'Today',
-      preview: dailyPhase.label,
+      preview: dailyInsight.label,
       tint: 'border-moss-500/25 bg-moss-500/8',
     },
     {
@@ -483,17 +772,29 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
 
         <div className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-start">
           <div>
-            <p className="shell-kicker">Today</p>
+            <p className="shell-kicker">{dailyInsight.label}</p>
             <h1 className="mt-2 font-serif text-[2rem] leading-tight text-bone md:text-[2.5rem]">
-              {currentWeek?.theme ?? dailyPhase.title}
+              {dailyInsight.title}
             </h1>
             <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-bone-muted">
-              {dailyPhase.description}
+              {dailyInsight.description}
             </p>
-            {currentWeek?.cosmicContext ? (
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-bone-muted/85">
-                {firstSentence(currentWeek.cosmicContext)}
-              </p>
+
+            {dailyInsight.evidence.length > 0 ? (
+              <details className="mt-4 max-w-2xl rounded-[0.9rem] border border-border/65 bg-stone-950/45 px-4 py-3 text-sm text-bone-muted">
+                <summary className="cursor-pointer list-none font-medium text-bone-muted transition-colors hover:text-bone">
+                  Why this today?
+                </summary>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {dailyInsight.evidence.map((item) => (
+                    <div key={item.label} className="rounded-[0.75rem] border border-border/55 bg-stone-950/55 px-3 py-3">
+                      <p className="shell-eyebrow text-bone-muted/65">{item.label}</p>
+                      <p className="mt-1 text-sm font-semibold text-bone">{item.value}</p>
+                      <p className="mt-1 text-xs leading-5 text-bone-muted/80">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </details>
             ) : null}
 
             {transitChips.length > 0 ? (
@@ -544,6 +845,32 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
           </div>
         </div>
 
+        {temporalThemes.length > 0 ? (
+          <div className="mt-6 border-t border-border/60 pt-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="shell-eyebrow text-bone-muted/70">Longer arcs</p>
+              <Link
+                href="/blueprint"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-bone-muted hover:text-bone"
+              >
+                View full blueprint
+                <ArrowUpRight size={12} />
+              </Link>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {temporalThemes.map((theme) => (
+                <div key={theme.label} className="rounded-[0.9rem] border border-border/60 bg-stone-950/35 px-4 py-3">
+                  <p className="shell-eyebrow text-bone-muted/65">{theme.label}</p>
+                  <p className="mt-1 text-sm font-semibold leading-5 text-bone">{theme.value}</p>
+                  {theme.detail ? (
+                    <p className="mt-2 text-xs leading-5 text-bone-muted/75">{theme.detail}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         {/* Week ribbon */}
         <div className="mt-6 grid grid-cols-7 gap-1.5">
           {weekDates.map((date) => {
@@ -574,21 +901,6 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
             )
           })}
         </div>
-
-        {currentMonth ? (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
-            <p className="text-xs text-bone-muted/75">
-              <span className="font-semibold text-bone-muted">{currentMonth.name}:</span> {currentMonth.theme}
-            </p>
-            <Link
-              href="/blueprint"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-bone-muted hover:text-bone"
-            >
-              View full blueprint
-              <ArrowUpRight size={12} />
-            </Link>
-          </div>
-        ) : null}
       </section>
 
       {/* CARD GRID — destinations */}
