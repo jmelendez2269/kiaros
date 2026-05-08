@@ -6,6 +6,7 @@
     "clean:next": "node scripts/clean-next.mjs",
     "dev": "next dev --port 3699",
     "dev:fresh": "npm run clean:next && next dev --port 3699",
+    "stripe:sync-catalog": "node scripts/sync-stripe-catalog.mjs",
     "build": "next build",
     "start": "next start --port 3699",
     "start:fresh": "npm run clean:next && next build && next start --port 3699",
