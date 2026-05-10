@@ -174,7 +174,6 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       ephemeris = computeYearEphemeris({
         userId,
         natalChart,
-        birthDate: profile.birth_date,
         startDate,
         year: planYear,
       })

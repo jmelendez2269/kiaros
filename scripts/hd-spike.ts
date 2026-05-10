@@ -91,7 +91,7 @@ function printChart(ref: ReferenceChart): void {
   console.log('\n  Western natal chart (existing Kiaros engine):')
   console.log(`    Sun ${pad(natal.sun.sign, 12)} ${fmt(natal.sun.degree, 2)}°   Moon ${pad(natal.moon.sign, 12)} ${fmt(natal.moon.degree, 2)}°   Rising ${natal.rising}`)
 
-  const { personality, design } = computeDesignAndPersonality(ref.birth)
+  const { personality, design, edgeCases } = computeDesignAndPersonality(ref.birth)
 
   console.log('\n  Human Design activations (Personality / Design):')
   const keys = ['sun','earth','moon','northNode','southNode','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'] as const
@@ -115,6 +115,13 @@ function printChart(ref: ReferenceChart): void {
   console.log(`    Activated channels (${bg.activatedChannels.length}):`)
   for (const c of bg.activatedChannels) {
     console.log(`      ${c.gates[0]}–${c.gates[1]}  ${c.name}`)
+  }
+
+  if (edgeCases.length > 0) {
+    console.log(`\n  Edge cases (within 0.2° of a gate boundary — flag for MBG cross-check):`)
+    for (const e of edgeCases) {
+      console.log(`    ${pad(e.side, 11)} ${pad(e.key, 10)} gate ${e.gate}.${e.line} — ${e.boundaryDistance.toFixed(4)}° from boundary`)
+    }
   }
 
   const seq = deriveActivationSequence(personality, design)

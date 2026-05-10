@@ -73,6 +73,16 @@ export interface GateActivation {
   color: number     // 1-6
   tone: number      // 1-6
   base: number      // 1-5
+  boundaryDistance: number  // degrees to nearest gate boundary
+}
+
+// Documented VSOP87B vs JPL DE431 longitude drift at our era is ≤0.17°.
+// Activations within this distance of a gate boundary may disagree with
+// MyBodyGraph at the gate level; surface to the user for cross-check.
+export const GATE_BOUNDARY_PROXIMITY_THRESHOLD = 0.2
+
+export function isNearGateBoundary(activation: GateActivation): boolean {
+  return activation.boundaryDistance < GATE_BOUNDARY_PROXIMITY_THRESHOLD
 }
 
 /** Normalize to [0, 360). */
@@ -105,7 +115,9 @@ export function longitudeToActivation(longitude: number): GateActivation {
   const withinTone = withinColor - (tone - 1) * TONE_WIDTH_DEG
   const base = Math.min(5, Math.floor(withinTone / BASE_WIDTH_DEG) + 1)
 
-  return { gate, line, color, tone, base }
+  const boundaryDistance = Math.min(withinGate, GATE_WIDTH_DEG - withinGate)
+
+  return { gate, line, color, tone, base, boundaryDistance }
 }
 
 /**

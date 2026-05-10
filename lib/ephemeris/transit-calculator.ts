@@ -180,13 +180,12 @@ function detectRetrogradePeriods(
 export interface ComputeYearEphemerisOptions {
   userId: string
   natalChart: NatalChart
-  birthDate: string    // YYYY-MM-DD (for Pluto lookup)
   startDate: string    // YYYY-MM-DD (start of planning year)
   year: number
 }
 
 export function computeYearEphemeris(opts: ComputeYearEphemerisOptions): YearEphemeris {
-  const { userId, natalChart, birthDate, startDate, year } = opts
+  const { userId, natalChart, startDate, year } = opts
   const endDate = `${year}-12-31`
 
   // Build array of YYYY-MM-DD dates from startDate to endDate
@@ -207,13 +206,13 @@ export function computeYearEphemeris(opts: ComputeYearEphemerisOptions): YearEph
   const dayBeforeStr = dayBefore.toISOString().slice(0, 10)
   dailyLons.push({
     date: dayBeforeStr,
-    lons: getDailyLongitudesForDate(dayBeforeStr, birthDate) as unknown as Record<string, number>,
+    lons: getDailyLongitudesForDate(dayBeforeStr) as unknown as Record<string, number>,
   })
 
   for (const date of dates) {
     dailyLons.push({
       date,
-      lons: getDailyLongitudesForDate(date, birthDate) as unknown as Record<string, number>,
+      lons: getDailyLongitudesForDate(date) as unknown as Record<string, number>,
     })
   }
 

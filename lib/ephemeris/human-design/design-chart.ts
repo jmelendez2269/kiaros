@@ -37,6 +37,7 @@ import {
 import type { BirthData } from '../astronomia-adapter'
 import {
   longitudeToActivation,
+  isNearGateBoundary,
   type GateActivation,
 } from './gate-wheel'
 
@@ -68,9 +69,27 @@ export interface ChartActivations {
   activations: ActivationSet
 }
 
+export type ChartSide = 'personality' | 'design'
+
+export interface EdgeCase {
+  side: ChartSide
+  key: ActivationKey
+  gate: number
+  line: number
+  longitude: number
+  boundaryDistance: number  // degrees to nearest gate boundary
+}
+
 export interface DesignChartResult {
   personality: ChartActivations
   design: ChartActivations
+  /**
+   * Activations sitting within GATE_BOUNDARY_PROXIMITY_THRESHOLD of a gate
+   * boundary. These may disagree with MyBodyGraph at the gate level due to
+   * VSOP87B vs DE431 ephemeris-source drift (≤0.17° at 20th-century epochs).
+   * Surface to the user as a soft "double-check on MyBodyGraph" prompt.
+   */
+  edgeCases: EdgeCase[]
 }
 
 // ─── Lunar node (true ascending node) ────────────────────────────────────
@@ -193,8 +212,8 @@ function solveSunLongitudeJDE(targetLongitude: number, seedJDE: number): number 
 
 // ─── Activation set assembly ─────────────────────────────────────────────
 
-function buildActivationSet(jde: number, birthDateStr: string): ActivationSet {
-  const longs = getDailyLongitudes(jde, birthDateStr)
+function buildActivationSet(jde: number): ActivationSet {
+  const longs = getDailyLongitudes(jde)
   const sunLon = longs.sun
   const earthLon = normalizeDeg(sunLon + 180)
   const northNodeLon = trueLunarNodeLongitude(jde)
@@ -228,7 +247,7 @@ function buildActivationSet(jde: number, birthDateStr: string): ActivationSet {
 
 export function computeDesignAndPersonality(birth: BirthData): DesignChartResult {
   const { jde: personalityJDE, utcMs: personalityUTC } = birthMomentJDE(birth)
-  const personalityActivations = buildActivationSet(personalityJDE, birth.date)
+  const personalityActivations = buildActivationSet(personalityJDE)
   const natalSunLon = personalityActivations.sun.longitude
 
   // Design: solar arc 88° before natal Sun (degree-based, not day-based)
@@ -237,8 +256,25 @@ export function computeDesignAndPersonality(birth: BirthData): DesignChartResult
   const designJDE = solveSunLongitudeJDE(designSunTarget, seedJDE)
   const designUTC = (designJDE - 2440587.5) * 86400000
 
-  // Use the same birth-year Pluto lookup for both — Pluto moves <0.1° in 89 days
-  const designActivations = buildActivationSet(designJDE, birth.date)
+  const designActivations = buildActivationSet(designJDE)
+
+  const edgeCases: EdgeCase[] = []
+  for (const side of ['personality', 'design'] as const) {
+    const set = side === 'personality' ? personalityActivations : designActivations
+    for (const key of ACTIVATION_KEYS) {
+      const a = set[key]
+      if (isNearGateBoundary(a)) {
+        edgeCases.push({
+          side,
+          key,
+          gate: a.gate,
+          line: a.line,
+          longitude: a.longitude,
+          boundaryDistance: a.boundaryDistance,
+        })
+      }
+    }
+  }
 
   return {
     personality: {
@@ -251,5 +287,6 @@ export function computeDesignAndPersonality(birth: BirthData): DesignChartResult
       utcMs: designUTC,
       activations: designActivations,
     },
+    edgeCases,
   }
 }

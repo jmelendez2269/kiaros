@@ -33,6 +33,10 @@ declare module 'astronomia' {
   export const elliptic: {
     position(planet: unknown, earth: unknown, jde: number): { ra: number; dec: number }
   }
+  export const pluto: {
+    heliocentric(jde: number): { lon: number; lat: number; range: number }
+    astrometric(jde: number, earth: unknown): { ra: number; dec: number }
+  }
   export const planetposition: {
     Planet: new (data: unknown) => {
       position(T: number): { lon: number; lat: number; range: number }
