@@ -23,9 +23,11 @@ const COLOR_WIDTH_DEG = LINE_WIDTH_DEG / 6       // 0.15625
 const TONE_WIDTH_DEG = COLOR_WIDTH_DEG / 6       // ~0.026
 const BASE_WIDTH_DEG = TONE_WIDTH_DEG / 5        // ~0.0052
 
-// Calibrated against MyBodyGraph using Ra Uru Hu's chart: matches Sun, Earth,
-// Mercury, Venus D, and Uranus when set to 302.25° (15 arc-min later than the
-// often-cited "exactly 2° Aquarius" value). Slow planets agree at either anchor.
+// Calibrated against MyBodyGraph using Ra Uru Hu's chart with the canonical
+// Rave Mandala order (see GATE_SEQUENCE below): matches Sun, Earth, Moon, NN,
+// SN, Mercury, Venus, Mars, Jupiter, Saturn, Neptune, and most line numbers at
+// 302.25° (15 arc-min later than the often-cited "exactly 2° Aquarius" value).
+// Sub-line precision drift in a few slow planets remains and is not chased.
 const GATE_41_START_LONGITUDE = 302.25
 
 /**
@@ -42,9 +44,9 @@ export const GATE_SEQUENCE: readonly number[] = [
   // Aries      (5): idx 11–15
   17, 21, 51, 42, 3,
   // Taurus     (5): idx 16–20
-  27, 24, 23, 8, 20,
+  27, 24, 2, 23, 8,
   // Gemini     (6): idx 21–26
-  16, 35, 45, 12, 15, 2,
+  20, 16, 35, 45, 12, 15,
   // Cancer     (5): idx 27–31
   52, 39, 53, 62, 56,
   // Leo        (5): idx 32–36

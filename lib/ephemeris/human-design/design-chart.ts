@@ -20,8 +20,11 @@
  *   Earth      = Sun + 180°
  *   South Node = North Node + 180°
  *
- * Lunar nodes use the *mean* node (standard HD convention), computed from
- * Meeus's polynomial expression in Julian centuries from J2000.0.
+ * Lunar nodes use the *true* ascending node — the mean node from Meeus's
+ * polynomial expression corrected by the periodic perturbation series in
+ * Meeus chapter 47, equation 47.7. Mean-vs-true drift reaches ~1.5°, which
+ * is enough to push the node into a neighbouring HD gate (~5.6° wide) ~5–10%
+ * of the time, so we always evaluate the true node.
  */
 
 import {
@@ -70,13 +73,17 @@ export interface DesignChartResult {
   design: ChartActivations
 }
 
-// ─── Mean lunar node ─────────────────────────────────────────────────────
+// ─── Lunar node (true ascending node) ────────────────────────────────────
+
+const DEG = Math.PI / 180
 
 /**
  * Mean longitude of the Moon's ascending node, per Meeus Astronomical
  * Algorithms (chap. 47). Returns degrees in [0, 360).
  *
- *   Ω = 125.04452 − 1934.136261·T + 0.0020708·T² + T³/450000
+ *   Ω̄ = 125.04452 − 1934.136261·T + 0.0020708·T² + T³/450000
+ *
+ * Kept private — the exported pipeline always uses the true node.
  */
 function meanLunarNodeLongitude(jde: number): number {
   const T = (jde - 2451545.0) / 36525
@@ -86,6 +93,59 @@ function meanLunarNodeLongitude(jde: number): number {
     0.0020708 * T * T +
     (T * T * T) / 450000
   return normalizeDeg(omega)
+}
+
+/**
+ * True longitude of the Moon's ascending node. Mean Ω̄ corrected by the
+ * leading periodic terms of Meeus 47.7. Accurate to ~0.1° — comfortably
+ * inside HD's 5.6° gate width.
+ *
+ * Arguments are the standard Delaunay variables from Meeus 47.2–47.5:
+ *   D  = mean elongation of the Moon
+ *   M  = Sun's mean anomaly
+ *   M' = Moon's mean anomaly
+ *   F  = Moon's argument of latitude
+ */
+function trueLunarNodeLongitude(jde: number): number {
+  const T = (jde - 2451545.0) / 36525
+  const T2 = T * T
+  const T3 = T2 * T
+  const T4 = T3 * T
+
+  const Omega = meanLunarNodeLongitude(jde)
+
+  const D =
+    297.8501921 +
+    445267.1114034 * T -
+    0.0018819 * T2 +
+    T3 / 545868 -
+    T4 / 113065000
+  const M =
+    357.5291092 +
+    35999.0502909 * T -
+    0.0001536 * T2 +
+    T3 / 24490000
+  const Mp =
+    134.9633964 +
+    477198.8675055 * T +
+    0.0087414 * T2 +
+    T3 / 69699 -
+    T4 / 14712000
+  const F =
+    93.2720950 +
+    483202.0175233 * T -
+    0.0036539 * T2 -
+    T3 / 3526000 +
+    T4 / 863310000
+
+  const corr =
+    -1.4979 * Math.sin((2 * D - 2 * F) * DEG) +
+    -0.1500 * Math.sin(M * DEG) +
+    -0.1226 * Math.sin(2 * D * DEG) +
+    0.1176 * Math.sin(2 * F * DEG) +
+    -0.0801 * Math.sin((2 * Mp - 2 * F) * DEG)
+
+  return normalizeDeg(Omega + corr)
 }
 
 // ─── Birth-moment JDE ────────────────────────────────────────────────────
@@ -137,7 +197,7 @@ function buildActivationSet(jde: number, birthDateStr: string): ActivationSet {
   const longs = getDailyLongitudes(jde, birthDateStr)
   const sunLon = longs.sun
   const earthLon = normalizeDeg(sunLon + 180)
-  const northNodeLon = meanLunarNodeLongitude(jde)
+  const northNodeLon = trueLunarNodeLongitude(jde)
   const southNodeLon = normalizeDeg(northNodeLon + 180)
 
   const longitudes: Record<ActivationKey, number> = {
