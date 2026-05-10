@@ -367,6 +367,12 @@ export function JournalComposer({
               <p className="mt-3 text-sm leading-7 text-bone-muted">
                 Revisit past entries, rituals, and timing-window notes in one place.
               </p>
+              <Link
+                href="/journal/insights"
+                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-leather-200 transition-colors hover:text-leather-100"
+              >
+                View patterns Kiaros has noticed →
+              </Link>
             </div>
             <span className="shell-pill">{entries.length} loaded</span>
           </div>

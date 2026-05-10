@@ -260,6 +260,30 @@ We're mid-flight. Call what's done "Phase 0 — Beta Shell" and renumber from he
 ✅ `app/(app)/blueprint/page.tsx` — Server Component using BlueprintView
 ✅ `components/calendar/CosmicCalendar.tsx` + year/month/week views — uses `ephemeris_cache`; `YearView`, `MonthView`, `WeekView` sub-components; `app/(app)/calendar/page.tsx` Server Component
 
+### Phase 4.5 — Human Design + Gene Keys (deferred, spike complete)
+
+A methodology spike was run in 2026-05-08 to validate whether HD/Gene Keys could integrate with the blueprint generator. The math layer is built and validated; the blueprint integration is deliberately deferred until after Phase 5 so user behaviour in the Oracle informs how HD/GK signals are framed.
+
+**What's built and validated** (in `lib/ephemeris/human-design/`, no production wiring):
+- `gate-wheel.ts` — 64-gate I-Ching wheel; calibrated anchor `GATE_41_START_LONGITUDE = 302.25°` (matched against MyBodyGraph and GeneticMatrix using Ra Uru Hu's chart)
+- `design-chart.ts` — solar-arc Design solver (88° tropical longitude back from natal Sun, not 88 days); computes Personality + Design activations for the 13 standard points
+- `bodygraph.ts` — Type / Authority / Profile derivation, defined Centers, activated Channels (BFS for motor-to-Throat connection)
+- `gene-keys.ts` — 4 Prime Gifts (Life's Work / Evolution / Radiance / Purpose) with full Shadow / Gift / Siddhi names per gate
+- `scripts/hd-spike.ts` — runnable validation against any reference chart via `npx tsx scripts/hd-spike.ts`
+
+**Validation status:** Type, Authority, Profile (5/1), Sun and Earth gate.line all match Ra Uru Hu's published chart across MBG and GeneticMatrix. Slow planets (Mars/Jupiter/Saturn/Neptune) match exactly; inner planets within 1 line (ephemeris precision). All 64 gates appear exactly once in the canonical sequence.
+
+**Known deferred work:**
+- True lunar node vs mean lunar node — astronomia ships only mean; max 1.5° drift on South Node positions. Needs a perturbation series or a second ephemeris.
+- Pluto for HD: current `pluto-table.ts` keys by birth year only, so Personality and Design get the same Pluto. For HD-grade Pluto we'd need a real ephemeris.
+
+**When this resumes** (after Phase 5):
+- Add HD/GK section to `assembleBlueprintUserPrompt` between NATAL CHART and YEAR VISION (~300 tokens, constant per user)
+- Add Type-conditional rules to INSTRUCTIONS block (Manifesting Generators get "respond + inform" framing for `energyType`; Projectors get "wait for invitation"; Reflectors get lunar-cycle pacing)
+- Add transit-to-gate map in `transit-calculator.ts` so each week can flag activated natal gates
+- Distribute the 4 Prime Gifts across the year as contemplation threads (e.g. one per quarter)
+- Onboarding tweak: detect imprecise birth times and degrade gracefully (HD gates change every ~16 minutes)
+
 ### Phase 5 — Tracker + Oracle
 - Tracker UI with dynamic metrics, consistency grid, per-category mini charts
 - Oracle chat with the 4-layer system prompt (identity / natal chart / current cosmic context / goals + blueprint)
@@ -362,5 +386,5 @@ Build it in this order:
 
 ---
 
-**Last updated:** 2026-04-13 — Phase 4 complete. All dashboard, blueprint, and calendar components done. Phase 5 (Tracker + Oracle) is next.
+**Last updated:** 2026-05-08 — Phase 4.5 (Human Design + Gene Keys) spike complete and deferred; math layer built in `lib/ephemeris/human-design/`. Phase 5 (Tracker + Oracle) is next.
 **Status:** Adopted — supersedes all `kiaros-*-v1.md` docs

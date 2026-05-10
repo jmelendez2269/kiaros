@@ -25,27 +25,31 @@ Kiaros (formerly "Cosmic Life Planner") is a personalised yearly planning system
 - Recharts — charts (Phase 7)
 - `@dnd-kit/sortable` — DnD (Phase 2)
 
-## Current state (2026-04-12)
+## Current state (2026-05-10)
 
-Phases 1–4 complete. **Phase 5 — Tracker + Oracle is next.**
+Kiaros went live ~2026-05-01. The original phase plan is no longer the right map — see [`docs/handoff-2026-05-08.md`](./docs/handoff-2026-05-08.md) for the authoritative snapshot.
 
-**What exists in the repo:**
+**Shipped (production):**
 - Next.js + Clerk + Supabase wired, RLS-aware clients (`lib/supabase/{client,server,admin}.ts`)
-- Clerk webhook (`app/api/webhooks/clerk/route.ts`) — creates `user_profiles` on sign-up
-- Full onboarding: birth data → goals (DnD + icon/color) → year focus → cycle → generating screen
-- Real schema running in Supabase (`supabase/migrations/0001_product_bible_schema.sql`)
-- `types/database.ts` generated from live schema
-- **Ephemeris engine** (`lib/ephemeris/`) — natal chart (all 10 planets, Whole Sign houses), year transit calculator, moon phases, retrograde periods, Pluto lookup table
-- **Blueprint generator** (`lib/ai/blueprint-generator.ts`) — AI SDK v6 via Vercel AI Gateway, full prompt assembly from real ephemeris + goals, writes structured JSON to `blueprints` table
-- `app/api/blueprint/generate` uses `after()` for background generation; `status` route polls it
-- `types/blueprint.ts` — all shared blueprint + ephemeris types
-- **`components/shared/MoonPhaseIcon.tsx`** — Server Component; all 8 `LunarPhase` values; SVG mask technique; props: `phase`, `size`, `className`, `showLabel`
+- Clerk webhook (`app/api/webhooks/clerk/route.ts`); full onboarding flow
+- Schema through migration 0013 (`supabase/migrations/`); `types/database.ts` generated from live schema
+- Ephemeris engine (`lib/ephemeris/`) and blueprint generator (`lib/ai/blueprint-generator.ts`) — AI SDK v6 via Vercel AI Gateway
+- **Cosmic Calendar** — year/month/week views
+- **Tracker** — dynamic per-category metrics, daily logs auto-stamped with lunar phase / sign / cycle phase, 90-day grid + 14-day per-category bars
+- **Oracle chat** — 4-layer system prompt, streaming Sonnet 4.6 with prompt caching, captures (`oracle_captures`) with `include_in_insights` / `include_in_planner` flags, monthly limit
+- **Journal** — entry creation with transit context; `journal_entry_sky` and `journal_entry_aspects` populated per save; `refresh_user_pattern_insight` RPC keeps `user_pattern_insights` current
+- **Curriculum** — AI-generated week-by-week study plans, sessions, approval flow, fed into Oracle context
+- **Areas** — list view enriched with house interpretations (`lib/areas.ts`)
+- **Commerce** — Stripe subscriptions (yearly/monthly) + Etsy `marketplace_orders`; `npm run stripe:sync-catalog`
+- **Admin console** — `app/(admin)/admin/*` (internal)
+- **Public pages** — homepage, contact, policy pages, manifest, icons
 
-**What does not yet exist:**
-- `components/calendar/CosmicCalendar.tsx` + year/month/week views (next Phase 4 item)
-- Tracker, Oracle, Journal, Quarterly Reviews, Year Unwrapped
-
-See `docs/architecture-v2.md` §8 for the full phase plan.
+**Gaps (priority order):**
+- **Journal Intelligence UI** — `user_pattern_insights` is populated but never shown to users (HIGH — current task)
+- **Quarterly Reviews UI** — `quarterly_reviews` exists, Oracle reads it, no create/edit surface (Q2 ends 2026-06-30)
+- **Areas detail pages** — `/areas/[slug]` is a 404 stub (~3 days)
+- **Year Unwrapped** — not built; Recharts not yet installed (Q4 seasonal)
+- **HD + Gene Keys integration** — math layer validated under `lib/ephemeris/human-design/`; blueprint integration deferred (Phase 4.5 in `docs/architecture-v2.md` §8)
 
 ## Conventions
 
@@ -110,4 +114,4 @@ A feature is done when:
 
 ---
 
-**Last updated:** 2026-04-13 — Phase 4 complete. CosmicCalendar (year/month/week views) done. Phase 5 (Tracker + Oracle) is next.
+**Last updated:** 2026-05-10 — Current-state block reconciled with `docs/handoff-2026-05-08.md`. Journal Intelligence UI underway.

@@ -130,7 +130,11 @@ function NavigationContent({
   onToggleDesktop?: () => void
   hasOracleAccess?: boolean
 }) {
-  const isLinkActive = (href: string) => (href === '/areas' ? pathname === href || pathname.startsWith('/areas/') : pathname === href)
+  const isLinkActive = (href: string) => {
+    if (href === '/areas') return pathname === href || pathname.startsWith('/areas/')
+    if (href === '/journal') return pathname === href || pathname.startsWith('/journal/')
+    return pathname === href
+  }
 
   return (
     <>
