@@ -5,6 +5,7 @@ import { deriveAstrologicalYearWord } from "@/lib/astrology/year-word";
 import { computeNatalChart } from "@/lib/ephemeris";
 import type { BirthData } from "@/lib/ephemeris";
 import type { NatalChart } from "@/types/blueprint";
+import { computeHumanDesign } from "@/lib/human-design";
 
 export async function GET() {
   const { userId } = await auth();
@@ -98,6 +99,20 @@ export async function PATCH(req: Request) {
       } catch (chartErr) {
         // Non-fatal: natal chart computation is best-effort at this stage.
         console.error("[profile] natal chart computation failed:", chartErr);
+      }
+
+      try {
+        const humanDesign = computeHumanDesign(profile);
+        if (humanDesign) {
+          await admin
+            .from("user_profiles")
+            .update({ human_design: humanDesign as unknown as Record<string, unknown> })
+            .eq("clerk_user_id", userId);
+        }
+      } catch (hdErr) {
+        // Non-fatal: HD is supplementary to the natal chart. Surface in UI
+        // as "not yet computed" rather than blocking profile save.
+        console.error("[profile] human design computation failed:", hdErr);
       }
     }
   }

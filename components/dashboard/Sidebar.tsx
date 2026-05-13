@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, FileText, LockKeyhole, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
+import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, FileText, Hexagon, LockKeyhole, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { slugifyAreaName } from '@/lib/areas'
 import { cn } from '@/lib/utils'
@@ -65,6 +65,19 @@ const NAV_LINKS = [
       accent: 'bg-leather-300',
       icon: 'border-leather-300/30 bg-leather-500/12 text-leather-200',
       detail: 'text-leather-200',
+    },
+  },
+  {
+    href: '/human-design',
+    label: 'Human Design',
+    detailLead: 'Type & strategy',
+    detailTrail: 'chart',
+    icon: Hexagon,
+    tone: {
+      active: 'border-moss-400/60 bg-moss-500/18 text-bone shadow-glow',
+      accent: 'bg-moss-300',
+      icon: 'border-moss-300/30 bg-moss-500/12 text-moss-200',
+      detail: 'text-moss-200',
     },
   },
   {

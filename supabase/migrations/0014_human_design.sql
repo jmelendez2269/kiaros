@@ -1,0 +1,31 @@
+-- ============================================================
+-- 0014_human_design.sql
+--
+-- Persist the Human Design / Gene Keys chart on the user profile so
+-- downstream code reads from the DB instead of recomputing per request.
+--
+-- Shape of the JSONB payload (see lib/human-design.ts → HumanDesignChart):
+--   {
+--     version:            number    -- methodology version; bump when the
+--                                      math layer changes (anchor, node
+--                                      calc, Pluto source, etc.)
+--     computedAt:         string    -- ISO timestamp
+--     personality:        { jde, utcMs, activations }
+--     design:             { jde, utcMs, activations }
+--     bodyGraph:          { type, strategy, authority, profile, ... }
+--     activationSequence: { lifesWork, evolution, radiance, purpose }
+--     edgeCases:          EdgeCase[]
+--     hasKnownBirthTime:  boolean   -- false for time_unknown users; HD
+--                                      gates change every ~16 minutes so
+--                                      unknown-time results are unreliable
+--                                      and should not be surfaced in UI
+--   }
+--
+-- We deliberately store the full computed payload (not just the inputs)
+-- so the UI never has to recompute. Re-derivation happens whenever
+-- birth data changes (see app/api/profile/route.ts) or when methodology
+-- version moves (handled lazily on next access).
+-- ============================================================
+
+ALTER TABLE user_profiles
+  ADD COLUMN IF NOT EXISTS human_design JSONB;

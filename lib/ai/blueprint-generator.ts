@@ -21,6 +21,12 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { computeNatalChart, computeYearEphemeris } from '@/lib/ephemeris'
 import type { BirthData } from '@/lib/ephemeris'
 import {
+  computeHumanDesign,
+  isHumanDesignStale,
+  parseStoredHumanDesign,
+  type HumanDesignChart,
+} from '@/lib/human-design'
+import {
   assembleBlueprintSystemPrompt,
   assembleBlueprintUserPrompt,
 } from './blueprint-system-prompt'
@@ -89,7 +95,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     const { data: profile, error: profileError } = await admin
       .from('user_profiles')
       .select(
-        'display_name, birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng, natal_chart, year_vision, word_of_year, what_to_release, study_focus'
+        'display_name, birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng, natal_chart, human_design, year_vision, word_of_year, what_to_release, study_focus'
       )
       .eq('id', userId)
       .single()
@@ -155,6 +161,35 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     }
     log('natal chart ready')
 
+    // ── 4b. Compute or load Human Design ──────────────────────────────
+    // Skip when birth time is unknown — HD gates change every ~16 min, so
+    // computing without a time would produce a result we deliberately don't
+    // show in UI (see app/(app)/human-design/page.tsx).
+    let humanDesign: HumanDesignChart | null = null
+    const hasKnownBirthTime = !profile.birth_time_unknown && !!profile.birth_time
+    if (hasKnownBirthTime) {
+      const stored = parseStoredHumanDesign(profile.human_design)
+      if (stored && !isHumanDesignStale(profile.human_design)) {
+        humanDesign = stored
+      } else {
+        humanDesign = computeHumanDesign({
+          birth_date: profile.birth_date,
+          birth_time: profile.birth_time,
+          birth_time_unknown: profile.birth_time_unknown,
+          birth_tz: profile.birth_tz,
+          birth_lat: profile.birth_lat,
+          birth_lng: profile.birth_lng,
+        })
+        if (humanDesign) {
+          await admin
+            .from('user_profiles')
+            .update({ human_design: humanDesign as unknown as Record<string, unknown> })
+            .eq('id', userId)
+        }
+      }
+    }
+    log(`human design ${humanDesign ? `ready (${humanDesign.bodyGraph.type}, ${humanDesign.bodyGraph.profile})` : 'skipped'}`)
+
     // ── 5. Compute or load year ephemeris ─────────────────────────────
     let ephemeris: YearEphemeris
 
@@ -193,6 +228,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     const userPrompt = assembleBlueprintUserPrompt({
       userName: profile.display_name ?? 'there',
       natalChart,
+      humanDesign,
       ephemeris,
       goals: goals ?? [],
       journalPatterns: journalPatterns ?? [],

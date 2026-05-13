@@ -2,9 +2,10 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { OracleMessage } from './OracleMessage'
 import { OracleInput } from './OracleInput'
+import { consumeOraclePreseed } from '@/lib/oracle/preseed'
 
 const SUGGESTED_PROMPTS = [
   'What should I focus on this week?',
@@ -21,6 +22,10 @@ export function OracleChat({ today }: Props) {
 
   const { messages, sendMessage, status, error } = useChat({ transport })
   const [captureError, setCaptureError] = useState<string | null>(null)
+  // Dashboard deep-links write a pre-seed prompt into sessionStorage before
+  // navigating here. We dispatch it as the first user message on mount.
+  // Ref guards against StrictMode's double-invoke.
+  const preseedDispatched = useRef(false)
 
   const isLoading = status === 'streaming' || status === 'submitted'
   const lastRole = messages[messages.length - 1]?.role
@@ -29,6 +34,18 @@ export function OracleChat({ today }: Props) {
     setCaptureError(null)
     sendMessage({ text })
   }
+
+  useEffect(() => {
+    if (preseedDispatched.current) return
+    const preseed = consumeOraclePreseed()
+    if (preseed) {
+      preseedDispatched.current = true
+      handleSend(preseed)
+    }
+    // We want this to run once on mount; sendMessage identity may change but
+    // the dispatched ref makes a repeated effect call a no-op.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleCapture(capture: {
     capturedText: string

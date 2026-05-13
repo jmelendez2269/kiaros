@@ -14,6 +14,11 @@ export function useSupabaseBrowser() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
           accessToken: async () => session?.getToken() ?? null,
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+          },
         }
       ),
     [session]
