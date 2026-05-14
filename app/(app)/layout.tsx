@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createAdminSupabase } from '@/lib/supabase/admin'
-import { Sidebar } from '@/components/dashboard/Sidebar'
+import { AlmanacSidebar } from '@/components/almanac/AlmanacSidebar'
+import { StelloquyDock } from '@/components/oracle/StelloquyDock'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -44,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
       <div className="flex min-h-screen flex-col md:flex-row">
-        <Sidebar categories={sidebarCategories} hasOracleAccess={access.hasOracleAccess} />
+        <AlmanacSidebar categories={sidebarCategories} hasOracleAccess={access.hasOracleAccess} />
         <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
           <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
             <div className="mx-auto w-full max-w-[1480px]">
@@ -53,6 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
+      <StelloquyDock />
     </div>
   )
 }
