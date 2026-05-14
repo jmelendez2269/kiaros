@@ -419,7 +419,7 @@ export default function SettingsPage() {
               <MessageCircle size={18} />
             </div>
             <div>
-              <p className="shell-kicker">Oracle usage</p>
+              <p className="shell-kicker">Stelloquy usage</p>
               <h2 className="shell-subsection-title mt-1">This month</h2>
             </div>
           </div>
@@ -449,7 +449,7 @@ export default function SettingsPage() {
           </div>
 
           <p className="mt-3 text-xs leading-6 text-bone-muted/75">
-            Your Oracle limit resets on the first of each month. Cached input tokens cost ~90% less — a high cache hit rate means your natal chart and blueprint aren&apos;t being re-billed on every message.
+            Your Stelloquy limit resets on the first of each month. Cached input tokens cost ~90% less — a high cache hit rate means your natal chart and blueprint aren&apos;t being re-billed on every message.
           </p>
         </section>
       ) : null}

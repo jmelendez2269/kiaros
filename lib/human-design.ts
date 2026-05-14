@@ -24,11 +24,7 @@ import type {
   ChartActivations,
   EdgeCase,
 } from '@/lib/ephemeris/human-design/design-chart'
-import type {
-  BodyGraph,
-  HumanDesignAuthority,
-  HumanDesignType,
-} from '@/lib/ephemeris/human-design/bodygraph'
+import type { BodyGraph } from '@/lib/ephemeris/human-design/bodygraph'
 import type { ActivationSequence } from '@/lib/ephemeris/human-design/gene-keys'
 import type {
   AspectType,
@@ -193,6 +189,49 @@ const MOON_PHASE_PLAIN: Record<LunarPhase, { mood: string; verb: string }> = {
   'waning-crescent': { mood: 'low and resting', verb: 'rest, do not start' },
 }
 
+const MOON_PHASE_DAILY_MOVES: Record<LunarPhase, string[]> = {
+  new: [
+    'name the intention before you try to act on it',
+    'protect one clean beginning from too many opinions',
+    'start with the smallest version that still feels true',
+  ],
+  'waxing-crescent': [
+    'give one new thread enough attention to catch',
+    'feed the thing that is already showing a little life',
+    'choose traction over a perfect plan',
+  ],
+  'first-quarter': [
+    'take the step that proves the intention is real',
+    'meet resistance directly, then simplify the next move',
+    'commit to the useful challenge, not the dramatic one',
+  ],
+  'waxing-gibbous': [
+    'refine what is working before asking it to carry more',
+    'tighten the draft, system, or promise already in motion',
+    'make one practical improvement instead of reopening the whole question',
+  ],
+  full: [
+    'let the obvious thing be obvious before you respond',
+    'notice what has become visible, then decide what deserves your energy',
+    'separate real clarity from emotional volume',
+  ],
+  'waning-gibbous': [
+    'turn what you learned into something usable',
+    'share the lesson without forcing a conclusion',
+    'integrate the result before chasing the next signal',
+  ],
+  'last-quarter': [
+    'edit the plan where it has become heavier than helpful',
+    'release one obligation that no longer matches the direction',
+    'make the clean cut that gives the next week more room',
+  ],
+  'waning-crescent': [
+    'close one small loop and leave the rest unforced',
+    'protect recovery before adding anything new',
+    'let quiet be productive by noticing what has lost charge',
+  ],
+}
+
 const SIGN_PLAIN: Record<ZodiacSign, string> = {
   Aries: 'direct and action-oriented',
   Taurus: 'steady, sensory, slow',
@@ -214,40 +253,6 @@ const ASPECT_PLAIN: Record<AspectType, { tone: 'tense' | 'easy' | 'neutral'; pla
   opposition: { tone: 'tense', plain: 'polarity — two sides asking to be seen' },
   trine: { tone: 'easy', plain: 'flowing — easy support, almost too easy to notice' },
   sextile: { tone: 'easy', plain: 'opportunity — a small opening worth taking' },
-}
-
-const TYPE_PLAIN: Record<HumanDesignType, { oneLiner: string; today: string }> = {
-  Reflector: {
-    oneLiner: 'you mirror the energy of whoever and wherever you are',
-    today: 'so today is for sampling, not deciding — your clarity arrives over the full month, not in a moment',
-  },
-  Generator: {
-    oneLiner: 'you have steady life-force energy when responding to what feels alive',
-    today: 'so today, follow what your body lights up for — gut first, then act',
-  },
-  'Manifesting Generator': {
-    oneLiner: 'you have responsive energy and can multitask',
-    today: 'so today, follow what lights up — and tell people when you change direction',
-  },
-  Projector: {
-    oneLiner: 'you see others clearly and were built to guide, not push',
-    today: 'so today, wait for an invitation or recognition before pouring energy out',
-  },
-  Manifestor: {
-    oneLiner: 'you are built to start things',
-    today: 'so today, inform someone before you act — it creates less friction than going alone',
-  },
-}
-
-const AUTHORITY_PLAIN: Record<HumanDesignAuthority, string> = {
-  Emotional: 'wait through an emotional cycle (a day or two) before any real decision',
-  Sacral: 'trust your gut response in the body — uh-huh or uh-uh',
-  Splenic: 'trust your first quiet instinct — it speaks once',
-  'Ego-Manifested': 'decide from willpower — what your heart genuinely wants',
-  'Ego-Projected': 'wait for the right invitation, then decide from the heart',
-  'Self-Projected': 'speak it out loud to hear your own truth',
-  Mental: 'talk it through with trusted people — your clarity comes from outside the body',
-  Lunar: 'wait the full 28-day moon cycle before deciding anything important',
 }
 
 // ─── Placement explanations (Sky Portrait click panel) ──────────────────
@@ -390,6 +395,19 @@ function tightestTransit(day: EphemerisDay) {
   return [...day.transits].sort((a, b) => a.orb - b.orb)[0]
 }
 
+function dailyMoveForMoon(day: EphemerisDay) {
+  const moves = MOON_PHASE_DAILY_MOVES[day.moon.lunarPhase]
+  const dayNumber = Number.parseInt(day.date.slice(8, 10), 10)
+  const moonDegree = Math.floor(day.moon.degree)
+  return moves[(dayNumber + moonDegree) % moves.length]
+}
+
+function moonDegreeBand(degree: number) {
+  if (degree < 10) return 'early'
+  if (degree < 20) return 'mid'
+  return 'late'
+}
+
 function lunarDayNumber(today: string, moonPhases: MoonPhaseEvent[]): number | null {
   const prior = moonPhases
     .filter((p) => p.phase === 'new' && p.date <= today)
@@ -411,11 +429,11 @@ function lunarDayNumber(today: string, moonPhases: MoonPhaseEvent[]): number | n
  * organically without needing a glossary.
  */
 export function buildPlainDailySummary(
-  chart: HumanDesignChart | null,
   day: EphemerisDay,
 ): string {
   const moon = MOON_PHASE_PLAIN[day.moon.lunarPhase]
   const signMood = SIGN_PLAIN[day.moon.sign]
+  const moonMoveClause = ` At ${Math.round(day.moon.illumination * 100)}% light and ${moonDegreeBand(day.moon.degree)} in the sign, the practical move is to ${dailyMoveForMoon(day)}.`
   const moonClause = `The day's mood is ${moon.mood} — a ${signMood} ${day.moon.sign} Moon.`
 
   const tt = tightestTransit(day)
@@ -428,11 +446,7 @@ export function buildPlainDailySummary(
     return ` A long, slow current is active (${tt.planet} merging with your natal ${tt.natalPlanet}).`
   })()
 
-  const typeClause = chart
-    ? ` Your design: ${TYPE_PLAIN[chart.bodyGraph.type].oneLiner}, ${TYPE_PLAIN[chart.bodyGraph.type].today}.`
-    : ''
-
-  return `${moonClause}${transitClause}${typeClause}`
+  return `${moonClause}${moonMoveClause}${transitClause}`
 }
 
 /**
@@ -631,7 +645,7 @@ export function buildDailySignals(
     key: 'moon',
     label: 'Moon',
     technical: `${day.moon.lunarPhase.replace(/-/g, ' ')} in ${day.moon.sign} (${Math.round(day.moon.illumination * 100)}%)`,
-    plain: `${moon.mood.charAt(0).toUpperCase() + moon.mood.slice(1)} — ${moon.verb}.`,
+    plain: `${moon.mood.charAt(0).toUpperCase() + moon.mood.slice(1)}: ${dailyMoveForMoon(day)}.`,
   })
 
   // Tightest transit (if any inside meaningful orb)
@@ -646,33 +660,22 @@ export function buildDailySignals(
     })
   }
 
-  // Design lens — Type + Authority
-  if (chart) {
-    const typeMeta = TYPE_PLAIN[chart.bodyGraph.type]
-    signals.push({
-      key: 'design',
-      label: 'Your design',
-      technical: `${chart.bodyGraph.type} · ${chart.bodyGraph.authority} authority`,
-      plain: `${typeMeta.oneLiner.charAt(0).toUpperCase() + typeMeta.oneLiner.slice(1)}. To decide: ${AUTHORITY_PLAIN[chart.bodyGraph.authority]}.`,
-    })
-
-    // Reflectors get a lunar-day counter too
-    if (chart.bodyGraph.type === 'Reflector') {
-      const ld = lunarDayNumber(day.date, moonPhases)
-      if (ld !== null) {
-        signals.push({
-          key: 'lunar-day',
-          label: 'Lunar day',
-          technical: `Day ${ld + 1} of 28`,
-          plain: ld < 7
-            ? 'Early in your cycle — sample energy, do not commit.'
-            : ld < 14
-              ? 'Building phase — notice what consistently feels true.'
-              : ld < 21
-                ? 'Past the full moon — you have most of the information now.'
-                : 'Closing phase — clarity may surface before the next new moon.',
-        })
-      }
+  // Reflectors get a lunar-day counter because it changes with the Moon.
+  if (chart?.bodyGraph.type === 'Reflector') {
+    const ld = lunarDayNumber(day.date, moonPhases)
+    if (ld !== null) {
+      signals.push({
+        key: 'lunar-day',
+        label: 'Lunar day',
+        technical: `Day ${ld + 1} of 28`,
+        plain: ld < 7
+          ? 'Early in your cycle — sample energy, do not commit.'
+          : ld < 14
+            ? 'Building phase — notice what consistently feels true.'
+            : ld < 21
+              ? 'Past the full moon — you have most of the information now.'
+              : 'Closing phase — clarity may surface before the next new moon.',
+      })
     }
   }
 

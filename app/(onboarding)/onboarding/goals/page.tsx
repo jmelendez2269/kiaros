@@ -104,7 +104,7 @@ export default function OnboardingGoalsPage() {
         </p>
         <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
           <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
-          Your Oracle knows your goals by name and what success looks like to you
+          Stelloquy knows your goals by name and what success looks like to you
         </div>
       </div>
 

@@ -319,3 +319,19 @@ html[data-theme="dawn"] ::selection {
 * {
   @apply transition-colors duration-200;
 }
+
+/* Stelloquy orb — three states. Defined globally so the orb stays animated
+   wherever it's mounted (header, message avatar, inline streaming indicator). */
+@keyframes stelloquy-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50%      { transform: scale(1.07); filter: brightness(1.12); }
+}
+@keyframes stelloquy-breathe {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50%      { transform: scale(0.95); filter: brightness(0.92); }
+}
+@keyframes stelloquy-think {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  33%      { transform: scale(1.04); }
+  66%      { transform: scale(0.97); }
+}

@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: 'monthly_limit_reached',
-          message: `You've reached this month's Oracle limit of ${ORACLE_MONTHLY_MESSAGE_LIMIT} messages. It resets on the first of next month.`,
+          message: `You've reached this month's Stelloquy limit of ${ORACLE_MONTHLY_MESSAGE_LIMIT} messages. It resets on the first of next month.`,
           limit: ORACLE_MONTHLY_MESSAGE_LIMIT,
           used: usage.messageCount,
         },
@@ -144,7 +144,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: 'oracle_upgrade_required',
-          message: 'Oracle is available with an active Planner + Oracle entitlement.',
+          message: 'Stelloquy is available with an active Planner + Oracle entitlement.',
         },
         { status: 403 }
       )

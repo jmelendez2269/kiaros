@@ -45,8 +45,21 @@ type DailyInsightEvidence = {
   detail: string
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
+const APP_TIME_ZONE = 'America/New_York'
+
+function todayISO(timeZone = APP_TIME_ZONE): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+
+  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10)
 }
 
 function findCurrentWeek(weeks: WeekBlueprint[], today: string): WeekBlueprint | null {
@@ -558,7 +571,7 @@ interface DashboardOverviewProps {
 export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const supabase = await createServerSupabase()
   const today = todayISO()
-  const currentYear = new Date().getFullYear()
+  const currentYear = Number.parseInt(today.slice(0, 4), 10)
 
   const [
     profileRes,
@@ -655,7 +668,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const humanDesign = parseStoredHumanDesign(profile?.human_design)
   const currentWeek = findCurrentWeek(weeks, today)
   const todayEphemeris = yearEphemeris ? findTodayEphemeris(yearEphemeris, today) : null
-  const plainSummary = todayEphemeris ? buildPlainDailySummary(humanDesign, todayEphemeris) : null
+  const plainSummary = todayEphemeris ? buildPlainDailySummary(todayEphemeris) : null
   const dailySignals: DailySignal[] = todayEphemeris && yearEphemeris
     ? buildDailySignals(humanDesign, todayEphemeris, yearEphemeris.moonPhases)
     : []
@@ -808,7 +821,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
       id: 'oracle',
       href: '/oracle',
       icon: MessageSquare,
-      title: 'Oracle',
+      title: 'Stelloquy',
       kicker: `${oracleMemoryCount} ${oracleMemoryCount === 1 ? 'memory' : 'memories'}`,
       preview: oracleSuggestion,
       tint: 'border-ember-400/25 bg-ember-400/8',

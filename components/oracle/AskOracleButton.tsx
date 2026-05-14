@@ -83,13 +83,13 @@ export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'defaul
           return
         }
         setStatus('error')
-        setErrorMessage(payload?.message || payload?.error || 'Could not reach the Oracle.')
+        setErrorMessage(payload?.message || payload?.error || 'Could not reach Stelloquy.')
         return
       }
 
       if (!res.body) {
         setStatus('error')
-        setErrorMessage('No response stream from the Oracle.')
+        setErrorMessage('No response stream from Stelloquy.')
         return
       }
 
@@ -133,7 +133,7 @@ export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'defaul
       <div className={size === 'chip' ? 'mt-1.5' : 'mt-3'}>
         <button type="button" onClick={handleClick} className={buttonClass}>
           {hasOracleAccess ? <MessageSquare size={12} /> : <Sparkles size={12} />}
-          <span>Ask Oracle about {label}</span>
+          <span>Ask Stelloquy about {label}</span>
         </button>
       </div>
 
@@ -179,7 +179,7 @@ function OracleOverlay({
       className="fixed inset-0 z-[300] flex items-center justify-center px-4 py-10 animate-fade-in"
       role="dialog"
       aria-modal="true"
-      aria-label={`Oracle reading on ${label}`}
+      aria-label={`Stelloquy reading on ${label}`}
     >
       <div
         className="absolute inset-0 bg-stone-950/75 backdrop-blur-sm"
@@ -190,7 +190,7 @@ function OracleOverlay({
       <div className="relative z-10 w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-leather-400/30 bg-stone-950/95 shadow-2xl">
         <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-leather-400/20 bg-stone-950/95 px-6 py-4 backdrop-blur-sm">
           <div>
-            <p className="shell-eyebrow text-bone-muted/70">Oracle reading · one-shot</p>
+            <p className="shell-eyebrow text-bone-muted/70">Stelloquy reading · one-shot</p>
             <p className="mt-0.5 font-serif text-base text-bone">About {label}</p>
           </div>
           <button
@@ -237,13 +237,13 @@ function OracleOverlay({
           {status === 'done' && !hasOracleAccess ? (
             <div className="mt-5 border-t border-leather-400/20 pt-4">
               <p className="text-sm leading-6 text-bone-muted">
-                Want to keep this conversation going? The Oracle can pick up where this left off — bring follow-up questions, push back on the reading, build it out.
+                Want to keep this conversation going? Stelloquy can pick up where this left off — bring follow-up questions, push back on the reading, build it out.
               </p>
               <a
                 href="/pricing#tiers"
                 className="mt-3 inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-sm font-semibold text-stone-950"
               >
-                Continue in Oracle →
+                Continue with Stelloquy →
               </a>
             </div>
           ) : null}

@@ -63,6 +63,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid capture' }, { status: 400 })
     }
 
-    return NextResponse.json({ error: 'Failed to save Oracle capture' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to save Stelloquy capture' }, { status: 500 })
   }
 }

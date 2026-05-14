@@ -108,9 +108,9 @@ const NAV_LINKS = [
   },
   {
     href: '/oracle',
-    label: 'Oracle',
-    detailLead: 'Guidance',
-    detailTrail: 'channel',
+    label: 'Stelloquy',
+    detailLead: 'Conversation',
+    detailTrail: 'with the stars',
     icon: MessageSquare,
     tone: {
       active: 'border-leather-400/60 bg-leather-500/18 text-bone shadow-glow',
@@ -198,7 +198,7 @@ function NavigationContent({
                 key={href}
                 href={linkHref}
                 onClick={onNavigate}
-                title={isCollapsed ? (isOracleLocked ? 'Upgrade Oracle' : label) : undefined}
+                title={isCollapsed ? (isOracleLocked ? 'Upgrade Stelloquy' : label) : undefined}
                 className={cn(
                   'group flex rounded-[1rem] border transition-all duration-200',
                   isCollapsed ? 'justify-center px-2 py-2.5' : 'items-center gap-2.5 px-2.5 py-2.5',

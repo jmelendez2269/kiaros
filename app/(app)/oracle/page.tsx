@@ -8,21 +8,22 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-4xl items-center">
       <section className="shell-panel-hero w-full p-8 md:p-10">
-        <p className="shell-kicker mb-4">Oracle intelligence</p>
+        <p className="shell-kicker mb-4">Stelloquy · steh-LOH-kwee</p>
         <h1 className="shell-hero-title max-w-3xl">
-          Unlock the Oracle&apos;s memory and pattern layer.
+          Unlock Stelloquy&apos;s memory and pattern layer.
         </h1>
         <p className="shell-prose-lead mt-4 max-w-3xl">
-          Oracle is included with an active Planner + Oracle subscription or Etsy Planner + Oracle
-          activation. It grounds conversations in your chart, current sky, selected journal memory,
-          and the recurring astrological patterns Kiaros observes across your entries.
+          Stelloquy is the voice woven through Kiaros — a conversation with the stars, grounded in
+          your chart, the current sky, your marked journal memory, and the recurring astrological
+          patterns we observe across your entries. Included with an active Planner + Oracle
+          subscription or Etsy Planner + Oracle activation.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {[
-            'Journal entries can become Oracle memory when you choose.',
+            'Journal entries can become Stelloquy memory when you choose.',
             'Each entry carries lunar, retrograde, and transit-aspect context.',
-            'Repeated patterns can inform Oracle guidance and future calendars.',
+            'Repeated patterns can inform Stelloquy guidance and future calendars.',
           ].map((item) => (
             <div key={item} className="shell-panel-soft p-4 text-sm leading-7 text-bone-muted">
               {item}
@@ -32,7 +33,7 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
 
         {hasReadOnlyPlannerAccess ? (
           <p className="mt-6 rounded-[1rem] border border-leather-500/25 bg-leather-500/10 px-4 py-3 text-sm leading-6 text-bone-muted">
-            Your previous annual planner remains readable, but Oracle requires active Planner +
+            Your previous annual planner remains readable, but Stelloquy requires active Planner +
             Oracle access.
           </p>
         ) : null}

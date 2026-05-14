@@ -5,6 +5,7 @@ import { DefaultChatTransport } from 'ai'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { OracleMessage } from './OracleMessage'
 import { OracleInput } from './OracleInput'
+import { StelloquyOrb, type OrbState } from './StelloquyOrb'
 import { consumeOraclePreseed } from '@/lib/oracle/preseed'
 
 const SUGGESTED_PROMPTS = [
@@ -29,6 +30,11 @@ export function OracleChat({ today }: Props) {
 
   const isLoading = status === 'streaming' || status === 'submitted'
   const lastRole = messages[messages.length - 1]?.role
+
+  // Header orb state: thinking while we wait for the first token, speaking while
+  // streaming, listening otherwise. Maps to the three orb states from Brand v10 §04.
+  const headerOrbState: OrbState =
+    status === 'submitted' ? 'thinking' : status === 'streaming' ? 'speaking' : 'listening'
 
   function handleSend(text: string) {
     setCaptureError(null)
@@ -72,7 +78,7 @@ export function OracleChat({ today }: Props) {
 
     const payload = (await response.json()) as { error?: string }
     if (!response.ok) {
-      const message = payload.error || 'Failed to save Oracle capture.'
+      const message = payload.error || 'Failed to save Stelloquy capture.'
       setCaptureError(message)
       throw new Error(message)
     }
@@ -81,13 +87,16 @@ export function OracleChat({ today }: Props) {
   return (
     <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-4xl flex-col">
       <div className="shell-panel mb-5 px-6 py-6">
-        <p className="shell-kicker mb-3">Oracle</p>
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="shell-section-title">Guidance grounded in your chart and the current sky</h1>
-            <p className="mt-3 text-sm leading-7 text-bone-muted">
-              Ask about the year, this week, a transit, your journal patterns, or how to direct your energy.
-            </p>
+        <p className="shell-kicker mb-3">Stelloquy · steh-LOH-kwee</p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-5">
+            <StelloquyOrb size={64} state={headerOrbState} ariaLabel={`Stelloquy ${headerOrbState}`} />
+            <div>
+              <h1 className="shell-section-title">A conversation with the stars</h1>
+              <p className="mt-2 text-sm leading-7 text-bone-muted">
+                Grounded in your chart, this week&apos;s sky, and the journal memory you&apos;ve marked.
+              </p>
+            </div>
           </div>
           <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">{today}</div>
         </div>
@@ -98,7 +107,7 @@ export function OracleChat({ today }: Props) {
           {messages.length === 0 ? (
             <div className="space-y-6 pt-12">
               <p className="text-center text-sm text-bone-muted">
-                Ask the Oracle anything grounded in your chart, current transits, selected journal memory, or recurring sky patterns.
+                Ask Stelloquy anything grounded in your chart, current transits, selected journal memory, or recurring sky patterns.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SUGGESTED_PROMPTS.map((prompt) => (
@@ -118,16 +127,15 @@ export function OracleChat({ today }: Props) {
           )}
 
           {isLoading && lastRole === 'user' && (
-            <div className="flex items-center gap-1 pl-1 text-bone-muted">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leather-300" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leather-300 [animation-delay:150ms]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leather-300 [animation-delay:300ms]" />
+            <div className="flex items-center gap-2.5 pl-1 text-[10px] uppercase tracking-widest text-bone-muted/60">
+              <StelloquyOrb size={28} state="thinking" ariaLabel="Stelloquy is thinking" />
+              <span>Thinking</span>
             </div>
           )}
 
           {error && (
             <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-300">
-              {error.message || 'Something went wrong reaching the Oracle. Try again in a moment.'}
+              {error.message || 'Something went wrong reaching Stelloquy. Try again in a moment.'}
             </div>
           )}
 

@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: 'monthly_limit_reached',
-          message: `You've used this month's ${ORACLE_EXPLAIN_MONTHLY_LIMIT} inline Oracle questions. Upgrade to Planner + Oracle for unlimited conversation, or wait until the first of next month.`,
+          message: `You've used this month's ${ORACLE_EXPLAIN_MONTHLY_LIMIT} inline Stelloquy questions. Upgrade to Planner + Oracle for unlimited conversation, or wait until the first of next month.`,
           limit: ORACLE_EXPLAIN_MONTHLY_LIMIT,
           used: usage.messageCount,
           upgradeAvailable: !access.hasOracleAccess,

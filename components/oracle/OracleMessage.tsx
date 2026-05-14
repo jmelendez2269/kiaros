@@ -3,6 +3,7 @@
 import { BookmarkPlus, Check, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { UIMessage } from 'ai'
+import { StelloquyOrb } from './StelloquyOrb'
 
 interface Props {
   message: UIMessage
@@ -168,9 +169,10 @@ export function OracleMessage({ message, onCapture }: Props) {
   }
 
   return (
-    <div className="flex justify-start">
+    <div className="flex justify-start gap-2.5">
+      <StelloquyOrb size={28} state="speaking" ariaLabel="Stelloquy" className="mt-5" />
       <div className="max-w-[85%] space-y-1">
-        <p className="pl-1 text-[10px] uppercase tracking-widest text-bone-muted/40">Oracle</p>
+        <p className="pl-1 text-[10px] uppercase tracking-widest text-bone-muted/40">Stelloquy</p>
         <div
           ref={textRef}
           className="whitespace-pre-wrap rounded-2xl rounded-tl-sm border border-border/80 bg-stone-950/80 px-4 py-3 text-sm leading-relaxed text-bone-muted"

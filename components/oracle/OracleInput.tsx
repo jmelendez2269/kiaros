@@ -49,7 +49,7 @@ export function OracleInput({ onSend, isLoading }: Props) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask the Oracle..."
+          placeholder="Ask Stelloquy…"
           disabled={isLoading}
           rows={1}
           className="min-h-[44px] max-h-[120px] flex-1 resize-none rounded-xl border border-border/80 bg-stone-950/80 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/40 focus:outline-none focus:ring-1 focus:ring-leather-400 disabled:opacity-50"
