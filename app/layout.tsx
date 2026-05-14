@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Lora, Figtree } from "next/font/google";
+import {
+  Cinzel,
+  Cormorant_Garamond,
+  DM_Sans,
+  Figtree,
+  JetBrains_Mono,
+  Lora,
+} from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 
@@ -13,6 +20,38 @@ const lora = Lora({
 const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-body",
+  display: "swap",
+});
+
+// Warm Almanac type stack. Loaded at root so every screen can opt in via the
+// almanac.* color + font Tailwind utilities. Existing themes still read
+// --font-display / --font-body unchanged.
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-almanac-serif",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-almanac-body",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-almanac-mono",
+  display: "swap",
+});
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-almanac-display",
   display: "swap",
 });
 
@@ -49,7 +88,7 @@ export default async function RootLayout({
         lang="en"
         data-theme={theme}
         suppressHydrationWarning
-        className={`${lora.variable} ${figtree.variable}`}
+        className={`${lora.variable} ${figtree.variable} ${cormorant.variable} ${dmSans.variable} ${jetbrains.variable} ${cinzel.variable}`}
       >
         <head>
           <meta charSet="utf-8" />

@@ -54,6 +54,38 @@
     /* Quaternary — deep plum */
     --plum-400: 270 52% 66%;
     --plum-300: 268 58% 80%;
+
+    /* ─── Warm Almanac (Kairos redesign) ───────────────────────────────────
+       Parallel token set. Lives at :root so the new screens work under any
+       current theme. Hex values (not HSL) so they pass straight through to
+       inline styles in the Almanac primitives without alpha hacks. Phase 5
+       cleanup removes the old --leather/--moss/--ember/--plum tokens once
+       every screen has migrated. */
+    --almanac-bg: #15100c;
+    --almanac-bg2: #1f1814;
+    --almanac-bg3: #2a2018;
+    --almanac-bg4: #372a20;
+    --almanac-line: rgba(244, 232, 212, 0.10);
+    --almanac-line-hi: rgba(244, 232, 212, 0.18);
+    --almanac-ink: #f4e8d4;
+    --almanac-ink-dim: #c7b69a;
+    --almanac-ink-soft: #8b7a60;
+    --almanac-ink-faint: rgba(244, 232, 212, 0.4);
+    --almanac-brick: #7c2d2d;
+    --almanac-brick-hi: #a04040;
+    --almanac-copper: #c9854c;
+    --almanac-copper-hi: #e0a05c;
+    --almanac-ember: #d97c5e;
+    --almanac-sage: #7a8a6e;
+    --almanac-plum: #6b3d6e;
+    --almanac-midnight: #1a2240;
+    --almanac-starlight: #a9b4d8;
+    /* Brand accents — sprinkled throughout, anchor the Stelloquy orb */
+    --almanac-kairos: #9966ff;
+    --almanac-kairos-hi: #b58fff;
+    --almanac-kairos-lo: #6b3fcc;
+    --almanac-prism: #4ee7fd;
+    --almanac-chronos: #ff9b2b;
   }
 
   html {
