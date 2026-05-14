@@ -1,20 +1,59 @@
 'use client'
 
 import Link from 'next/link'
+import { useRef, useState, useTransition } from 'react'
 import { K, Kicker } from '@/components/almanac'
+import { saveLineForToday } from '@/app/(app)/today/actions'
 
 interface Props {
-  /** Optional streak count to show in the eyebrow. */
+  /** Optional starting streak. Bumps by 1 on a successful save when the user
+   *  didn't already have an entry today. */
   streak?: number
 }
 
-/**
- * Quick-line composer placeholder. The "real" path is the full JournalComposer
- * on /journal — this is the daily prompt that nudges the user into that flow
- * from Today. Phase 1.B leaves it as a styled link; a later pass can inline
- * the composer here if we want save-without-leaving-Today.
- */
-export function LineForToday({ streak }: Props) {
+const TAGS = ['body', 'craft', 'love', 'work', 'rest', 'mind'] as const
+type TagKey = (typeof TAGS)[number]
+
+const PROMPT = 'What did the day try to teach me?'
+
+export function LineForToday({ streak = 0 }: Props) {
+  const [draft, setDraft] = useState('')
+  const [tags, setTags] = useState<TagKey[]>([])
+  const [streakNow, setStreakNow] = useState(streak)
+  const [savedFlash, setSavedFlash] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function toggleTag(tag: TagKey) {
+    setTags((curr) => (curr.includes(tag) ? curr.filter((t) => t !== tag) : [...curr, tag]))
+  }
+
+  function handleSave() {
+    if (!draft.trim() || pending) return
+    setError(null)
+    startTransition(async () => {
+      const result = await saveLineForToday(draft, tags)
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      setDraft('')
+      setTags([])
+      setStreakNow((s) => s + 1)
+      setSavedFlash(true)
+      if (flashTimer.current) clearTimeout(flashTimer.current)
+      flashTimer.current = setTimeout(() => setSavedFlash(false), 2400)
+    })
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault()
+      handleSave()
+    }
+  }
+
   return (
     <div
       style={{
@@ -26,7 +65,7 @@ export function LineForToday({ streak }: Props) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Kicker color={K.brickHi}>A line for today</Kicker>
-        {typeof streak === 'number' && streak > 0 ? (
+        {streakNow > 0 ? (
           <span
             style={{
               fontFamily: K.fMono,
@@ -35,10 +74,11 @@ export function LineForToday({ streak }: Props) {
               letterSpacing: '0.14em',
             }}
           >
-            {streak}-DAY STREAK
+            {streakNow}-DAY STREAK
           </span>
         ) : null}
       </div>
+
       <div
         style={{
           fontFamily: K.fSerif,
@@ -49,10 +89,17 @@ export function LineForToday({ streak }: Props) {
           lineHeight: 1.25,
         }}
       >
-        What did the day try to teach me?
+        {PROMPT}
       </div>
-      <div
+
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Write a sentence. Tomorrow Stelloquy will fold it into the pattern."
+        disabled={pending}
         style={{
+          width: '100%',
           marginTop: 12,
           background: K.bg,
           border: `1px solid ${K.line}`,
@@ -60,60 +107,116 @@ export function LineForToday({ streak }: Props) {
           padding: 14,
           fontFamily: K.fSerif,
           fontSize: 14,
-          color: K.inkDim,
+          color: K.ink,
           fontStyle: 'italic',
           lineHeight: 1.6,
           minHeight: 100,
+          resize: 'vertical',
+          outline: 'none',
         }}
-      >
-        <span style={{ color: K.copperHi }}>|</span> Write a sentence. Tomorrow Stelloquy will fold
-        it into the pattern.
-      </div>
+      />
+
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginTop: 12,
+          flexWrap: 'wrap',
+          gap: 10,
         }}
       >
-        <div style={{ display: 'flex', gap: 6 }}>
-          {['body', 'craft', 'love'].map((t) => (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {TAGS.map((tag) => {
+            const active = tags.includes(tag)
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                disabled={pending}
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 9.5,
+                  color: active ? K.bg : K.copperHi,
+                  background: active ? K.copperHi : 'transparent',
+                  border: `1px solid ${K.copper}${active ? 'ff' : '55'}`,
+                  borderRadius: 999,
+                  padding: '3px 9px',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  cursor: pending ? 'not-allowed' : 'pointer',
+                  transition: 'background 120ms, color 120ms, border-color 120ms',
+                }}
+              >
+                {tag}
+              </button>
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {savedFlash ? (
             <span
-              key={t}
               style={{
                 fontFamily: K.fMono,
-                fontSize: 9.5,
-                color: K.copperHi,
-                border: `1px solid ${K.copper}55`,
-                borderRadius: 999,
-                padding: '3px 9px',
-                letterSpacing: '0.1em',
+                fontSize: 9,
+                color: K.sage,
+                letterSpacing: '0.16em',
                 textTransform: 'uppercase',
               }}
             >
-              {t}
+              Saved · Stelloquy is listening
             </span>
-          ))}
+          ) : null}
+          <Link
+            href="/journal"
+            style={{
+              fontFamily: K.fMono,
+              fontSize: 9,
+              color: K.inkSoft,
+              letterSpacing: '0.14em',
+              textDecoration: 'none',
+              textTransform: 'uppercase',
+            }}
+          >
+            Open journal →
+          </Link>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={pending || !draft.trim()}
+            style={{
+              fontFamily: K.fBody,
+              fontSize: 12,
+              color: K.bg,
+              background: K.copperHi,
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 16px',
+              fontWeight: 500,
+              letterSpacing: '0.02em',
+              cursor: pending || !draft.trim() ? 'not-allowed' : 'pointer',
+              opacity: pending || !draft.trim() ? 0.55 : 1,
+            }}
+          >
+            {pending ? 'Saving…' : 'Save line'}
+          </button>
         </div>
-        <Link
-          href="/journal"
+      </div>
+
+      {error ? (
+        <div
           style={{
+            marginTop: 10,
             fontFamily: K.fBody,
             fontSize: 12,
-            color: K.bg,
-            background: K.copperHi,
-            border: 'none',
-            borderRadius: 8,
-            padding: '8px 16px',
-            fontWeight: 500,
-            letterSpacing: '0.02em',
-            textDecoration: 'none',
+            color: K.brickHi,
           }}
         >
-          Open the journal →
-        </Link>
-      </div>
+          {error}
+        </div>
+      ) : null}
     </div>
   )
 }

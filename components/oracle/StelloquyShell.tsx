@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { BRAND } from '@/lib/brand'
 import { K } from '@/components/almanac/tokens'
-import { OracleChat } from './OracleChat'
+import { OracleConversation } from './OracleConversation'
 import { StelloquyOrb } from './StelloquyOrb'
 
 interface Props {
@@ -220,8 +220,8 @@ export function StelloquyShell({ today }: Props) {
                 <X size={14} />
               </button>
             </div>
-            <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '0 6px' }}>
-              <OracleChat today={today} />
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+              <OracleConversation className="flex min-h-0 flex-1 flex-col px-4 py-4" />
             </div>
           </aside>
         </>

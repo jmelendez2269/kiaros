@@ -10,6 +10,9 @@ import { ShapeOfTodayCards } from '@/components/today/ShapeOfToday'
 import { WeekRibbon } from '@/components/today/WeekRibbon'
 import { MiniEphemeris } from '@/components/today/MiniEphemeris'
 import { LineForToday } from '@/components/today/LineForToday'
+import { ActiveTransits } from '@/components/today/ActiveTransits'
+import { getActiveTransits } from '@/lib/today/get-active-transits'
+import { getJournalStreak } from '@/lib/today/get-journal-streak'
 
 export default async function TodayPage() {
   const { userId } = await auth()
@@ -27,6 +30,10 @@ export default async function TodayPage() {
     moonSign: context.today.moon.sign,
   })
   const transit = getDailyLongitudesForDate(context.today.date)
+  const [activeTransits, journalStreak] = await Promise.all([
+    getActiveTransits(context.today.date),
+    getJournalStreak(context.today.date),
+  ])
 
   return (
     <div
@@ -48,15 +55,19 @@ export default async function TodayPage() {
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
           gap: 16,
+          alignItems: 'start',
         }}
       >
-        <Frame tone="umber" padding={22}>
-          <ShapeOfTodayCards
-            shape={shape}
-            isoWeek={context.meta.isoWeek}
-            dayOfYear={context.meta.dayOfYear}
-          />
-        </Frame>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+          <Frame tone="umber" padding={22}>
+            <ShapeOfTodayCards
+              shape={shape}
+              isoWeek={context.meta.isoWeek}
+              dayOfYear={context.meta.dayOfYear}
+            />
+          </Frame>
+          <ActiveTransits data={activeTransits} />
+        </div>
         <Frame tone="cocoa" padding={20} stars>
           <MiniEphemeris transit={transit} natal={null} />
         </Frame>
@@ -72,7 +83,7 @@ export default async function TodayPage() {
         <Frame tone="umber" padding={20}>
           <WeekRibbon week={context.week} />
         </Frame>
-        <LineForToday />
+        <LineForToday streak={journalStreak} />
       </div>
     </div>
   )
