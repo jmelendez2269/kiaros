@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { AlmanacSidebar } from '@/components/almanac/AlmanacSidebar'
-import { StelloquyDock } from '@/components/oracle/StelloquyDock'
+import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -54,7 +54,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
-      <StelloquyDock />
+      <StelloquyShell
+        today={new Date().toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+        })}
+      />
     </div>
   )
 }
