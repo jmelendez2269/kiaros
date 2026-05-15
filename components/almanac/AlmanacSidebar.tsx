@@ -27,7 +27,7 @@ interface SidebarProps {
 // flip these to /year, /self, /journal-new as those screens land.
 const NAV = [
   { key: 'today', label: 'Today', hint: 'sky now · daily focus', glyph: '☉', tone: K.copper, href: '/today' },
-  { key: 'year', label: 'Year', hint: 'calendar · blueprint · arcs', glyph: '◐', tone: K.ember, href: '/calendar' },
+  { key: 'year', label: 'Year', hint: 'calendar · blueprint · arcs', glyph: '◐', tone: K.ember, href: '/year' },
   { key: 'self', label: 'Self', hint: 'natal · design · areas', glyph: '✺', tone: K.sage, href: '/human-design' },
   { key: 'journal', label: 'Journal', hint: 'entries · tracker · memory', glyph: '✎', tone: K.brickHi, href: '/journal' },
 ] as const

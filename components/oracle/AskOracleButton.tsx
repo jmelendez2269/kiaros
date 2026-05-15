@@ -1,25 +1,30 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MessageSquare, Sparkles, X } from 'lucide-react'
-import { writeOraclePreseed } from '@/lib/oracle/preseed'
+import { useStelloquy } from './StelloquyProvider'
 
 interface Props {
   prompt: string
   hasOracleAccess: boolean
   // Visual label inside the button, e.g. "this placement" → renders
-  // "Ask Oracle about this placement". Keep it short.
+  // "Ask Oracle about this placement". Keep it short. Also used as the
+  // overlay header for the free-tier one-shot reading.
   label: string
   // Visual size — tight chip on signal cards, regular button elsewhere.
   size?: 'chip' | 'default'
+  // Custom trigger content. When provided, replaces the default "Ask
+  // Stelloquy about <label>" chip with whatever the caller renders. The
+  // children are wrapped in a transparent button that fires the same flow.
+  // Used by SkyBanner et al. to make placement chips themselves clickable.
+  children?: React.ReactNode
 }
 
 type Status = 'idle' | 'streaming' | 'done' | 'error' | 'limit_reached'
 
-export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'default' }: Props) {
-  const router = useRouter()
+export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'default', children }: Props) {
+  const { openWith } = useStelloquy()
   const [status, setStatus] = useState<Status>('idle')
   const [response, setResponse] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -45,8 +50,7 @@ export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'defaul
 
   function handleClick() {
     if (hasOracleAccess) {
-      writeOraclePreseed(prompt)
-      router.push('/oracle')
+      openWith(prompt)
       return
     }
     void streamExplain()
@@ -130,12 +134,23 @@ export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'defaul
 
   return (
     <>
-      <div className={size === 'chip' ? 'mt-1.5' : 'mt-3'}>
-        <button type="button" onClick={handleClick} className={buttonClass}>
-          {hasOracleAccess ? <MessageSquare size={12} /> : <Sparkles size={12} />}
-          <span>Ask Stelloquy about {label}</span>
+      {children ? (
+        <button
+          type="button"
+          onClick={handleClick}
+          aria-label={`Ask Stelloquy about ${label}`}
+          className="cursor-pointer border-0 bg-transparent p-0 text-inherit"
+        >
+          {children}
         </button>
-      </div>
+      ) : (
+        <div className={size === 'chip' ? 'mt-1.5' : 'mt-3'}>
+          <button type="button" onClick={handleClick} className={buttonClass}>
+            {hasOracleAccess ? <MessageSquare size={12} /> : <Sparkles size={12} />}
+            <span>Ask Stelloquy about {label}</span>
+          </button>
+        </div>
+      )}
 
       {mounted && isOpen
         ? createPortal(

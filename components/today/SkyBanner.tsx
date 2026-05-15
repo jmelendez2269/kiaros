@@ -1,18 +1,40 @@
+'use client'
+
 import { MoonGlyph, StarField, K } from '@/components/almanac'
+import { AskOracleButton } from '@/components/oracle/AskOracleButton'
+import { useStelloquy } from '@/components/oracle/StelloquyProvider'
+import { buildTransitPlacementExplanation } from '@/lib/human-design'
+import { buildPlacementPrompt } from '@/lib/oracle/preseed'
 import type { TodayContext } from '@/lib/today/get-today-context'
+import type { Planet, ZodiacSign } from '@/types/blueprint'
 
 interface Props {
   context: TodayContext
   firstName?: string | null
 }
 
+function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: number): string {
+  // No-aspects prompt for now — the SkyBanner doesn't carry today's per-day
+  // aspect set yet. When we wire that in, swap aspects: [] for the real list.
+  const explanation = buildTransitPlacementExplanation({
+    planet,
+    sign,
+    degreeInSign,
+    aspects: [],
+  })
+  return buildPlacementPrompt(explanation)
+}
+
 // The editorial moment of the page. Uses a sunset gradient by default;
 // later we can vary by time of day or season via window.__kairosTweaks.
 export function SkyBanner({ context, firstName }: Props) {
   const { today, sabian, meta } = context
+  const { hasOracleAccess } = useStelloquy()
   const moonPos = `${Math.round(today.moon.degreeInSign)}° ${signGlyph(today.moon.sign)}`
   const sunPos = `${Math.round(today.sun.degreeInSign)}° ${signGlyph(today.sun.sign)}`
   const illumPct = Math.round(today.moonIllumination * 100)
+  const sunPrompt = placementPromptFor('Sun' as Planet, today.sun.sign as ZodiacSign, today.sun.degreeInSign)
+  const moonPrompt = placementPromptFor('Moon' as Planet, today.moon.sign as ZodiacSign, today.moon.degreeInSign)
 
   return (
     <div
@@ -117,14 +139,36 @@ export function SkyBanner({ context, firstName }: Props) {
           <div>
             WEEK {String(meta.isoWeek).padStart(2, '0')} · DAY {String(meta.dayOfYear).padStart(3, '0')}
           </div>
-          <div style={{ color: '#fff5e0', marginTop: 6 }}>☉ {sunPos}</div>
-          <div style={{ color: '#fff5e0' }}>
-            ☽ {moonPos} · {illumPct}%
-          </div>
+          <AskOracleButton
+            prompt={sunPrompt}
+            hasOracleAccess={hasOracleAccess}
+            label={`the Sun at ${sunPos}`}
+          >
+            <span style={placementChipStyle}>☉ {sunPos}</span>
+          </AskOracleButton>
+          <AskOracleButton
+            prompt={moonPrompt}
+            hasOracleAccess={hasOracleAccess}
+            label={`the Moon at ${moonPos}`}
+          >
+            <span style={placementChipStyle}>☽ {moonPos} · {illumPct}%</span>
+          </AskOracleButton>
         </div>
       </div>
     </div>
   )
+}
+
+const placementChipStyle: React.CSSProperties = {
+  display: 'inline-block',
+  color: '#fff5e0',
+  marginTop: 6,
+  padding: '2px 6px',
+  borderRadius: 4,
+  transition: 'background 0.15s, border-color 0.15s',
+  border: '1px solid rgba(255, 245, 224, 0.18)',
+  background: 'rgba(255, 245, 224, 0.04)',
+  cursor: 'pointer',
 }
 
 function signGlyph(sign: string): string {
