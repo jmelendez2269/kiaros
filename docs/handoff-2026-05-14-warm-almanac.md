@@ -14,10 +14,11 @@ for the design canon. Do not start coding until you have read both.**
 ## 1. Where we are
 
 - **Branch:** `feature/warm-almanac` (branched off `feature/human-design`)
-- **Three commits landed:**
+- **Four commits landed:**
   - `d96bb3a` — Warm Almanac foundations (tokens, fonts, brand, primitives)
   - `c5a31d8` — Shell live (`AlmanacSidebar` + `/today` placeholder + dock)
   - `c219946` — Today wired to live ephemeris + `StelloquyShell` drawer + `/dashboard → /today` redirect
+  - `0a09b22` — **Phase 1.C polish** (Sabian 360 stub, Active Transits panel, inline LineForToday composer with server action, OracleConversation extraction)
 - **Type-clean** (`npx tsc --noEmit` passes after each commit)
 - **Old routes still resolve** — `/calendar`, `/human-design`, `/journal`,
   `/tracker`, `/areas`, `/blueprint`, `/curriculum`, `/oracle` — but Year /
@@ -30,14 +31,18 @@ for the design canon. Do not start coding until you have read both.**
 - New cocoa/copper Warm Almanac shell. Four nav items (Today / Year / Self /
   Journal). Pinned areas in sidebar. Mobile drawer + desktop collapse.
 - `/today` shows a real SkyBanner (sun/moon longitudes, moon illumination,
-  Sabian for the Sun degree), three Shape-of-Today cards (energy / voice /
-  body, derived deterministically from moon phase + moon sign), a transit-only
-  mini ephemeris wheel, a 7-day week ribbon, and a Line-for-Today card that
-  routes to `/journal`.
+  Sabian for the Sun degree — exact-degree lookup), three Shape-of-Today
+  cards (energy / voice / body, derived deterministically from moon phase +
+  moon sign), an **Active Transits panel** stacked below Shape-of-Today
+  (rarity, applying/separating state, live orb), a transit-only mini
+  ephemeris wheel, a 7-day week ribbon, and an **inline LineForToday
+  composer** (textarea + tag chips + ⌘/Ctrl+Enter save + streak bump,
+  backed by an `app/(app)/today/actions.ts` server action that mirrors
+  `POST /api/journal`).
 - A Stelloquy orb pulses bottom-right of every authed page. Click it or press
-  **⌘K / Ctrl+K** anywhere → right-side drawer slides in with the existing
-  streaming chat (`OracleChat`, no backend changes). Esc / backdrop / X to
-  close.
+  **⌘K / Ctrl+K** anywhere → right-side drawer slides in with the streaming
+  chat (now `OracleConversation`, the extracted chat body — no backend
+  changes). Esc / backdrop / X to close.
 
 ---
 
@@ -76,10 +81,16 @@ Earlier in the session the user committed to these. Treat as final:
 lib/
   brand.ts                    BRAND.product / BRAND.oracle constants
   ephemeris/
-    sabian.ts                 ⚠ stub (30 samples). Fill to 360 in Phase 1.C
+    sabian.ts                 360-degree direct lookup. 32 transcribed Rudhyar
+                              entries + 328 pending (nearest-real fallback).
+                              Adding a real symbol = single edit to TRANSCRIBED.
   today/
     get-today-context.ts      Server helper: longitudes → snapshot + week ribbon
     shape-of-today.ts         Deterministic energy/voice/body derivation
+    get-active-transits.ts    Joins buildSkyTimeline windows to today's per-day
+                              Transit for live orb + applying state. Returns
+                              `{ status: 'no-chart' }` when natal chart absent.
+    get-journal-streak.ts     Consecutive-day streak count, lookback 90 days.
 
 components/
   almanac/
@@ -97,19 +108,34 @@ components/
   today/
     SkyBanner.tsx             Gradient banner — sun/moon/Sabian
     ShapeOfToday.tsx          3-up energy/voice/body cards
+    ActiveTransits.tsx        Stacked rows below Shape-of-Today: glyphs,
+                              technical name, rarity label, orb, applying state.
+                              Empty / no-orb / no-chart states all styled.
     MiniEphemeris.tsx         Wraps EphemerisWheel for the Today layout
     WeekRibbon.tsx            7-day strip with moon glyphs + phase hints
-    LineForToday.tsx          Composer entry point (client) — currently links to /journal
+    LineForToday.tsx          Stateful composer: textarea + multi-select tag
+                              chips + useTransition save (server action) +
+                              optimistic streak bump + saved flash.
   oracle/
     StelloquyOrb.tsx          (pre-existing) Three-state animated orb
-    StelloquyShell.tsx        Drawer + dock + ⌘K — replaces old StelloquyDock
+    OracleConversation.tsx    Chat body (useChat + messages + capture handling).
+                              Owns streaming state; takes className + showStatusOrb.
+                              Both /oracle and the Stelloquy drawer render this.
+    OracleChat.tsx            Thin /oracle-page wrapper — header chrome only.
+    StelloquyShell.tsx        Drawer + dock + ⌘K. Renders OracleConversation
+                              directly (no nested max-w-4xl/h-calc constraints).
 
 app/
   layout.tsx                  Loads Cormorant, DM Sans, JetBrains Mono, Cinzel
   globals.css                 --almanac-* tokens at :root
   (app)/
     layout.tsx                Uses AlmanacSidebar + StelloquyShell
-    today/page.tsx            Server Component composing the Today layout
+    today/
+      page.tsx                Server Component composing the Today layout
+      actions.ts              'use server' saveLineForToday — mirrors POST
+                              /api/journal for sky context + aspect inserts +
+                              pattern refresh. Phase 4 should converge these
+                              onto a shared lib/journal/create-entry.ts.
 
 tailwind.config.ts            colors.almanac.* + fontFamily.almanac-*
 next.config.js                /dashboard → /today
@@ -132,12 +158,12 @@ Do NOT delete these until each replacement screen ships and is verified.
 
 | UI surface | Source | Net-new work |
 |---|---|---|
-| Sky banner (Today) | `getDailyLongitudesForDate`, `getMoonIllumination`, `getLunarPhaseLabel`, `lonToSign`, `lonToDegreeInSign` ✓ wired | Full Sabian list (Phase 1.C) |
+| Sky banner (Today) | `getDailyLongitudesForDate`, `getMoonIllumination`, `getLunarPhaseLabel`, `lonToSign`, `lonToDegreeInSign` ✓ wired; `getSabianForDegree` exact-degree lookup ✓ wired | Transcribe remaining 328 Sabian symbols into `TRANSCRIBED` (data-only, single edits) |
 | Shape of today (Today) | `lib/today/shape-of-today.ts` ✓ deterministic | None |
 | Mini ephemeris (Today) | `getDailyLongitudesForDate` ✓ transit only | Natal layer needs `birth_charts` join — wires in alongside Self screen, Phase 3 |
-| Active transits (Today) | DashboardOverview's `buildSkyTimeline` + `buildDailySignals` | **Phase 1.C**: extract shared helper, render Today's active transits panel |
+| Active transits (Today) | `lib/today/get-active-transits.ts` joins `buildSkyTimeline` windows + per-day Transit ✓ wired | Empty-state copy points users at the Self screen — re-look once Phase 3 ships |
 | Week ribbon (Today) | `getDailyLongitudesForDate` per day ✓ | None |
-| Line-for-today (Today) | Links to `/journal` | **Phase 1.C**: inline composer save |
+| Line-for-today (Today) | `app/(app)/today/actions.ts` server action ✓ wired (sky + aspects + pattern refresh) | Phase 4 should converge the action and `POST /api/journal` onto a shared helper |
 | Year heatmap (Year) | `blueprints` + ephemeris days | Phase 2 |
 | Month grid events (Year) | calendar + transits | Phase 2 |
 | Push/rest ribbon (Year) | Blueprint | **Migration 0014**: `push_rest_arc` JSON column on `blueprints` — write a fallback if missing so existing blueprints still render |
@@ -157,53 +183,53 @@ Do NOT delete these until each replacement screen ships and is verified.
 
 ## 5. Remaining work — every optional
 
-### Phase 1.C — Polish (do these before Phase 2 if time allows)
+### Phase 1.C — Polish ✓ SHIPPED (`0a09b22`, 2026-05-14)
 
-1. **Fill Rudhyar's full 360 symbols** in `lib/ephemeris/sabian.ts`.
-   - Data-only, no architecture change.
-   - Replace the `SAMPLES` array with 360 entries, one per degree.
-   - The `getSabianForDegree()` contract stays the same — callers don't change.
-   - Use Rudhyar's *An Astrological Mandala* (1973) wording (PD-1953-elsewhere
-     edition); credit in a header comment.
+All four items landed. Carried-forward notes on what's still imperfect:
 
-2. **Active transits panel on Today.**
-   - DashboardOverview at `components/dashboard/DashboardOverview.tsx` already
-     uses `buildSkyTimeline` from `lib/human-design.ts`.
-   - Extract a shared helper, e.g. `lib/today/get-active-transits.ts`, that
-     takes a userId + date and returns the top 3–5 transits with applying/
-     separating state, orb, rarity, and a one-line description.
-   - Render via a new `components/today/ActiveTransits.tsx` modelled on the
-     prototype's "ACTIVE TRANSITS" block in
-     `Kairos-handoff/kairos/project/kairos/today.jsx` around lines 210–225.
-   - Insert in the Today layout between Shape-of-Today and MiniEphemeris,
-     or as a third column.
-   - **Requires a natal chart.** Render an empty state ("Complete your
-     birth chart on the Self screen to see today's transits") if missing.
+1. **Sabian 360 — structured stub.**
+   - `lib/ephemeris/sabian.ts` now exports a 360-degree direct lookup. 32
+     transcribed Rudhyar entries are preserved at their exact degrees; the
+     other 328 carry `pending: true` and serve the nearest-real prose as a
+     readable placeholder.
+   - **Decision recorded:** the handoff's original "Rudhyar 1973 PD-1953-
+     elsewhere" framing was contradictory — Marc Edmund Jones / Elsie
+     Wheeler 1925 is the genuinely-PD set; Rudhyar 1973 is derivative.
+     Treat Rudhyar text as quotable in small numbers with attribution, not
+     bulk-reproduced. Replace pending entries with vetted text via single
+     edits to the `TRANSCRIBED` map. `getSabianForDegree()` contract
+     unchanged.
+
+2. **Active Transits panel.**
+   - Helper: `lib/today/get-active-transits.ts` joins `buildSkyTimeline`
+     windows (rarity + plain prose) to today's per-day `Transit` (live orb
+     + applying state). Returns `{ status: 'no-chart' }` when natal chart
+     or year-cache is missing.
+   - Component: `components/today/ActiveTransits.tsx`. Inserted as a
+     stacked frame below Shape-of-Today inside the left column; MiniEphemeris
+     keeps its right column.
+   - **Carried debt:** the no-chart empty-state copy points users at the
+     Self screen — re-look once Phase 3 ships and `/self` exists.
 
 3. **Inline LineForToday composer.**
-   - Today's `LineForToday` is a styled prompt that links to `/journal`. The
-     prototype shows a textarea + save button in place.
-   - Add a small server action (`app/(app)/today/actions.ts`) that wraps
-     the existing journal-entry insert logic. Reuse `JournalComposer`'s
-     `saveEntry` path if it's already a server action.
-   - Update `components/today/LineForToday.tsx`:
-     - Add `useState` for draft text + tag chips.
-     - Submit calls the server action.
-     - On success: optimistic clear + small success toast + bump streak
-       count.
-   - Pre-fill the journal_entry's sky context (already auto-stamped server-
-     side) — no changes needed there.
+   - Server action: `app/(app)/today/actions.ts` (`'use server'`) mirrors
+     `POST /api/journal` — sky context, aspect inserts, pattern refresh —
+     scoped to the quick-line shape (no ritual flag, no Stelloquy memory
+     toggle). Streak helper: `lib/today/get-journal-streak.ts`.
+   - Composer is stateful: textarea + multi-select tag chips +
+     `useTransition` save + ⌘/Ctrl+Enter submit + optimistic streak bump +
+     saved flash + inline error. `/journal` link kept as escape hatch.
+   - **Carried debt:** ~50 lines duplicated with `app/api/journal/route.ts`.
+     Phase 4's journal rebuild should converge both call sites onto a
+     shared `lib/journal/create-entry.ts` helper.
 
-4. **Drawer width + scroll polish for OracleChat inside the drawer.**
-   - `OracleChat`'s outer container is `h-[calc(100vh-8rem)] max-w-4xl` —
-     designed for the legacy `/oracle` page. It works in the 560px drawer
-     but is constrained.
-   - Either: thread a `containerClassName` prop into `OracleChat` so the
-     drawer can pass its own height/width, or extract the chat body from
-     OracleChat into a `<OracleConversation>` shell that both `/oracle`
-     and the drawer wrap.
-   - Recommend the second — cleaner long-term, and Phase 5 will likely
-     delete the `/oracle` page anyway.
+4. **OracleConversation extraction.**
+   - `components/oracle/OracleConversation.tsx` owns `useChat`, messages,
+     suggested prompts, capture handling. Accepts `className` and
+     `showStatusOrb` props.
+   - `OracleChat.tsx` is now a thin legacy /oracle wrapper around it.
+   - `StelloquyShell` renders `OracleConversation` directly — drawer no
+     longer pays for nested `max-w-4xl`/`h-[calc(100vh-8rem)]` constraints.
 
 ### Phase 2 — Year (replaces Calendar + Blueprint + Curriculum)
 
@@ -293,21 +319,24 @@ Intelligence UI gap from CLAUDE.md.
 
 ---
 
-## 6. Open decisions for the next session
+## 6. Open decisions
 
-These haven't been answered yet:
+Resolved during Phase 1.C session (2026-05-14):
 
-1. **Phase 1.C scope** — do all four polish items, just Sabian + active
-   transits, or skip to Phase 2 entirely?
-2. **Inline composer authentication** — server action or API route? Server
-   action is the App Router idiom; check whether existing `JournalComposer`
-   uses a route handler for legacy reasons.
-3. **`/oracle` deprecation timing** — keep the legacy chat page accessible
-   through Phase 2 and 3 as a safety net, or redirect it the moment Phase
-   1.C polish lands?
-4. **Migration 0014 timing** — generate it during Phase 2 implementation
-   (run on dev DB, get approval before prod), or as a separate prep PR
-   beforehand?
+1. **Phase 1.C scope** ✓ All four polish items shipped in `0a09b22`.
+2. **Inline composer authentication** ✓ Server action (`'use server'`).
+   `JournalComposer` still uses the route handler; the action duplicates
+   ~50 lines of intelligence pipeline. Phase 4 converges them.
+
+Still open going into Phase 2:
+
+3. **`/oracle` deprecation timing** — recommend keeping the legacy page
+   reachable through Phase 2 and 3, then redirecting in Phase 5 cleanup.
+   The drawer is proven; `/oracle` survives as a safety net.
+4. **Migration 0014 timing** — recommend generating during Phase 2
+   implementation. Run on dev DB, get user approval before prod. Write the
+   `lib/year/push-rest-arc.ts` fallback derivation in the same PR so
+   existing blueprints render even without the column populated.
 
 ---
 
@@ -319,7 +348,13 @@ npm install            # if pulling fresh
 npm run dev            # opens on :3699
 # sign in, land on /today
 # click each nav item, verify no 404s
-# press ⌘K from /today, the drawer opens
+# /today: SkyBanner renders a Sabian symbol for the Sun's exact degree
+# /today: Active Transits frame shows either rows, "no transits in orb"
+#         empty state, or "complete your birth chart" if no natal chart
+# /today: write a line in the composer, hit Cmd/Ctrl+Enter or Save,
+#         see saved flash + streak bump (no full-page refresh required)
+# press ⌘K from /today, the drawer opens with OracleConversation inside
+# /oracle still renders its own header chrome + the same conversation
 # press Esc, drawer closes
 # /dashboard should 308 redirect to /today
 ```
