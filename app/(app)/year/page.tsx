@@ -6,7 +6,7 @@ import { WeekView } from '@/components/calendar/WeekView'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { createServerSupabase } from '@/lib/supabase/server'
-import type { EphemerisDay, YearEphemeris } from '@/types/blueprint'
+import type { EphemerisDay, MonthBlueprint, MoonPhase, YearEphemeris } from '@/types/blueprint'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import { Frame, Kicker, K } from '@/components/almanac'
 import { YearViewSwitcher } from '@/components/year/YearViewSwitcher'
@@ -73,16 +73,30 @@ function dayOfYear(date: Date): number {
   return Math.floor(diff / 86_400_000)
 }
 
-function placeholderEvents(month: number): DayEvent[] {
-  if (month === 4) {
-    return [
-      { day: 7, tag: 'New ☾ Taurus', tone: K.copper },
-      { day: 15, tag: 'Today', tone: K.copperHi },
-      { day: 22, tag: 'Full ☾ Scorpio', tone: K.copper },
-      { day: 26, tag: 'Mercury cazimi', tone: K.sage },
-    ]
+const MOON_PHASE_LABEL: Record<MoonPhase, string> = {
+  'new': 'New ☾',
+  'first-quarter': 'First Q ☾',
+  'full': 'Full ☾',
+  'last-quarter': 'Last Q ☾',
+}
+
+function moonPhaseTone(phase: MoonPhase): string {
+  return phase === 'new' || phase === 'full' ? K.copper : K.sage
+}
+
+function eventsForMonth(monthBlueprint: MonthBlueprint | undefined, year: number, month: number): DayEvent[] {
+  if (!monthBlueprint) return []
+  const events: DayEvent[] = []
+  for (const mp of monthBlueprint.moonPhases) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(mp.date)
+    if (!match) continue
+    const y = Number(match[1])
+    const m = Number(match[2]) - 1
+    const d = Number(match[3])
+    if (y !== year || m !== month) continue
+    events.push({ day: d, tag: MOON_PHASE_LABEL[mp.phase], tone: moonPhaseTone(mp.phase) })
   }
-  return []
+  return events
 }
 
 function placeholderArc(): ArcPeriod[] {
@@ -275,16 +289,42 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
   )
 }
 
-function MonthChartView({ searchParams }: { searchParams: SearchParams }) {
+async function MonthChartView({ searchParams }: { searchParams: SearchParams }) {
   const now = new Date()
   const today = { year: now.getFullYear(), month: now.getMonth(), day: now.getDate() }
   const selected = parseMonth(searchParams.month, { year: today.year, month: today.month })
 
+  const { loaded, curriculumSessions } = await loadYearData()
+
   const weekStart = new Date(selected.year, selected.month, 1)
   const weekNumber = isoWeek(weekStart)
-  const events = placeholderEvents(selected.month)
   const arc = placeholderArc()
   const todayPct = (dayOfYear(now) / 365) * 100
+
+  const monthBlueprint = loaded?.blueprint.months.find((m) => m.month === selected.month + 1)
+  const quarterNumber = Math.floor(selected.month / 3) + 1
+  const quarterBlueprint = loaded?.blueprint.quarters.find((q) => q.quarter === quarterNumber)
+  const events = eventsForMonth(monthBlueprint, selected.year, selected.month)
+  const monthPrefix = `${selected.year}-${String(selected.month + 1).padStart(2, '0')}-`
+  const monthSessions = curriculumSessions.filter((s) => s.scheduled_for.startsWith(monthPrefix))
+
+  const lastDay = new Date(selected.year, selected.month + 1, 0).getDate()
+  const monthStart = `${monthPrefix}01`
+  const monthEnd = `${monthPrefix}${String(lastDay).padStart(2, '0')}`
+  const supabase = await createServerSupabase()
+  const journalRes = await supabase
+    .from('journal_entries')
+    .select('entry_date')
+    .gte('entry_date', monthStart)
+    .lte('entry_date', monthEnd)
+  const journalDays = new Set<number>()
+  for (const row of journalRes.data ?? []) {
+    const d = Number(row.entry_date?.slice(8, 10))
+    if (Number.isFinite(d)) journalDays.add(d)
+  }
+  const moonPhaseCount = monthBlueprint?.moonPhases.filter((mp) => mp.date.startsWith(monthPrefix)).length ?? 0
+  const intentionsCount = monthBlueprint?.intentions.length ?? 0
+  const keyTransitsCount = monthBlueprint?.keyTransits.length ?? 0
 
   return (
     <div className="space-y-6">
@@ -302,39 +342,106 @@ function MonthChartView({ searchParams }: { searchParams: SearchParams }) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
-            <Kicker>Year · {selected.year}</Kicker>
+            <Kicker>{MONTH_NAMES[selected.month]} · {selected.year}</Kicker>
             <div
               style={{
                 fontFamily: K.fSerif,
                 fontStyle: 'italic',
                 fontSize: 32,
                 color: K.ink,
-                lineHeight: 1,
+                lineHeight: 1.1,
                 marginTop: 4,
               }}
             >
-              Your year, anchored to the sky.
+              {monthBlueprint?.theme ?? 'Your year, anchored to the sky.'}
             </div>
+            {monthBlueprint?.energyArc ? (
+              <div
+                style={{
+                  fontFamily: K.fBody,
+                  fontSize: 13,
+                  color: K.inkDim,
+                  lineHeight: 1.6,
+                  marginTop: 10,
+                  maxWidth: 720,
+                }}
+              >
+                {monthBlueprint.energyArc}
+              </div>
+            ) : null}
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 16, minHeight: 0 }}>
-          <Frame tone="umber" padding={18}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 12,
+              padding: '10px 14px',
+              border: `1px solid ${K.line}`,
+              borderRadius: 10,
+              background: K.bg2,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <span
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 10,
+                  letterSpacing: '0.16em',
+                  color: K.copperHi,
+                }}
+              >
+                Q{quarterNumber}
+              </span>
+              <span
+                style={{
+                  fontFamily: K.fSerif,
+                  fontStyle: 'italic',
+                  fontSize: 16,
+                  color: K.ink,
+                  lineHeight: 1.2,
+                }}
+              >
+                {quarterBlueprint?.theme ?? 'Quarterly theme'}
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: 18,
+                fontFamily: K.fMono,
+                fontSize: 11,
+                letterSpacing: '0.14em',
+                color: K.inkDim,
+              }}
+            >
+              <span>{intentionsCount} INTENTIONS</span>
+              <span>{keyTransitsCount} TRANSITS</span>
+              <span>{monthSessions.length} SESSIONS</span>
+              <span>{moonPhaseCount} MOON {moonPhaseCount === 1 ? 'PHASE' : 'PHASES'}</span>
+            </div>
+          </div>
+
+          <Frame tone="umber" padding={20}>
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'baseline',
-                marginBottom: 10,
+                marginBottom: 14,
               }}
             >
-              <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 26, color: K.ink }}>
+              <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 28, color: K.ink }}>
                 {MONTH_NAMES[selected.month]}
               </div>
               <div
                 style={{
                   fontFamily: K.fMono,
-                  fontSize: 10,
+                  fontSize: 11,
                   color: K.inkSoft,
                   letterSpacing: '0.14em',
                 }}
@@ -342,117 +449,195 @@ function MonthChartView({ searchParams }: { searchParams: SearchParams }) {
                 WK {weekNumber} — WK {weekNumber + 4}
               </div>
             </div>
-            <MonthGrid year={selected.year} month={selected.month} today={today} events={events} />
+            <MonthGrid
+              year={selected.year}
+              month={selected.month}
+              today={today}
+              events={events}
+              journalDays={journalDays}
+            />
           </Frame>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0 }}>
-            <Frame tone="raised" padding={18} style={{ borderColor: `${K.brickHi}55` }}>
-              <Kicker color={K.brickHi}>{MONTH_NAMES[selected.month]} brief</Kicker>
-              <div
-                style={{
-                  fontFamily: K.fSerif,
-                  fontStyle: 'italic',
-                  fontSize: 20,
-                  color: K.ink,
-                  marginTop: 6,
-                  lineHeight: 1.2,
-                }}
-              >
-                Brief is generated per month.
-              </div>
-              <div
-                style={{
-                  fontFamily: K.fBody,
-                  fontSize: 12,
-                  color: K.inkDim,
-                  marginTop: 8,
-                  lineHeight: 1.6,
-                }}
-              >
-                Cached Claude generation drawing on your blueprint and the month&apos;s transits.
-                Layout placeholder until that wiring lands.
-              </div>
-              <div
-                style={{
-                  marginTop: 10,
-                  fontFamily: K.fMono,
-                  fontSize: 9.5,
-                  color: K.copperHi,
-                  letterSpacing: '0.14em',
-                }}
-              >
-                FOCUS · PLACEHOLDER
-              </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: 14,
+              minHeight: 0,
+            }}
+          >
+            <Frame tone="raised" padding={20} style={{ borderColor: `${K.brickHi}55` }}>
+              <Kicker color={K.brickHi}>Intentions</Kicker>
+              {monthBlueprint && monthBlueprint.intentions.length > 0 ? (
+                <ul
+                  style={{
+                    marginTop: 12,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    listStyle: 'none',
+                    padding: 0,
+                  }}
+                >
+                  {monthBlueprint.intentions.map((intention) => (
+                    <li
+                      key={intention}
+                      style={{
+                        fontFamily: K.fSerif,
+                        fontStyle: 'italic',
+                        fontSize: 17,
+                        color: K.ink,
+                        lineHeight: 1.4,
+                        paddingLeft: 14,
+                        borderLeft: `2px solid ${K.copper}`,
+                      }}
+                    >
+                      {intention}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div
+                  style={{
+                    fontFamily: K.fBody,
+                    fontSize: 14,
+                    color: K.inkDim,
+                    marginTop: 10,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Intentions for this month aren&apos;t in your blueprint yet.
+                </div>
+              )}
             </Frame>
 
-            <Frame tone="cocoa" padding={16} stars>
-              <Kicker color={K.copper}>Sabian for this week</Kicker>
+            <Frame tone="umber" padding={20}>
+              <Kicker color={K.copper}>Key transits</Kicker>
+              {monthBlueprint && monthBlueprint.keyTransits.length > 0 ? (
+                <ul
+                  style={{
+                    marginTop: 12,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 9,
+                    listStyle: 'none',
+                    padding: 0,
+                  }}
+                >
+                  {monthBlueprint.keyTransits.map((transit) => (
+                    <li
+                      key={transit}
+                      style={{
+                        fontFamily: K.fBody,
+                        fontSize: 14,
+                        color: K.ink,
+                        lineHeight: 1.5,
+                        display: 'flex',
+                        gap: 9,
+                      }}
+                    >
+                      <span style={{ color: K.copperHi, marginTop: 3 }}>•</span>
+                      <span style={{ flex: 1 }}>{transit}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div
+                  style={{
+                    fontFamily: K.fBody,
+                    fontSize: 14,
+                    color: K.inkDim,
+                    marginTop: 10,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  No key transits noted for this month.
+                </div>
+              )}
+            </Frame>
+
+            <Frame tone="cocoa" padding={20} stars>
+              <Kicker color={K.copper}>Sabian symbol</Kicker>
               <div
                 style={{
                   fontFamily: K.fSerif,
                   fontStyle: 'italic',
-                  fontSize: 16,
+                  fontSize: 17,
                   color: K.ink,
-                  marginTop: 8,
-                  lineHeight: 1.3,
+                  marginTop: 10,
+                  lineHeight: 1.35,
                 }}
               >
-                &quot;A symbol drawn from the sun&apos;s degree this week.&quot;
+                &quot;A symbol drawn from the sun&apos;s degree this month.&quot;
               </div>
               <div
                 style={{
                   fontFamily: K.fMono,
-                  fontSize: 9,
+                  fontSize: 10,
                   color: K.inkSoft,
                   letterSpacing: '0.14em',
-                  marginTop: 8,
+                  marginTop: 10,
                 }}
               >
                 SUN · — °
               </div>
             </Frame>
 
-            <Frame tone="umber" padding={16}>
+            <Frame tone="umber" padding={20}>
               <Kicker>Curriculum</Kicker>
-              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {[
-                  { label: 'Sample track · placeholder', minutes: '12 min', tone: K.copper },
-                  { label: 'Another track · placeholder', minutes: '8 min', tone: K.sage },
-                ].map((t) => (
-                  <div
-                    key={t.label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '8px 10px',
-                      background: K.bg,
-                      border: `1px solid ${K.line}`,
-                      borderRadius: 8,
-                    }}
-                  >
-                    <span style={{ color: t.tone, fontSize: 14 }}>◐</span>
-                    <span style={{ fontFamily: K.fBody, fontSize: 12, color: K.ink, flex: 1 }}>
-                      {t.label}
-                    </span>
-                    <span style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft }}>
-                      {t.minutes}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div
+              {monthSessions.length > 0 ? (
+                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {monthSessions.slice(0, 4).map((session) => (
+                    <div
+                      key={session.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '10px 12px',
+                        background: K.bg,
+                        border: `1px solid ${K.line}`,
+                        borderRadius: 8,
+                      }}
+                    >
+                      <span style={{ color: session.status === 'done' ? K.sage : K.copper, fontSize: 16 }}>◐</span>
+                      <span style={{ fontFamily: K.fBody, fontSize: 14, color: K.ink, flex: 1, lineHeight: 1.3 }}>
+                        {session.title}
+                      </span>
+                      <span style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkSoft }}>
+                        {session.estimated_minutes}m
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    fontFamily: K.fBody,
+                    fontSize: 14,
+                    color: K.inkDim,
+                    marginTop: 10,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  No curriculum sessions scheduled this month.
+                </div>
+              )}
+              <Link
+                href="/curriculum"
                 style={{
+                  display: 'block',
                   fontFamily: K.fMono,
-                  fontSize: 9,
+                  fontSize: 10,
                   color: K.copperHi,
                   letterSpacing: '0.14em',
-                  marginTop: 10,
+                  marginTop: 12,
                   textAlign: 'right',
+                  textDecoration: 'none',
                 }}
               >
                 BROWSE ALL TRACKS →
-              </div>
+              </Link>
             </Frame>
           </div>
         </div>

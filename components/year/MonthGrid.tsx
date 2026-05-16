@@ -14,6 +14,8 @@ interface Props {
   month: number
   today: { year: number; month: number; day: number }
   events?: DayEvent[]
+  /** Day-of-month (1-indexed) values for cells that have a journal entry */
+  journalDays?: Set<number>
 }
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -22,7 +24,7 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
-export function MonthGrid({ year, month, today, events = [] }: Props) {
+export function MonthGrid({ year, month, today, events = [], journalDays }: Props) {
   const offset = new Date(year, month, 1).getDay()
   const days = daysInMonth(year, month)
   const cellCount = Math.ceil((offset + days) / 7) * 7
@@ -55,6 +57,7 @@ export function MonthGrid({ year, month, today, events = [] }: Props) {
           const phase = valid ? ((d - 1) / 29.5) % 1 : 0
           const event = valid ? eventByDay.get(d) : undefined
           const showMoon = valid && (d === 1 || d % 7 === 0)
+          const hasJournal = valid && journalDays?.has(d) === true
 
           return (
             <div
@@ -103,6 +106,23 @@ export function MonthGrid({ year, month, today, events = [] }: Props) {
                     >
                       {event.tag}
                     </div>
+                  ) : null}
+                  {hasJournal ? (
+                    <span
+                      title="Journal entry on this day"
+                      aria-label="Journal entry on this day"
+                      style={{
+                        position: 'absolute',
+                        bottom: 6,
+                        right: 8,
+                        fontFamily: K.fSerif,
+                        fontSize: 13,
+                        lineHeight: 1,
+                        color: K.starlight,
+                      }}
+                    >
+                      ✎
+                    </span>
                   ) : null}
                 </>
               )}
