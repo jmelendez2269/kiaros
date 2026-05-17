@@ -19,11 +19,15 @@ interface Props {
   // children are wrapped in a transparent button that fires the same flow.
   // Used by SkyBanner et al. to make placement chips themselves clickable.
   children?: React.ReactNode
+  // Extra classes appended to the wrapping button when `children` is used.
+  // Lets callers make the trigger full-width (e.g. block w-full) or add
+  // hover affordances without re-styling AskOracleButton itself.
+  triggerClassName?: string
 }
 
 type Status = 'idle' | 'streaming' | 'done' | 'error' | 'limit_reached'
 
-export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'default', children }: Props) {
+export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'default', children, triggerClassName }: Props) {
   const { openWith } = useStelloquy()
   const [status, setStatus] = useState<Status>('idle')
   const [response, setResponse] = useState('')
@@ -139,7 +143,7 @@ export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'defaul
           type="button"
           onClick={handleClick}
           aria-label={`Ask Stelloquy about ${label}`}
-          className="cursor-pointer border-0 bg-transparent p-0 text-inherit"
+          className={`cursor-pointer border-0 bg-transparent p-0 text-inherit${triggerClassName ? ` ${triggerClassName}` : ''}`}
         >
           {children}
         </button>

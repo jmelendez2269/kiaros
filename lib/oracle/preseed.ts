@@ -18,6 +18,7 @@
  */
 
 import type { PlacementExplanation, DailySignal, SkyTimelineEntry } from '@/lib/human-design'
+import type { ActiveTransitRow } from '@/lib/today/get-active-transits'
 
 const SESSION_STORAGE_KEY = 'kiaros.oracle.preseed'
 
@@ -86,6 +87,11 @@ export function buildTransitPrompt(entry: SkyTimelineEntry): string {
 
 export function buildSignalPrompt(signal: DailySignal): string {
   return `On the dashboard today, this signal is showing for me: "${signal.label} — ${signal.technical}. ${signal.plain}". Why does this matter today, specifically for me?`
+}
+
+export function buildActiveTransitPrompt(row: ActiveTransitRow): string {
+  const motion = row.applying ? 'applying' : 'separating'
+  return `Tell me about ${row.technical} — currently ${motion} at orb ${row.orb.toFixed(1)}°. Context: ${row.rarityLabel.toLowerCase()}. ${row.plain} What does it mean for me right now given my chart and what I'm working on?`
 }
 
 function formatDuration(days: number): string {

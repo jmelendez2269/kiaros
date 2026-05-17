@@ -11,8 +11,11 @@ import type { CurriculumSessionRow } from '@/types/curriculum'
 import { Frame, Kicker, K } from '@/components/almanac'
 import { YearViewSwitcher } from '@/components/year/YearViewSwitcher'
 import { MonthGrid, type DayEvent } from '@/components/year/MonthGrid'
-import { PushRestRibbon, type ArcPeriod } from '@/components/year/PushRestRibbon'
+import { MonthBriefPanel } from '@/components/year/MonthBriefPanel'
+import { PushRestRibbon } from '@/components/year/PushRestRibbon'
 import { MONTH_NAMES as CAL_MONTH_NAMES } from '@/components/calendar/utils'
+import { getSabianForDegree } from '@/lib/ephemeris/sabian'
+import { derivePushRestArc } from '@/lib/year/push-rest-arc'
 
 type View = 'year' | 'month' | 'week'
 
@@ -99,17 +102,6 @@ function eventsForMonth(monthBlueprint: MonthBlueprint | undefined, year: number
   return events
 }
 
-function placeholderArc(): ArcPeriod[] {
-  return [
-    { kind: 'push', startPct: 0, endPct: 14, label: 'PUSH · Year arc opens' },
-    { kind: 'rest', startPct: 14, endPct: 22, label: 'REST · Editorial pause' },
-    { kind: 'push', startPct: 22, endPct: 48, label: 'PUSH · Build Q2' },
-    { kind: 'rest', startPct: 48, endPct: 56, label: 'REST · Solstice rest' },
-    { kind: 'push', startPct: 56, endPct: 78, label: 'PUSH · Ripen the work' },
-    { kind: 'edit', startPct: 78, endPct: 88, label: 'EDIT · Cull & close' },
-    { kind: 'rest', startPct: 88, endPct: 100, label: 'REST · Year closes' },
-  ]
-}
 
 interface PageProps {
   searchParams: Promise<SearchParams>
@@ -294,11 +286,13 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
   const today = { year: now.getFullYear(), month: now.getMonth(), day: now.getDate() }
   const selected = parseMonth(searchParams.month, { year: today.year, month: today.month })
 
-  const { loaded, curriculumSessions } = await loadYearData()
+  const { loaded, yearEphemeris, curriculumSessions } = await loadYearData()
 
   const weekStart = new Date(selected.year, selected.month, 1)
   const weekNumber = isoWeek(weekStart)
-  const arc = placeholderArc()
+  const arc = loaded
+    ? (loaded.pushRestArc ?? derivePushRestArc(loaded.blueprint, loaded.planYear))
+    : []
   const todayPct = (dayOfYear(now) / 365) * 100
 
   const monthBlueprint = loaded?.blueprint.months.find((m) => m.month === selected.month + 1)
@@ -312,19 +306,40 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
   const monthStart = `${monthPrefix}01`
   const monthEnd = `${monthPrefix}${String(lastDay).padStart(2, '0')}`
   const supabase = await createServerSupabase()
-  const journalRes = await supabase
-    .from('journal_entries')
-    .select('entry_date')
-    .gte('entry_date', monthStart)
-    .lte('entry_date', monthEnd)
+  const [journalRes, briefRes] = await Promise.all([
+    supabase
+      .from('journal_entries')
+      .select('entry_date')
+      .gte('entry_date', monthStart)
+      .lte('entry_date', monthEnd),
+    supabase
+      .from('month_briefs')
+      .select('brief_text, generated_at, pinned')
+      .eq('plan_year', selected.year)
+      .eq('month', selected.month + 1)
+      .maybeSingle(),
+  ])
   const journalDays = new Set<number>()
   for (const row of journalRes.data ?? []) {
     const d = Number(row.entry_date?.slice(8, 10))
     if (Number.isFinite(d)) journalDays.add(d)
   }
+  const existingBrief = briefRes.data ?? null
   const moonPhaseCount = monthBlueprint?.moonPhases.filter((mp) => mp.date.startsWith(monthPrefix)).length ?? 0
   const intentionsCount = monthBlueprint?.intentions.length ?? 0
   const keyTransitsCount = monthBlueprint?.keyTransits.length ?? 0
+
+  // Sabian symbol — use today's Sun degree when the displayed month contains
+  // today, otherwise the 15th of the displayed month. Sun moves ~1° / day so
+  // this is effectively the week-midpoint reading the handoff called for.
+  const sabianTargetIso = (today.year === selected.year && today.month === selected.month)
+    ? `${selected.year}-${String(selected.month + 1).padStart(2, '0')}-${String(today.day).padStart(2, '0')}`
+    : `${monthPrefix}15`
+  const sabianDay = yearEphemeris?.days.find((d) => d.date === sabianTargetIso)
+  const sabian = sabianDay ? getSabianForDegree(sabianDay.sun.longitude) : null
+  const sabianDateLabel = sabianDay
+    ? new Date(`${sabianTargetIso}T00:00:00Z`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    : null
 
   return (
     <div className="space-y-6">
@@ -458,6 +473,17 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
             />
           </Frame>
 
+          {monthBlueprint ? (
+            <MonthBriefPanel
+              year={selected.year}
+              month={selected.month + 1}
+              monthName={MONTH_NAMES[selected.month] ?? ''}
+              initialBrief={existingBrief?.brief_text ?? undefined}
+              initialGeneratedAt={existingBrief?.generated_at ?? undefined}
+              initialPinned={Boolean(existingBrief?.pinned)}
+            />
+          ) : null}
+
           <div
             style={{
               display: 'grid',
@@ -558,29 +584,47 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
 
             <Frame tone="cocoa" padding={20} stars>
               <Kicker color={K.copper}>Sabian symbol</Kicker>
-              <div
-                style={{
-                  fontFamily: K.fSerif,
-                  fontStyle: 'italic',
-                  fontSize: 17,
-                  color: K.ink,
-                  marginTop: 10,
-                  lineHeight: 1.35,
-                }}
-              >
-                &quot;A symbol drawn from the sun&apos;s degree this month.&quot;
-              </div>
-              <div
-                style={{
-                  fontFamily: K.fMono,
-                  fontSize: 10,
-                  color: K.inkSoft,
-                  letterSpacing: '0.14em',
-                  marginTop: 10,
-                }}
-              >
-                SUN · — °
-              </div>
+              {sabian ? (
+                <>
+                  <div
+                    style={{
+                      fontFamily: K.fSerif,
+                      fontStyle: 'italic',
+                      fontSize: 17,
+                      color: K.ink,
+                      marginTop: 10,
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    &ldquo;{sabian.symbol}&rdquo;
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: K.fMono,
+                      fontSize: 10,
+                      color: K.inkSoft,
+                      letterSpacing: '0.14em',
+                      marginTop: 10,
+                    }}
+                  >
+                    SUN · {sabian.position.toUpperCase()}
+                    {sabianDateLabel ? ` · ${sabianDateLabel.toUpperCase()}` : ''}
+                    {sabian.pending ? ' · NEAREST' : ''}
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    fontFamily: K.fBody,
+                    fontSize: 14,
+                    color: K.inkDim,
+                    marginTop: 10,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Ephemeris data isn&apos;t ready for this month yet.
+                </div>
+              )}
             </Frame>
 
             <Frame tone="umber" padding={20}>

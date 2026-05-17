@@ -1,4 +1,9 @@
+'use client'
+
 import { Frame, K, Kicker, GLYPH } from '@/components/almanac'
+import { AskOracleButton } from '@/components/oracle/AskOracleButton'
+import { useStelloquy } from '@/components/oracle/StelloquyProvider'
+import { buildActiveTransitPrompt } from '@/lib/oracle/preseed'
 import type { ActiveTransitsResult, ActiveTransitRow } from '@/lib/today/get-active-transits'
 import type { AspectKind } from '@/components/almanac/tokens'
 import type { Planet } from '@/types/blueprint'
@@ -45,6 +50,8 @@ const RARITY_TONE: Record<string, string> = {
 }
 
 export function ActiveTransits({ data }: Props) {
+  const { hasOracleAccess } = useStelloquy()
+
   if (data.status === 'no-chart') {
     return (
       <Frame tone="umber" padding={22}>
@@ -92,7 +99,15 @@ export function ActiveTransits({ data }: Props) {
       <Kicker color={K.copper}>Active transits</Kicker>
       <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column' }}>
         {data.rows.map((row, i) => (
-          <TransitRow key={`${row.planet}-${row.aspect}-${row.natalPlanet}`} row={row} first={i === 0} />
+          <AskOracleButton
+            key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
+            prompt={buildActiveTransitPrompt(row)}
+            hasOracleAccess={hasOracleAccess}
+            label={`this ${row.technical}`}
+            triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
+          >
+            <TransitRow row={row} first={i === 0} />
+          </AskOracleButton>
         ))}
       </div>
     </Frame>

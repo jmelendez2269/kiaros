@@ -1,5 +1,7 @@
 import { createServerSupabase } from '@/lib/supabase/server'
 import type { BlueprintOutput, MoonPhase } from '@/types/blueprint'
+import type { ArcPeriod } from '@/components/year/PushRestRibbon'
+import { sanitizePushRestArc } from '@/lib/year/push-rest-arc'
 
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
@@ -73,6 +75,8 @@ function sanitizeWeeks(value: unknown): BlueprintOutput['weeks'] {
 export interface LoadedBlueprint {
   blueprint: BlueprintOutput
   planYear: number
+  /** Authored push/rest/edit arc; null when the column is empty (UI falls back to deriving). */
+  pushRestArc: ArcPeriod[] | null
 }
 
 export async function loadCurrentBlueprint(): Promise<LoadedBlueprint | null> {
@@ -82,7 +86,7 @@ export async function loadCurrentBlueprint(): Promise<LoadedBlueprint | null> {
   const { data: row } = await supabase
     .from('blueprints')
     .select(
-      'id, plan_year, year_theme, year_summary, quarters, months, weeks, push_periods, rest_periods'
+      'id, plan_year, year_theme, year_summary, quarters, months, weeks, push_periods, rest_periods, push_rest_arc'
     )
     .eq('plan_year', currentYear)
     .eq('status', 'ready')
@@ -103,5 +107,6 @@ export async function loadCurrentBlueprint(): Promise<LoadedBlueprint | null> {
       restPeriods: sanitizePeriodRanges(row.rest_periods),
     },
     planYear: row.plan_year,
+    pushRestArc: sanitizePushRestArc(row.push_rest_arc),
   }
 }
