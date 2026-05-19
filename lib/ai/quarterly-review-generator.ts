@@ -50,27 +50,29 @@ export interface GenerateReviewSummaryResult {
   modelUsed: string
 }
 
-function quarterDateRange(planYear: number, quarter: number): { start: string; end: string } {
-  const startMonth = (quarter - 1) * 3 + 1
-  const endMonth = startMonth + 2
-  const start = `${planYear}-${String(startMonth).padStart(2, '0')}-01`
-  const lastDay = new Date(planYear, endMonth, 0).getDate()
-  const end = `${planYear}-${String(endMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
-  return { start, end }
+export interface QuarterlyReviewPromptBundle {
+  systemPrompt: string
+  userPrompt: string
+  statsSnapshot: QuarterlyReviewStats
+  modelId: string
 }
 
-function priorQuarterCoords(planYear: number, quarter: number): { year: number; quarter: number } {
-  return quarter === 1 ? { year: planYear - 1, quarter: 4 } : { year: planYear, quarter: quarter - 1 }
+export const QUARTERLY_REVIEW_MODEL_ID = MODEL_ID
+export const QUARTERLY_REVIEW_MAX_OUTPUT_TOKENS = MAX_OUTPUT_TOKENS
+
+export function quarterlyReviewModel() {
+  return process.env.VERCEL ? gateway(`anthropic/${MODEL_ID}`) : anthropic(MODEL_ID)
 }
 
-function coerceStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
-}
-
-export async function generateQuarterlyReviewSummary(
+/**
+ * Loads everything needed to build the LLM call for a quarterly review,
+ * but does not invoke the model. Shared by both the non-streaming
+ * generator and the streaming endpoint so they stay aligned on prompts
+ * and stats.
+ */
+export async function loadQuarterlyReviewPromptBundle(
   opts: GenerateReviewSummaryOptions,
-): Promise<GenerateReviewSummaryResult> {
+): Promise<QuarterlyReviewPromptBundle> {
   const { userProfileId, planYear, quarter, wins, challenges, pivots, nextQuarterIntentions } = opts
 
   if (quarter < 1 || quarter > 4) {
@@ -201,17 +203,41 @@ export async function generateQuarterlyReviewSummary(
     priorQuarter,
   }
 
-  const systemPrompt = assembleQuarterlyReviewSystemPrompt()
-  const userPrompt = assembleQuarterlyReviewUserPrompt(ctx)
+  return {
+    systemPrompt: assembleQuarterlyReviewSystemPrompt(),
+    userPrompt: assembleQuarterlyReviewUserPrompt(ctx),
+    statsSnapshot,
+    modelId: MODEL_ID,
+  }
+}
 
-  const model = process.env.VERCEL
-    ? gateway(`anthropic/${MODEL_ID}`)
-    : anthropic(MODEL_ID)
+function quarterDateRange(planYear: number, quarter: number): { start: string; end: string } {
+  const startMonth = (quarter - 1) * 3 + 1
+  const endMonth = startMonth + 2
+  const start = `${planYear}-${String(startMonth).padStart(2, '0')}-01`
+  const lastDay = new Date(planYear, endMonth, 0).getDate()
+  const end = `${planYear}-${String(endMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return { start, end }
+}
+
+function priorQuarterCoords(planYear: number, quarter: number): { year: number; quarter: number } {
+  return quarter === 1 ? { year: planYear - 1, quarter: 4 } : { year: planYear, quarter: quarter - 1 }
+}
+
+function coerceStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+}
+
+export async function generateQuarterlyReviewSummary(
+  opts: GenerateReviewSummaryOptions,
+): Promise<GenerateReviewSummaryResult> {
+  const bundle = await loadQuarterlyReviewPromptBundle(opts)
 
   const { text, usage, providerMetadata } = await generateText({
-    model,
-    system: systemPrompt,
-    prompt: userPrompt,
+    model: quarterlyReviewModel(),
+    system: bundle.systemPrompt,
+    prompt: bundle.userPrompt,
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     temperature: 0.75,
     abortSignal: AbortSignal.timeout(60_000),
@@ -226,9 +252,9 @@ export async function generateQuarterlyReviewSummary(
     | { cacheReadInputTokens?: number; cacheCreationInputTokens?: number }
     | undefined
   await recordUsage({
-    userId: userProfileId,
+    userId: opts.userProfileId,
     feature: 'quarterly_review',
-    model: MODEL_ID,
+    model: bundle.modelId,
     messages: 1,
     inputTokens: usage.inputTokens ?? 0,
     inputTokensCached: anthropicMeta?.cacheReadInputTokens ?? 0,
@@ -238,7 +264,7 @@ export async function generateQuarterlyReviewSummary(
 
   return {
     aiSummary,
-    statsSnapshot,
-    modelUsed: MODEL_ID,
+    statsSnapshot: bundle.statsSnapshot,
+    modelUsed: bundle.modelId,
   }
 }

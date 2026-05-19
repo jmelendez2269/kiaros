@@ -17,6 +17,14 @@ interface RequestBody {
   nextQuarterIntentions?: unknown
   markComplete?: boolean
   regenSummary?: boolean
+  /**
+   * When true, the save path skips the bundled AI synthesis and returns
+   * as soon as content + completed_at are written. The client uses this
+   * for the two-step flow where the panel calls /api/quarterly-review/stream
+   * next to consume a token stream instead of waiting on a synchronous LLM
+   * call. Defaults to false to preserve the original single-shot behaviour.
+   */
+  skipAi?: boolean
 }
 
 function getErrorMessage(error: unknown): string {
@@ -191,9 +199,11 @@ export async function POST(req: Request) {
 
     // AI synthesis only runs on completion. Drafts skip it — they're
     // work-in-progress and we don't burn tokens on incomplete content.
+    // Callers that want token-by-token output set skipAi=true and consume
+    // /api/quarterly-review/stream after this returns.
     let aiSummary: string | null = null
     let statsSnapshot: QuarterlyReviewStats | null = null
-    if (markComplete) {
+    if (markComplete && !body.skipAi) {
       try {
         const synth = await generateQuarterlyReviewSummary({
           userProfileId: profileId,

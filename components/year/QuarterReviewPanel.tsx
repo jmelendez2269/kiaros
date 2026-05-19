@@ -15,7 +15,7 @@ interface QuarterReviewPanelProps {
   initialStatsSnapshot?: Record<string, number> | null
 }
 
-type Status = 'idle' | 'saving' | 'synthesizing' | 'regenerating' | 'saved' | 'error'
+type Status = 'idle' | 'saving' | 'synthesizing' | 'streaming' | 'regenerating' | 'saved' | 'error'
 
 interface ApiResult {
   quarter: number
@@ -69,7 +69,11 @@ export function QuarterReviewPanel({
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
 
-  const busy = status === 'saving' || status === 'synthesizing' || status === 'regenerating'
+  const busy =
+    status === 'saving' ||
+    status === 'synthesizing' ||
+    status === 'streaming' ||
+    status === 'regenerating'
   const isCompleted = Boolean(completedAt)
 
   // Snapshot of the form's "clean" baseline. The user's content is dirty
@@ -144,10 +148,59 @@ export function QuarterReviewPanel({
     }
   }, [year, quarter, busy, isDirty])
 
+  async function streamReflection(mode: 'complete' | 'regenerate'): Promise<void> {
+    // Reset to a clean reflection block so the user sees fresh tokens land
+    // instead of new text appended to the previous one.
+    setAiSummary('')
+    const res = await fetch('/api/quarterly-review/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year, quarter }),
+    })
+    if (!res.ok || !res.body) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      throw new Error(body.error ?? `Stream failed (${res.status})`)
+    }
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      if (value) {
+        buffer += decoder.decode(value, { stream: true })
+        setAiSummary(buffer)
+      }
+    }
+    buffer += decoder.decode()
+    setAiSummary(buffer.trim() || null)
+
+    // After the stream lands, the server has persisted ai_summary +
+    // stats_snapshot. Pull the stats via GET so the activity grid renders.
+    try {
+      const getRes = await fetch(
+        `/api/quarterly-review?year=${year}&quarter=${quarter}`,
+        { cache: 'no-store' },
+      )
+      if (getRes.ok) {
+        const data = (await getRes.json()) as { exists?: boolean; statsSnapshot?: Record<string, number> | null }
+        if (data.exists && data.statsSnapshot) {
+          setStatsSnapshot(data.statsSnapshot)
+        }
+      }
+    } catch {
+      // Stats grid is a nice-to-have on the synthesis flow; ignore.
+    }
+
+    // Suppress unused-var lint without changing the type of mode (kept for
+    // future call-site differentiation if needed, e.g. analytics).
+    void mode
+  }
+
   async function submit(opts: { markComplete: boolean }) {
     if (busy) return
-    setStatus(opts.markComplete ? 'synthesizing' : 'saving')
     setError(null)
+    setStatus(opts.markComplete ? 'synthesizing' : 'saving')
     try {
       const res = await fetch('/api/quarterly-review', {
         method: 'POST',
@@ -160,6 +213,7 @@ export function QuarterReviewPanel({
           pivots: pivots.trim() || null,
           nextQuarterIntentions: intentions.trim() || null,
           markComplete: opts.markComplete,
+          skipAi: opts.markComplete, // stream the reflection in the next step
         }),
       })
       if (!res.ok) {
@@ -168,10 +222,6 @@ export function QuarterReviewPanel({
       }
       const data = (await res.json()) as ApiResult
       setCompletedAt(data.completedAt)
-      if (opts.markComplete) {
-        setAiSummary(data.aiSummary)
-        setStatsSnapshot(data.statsSnapshot)
-      }
       // The freshly-saved values become the new "clean" baseline so a later
       // visibility-change refresh doesn't see this content as dirty.
       cleanFormRef.current = {
@@ -179,6 +229,10 @@ export function QuarterReviewPanel({
         challenges,
         pivots,
         intentions,
+      }
+      if (opts.markComplete) {
+        setStatus('streaming')
+        await streamReflection('complete')
       }
       setStatus('saved')
     } catch (err) {
@@ -192,18 +246,7 @@ export function QuarterReviewPanel({
     setStatus('regenerating')
     setError(null)
     try {
-      const res = await fetch('/api/quarterly-review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year, quarter, regenSummary: true }),
-      })
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(body.error ?? `Request failed (${res.status})`)
-      }
-      const data = (await res.json()) as ApiResult
-      setAiSummary(data.aiSummary)
-      setStatsSnapshot(data.statsSnapshot)
+      await streamReflection('regenerate')
       setStatus('saved')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate reflection')
@@ -277,18 +320,20 @@ export function QuarterReviewPanel({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', color: status === 'error' ? K.brick : K.inkSoft }}>
           {status === 'synthesizing'
-            ? 'SAVING & SYNTHESIZING…'
-            : status === 'regenerating'
-              ? 'REGENERATING REFLECTION…'
-              : status === 'saving'
-                ? 'SAVING DRAFT…'
-                : status === 'saved'
-                  ? 'SAVED'
-                  : status === 'error' && error
-                    ? error.toUpperCase()
-                    : isCompleted
-                      ? 'EDIT TO RE-SAVE'
-                      : 'NOT YET SAVED'}
+            ? 'SAVING…'
+            : status === 'streaming'
+              ? 'REFLECTING…'
+              : status === 'regenerating'
+                ? 'REGENERATING REFLECTION…'
+                : status === 'saving'
+                  ? 'SAVING DRAFT…'
+                  : status === 'saved'
+                    ? 'SAVED'
+                    : status === 'error' && error
+                      ? error.toUpperCase()
+                      : isCompleted
+                        ? 'EDIT TO RE-SAVE'
+                        : 'NOT YET SAVED'}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
@@ -322,7 +367,7 @@ export function QuarterReviewPanel({
       </div>
 
       {/* AI synthesis */}
-      {status === 'synthesizing' || status === 'regenerating' ? (
+      {(status === 'synthesizing' || status === 'regenerating') && !aiSummary ? (
         <div
           style={{
             marginTop: 8,
@@ -336,9 +381,11 @@ export function QuarterReviewPanel({
             textAlign: 'center',
           }}
         >
-          Reflecting on Q{quarter}… this usually takes 10–15 seconds.
+          {status === 'regenerating'
+            ? `Re-reading Q${quarter}…`
+            : `Saving Q${quarter}…`}
         </div>
-      ) : aiSummary ? (
+      ) : aiSummary || status === 'streaming' ? (
         <div style={{ marginTop: 8 }}>
           <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.16em', color: K.copperHi, marginBottom: 10 }}>
             REFLECTION
