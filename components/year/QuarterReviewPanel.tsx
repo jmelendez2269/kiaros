@@ -13,6 +13,15 @@ interface QuarterReviewPanelProps {
   initialCompletedAt?: string | null
   initialAiSummary?: string | null
   initialStatsSnapshot?: Record<string, number> | null
+  /**
+   * Stats snapshot from the immediately prior completed quarter (or
+   * prior-year Q4 when this is Q1). Used to render trend deltas
+   * beneath each activity counter. null when the prior quarter has
+   * no synthesis yet.
+   */
+  priorStatsSnapshot?: Record<string, number> | null
+  /** Short label for the prior quarter ("Q1" or "Q4 2025"). */
+  priorQuarterLabel?: string
 }
 
 type Status = 'idle' | 'saving' | 'synthesizing' | 'streaming' | 'regenerating' | 'saved' | 'error'
@@ -58,6 +67,8 @@ export function QuarterReviewPanel({
   initialCompletedAt,
   initialAiSummary,
   initialStatsSnapshot,
+  priorStatsSnapshot,
+  priorQuarterLabel,
 }: QuarterReviewPanelProps) {
   const [wins, setWins] = useState<string>(bulletsToText(initialWins))
   const [challenges, setChallenges] = useState<string>(bulletsToText(initialChallenges))
@@ -420,6 +431,21 @@ export function QuarterReviewPanel({
             {Object.entries(STATS_LABELS).map(([key, label]) => {
               const value = statsSnapshot[key]
               if (typeof value !== 'number') return null
+              const priorValue = priorStatsSnapshot?.[key]
+              const delta =
+                typeof priorValue === 'number' ? value - priorValue : null
+              const deltaTone =
+                delta === null || delta === 0
+                  ? K.inkSoft
+                  : delta > 0
+                    ? K.sage
+                    : K.copperHi
+              const deltaLabel =
+                delta === null
+                  ? null
+                  : delta === 0
+                    ? `±0 vs ${priorQuarterLabel ?? 'prior'}`
+                    : `${delta > 0 ? '+' : ''}${delta} vs ${priorQuarterLabel ?? 'prior'}`
               return (
                 <div
                   key={key}
@@ -436,6 +462,19 @@ export function QuarterReviewPanel({
                   <div style={{ fontFamily: K.fSerif, fontSize: 22, color: K.ink, marginTop: 2 }}>
                     {value}
                   </div>
+                  {deltaLabel ? (
+                    <div
+                      style={{
+                        fontFamily: K.fMono,
+                        fontSize: 9,
+                        letterSpacing: '0.12em',
+                        color: deltaTone,
+                        marginTop: 4,
+                      }}
+                    >
+                      {deltaLabel.toUpperCase()}
+                    </div>
+                  ) : null}
                 </div>
               )
             })}

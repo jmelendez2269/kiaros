@@ -824,6 +824,34 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
   const selectedStatus = quarterStatus(selectedReview, selectedQuarter, currentQ)
   const selectedStatusMeta = statusLabel(selectedStatus)
 
+  // Pull the prior quarter's stats_snapshot so the panel can render
+  // deltas (e.g. "+12 vs Q1") below each activity counter. Q1's prior is
+  // Q4 of the previous year, which lives in a different plan_year row.
+  const priorCoords =
+    selectedQuarter === 1
+      ? { year: loaded.planYear - 1, quarter: 4 }
+      : { year: loaded.planYear, quarter: selectedQuarter - 1 }
+  let priorStatsSnapshot: Record<string, number> | null = null
+  if (priorCoords.year === loaded.planYear) {
+    const priorRow = reviewsByQuarter.get(priorCoords.quarter)
+    if (priorRow?.stats_snapshot && typeof priorRow.stats_snapshot === 'object') {
+      priorStatsSnapshot = priorRow.stats_snapshot as Record<string, number>
+    }
+  } else {
+    const priorYearRes = await supabase
+      .from('quarterly_reviews')
+      .select('stats_snapshot')
+      .eq('plan_year', priorCoords.year)
+      .eq('quarter', priorCoords.quarter)
+      .maybeSingle()
+    if (priorYearRes.data?.stats_snapshot && typeof priorYearRes.data.stats_snapshot === 'object') {
+      priorStatsSnapshot = priorYearRes.data.stats_snapshot as Record<string, number>
+    }
+  }
+  const priorQuarterLabel = `Q${priorCoords.quarter}${
+    priorCoords.year !== loaded.planYear ? ` ${priorCoords.year}` : ''
+  }`
+
   // Find the most recent past quarter that's never been touched, so we can
   // nudge the user to look back. Skipped when the user is already on it.
   let backfillQuarter: number | null = null
@@ -1002,6 +1030,8 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
                   ? (selectedReview.stats_snapshot as Record<string, number>)
                   : null
               }
+              priorStatsSnapshot={priorStatsSnapshot}
+              priorQuarterLabel={priorQuarterLabel}
             />
           </Frame>
 
