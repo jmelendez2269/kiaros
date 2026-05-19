@@ -598,6 +598,19 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
                   >
                     &ldquo;{sabian.symbol}&rdquo;
                   </div>
+                  {sabian.interpretation ? (
+                    <div
+                      style={{
+                        fontFamily: K.fBody,
+                        fontSize: 13,
+                        color: K.inkDim,
+                        marginTop: 10,
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      This is a symbol of {sabian.interpretation}
+                    </div>
+                  ) : null}
                   <div
                     style={{
                       fontFamily: K.fMono,
@@ -609,7 +622,6 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
                   >
                     SUN · {sabian.position.toUpperCase()}
                     {sabianDateLabel ? ` · ${sabianDateLabel.toUpperCase()}` : ''}
-                    {sabian.pending ? ' · NEAREST' : ''}
                   </div>
                 </>
               ) : (

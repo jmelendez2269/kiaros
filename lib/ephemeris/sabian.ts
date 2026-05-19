@@ -6,38 +6,34 @@
  * indexing because "1° Aries" is degree 1, not degree 0, in the traditional
  * system.
  *
- * Source notes
- * ─────────────
- * The classical 1925 Marc Edmund Jones / Elsie Wheeler set is public domain
- * in the United States. Dane Rudhyar's 1973 reformulations in *An
- * Astrological Mandala* are derivative interpretations whose public-domain
- * status is murkier — we treat them as quotable in small numbers with
- * attribution, not bulk-reproduced.
+ * Source
+ * ──────
+ * The classical 1925 Marc Edmund Jones / Elsie Wheeler set, transcribed from
+ * the third edition (Aurora Press, 1993) of *The Sabian Symbols in Astrology*.
+ * Public domain in the US. See `sabian-data.ts` for the raw entries.
  *
- * v1 coverage
- * ────────────
- * 32 transcribed entries (Rudhyar, attributed) are anchored at the exact
- * degrees below. The remaining 328 degrees are stubbed: each returns its
- * exact degree label plus the nearest transcribed symbol as a readable
- * fallback, with `pending: true` so UI can mark them. Replacing a pending
- * entry is a single edit to TRANSCRIBED — `getSabianForDegree()` stays
- * stable.
- *
- * Roadmap
- * ────────
- * Drop in the full 360-entry vetted set (single PR, data-only) and the
- * `pending` flag on all entries flips to false. No call-site changes.
+ * 348 entries carry both the iconic image and Jones's own "This is a symbol
+ * of …" interpretation sentence. The remaining 12 entries (whose pages in
+ * the source PDF were column-merge garbled) carry the canonical Jones image
+ * phrase but no interpretation. `getSabianForDegree()` always returns an
+ * entry — the `interpretation` field is the empty string for those 12.
  */
 
+import { SABIAN_DATA } from './sabian-data'
+
 interface SabianSymbol {
-  /** 1-based degree, 1–360 */
+  /** 1-based degree, 1–360. */
   degree: number
-  /** Sign + degree-within-sign label, e.g. "Aries 1°" */
+  /** Sign + degree-within-sign label, e.g. "1° Aries". */
   position: string
-  /** The symbol itself. For pending entries, the nearest transcribed symbol. */
+  /** The iconic image phrase, ending with a period. */
   symbol: string
-  /** True when this degree has not yet been transcribed from source. */
-  pending: boolean
+  /**
+   * Jones's "This is a symbol of …" sentence, with the leading
+   * "This is a symbol of " stripped. Empty for the 12 entries whose
+   * interpretation could not be cleanly recovered from the source.
+   */
+  interpretation: string
 }
 
 const SIGN_NAMES = [
@@ -55,46 +51,6 @@ const SIGN_NAMES = [
   'Pisces',
 ] as const
 
-/**
- * Transcribed Rudhyar symbols — degree → prose. These are the only entries
- * where `pending` is false. Add to this map (don't edit the generated
- * `SYMBOLS` array) when transcribing new degrees.
- */
-const TRANSCRIBED: Record<number, string> = {
-  1: 'A woman just risen from the sea; a seal is embracing her.',
-  13: 'An unsuccessful bomb explosion.',
-  25: 'A double promise reveals its inner and outer meanings.',
-  37: 'The woman of Samaria at the ancestral well.',
-  49: 'A new continent rising out of the ocean.',
-  61: 'A glass-bottomed boat reveals undersea wonders.',
-  73: 'A famous pianist giving a concert performance.',
-  85: 'A man, trimming palms, displays a vain self-importance.',
-  97: 'Two fairies dancing on a moonlit night.',
-  109: 'A priest performing a marriage ceremony.',
-  121: 'Blood rushes to a man’s head as his vital energies are mobilized under the spur of his ambition.',
-  133: 'An old sea captain rocking on the porch of his cottage.',
-  145: 'A large camel crossing a vast and forbidding desert.',
-  157: 'A harem.',
-  169: 'A swimming race.',
-  181: 'A butterfly preserved and made perfect with a dart through it.',
-  193: 'Children blowing soap bubbles.',
-  205: 'The sight of an autumn leaf brings to a pilgrim the sudden revelation of the mystery of life and death.',
-  217: 'Deep-sea divers.',
-  224: 'Telephone linemen at work installing new connections.',
-  229: 'A parrot listening and then talking, repeats a conversation he has overheard.',
-  241: 'A grand army of veterans on parade.',
-  253: 'A widow’s past is brought to light.',
-  265: 'A chubby boy on a hobby-horse.',
-  277: 'A veiled prophet of power.',
-  289: 'A child of about five carrying a huge shopping bag filled with groceries.',
-  301: 'An old adobe mission in California.',
-  313: 'A barometer.',
-  325: 'A butterfly with the right wing more perfectly formed.',
-  337: 'A cross lying on rocks surrounded by sea and mist.',
-  349: 'A master instructing his pupil.',
-  360: 'A majestic rock formation resembling a face is idealized by a boy who takes it as his ideal of greatness.',
-}
-
 function normalizeDegree(zodiacDegree: number): number {
   // Accept 0..360 or 1..360; clamp into 1..360.
   const wrapped = ((Math.floor(zodiacDegree) % 360) + 360) % 360
@@ -108,57 +64,18 @@ export function formatZodiacPosition(zodiacDegree: number): string {
   return `${within}° ${SIGN_NAMES[signIndex]}`
 }
 
-/**
- * Fully-populated 1..360 lookup, indexed by `degree - 1`. Built once at
- * module load by anchoring on TRANSCRIBED and filling gaps with the
- * nearest transcribed prose as a graceful fallback.
- */
-const SYMBOLS: readonly SabianSymbol[] = (() => {
-  const transcribedDegrees = Object.keys(TRANSCRIBED)
-    .map((k) => Number.parseInt(k, 10))
-    .sort((a, b) => a - b)
-
-  function nearestTranscribed(degree: number): number {
-    let best = transcribedDegrees[0]
-    let bestDistance = Math.abs(best - degree)
-    for (const candidate of transcribedDegrees) {
-      const d = Math.abs(candidate - degree)
-      if (d < bestDistance) {
-        best = candidate
-        bestDistance = d
-      }
-    }
-    return best
-  }
-
-  const out: SabianSymbol[] = []
-  for (let degree = 1; degree <= 360; degree++) {
-    const transcribed = TRANSCRIBED[degree]
-    if (transcribed) {
-      out.push({
-        degree,
-        position: formatZodiacPosition(degree),
-        symbol: transcribed,
-        pending: false,
-      })
-    } else {
-      const anchor = nearestTranscribed(degree)
-      out.push({
-        degree,
-        position: formatZodiacPosition(degree),
-        symbol: TRANSCRIBED[anchor],
-        pending: true,
-      })
-    }
-  }
-  return Object.freeze(out)
-})()
+const SYMBOLS: readonly SabianSymbol[] = Object.freeze(
+  SABIAN_DATA.map((entry, i) => ({
+    degree: i + 1,
+    position: formatZodiacPosition(i + 1),
+    symbol: entry.image,
+    interpretation: entry.interpretation,
+  }))
+)
 
 /**
- * Look up the Sabian symbol for a given zodiac degree. Always returns an
- * entry whose `position` matches the requested degree exactly. Entries
- * flagged `pending: true` carry the nearest transcribed symbol as a
- * readable placeholder until source-vetted prose is added to TRANSCRIBED.
+ * Look up the Sabian symbol for a given zodiac degree. Returns an entry
+ * whose `position` matches the requested degree exactly.
  */
 export function getSabianForDegree(zodiacDegree: number): SabianSymbol {
   const target = normalizeDegree(zodiacDegree)
