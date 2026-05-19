@@ -752,6 +752,13 @@ const QUARTER_MONTHS: Record<number, string> = {
   4: 'Oct — Dec',
 }
 
+const QUARTER_END_LABEL: Record<number, string> = {
+  1: 'Mar 31',
+  2: 'Jun 30',
+  3: 'Sep 30',
+  4: 'Dec 31',
+}
+
 type QuarterStatus = 'completed' | 'draft' | 'not-started' | 'future'
 
 function quarterStatus(
@@ -816,6 +823,18 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
   const quarterBlueprint = loaded.blueprint.quarters.find((q) => q.quarter === selectedQuarter)
   const selectedStatus = quarterStatus(selectedReview, selectedQuarter, currentQ)
   const selectedStatusMeta = statusLabel(selectedStatus)
+
+  // Find the most recent past quarter that's never been touched, so we can
+  // nudge the user to look back. Skipped when the user is already on it.
+  let backfillQuarter: number | null = null
+  for (let q = currentQ - 1; q >= 1; q--) {
+    const row = reviewsByQuarter.get(q) ?? null
+    if (quarterStatus(row, q, currentQ) === 'not-started') {
+      backfillQuarter = q
+      break
+    }
+  }
+  const showBackfillNudge = backfillQuarter !== null && backfillQuarter !== selectedQuarter
 
   const completedDateLabel = selectedReview?.completed_at
     ? new Date(selectedReview.completed_at).toLocaleDateString(undefined, {
@@ -887,6 +906,50 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
             ) : null}
           </div>
         </div>
+
+        {/* Q1 (or earlier) backfill nudge — past quarter, never touched */}
+        {showBackfillNudge && backfillQuarter !== null ? (
+          <Link
+            href={`/year?view=review&quarter=${backfillQuarter}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              padding: '10px 14px',
+              border: `1px solid ${K.copper}55`,
+              borderRadius: 10,
+              background: K.bg2,
+              textDecoration: 'none',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 10,
+                  letterSpacing: '0.16em',
+                  color: K.copperHi,
+                }}
+              >
+                Q{backfillQuarter} · {QUARTER_MONTHS[backfillQuarter]}
+              </span>
+              <span style={{ fontFamily: K.fBody, fontSize: 13, color: K.ink, lineHeight: 1.5 }}>
+                Wrapped on {QUARTER_END_LABEL[backfillQuarter]}. When you&rsquo;re ready, look back.
+              </span>
+            </div>
+            <span
+              style={{
+                fontFamily: K.fMono,
+                fontSize: 10,
+                letterSpacing: '0.16em',
+                color: K.copperHi,
+              }}
+            >
+              OPEN →
+            </span>
+          </Link>
+        ) : null}
 
         {/* Quarter selector */}
         <div style={{ display: 'flex', gap: 8 }}>
