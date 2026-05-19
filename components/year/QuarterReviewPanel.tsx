@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { K, Kicker } from '@/components/almanac'
 
 interface QuarterReviewPanelProps {
@@ -72,6 +72,78 @@ export function QuarterReviewPanel({
   const busy = status === 'saving' || status === 'synthesizing' || status === 'regenerating'
   const isCompleted = Boolean(completedAt)
 
+  // Snapshot of the form's "clean" baseline. The user's content is dirty
+  // whenever any of the four textareas differs from this snapshot. We use it
+  // to decide whether visibility-change refreshes are safe — refetching from
+  // the server while the user is mid-edit would clobber unsaved work.
+  const cleanFormRef = useRef({
+    wins: bulletsToText(initialWins),
+    challenges: bulletsToText(initialChallenges),
+    pivots: initialPivots ?? '',
+    intentions: initialNextQuarterIntentions ?? '',
+  })
+
+  const isDirty =
+    wins !== cleanFormRef.current.wins ||
+    challenges !== cleanFormRef.current.challenges ||
+    pivots !== cleanFormRef.current.pivots ||
+    intentions !== cleanFormRef.current.intentions
+
+  // Refetch server state when the tab regains focus, but only when the form
+  // is clean and no save is in flight. Another tab may have regenerated the
+  // reflection or saved updated content; pull it in silently.
+  useEffect(() => {
+    let cancelled = false
+    async function refreshFromServer() {
+      try {
+        const res = await fetch(`/api/quarterly-review?year=${year}&quarter=${quarter}`, {
+          cache: 'no-store',
+        })
+        if (cancelled || !res.ok) return
+        const data = (await res.json()) as {
+          exists: boolean
+          completedAt?: string | null
+          wins?: string[]
+          challenges?: string[]
+          pivots?: string | null
+          nextQuarterIntentions?: string | null
+          aiSummary?: string | null
+          statsSnapshot?: Record<string, number> | null
+        }
+        if (cancelled || !data.exists) return
+        const nextWins = bulletsToText(data.wins)
+        const nextChallenges = bulletsToText(data.challenges)
+        const nextPivots = data.pivots ?? ''
+        const nextIntentions = data.nextQuarterIntentions ?? ''
+        cleanFormRef.current = {
+          wins: nextWins,
+          challenges: nextChallenges,
+          pivots: nextPivots,
+          intentions: nextIntentions,
+        }
+        setWins(nextWins)
+        setChallenges(nextChallenges)
+        setPivots(nextPivots)
+        setIntentions(nextIntentions)
+        setCompletedAt(data.completedAt ?? null)
+        setAiSummary(data.aiSummary ?? null)
+        setStatsSnapshot(data.statsSnapshot ?? null)
+      } catch {
+        // Silent — refresh is best-effort.
+      }
+    }
+    function onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return
+      if (busy || isDirty) return
+      void refreshFromServer()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [year, quarter, busy, isDirty])
+
   async function submit(opts: { markComplete: boolean }) {
     if (busy) return
     setStatus(opts.markComplete ? 'synthesizing' : 'saving')
@@ -99,6 +171,14 @@ export function QuarterReviewPanel({
       if (opts.markComplete) {
         setAiSummary(data.aiSummary)
         setStatsSnapshot(data.statsSnapshot)
+      }
+      // The freshly-saved values become the new "clean" baseline so a later
+      // visibility-change refresh doesn't see this content as dirty.
+      cleanFormRef.current = {
+        wins,
+        challenges,
+        pivots,
+        intentions,
       }
       setStatus('saved')
     } catch (err) {
