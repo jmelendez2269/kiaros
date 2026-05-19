@@ -12,12 +12,13 @@ import { Frame, Kicker, K } from '@/components/almanac'
 import { YearViewSwitcher } from '@/components/year/YearViewSwitcher'
 import { MonthGrid, type DayEvent } from '@/components/year/MonthGrid'
 import { MonthBriefPanel } from '@/components/year/MonthBriefPanel'
+import { QuarterReviewPanel } from '@/components/year/QuarterReviewPanel'
 import { PushRestRibbon } from '@/components/year/PushRestRibbon'
 import { MONTH_NAMES as CAL_MONTH_NAMES } from '@/components/calendar/utils'
 import { getSabianForDegree } from '@/lib/ephemeris/sabian'
 import { derivePushRestArc } from '@/lib/year/push-rest-arc'
 
-type View = 'year' | 'month' | 'week'
+type View = 'year' | 'month' | 'week' | 'review'
 
 const MONTH_NAMES = [
   'January',
@@ -38,12 +39,25 @@ interface SearchParams {
   view?: string
   month?: string
   date?: string
+  quarter?: string
 }
 
 function parseView(raw: string | undefined): View {
   if (raw === 'month') return 'month'
   if (raw === 'week') return 'week'
+  if (raw === 'review') return 'review'
   return 'year'
+}
+
+function parseQuarter(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 1 || n > 4) return fallback
+  return Math.floor(n)
+}
+
+function currentQuarter(month0: number): number {
+  return Math.floor(month0 / 3) + 1
 }
 
 function parseMonth(raw: string | undefined, fallback: { year: number; month: number }) {
@@ -147,6 +161,10 @@ export default async function YearPage({ searchParams }: PageProps) {
 
   if (view === 'week') {
     return <WeekChartView searchParams={params} />
+  }
+
+  if (view === 'review') {
+    return <QuarterReviewView searchParams={params} />
   }
 
   return <YearChartView />
@@ -721,6 +739,252 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
             </div>
           </div>
           <PushRestRibbon periods={arc} todayPct={todayPct} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const QUARTER_MONTHS: Record<number, string> = {
+  1: 'Jan — Mar',
+  2: 'Apr — Jun',
+  3: 'Jul — Sep',
+  4: 'Oct — Dec',
+}
+
+type QuarterStatus = 'completed' | 'draft' | 'not-started' | 'future'
+
+function quarterStatus(
+  reviewRow: { completed_at: string | null; wins: unknown; challenges: unknown; pivots: string | null; next_quarter_intentions: string | null } | null,
+  quarter: number,
+  currentQ: number,
+): QuarterStatus {
+  if (reviewRow?.completed_at) return 'completed'
+  const hasDraftContent =
+    !!reviewRow &&
+    ((Array.isArray(reviewRow.wins) && reviewRow.wins.length > 0) ||
+      (Array.isArray(reviewRow.challenges) && reviewRow.challenges.length > 0) ||
+      (reviewRow.pivots && reviewRow.pivots.trim().length > 0) ||
+      (reviewRow.next_quarter_intentions && reviewRow.next_quarter_intentions.trim().length > 0))
+  if (hasDraftContent) return 'draft'
+  if (quarter > currentQ) return 'future'
+  return 'not-started'
+}
+
+function statusLabel(status: QuarterStatus): { label: string; tone: string } {
+  switch (status) {
+    case 'completed':
+      return { label: 'COMPLETED', tone: K.sage }
+    case 'draft':
+      return { label: 'DRAFT', tone: K.copperHi }
+    case 'future':
+      return { label: 'FUTURE QUARTER', tone: K.inkSoft }
+    case 'not-started':
+    default:
+      return { label: 'NOT STARTED', tone: K.inkDim }
+  }
+}
+
+async function QuarterReviewView({ searchParams }: { searchParams: SearchParams }) {
+  const now = new Date()
+  const currentQ = currentQuarter(now.getMonth())
+  const selectedQuarter = parseQuarter(searchParams.quarter, currentQ)
+
+  const { loaded } = await loadYearData()
+
+  if (!loaded) {
+    return (
+      <div className="space-y-6">
+        <PageHeader current="review" />
+        <NoBlueprintCard />
+      </div>
+    )
+  }
+
+  const supabase = await createServerSupabase()
+  const reviewsRes = await supabase
+    .from('quarterly_reviews')
+    .select('quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, stats_snapshot, created_at')
+    .eq('plan_year', loaded.planYear)
+
+  const reviewsByQuarter = new Map<number, NonNullable<typeof reviewsRes.data>[number]>()
+  for (const row of reviewsRes.data ?? []) {
+    if (typeof row.quarter === 'number') reviewsByQuarter.set(row.quarter, row)
+  }
+
+  const selectedReview = reviewsByQuarter.get(selectedQuarter) ?? null
+  const quarterBlueprint = loaded.blueprint.quarters.find((q) => q.quarter === selectedQuarter)
+  const selectedStatus = quarterStatus(selectedReview, selectedQuarter, currentQ)
+  const selectedStatusMeta = statusLabel(selectedStatus)
+
+  const completedDateLabel = selectedReview?.completed_at
+    ? new Date(selectedReview.completed_at).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null
+
+  return (
+    <div className="space-y-6">
+      <PageHeader current="review" />
+      <div
+        style={{
+          fontFamily: K.fBody,
+          color: K.ink,
+          background: K.bg,
+          display: 'grid',
+          gridTemplateRows: 'auto auto 1fr',
+          gap: 16,
+        }}
+      >
+        {/* Header: quarter title + status */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <Kicker>Quarterly Review · {loaded.planYear}</Kicker>
+            <div
+              style={{
+                fontFamily: K.fSerif,
+                fontStyle: 'italic',
+                fontSize: 32,
+                color: K.ink,
+                lineHeight: 1.1,
+                marginTop: 4,
+              }}
+            >
+              Q{selectedQuarter} · {QUARTER_MONTHS[selectedQuarter]}
+            </div>
+            {quarterBlueprint?.theme ? (
+              <div
+                style={{
+                  fontFamily: K.fBody,
+                  fontSize: 13,
+                  color: K.inkDim,
+                  lineHeight: 1.6,
+                  marginTop: 10,
+                  maxWidth: 720,
+                }}
+              >
+                {quarterBlueprint.theme}
+              </div>
+            ) : null}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div
+              style={{
+                fontFamily: K.fMono,
+                fontSize: 10,
+                letterSpacing: '0.18em',
+                color: selectedStatusMeta.tone,
+              }}
+            >
+              {selectedStatusMeta.label}
+            </div>
+            {completedDateLabel ? (
+              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft, marginTop: 4, letterSpacing: '0.14em' }}>
+                {completedDateLabel.toUpperCase()}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Quarter selector */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {[1, 2, 3, 4].map((q) => {
+            const row = reviewsByQuarter.get(q) ?? null
+            const status = quarterStatus(row, q, currentQ)
+            const meta = statusLabel(status)
+            const active = q === selectedQuarter
+            return (
+              <Link
+                key={q}
+                href={`/year?view=review&quarter=${q}`}
+                style={{
+                  flex: 1,
+                  padding: '12px 14px',
+                  background: active ? K.bg2 : 'transparent',
+                  border: `1px solid ${active ? K.copper : K.line}`,
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                }}
+              >
+                <div style={{ fontFamily: K.fMono, fontSize: 11, letterSpacing: '0.16em', color: active ? K.copperHi : K.inkDim }}>
+                  Q{q} · {QUARTER_MONTHS[q]}
+                </div>
+                <div style={{ fontFamily: K.fMono, fontSize: 9, letterSpacing: '0.14em', color: meta.tone }}>
+                  {meta.label}
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Quarter context + review form (form is the panel island, added next) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: 16, alignItems: 'flex-start' }}>
+          <Frame tone="raised" padding={20}>
+            <QuarterReviewPanel
+              year={loaded.planYear}
+              quarter={selectedQuarter}
+              initialWins={Array.isArray(selectedReview?.wins) ? (selectedReview!.wins as string[]) : undefined}
+              initialChallenges={Array.isArray(selectedReview?.challenges) ? (selectedReview!.challenges as string[]) : undefined}
+              initialPivots={selectedReview?.pivots ?? null}
+              initialNextQuarterIntentions={selectedReview?.next_quarter_intentions ?? null}
+              initialCompletedAt={selectedReview?.completed_at ?? null}
+              initialAiSummary={selectedReview?.ai_summary ?? null}
+              initialStatsSnapshot={
+                selectedReview?.stats_snapshot && typeof selectedReview.stats_snapshot === 'object'
+                  ? (selectedReview.stats_snapshot as Record<string, number>)
+                  : null
+              }
+            />
+          </Frame>
+
+          <Frame tone="umber" padding={20}>
+            <Kicker>Quarter context</Kicker>
+            {quarterBlueprint ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                {quarterBlueprint.intention ? (
+                  <div>
+                    <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.16em', color: K.copperHi, marginBottom: 4 }}>
+                      INTENTION
+                    </div>
+                    <div style={{ fontFamily: K.fBody, fontSize: 13, color: K.ink, lineHeight: 1.55 }}>
+                      {quarterBlueprint.intention}
+                    </div>
+                  </div>
+                ) : null}
+                {quarterBlueprint.cosmicHighlights.length > 0 ? (
+                  <div>
+                    <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.16em', color: K.copperHi, marginBottom: 6 }}>
+                      KEY TRANSITS
+                    </div>
+                    <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {quarterBlueprint.cosmicHighlights.map((h, i) => (
+                        <li key={i} style={{ fontFamily: K.fBody, fontSize: 12.5, color: K.inkDim, lineHeight: 1.5 }}>
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div
+                style={{
+                  fontFamily: K.fBody,
+                  fontSize: 13,
+                  color: K.inkDim,
+                  marginTop: 12,
+                  lineHeight: 1.6,
+                }}
+              >
+                No blueprint context for this quarter yet.
+              </div>
+            )}
+          </Frame>
         </div>
       </div>
     </div>

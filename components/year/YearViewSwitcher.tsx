@@ -4,12 +4,13 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
 import { K } from '@/components/almanac/tokens'
 
-type View = 'year' | 'month' | 'week'
+type View = 'year' | 'month' | 'week' | 'review'
 
 const VIEWS: { key: View; label: string }[] = [
   { key: 'year', label: 'Year' },
   { key: 'month', label: 'Month' },
   { key: 'week', label: 'Week' },
+  { key: 'review', label: 'Review' },
 ]
 
 interface Props {
