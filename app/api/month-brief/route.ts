@@ -4,6 +4,7 @@ import {
   MonthBriefPinnedError,
   fetchOrGenerateMonthBrief,
   setMonthBriefPinned,
+  setMonthBriefText,
 } from '@/lib/ai/month-brief-generator'
 import { getUserProfileId } from '@/lib/ai/usage'
 
@@ -14,7 +15,10 @@ interface RequestBody {
   month?: number
   regen?: boolean
   pin?: boolean
+  text?: string
 }
+
+const MAX_BRIEF_TEXT_LENGTH = 4000
 
 function getErrorMessage(error: unknown): string {
   if (error == null) return 'unknown error'
@@ -55,6 +59,32 @@ export async function POST(req: Request) {
           pinned: body.pin,
         })
         return NextResponse.json(result)
+      } catch (error) {
+        const message = getErrorMessage(error)
+        const status = message.includes('No brief exists') ? 404 : 500
+        return NextResponse.json({ error: message }, { status })
+      }
+    }
+
+    if (typeof body.text === 'string') {
+      const trimmed = body.text.trim()
+      if (!trimmed) {
+        return NextResponse.json({ error: 'Brief text cannot be empty' }, { status: 400 })
+      }
+      if (trimmed.length > MAX_BRIEF_TEXT_LENGTH) {
+        return NextResponse.json(
+          { error: `Brief text exceeds ${MAX_BRIEF_TEXT_LENGTH} characters` },
+          { status: 400 },
+        )
+      }
+      try {
+        const result = await setMonthBriefText({
+          userProfileId: profileId,
+          planYear: year,
+          month,
+          text: trimmed,
+        })
+        return NextResponse.json({ ...result, fromCache: false })
       } catch (error) {
         const message = getErrorMessage(error)
         const status = message.includes('No brief exists') ? 404 : 500

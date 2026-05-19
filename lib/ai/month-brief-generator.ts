@@ -14,6 +14,8 @@ import {
   assembleMonthBriefSystemPrompt,
   assembleMonthBriefUserPrompt,
   type MonthBriefPromptContext,
+  type PriorMonthBriefContext,
+  type PriorQuarterReviewContext,
 } from './month-brief-system-prompt'
 import { recordUsage } from './usage'
 import type { BlueprintOutput, MonthBlueprint, NatalChart } from '@/types/blueprint'
@@ -85,8 +87,20 @@ export async function fetchOrGenerateMonthBrief(
     throw new MonthBriefPinnedError()
   }
 
+  // Prior month coordinates — wraps to December of prior year for January.
+  const priorMonth = month === 1 ? 12 : month - 1
+  const priorMonthYear = month === 1 ? planYear - 1 : planYear
+
   // ── Load all the context we need ────────────────────────────────────
-  const [profileRes, blueprintRes, patternsRes, capturesRes, sessionsRes] = await Promise.all([
+  const [
+    profileRes,
+    blueprintRes,
+    patternsRes,
+    capturesRes,
+    sessionsRes,
+    priorBriefRes,
+    quarterReviewRes,
+  ] = await Promise.all([
     admin
       .from('user_profiles')
       .select('display_name, natal_chart, year_vision, word_of_year, what_to_release')
@@ -126,6 +140,21 @@ export async function fetchOrGenerateMonthBrief(
         .lte('scheduled_for', end)
         .order('scheduled_for', { ascending: true })
     })(),
+    admin
+      .from('month_briefs')
+      .select('brief_text, month, plan_year')
+      .eq('user_id', userProfileId)
+      .eq('plan_year', priorMonthYear)
+      .eq('month', priorMonth)
+      .maybeSingle(),
+    admin
+      .from('quarterly_reviews')
+      .select('quarter, plan_year, ai_summary, wins, challenges, pivots, next_quarter_intentions, completed_at')
+      .eq('user_id', userProfileId)
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (!profileRes.data) {
@@ -146,6 +175,27 @@ export async function fetchOrGenerateMonthBrief(
   }
   const quarterBlueprint = quarters.find((q) => q.quarter === Math.floor((month - 1) / 3) + 1) ?? null
 
+  const priorMonthBrief: PriorMonthBriefContext | null = priorBriefRes.data?.brief_text
+    ? {
+        month: priorMonth,
+        monthName: MONTH_NAMES[priorMonth - 1] ?? '',
+        planYear: priorMonthYear,
+        text: priorBriefRes.data.brief_text,
+      }
+    : null
+
+  const priorQuarterReview: PriorQuarterReviewContext | null = quarterReviewRes.data
+    ? {
+        quarter: quarterReviewRes.data.quarter,
+        planYear: quarterReviewRes.data.plan_year,
+        aiSummary: quarterReviewRes.data.ai_summary,
+        wins: quarterReviewRes.data.wins,
+        challenges: quarterReviewRes.data.challenges,
+        pivots: quarterReviewRes.data.pivots,
+        nextQuarterIntentions: quarterReviewRes.data.next_quarter_intentions,
+      }
+    : null
+
   const ctx: MonthBriefPromptContext = {
     userName: profileRes.data.display_name ?? 'there',
     natalChart: profileRes.data.natal_chart as unknown as NatalChart,
@@ -161,6 +211,8 @@ export async function fetchOrGenerateMonthBrief(
     journalPatterns: patternsRes.data ?? [],
     oraclePlannerCaptures: capturesRes.data ?? [],
     curriculumSessions: sessionsRes.data ?? [],
+    priorMonthBrief,
+    priorQuarterReview,
   }
 
   const systemPrompt = assembleMonthBriefSystemPrompt()
@@ -248,4 +300,42 @@ export async function setMonthBriefPinned(opts: SetPinnedOptions): Promise<{ pin
   if (!data) throw new Error('No brief exists for this month to pin')
 
   return { pinned: Boolean(data.pinned) }
+}
+
+interface SetTextOptions {
+  userProfileId: string
+  planYear: number
+  month: number
+  text: string
+}
+
+export async function setMonthBriefText(
+  opts: SetTextOptions,
+): Promise<{ briefText: string; modelUsed: string; generatedAt: string; editedAt: string; pinned: boolean }> {
+  const { userProfileId, planYear, month, text } = opts
+  const trimmed = text.trim()
+  if (!trimmed) throw new Error('Brief text cannot be empty')
+
+  const admin = createAdminSupabase()
+  const editedAt = new Date().toISOString()
+
+  const { data, error } = await admin
+    .from('month_briefs')
+    .update({ brief_text: trimmed, edited_at: editedAt })
+    .eq('user_id', userProfileId)
+    .eq('plan_year', planYear)
+    .eq('month', month)
+    .select('brief_text, model_used, generated_at, edited_at, pinned')
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) throw new Error('No brief exists for this month to edit')
+
+  return {
+    briefText: data.brief_text,
+    modelUsed: data.model_used,
+    generatedAt: data.generated_at,
+    editedAt: data.edited_at ?? editedAt,
+    pinned: Boolean(data.pinned),
+  }
 }

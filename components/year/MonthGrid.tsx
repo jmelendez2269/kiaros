@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { K } from '@/components/almanac/tokens'
 import { MoonGlyph } from '@/components/almanac/MoonGlyph'
 
@@ -59,74 +60,85 @@ export function MonthGrid({ year, month, today, events = [], journalDays }: Prop
           const showMoon = valid && (d === 1 || d % 7 === 0)
           const hasJournal = valid && journalDays?.has(d) === true
 
+          const cellStyle: React.CSSProperties = {
+            minHeight: 78,
+            background: !valid
+              ? K.bg
+              : isToday
+                ? `linear-gradient(180deg, ${K.copper}22, ${K.bg2})`
+                : K.bg2,
+            padding: 7,
+            position: 'relative',
+            border: isToday ? `1px solid ${K.copper}` : 'none',
+            borderRadius: isToday ? 4 : 0,
+          }
+
+          if (!valid) return <div key={i} style={cellStyle} />
+
+          const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+
           return (
-            <div
+            <Link
               key={i}
+              href={`/year?view=week&date=${iso}`}
+              prefetch={false}
+              aria-label={`Open week containing ${iso}`}
               style={{
-                minHeight: 78,
-                background: !valid
-                  ? K.bg
-                  : isToday
-                    ? `linear-gradient(180deg, ${K.copper}22, ${K.bg2})`
-                    : K.bg2,
-                padding: 7,
-                position: 'relative',
-                border: isToday ? `1px solid ${K.copper}` : 'none',
-                borderRadius: isToday ? 4 : 0,
+                ...cellStyle,
+                display: 'block',
+                color: 'inherit',
+                textDecoration: 'none',
+                cursor: 'pointer',
               }}
             >
-              {valid && (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <span
-                      style={{
-                        fontFamily: K.fSerif,
-                        fontStyle: 'italic',
-                        fontSize: 16,
-                        color: isToday ? K.ink : K.inkDim,
-                        lineHeight: 1,
-                      }}
-                    >
-                      {d}
-                    </span>
-                    {showMoon ? <MoonGlyph phase={phase} size={11} color={K.copperHi} /> : null}
-                  </div>
-                  {event ? (
-                    <div
-                      style={{
-                        marginTop: 6,
-                        fontFamily: K.fMono,
-                        fontSize: 8.5,
-                        color: event.tone,
-                        letterSpacing: '0.04em',
-                        borderLeft: `2px solid ${event.tone}`,
-                        paddingLeft: 5,
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {event.tag}
-                    </div>
-                  ) : null}
-                  {hasJournal ? (
-                    <span
-                      title="Journal entry on this day"
-                      aria-label="Journal entry on this day"
-                      style={{
-                        position: 'absolute',
-                        bottom: 6,
-                        right: 8,
-                        fontFamily: K.fSerif,
-                        fontSize: 13,
-                        lineHeight: 1,
-                        color: K.starlight,
-                      }}
-                    >
-                      ✎
-                    </span>
-                  ) : null}
-                </>
-              )}
-            </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <span
+                  style={{
+                    fontFamily: K.fSerif,
+                    fontStyle: 'italic',
+                    fontSize: 16,
+                    color: isToday ? K.ink : K.inkDim,
+                    lineHeight: 1,
+                  }}
+                >
+                  {d}
+                </span>
+                {showMoon ? <MoonGlyph phase={phase} size={11} color={K.copperHi} /> : null}
+              </div>
+              {event ? (
+                <div
+                  style={{
+                    marginTop: 6,
+                    fontFamily: K.fMono,
+                    fontSize: 8.5,
+                    color: event.tone,
+                    letterSpacing: '0.04em',
+                    borderLeft: `2px solid ${event.tone}`,
+                    paddingLeft: 5,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {event.tag}
+                </div>
+              ) : null}
+              {hasJournal ? (
+                <span
+                  title="Journal entry on this day"
+                  aria-label="Journal entry on this day"
+                  style={{
+                    position: 'absolute',
+                    bottom: 6,
+                    right: 8,
+                    fontFamily: K.fSerif,
+                    fontSize: 13,
+                    lineHeight: 1,
+                    color: K.starlight,
+                  }}
+                >
+                  ✎
+                </span>
+              ) : null}
+            </Link>
           )
         })}
       </div>

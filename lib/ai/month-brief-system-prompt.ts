@@ -21,6 +21,23 @@ interface CurriculumSessionForBrief {
   scheduled_for: string
 }
 
+export interface PriorMonthBriefContext {
+  month: number       // 1–12
+  monthName: string
+  planYear: number
+  text: string
+}
+
+export interface PriorQuarterReviewContext {
+  quarter: number
+  planYear: number
+  aiSummary: string | null
+  wins: Json
+  challenges: Json
+  pivots: string | null
+  nextQuarterIntentions: string | null
+}
+
 export interface MonthBriefPromptContext {
   userName: string
   natalChart: NatalChart
@@ -39,6 +56,8 @@ export interface MonthBriefPromptContext {
   >[]
   oraclePlannerCaptures: Pick<Tables<'oracle_captures'>, 'captured_text' | 'created_at'>[]
   curriculumSessions: CurriculumSessionForBrief[]
+  priorMonthBrief: PriorMonthBriefContext | null
+  priorQuarterReview: PriorQuarterReviewContext | null
 }
 
 function natalSummary(chart: NatalChart): string {
@@ -119,8 +138,56 @@ function curriculumToText(sessions: CurriculumSessionForBrief[]): string {
   if (sessions.length === 0) return '  (No curriculum sessions scheduled this month.)'
   return sessions
     .slice(0, 8)
-    .map((s) => `  ${s.scheduled_for} — ${s.title}${s.session_type ? ` [${s.session_type}]` : ''}`)
+    .map((s) => {
+      const head = `  ${s.scheduled_for} — ${s.title}${s.session_type ? ` [${s.session_type}]` : ''}`
+      const desc = s.description?.trim()
+      return desc ? `${head}\n      ${compact(desc, 140)}` : head
+    })
     .join('\n')
+}
+
+function jsonListCompact(value: Json, max = 3): string[] {
+  if (!Array.isArray(value)) return []
+  const out: string[] = []
+  for (const item of value) {
+    if (out.length >= max) break
+    if (typeof item === 'string') {
+      const t = item.trim()
+      if (t) out.push(compact(t, 140))
+    } else if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+      const text =
+        (typeof item.text === 'string' && item.text.trim()) ||
+        (typeof item.title === 'string' && item.title.trim()) ||
+        (typeof item.summary === 'string' && item.summary.trim()) ||
+        null
+      if (text) out.push(compact(text, 140))
+    }
+  }
+  return out
+}
+
+function priorMonthBriefToText(prior: PriorMonthBriefContext | null): string {
+  if (!prior) return '  (No prior month brief available.)'
+  return `  Prior month: ${prior.monthName} ${prior.planYear}\n\n${prior.text
+    .split(/\n+/)
+    .map((line) => `  ${line.trim()}`)
+    .filter((line) => line.trim().length > 0)
+    .join('\n')}`
+}
+
+function priorQuarterReviewToText(review: PriorQuarterReviewContext | null): string {
+  if (!review) return '  (No completed quarterly review yet.)'
+  const lines: string[] = [`  Q${review.quarter} ${review.planYear} review:`]
+  if (review.aiSummary?.trim()) lines.push(`  Summary: ${compact(review.aiSummary.trim(), 260)}`)
+  const wins = jsonListCompact(review.wins)
+  if (wins.length > 0) lines.push(`  Wins: ${wins.join(' · ')}`)
+  const challenges = jsonListCompact(review.challenges)
+  if (challenges.length > 0) lines.push(`  Challenges: ${challenges.join(' · ')}`)
+  if (review.pivots?.trim()) lines.push(`  Pivots: ${compact(review.pivots.trim(), 200)}`)
+  if (review.nextQuarterIntentions?.trim()) {
+    lines.push(`  Next quarter intentions: ${compact(review.nextQuarterIntentions.trim(), 200)}`)
+  }
+  return lines.join('\n')
 }
 
 // ─── System prompt ──────────────────────────────────────────────────────
@@ -163,6 +230,8 @@ export function assembleMonthBriefUserPrompt(ctx: MonthBriefPromptContext): stri
     journalPatterns,
     oraclePlannerCaptures,
     curriculumSessions,
+    priorMonthBrief,
+    priorQuarterReview,
   } = ctx
 
   return `
@@ -217,6 +286,16 @@ ${captureToText(oraclePlannerCaptures)}
 CURRICULUM SESSIONS SCHEDULED THIS MONTH
 ═══════════════════════════════════════════
 ${curriculumToText(curriculumSessions)}
+
+═══════════════════════════════════════════
+PRIOR MONTH BRIEF (for narrative continuity — echo a thread softly, don't repeat)
+═══════════════════════════════════════════
+${priorMonthBriefToText(priorMonthBrief)}
+
+═══════════════════════════════════════════
+LATEST QUARTERLY REVIEW (what the user actually noticed last quarter)
+═══════════════════════════════════════════
+${priorQuarterReviewToText(priorQuarterReview)}
 
 ═══════════════════════════════════════════
 INSTRUCTIONS

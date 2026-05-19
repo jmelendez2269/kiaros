@@ -16,6 +16,10 @@ interface StelloquyContextValue {
    *  OracleConversation consumes the pre-seed on mount and fires it as the
    *  first user message. */
   openWith: (prompt: string) => void
+  /** Monotonic counter incremented every `openWith`. OracleConversation
+   *  watches it to re-consume the sessionStorage preseed when the drawer is
+   *  already mounted (no remount → useEffect with empty deps won't fire). */
+  preseedNonce: number
   /** Entitlement — true for Planner+Oracle subscribers. Components use this
    *  to decide between drawer (subscriber) and one-shot inline reading (free). */
   hasOracleAccess: boolean
@@ -30,18 +34,20 @@ interface Props {
 
 export function StelloquyProvider({ children, hasOracleAccess }: Props) {
   const [open, setOpen] = useState(false)
+  const [preseedNonce, setPreseedNonce] = useState(0)
 
   const openDrawer = useCallback(() => setOpen(true), [])
   const closeDrawer = useCallback(() => setOpen(false), [])
   const toggleDrawer = useCallback(() => setOpen((v) => !v), [])
   const openWith = useCallback((prompt: string) => {
     writeOraclePreseed(prompt)
+    setPreseedNonce((n) => n + 1)
     setOpen(true)
   }, [])
 
   const value = useMemo<StelloquyContextValue>(
-    () => ({ open, openDrawer, closeDrawer, toggleDrawer, openWith, hasOracleAccess }),
-    [open, openDrawer, closeDrawer, toggleDrawer, openWith, hasOracleAccess],
+    () => ({ open, openDrawer, closeDrawer, toggleDrawer, openWith, preseedNonce, hasOracleAccess }),
+    [open, openDrawer, closeDrawer, toggleDrawer, openWith, preseedNonce, hasOracleAccess],
   )
 
   return <StelloquyContext.Provider value={value}>{children}</StelloquyContext.Provider>

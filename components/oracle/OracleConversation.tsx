@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { OracleMessage } from './OracleMessage'
 import { OracleInput } from './OracleInput'
 import { StelloquyOrb, type OrbState } from './StelloquyOrb'
+import { useStelloquy } from './StelloquyProvider'
 import { consumeOraclePreseed } from '@/lib/oracle/preseed'
 
 const SUGGESTED_PROMPTS = [
@@ -44,10 +45,13 @@ export function OracleConversation({
   const transport = useMemo(() => new DefaultChatTransport({ api: '/api/oracle/chat' }), [])
   const { messages, sendMessage, status, error } = useChat({ transport })
   const [captureError, setCaptureError] = useState<string | null>(null)
-  // Dashboard deep-links write a pre-seed prompt into sessionStorage before
-  // navigating here. We dispatch it as the first user message on mount.
-  // Ref guards against StrictMode's double-invoke.
-  const preseedDispatched = useRef(false)
+  const { preseedNonce } = useStelloquy()
+  // Tracks the highest preseed nonce we've already consumed. Initialised to
+  // -1 so the initial mount (nonce starts at 0) still fires the effect once
+  // for cross-page deep links that wrote a preseed before this component
+  // existed. Subsequent openWith() calls bump the nonce and re-fire even
+  // when the drawer is already open.
+  const lastConsumedNonce = useRef(-1)
 
   const isLoading = status === 'streaming' || status === 'submitted'
   const lastRole = messages[messages.length - 1]?.role
@@ -60,16 +64,19 @@ export function OracleConversation({
   }
 
   useEffect(() => {
-    if (preseedDispatched.current) return
+    if (lastConsumedNonce.current >= preseedNonce) return
     const preseed = consumeOraclePreseed()
     if (preseed) {
-      preseedDispatched.current = true
+      lastConsumedNonce.current = preseedNonce
       handleSend(preseed)
+    } else {
+      // No preseed waiting — still mark this nonce as handled so we don't
+      // re-enter on every render. Future openWith calls bump the nonce and
+      // re-trigger the effect.
+      lastConsumedNonce.current = preseedNonce
     }
-    // Run once on mount; sendMessage identity may change but the dispatched
-    // ref makes a repeated effect call a no-op.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [preseedNonce])
 
   async function handleCapture(capture: {
     capturedText: string

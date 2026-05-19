@@ -314,7 +314,7 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
       .lte('entry_date', monthEnd),
     supabase
       .from('month_briefs')
-      .select('brief_text, generated_at, pinned')
+      .select('brief_text, generated_at, edited_at, pinned')
       .eq('plan_year', selected.year)
       .eq('month', selected.month + 1)
       .maybeSingle(),
@@ -480,6 +480,7 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
               monthName={MONTH_NAMES[selected.month] ?? ''}
               initialBrief={existingBrief?.brief_text ?? undefined}
               initialGeneratedAt={existingBrief?.generated_at ?? undefined}
+              initialEditedAt={(existingBrief as { edited_at?: string | null } | null)?.edited_at ?? undefined}
               initialPinned={Boolean(existingBrief?.pinned)}
             />
           ) : null}
