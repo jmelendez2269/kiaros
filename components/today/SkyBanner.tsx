@@ -56,7 +56,7 @@ export function SkyBanner({ context, firstName }: Props) {
       >
         <path
           d="M 0 10 L 8 8 L 14 9 L 22 6 L 30 8 L 38 5 L 46 7 L 54 4 L 62 6 L 70 5 L 78 8 L 86 6 L 94 9 L 100 8 L 100 12 L 0 12 Z"
-          fill="#1a0e08"
+          fill={K.midnight}
         />
       </svg>
       <div
@@ -72,7 +72,7 @@ export function SkyBanner({ context, firstName }: Props) {
         }}
       />
       <div style={{ position: 'absolute', top: 30, left: '32%' }}>
-        <MoonGlyph phase={today.moonIllumination} size={28} color="#e8dcc4" />
+        <MoonGlyph phase={today.moonIllumination} size={28} color={K.ink} />
       </div>
 
       <div
@@ -89,7 +89,7 @@ export function SkyBanner({ context, firstName }: Props) {
             style={{
               fontFamily: K.fMono,
               fontSize: 10,
-              color: '#e8dcc4',
+              color: K.ink,
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
               opacity: 0.92,
@@ -102,7 +102,7 @@ export function SkyBanner({ context, firstName }: Props) {
               fontFamily: K.fSerif,
               fontStyle: 'italic',
               fontSize: 38,
-              color: '#fff5e0',
+              color: K.ink,
               lineHeight: 1.08,
               marginTop: 8,
               textWrap: 'balance',
@@ -114,7 +114,7 @@ export function SkyBanner({ context, firstName }: Props) {
             style={{
               fontFamily: K.fBody,
               fontSize: 13.5,
-              color: '#f0e0c8',
+              color: K.inkDim,
               marginTop: 12,
               lineHeight: 1.55,
             }}
@@ -131,7 +131,7 @@ export function SkyBanner({ context, firstName }: Props) {
             alignItems: 'flex-end',
             fontFamily: K.fMono,
             fontSize: 10,
-            color: '#f0e0c8',
+            color: K.inkDim,
             letterSpacing: '0.16em',
             flexShrink: 0,
           }}
@@ -161,13 +161,13 @@ export function SkyBanner({ context, firstName }: Props) {
 
 const placementChipStyle: React.CSSProperties = {
   display: 'inline-block',
-  color: '#fff5e0',
+  color: K.ink,
   marginTop: 6,
   padding: '2px 6px',
   borderRadius: 4,
   transition: 'background 0.15s, border-color 0.15s',
-  border: '1px solid rgba(255, 245, 224, 0.18)',
-  background: 'rgba(255, 245, 224, 0.04)',
+  border: `1px solid ${K.lineHi}`,
+  background: 'rgba(227, 226, 237, 0.04)',
   cursor: 'pointer',
 }
 
