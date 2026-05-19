@@ -36,6 +36,62 @@ function coerceNullableString(raw: unknown): string | null {
   return raw
 }
 
+export async function GET(req: Request) {
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const url = new URL(req.url)
+    const year = Number(url.searchParams.get('year'))
+    const quarter = Number(url.searchParams.get('quarter'))
+
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+      return NextResponse.json({ error: 'Invalid year' }, { status: 400 })
+    }
+    if (!Number.isInteger(quarter) || quarter < 1 || quarter > 4) {
+      return NextResponse.json({ error: 'Invalid quarter (1–4)' }, { status: 400 })
+    }
+
+    const profileId = await getUserProfileId(userId)
+    if (!profileId) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    const admin = createAdminSupabase()
+    const { data: row } = await admin
+      .from('quarterly_reviews')
+      .select('quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, stats_snapshot')
+      .eq('user_id', profileId)
+      .eq('plan_year', year)
+      .eq('quarter', quarter)
+      .maybeSingle()
+
+    if (!row) {
+      return NextResponse.json({ exists: false }, { status: 200 })
+    }
+
+    return NextResponse.json({
+      exists: true,
+      quarter: row.quarter,
+      completedAt: row.completed_at,
+      wins: coerceStringArray(row.wins),
+      challenges: coerceStringArray(row.challenges),
+      pivots: row.pivots,
+      nextQuarterIntentions: row.next_quarter_intentions,
+      aiSummary: row.ai_summary,
+      statsSnapshot:
+        row.stats_snapshot && typeof row.stats_snapshot === 'object'
+          ? (row.stats_snapshot as Record<string, number>)
+          : null,
+    })
+  } catch (error) {
+    console.error('[quarterly-review] GET failed:', error)
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { userId } = await auth()
