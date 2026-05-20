@@ -25,14 +25,14 @@ Kiaros (formerly "Cosmic Life Planner") is a personalised yearly planning system
 - Recharts — charts (Phase 7)
 - `@dnd-kit/sortable` — DnD (Phase 2)
 
-## Current state (2026-05-10)
+## Current state (2026-05-20)
 
 Kiaros went live ~2026-05-01. The original phase plan is no longer the right map — see [`docs/handoff-2026-05-08.md`](./docs/handoff-2026-05-08.md) for the authoritative snapshot.
 
 **Shipped (production):**
 - Next.js + Clerk + Supabase wired, RLS-aware clients (`lib/supabase/{client,server,admin}.ts`)
 - Clerk webhook (`app/api/webhooks/clerk/route.ts`); full onboarding flow
-- Schema through migration 0013 (`supabase/migrations/`); `types/database.ts` generated from live schema
+- Schema through migration 0019 (`supabase/migrations/`); `types/database.ts` generated from live schema
 - Ephemeris engine (`lib/ephemeris/`) and blueprint generator (`lib/ai/blueprint-generator.ts`) — AI SDK v6 via Vercel AI Gateway
 - **Cosmic Calendar** — year/month/week views
 - **Tracker** — dynamic per-category metrics, daily logs auto-stamped with lunar phase / sign / cycle phase, 90-day grid + 14-day per-category bars
@@ -43,10 +43,13 @@ Kiaros went live ~2026-05-01. The original phase plan is no longer the right map
 - **Commerce** — Stripe subscriptions (yearly/monthly) + Etsy `marketplace_orders`; `npm run stripe:sync-catalog`
 - **Admin console** — `app/(admin)/admin/*` (internal)
 - **Public pages** — homepage, contact, policy pages, manifest, icons
+- **Journal Insights** — `/journal/insights` surfaces `user_pattern_insights` with an AI synthesis layer (Haiku 4.5) on top of the SQL summary fallback; per-user voice control (`user_settings`) with three presets + custom prompt; bulk regen via Next 15 `after()` with page polling. See [`docs/handoff-2026-05-19-journal-insight-voice.md`](./docs/handoff-2026-05-19-journal-insight-voice.md).
+- **Quarterly Reviews** — create/edit surface live; deltas vs prior quarter shown under each activity stat. See [`docs/handoff-2026-05-19-quarterly-reviews-polish.md`](./docs/handoff-2026-05-19-quarterly-reviews-polish.md).
 
 **Gaps (priority order):**
-- **Journal Intelligence UI** — `user_pattern_insights` is populated but never shown to users (HIGH — current task)
-- **Quarterly Reviews UI** — `quarterly_reviews` exists, Oracle reads it, no create/edit surface (Q2 ends 2026-06-30)
+- **Areas detail pages** — `/areas/[slug]` is a 404 stub (~3 days)
+- **JournalComposer CTA + sidebar entry** for `/journal/insights` — destination shipped but the inline link in the composer is a tertiary text link and the sidebar has no entry (small follow-ups; see journal-insight-voice handoff §5 MEDIUM #6–7)
+- **Quarterly Reviews UI polish backlog** — see latest QR handoff for residual items (Q2 ends 2026-06-30)
 - **Areas detail pages** — `/areas/[slug]` is a 404 stub (~3 days)
 - **Year Unwrapped** — not built; Recharts not yet installed (Q4 seasonal)
 - **HD + Gene Keys integration** — math layer validated under `lib/ephemeris/human-design/`; blueprint integration deferred (Phase 4.5 in `docs/architecture-v2.md` §8)
@@ -114,4 +117,4 @@ A feature is done when:
 
 ---
 
-**Last updated:** 2026-05-10 — Current-state block reconciled with `docs/handoff-2026-05-08.md`. Journal Intelligence UI underway.
+**Last updated:** 2026-05-20 — Journal Insights + Quarterly Reviews moved to Shipped; schema bumped to 0019; current HIGH gap is Areas detail pages.

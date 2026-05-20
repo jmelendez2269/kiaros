@@ -367,15 +367,35 @@ export function JournalComposer({
               <p className="mt-3 text-sm leading-7 text-bone-muted">
                 Revisit past entries, rituals, and timing-window notes in one place.
               </p>
-              <Link
-                href="/journal/insights"
-                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-leather-200 transition-colors hover:text-leather-100"
-              >
-                View patterns Kiaros has noticed →
-              </Link>
             </div>
             <span className="shell-pill">{entries.length} loaded</span>
           </div>
+
+          <Link
+            href="/journal/insights"
+            className="group mt-5 flex items-start gap-4 rounded-2xl border border-leather-400/40 bg-leather-500/10 px-5 py-4 transition-colors hover:border-leather-300/60 hover:bg-leather-500/20"
+          >
+            <span
+              aria-hidden="true"
+              className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-leather-400/50 bg-leather-500/20 font-serif text-base text-leather-100"
+            >
+              ✦
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-bone">
+                Patterns Kiaros has noticed
+              </p>
+              <p className="mt-1 text-xs leading-6 text-bone-muted">
+                Recurring moons, signs, and transits across your entries — synthesised in your chosen voice.
+              </p>
+            </div>
+            <span
+              aria-hidden="true"
+              className="self-center text-base text-leather-200 transition-transform group-hover:translate-x-0.5"
+            >
+              →
+            </span>
+          </Link>
 
           <div className="mt-5 space-y-3">
             {entries.length > 0 ? (

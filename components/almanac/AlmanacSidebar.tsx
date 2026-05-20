@@ -25,12 +25,32 @@ interface SidebarProps {
 // Four doors. The fifth (Stelloquy) is the orb, not a tab.
 // Year/Self/Journal hrefs point at existing routes for now; Phases 2/3/4
 // flip these to /year, /self, /journal-new as those screens land.
-const NAV = [
+type SubNavItem = { label: string; href: string; hint: string }
+
+const NAV: ReadonlyArray<{
+  key: 'today' | 'year' | 'self' | 'journal'
+  label: string
+  hint: string
+  glyph: string
+  tone: string
+  href: string
+  subItems?: ReadonlyArray<SubNavItem>
+}> = [
   { key: 'today', label: 'Today', hint: 'sky now · daily focus', glyph: '☉', tone: K.copper, href: '/today' },
   { key: 'year', label: 'Year', hint: 'calendar · blueprint · arcs', glyph: '◐', tone: K.ember, href: '/year' },
   { key: 'self', label: 'Self', hint: 'natal · design · areas', glyph: '✺', tone: K.sage, href: '/human-design' },
-  { key: 'journal', label: 'Journal', hint: 'entries · tracker · memory', glyph: '✎', tone: K.brickHi, href: '/journal' },
-] as const
+  {
+    key: 'journal',
+    label: 'Journal',
+    hint: 'entries · tracker · memory',
+    glyph: '✎',
+    tone: K.brickHi,
+    href: '/journal',
+    subItems: [
+      { label: 'Insights', href: '/journal/insights', hint: 'patterns kiaros has noticed' },
+    ],
+  },
+]
 
 const SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
 
@@ -113,9 +133,12 @@ function NavRow({
           (n.key === 'journal' &&
             (pathname.startsWith('/journal') || pathname.startsWith('/tracker')))
 
+        const subItems = n.subItems ?? []
+        const showSubItems = isActive && !collapsed && subItems.length > 0
+
         return (
+          <div key={n.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <Link
-            key={n.key}
             href={n.href}
             onClick={onNavigate}
             title={collapsed ? n.label : undefined}
@@ -176,6 +199,61 @@ function NavRow({
               </div>
             ) : null}
           </Link>
+          {showSubItems ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                paddingLeft: 22,
+                borderLeft: `1px solid ${n.tone}44`,
+                marginLeft: 19,
+              }}
+            >
+              {subItems.map((sub) => {
+                const subActive = pathname === sub.href || pathname.startsWith(`${sub.href}/`)
+                return (
+                  <Link
+                    key={sub.href}
+                    href={sub.href}
+                    onClick={onNavigate}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1,
+                      padding: '6px 10px',
+                      borderRadius: 8,
+                      textDecoration: 'none',
+                      background: subActive ? `${n.tone}14` : 'transparent',
+                      transition: 'background 200ms ease',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: K.fBody,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: subActive ? K.ink : K.inkDim,
+                      }}
+                    >
+                      {sub.label}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: K.fMono,
+                        fontSize: 9,
+                        letterSpacing: '0.1em',
+                        color: K.inkSoft,
+                      }}
+                    >
+                      {sub.hint}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : null}
+          </div>
         )
       })}
     </div>
