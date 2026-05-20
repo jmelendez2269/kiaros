@@ -95,7 +95,7 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
           <div
             style={{
               fontFamily: K.fMono,
-              fontSize: 9,
+              fontSize: 10.5,
               letterSpacing: '0.24em',
               textTransform: 'uppercase',
               marginTop: 4,
@@ -178,7 +178,7 @@ function NavRow({
                 <div
                   style={{
                     fontFamily: K.fBody,
-                    fontSize: 14,
+                    fontSize: 15.5,
                     fontWeight: 500,
                     color: isActive ? K.ink : K.inkDim,
                   }}
@@ -188,7 +188,7 @@ function NavRow({
                 <div
                   style={{
                     fontFamily: K.fMono,
-                    fontSize: 9.5,
+                    fontSize: 11,
                     letterSpacing: '0.1em',
                     color: K.inkSoft,
                     marginTop: 2,
@@ -231,7 +231,7 @@ function NavRow({
                     <span
                       style={{
                         fontFamily: K.fBody,
-                        fontSize: 13,
+                        fontSize: 14.5,
                         fontWeight: 500,
                         color: subActive ? K.ink : K.inkDim,
                       }}
@@ -241,7 +241,7 @@ function NavRow({
                     <span
                       style={{
                         fontFamily: K.fMono,
-                        fontSize: 9,
+                        fontSize: 10.5,
                         letterSpacing: '0.1em',
                         color: K.inkSoft,
                       }}
@@ -273,7 +273,7 @@ function PinnedAreas({
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 10,
+          fontSize: 11.5,
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           color: K.inkSoft,
@@ -299,10 +299,10 @@ function PinnedAreas({
               color: K.inkDim,
             }}
           >
-            <span style={{ color: K.copper, fontSize: 12, width: 14, textAlign: 'center' }}>
+            <span style={{ color: K.copper, fontSize: 14, width: 16, textAlign: 'center' }}>
               {c.icon_key ?? '·'}
             </span>
-            <span style={{ fontFamily: K.fBody, fontSize: 12 }}>{c.name}</span>
+            <span style={{ fontFamily: K.fBody, fontSize: 13.5 }}>{c.name}</span>
           </Link>
         ))}
       </div>
@@ -365,7 +365,7 @@ function SidebarBody({
               background: 'transparent',
               color: K.inkDim,
               fontFamily: K.fMono,
-              fontSize: 10,
+              fontSize: 11,
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
               cursor: 'pointer',
@@ -404,7 +404,7 @@ function SidebarBody({
           />
           {!collapsed ? (
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+              <div style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
                 Your chart
               </div>
             </div>

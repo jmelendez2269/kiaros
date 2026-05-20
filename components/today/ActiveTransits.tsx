@@ -61,7 +61,7 @@ export function ActiveTransits({ data }: Props) {
             marginTop: 10,
             fontFamily: K.fSerif,
             fontStyle: 'italic',
-            fontSize: 15,
+            fontSize: 16.5,
             color: K.inkDim,
             lineHeight: 1.5,
           }}
@@ -82,7 +82,7 @@ export function ActiveTransits({ data }: Props) {
             marginTop: 10,
             fontFamily: K.fSerif,
             fontStyle: 'italic',
-            fontSize: 15,
+            fontSize: 16.5,
             color: K.inkDim,
             lineHeight: 1.5,
           }}
@@ -133,7 +133,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fSerif,
-          fontSize: 22,
+          fontSize: 24,
           color: tone,
           letterSpacing: '0.12em',
           whiteSpace: 'nowrap',
@@ -146,7 +146,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         <div
           style={{
             fontFamily: K.fBody,
-            fontSize: 13,
+            fontSize: 14.5,
             color: K.ink,
             lineHeight: 1.35,
           }}
@@ -155,9 +155,9 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         </div>
         <div
           style={{
-            marginTop: 2,
+            marginTop: 3,
             fontFamily: K.fMono,
-            fontSize: 9,
+            fontSize: 10.5,
             color: rarityColor,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
@@ -169,7 +169,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 10.5,
+          fontSize: 12,
           color: K.inkDim,
           whiteSpace: 'nowrap',
         }}
@@ -179,7 +179,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 8.5,
+          fontSize: 10,
           color: K.inkSoft,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',

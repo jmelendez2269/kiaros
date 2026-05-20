@@ -69,7 +69,7 @@ export function LineForToday({ streak = 0 }: Props) {
           <span
             style={{
               fontFamily: K.fMono,
-              fontSize: 9,
+              fontSize: 10.5,
               color: K.inkSoft,
               letterSpacing: '0.14em',
             }}
@@ -83,7 +83,7 @@ export function LineForToday({ streak = 0 }: Props) {
         style={{
           fontFamily: K.fSerif,
           fontStyle: 'italic',
-          fontSize: 19,
+          fontSize: 21,
           color: K.ink,
           marginTop: 8,
           lineHeight: 1.25,
@@ -106,7 +106,7 @@ export function LineForToday({ streak = 0 }: Props) {
           borderRadius: 10,
           padding: 14,
           fontFamily: K.fSerif,
-          fontSize: 14,
+          fontSize: 15.5,
           color: K.ink,
           fontStyle: 'italic',
           lineHeight: 1.6,
@@ -137,7 +137,7 @@ export function LineForToday({ streak = 0 }: Props) {
                 disabled={pending}
                 style={{
                   fontFamily: K.fMono,
-                  fontSize: 9.5,
+                  fontSize: 11,
                   color: active ? K.bg : K.copperHi,
                   background: active ? K.copperHi : 'transparent',
                   border: `1px solid ${K.copper}${active ? 'ff' : '55'}`,
@@ -160,7 +160,7 @@ export function LineForToday({ streak = 0 }: Props) {
             <span
               style={{
                 fontFamily: K.fMono,
-                fontSize: 9,
+                fontSize: 10.5,
                 color: K.sage,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
@@ -173,7 +173,7 @@ export function LineForToday({ streak = 0 }: Props) {
             href="/journal"
             style={{
               fontFamily: K.fMono,
-              fontSize: 9,
+              fontSize: 10.5,
               color: K.inkSoft,
               letterSpacing: '0.14em',
               textDecoration: 'none',
@@ -188,7 +188,7 @@ export function LineForToday({ streak = 0 }: Props) {
             disabled={pending || !draft.trim()}
             style={{
               fontFamily: K.fBody,
-              fontSize: 12,
+              fontSize: 13.5,
               color: K.bg,
               background: K.copperHi,
               border: 'none',
@@ -210,7 +210,7 @@ export function LineForToday({ streak = 0 }: Props) {
           style={{
             marginTop: 10,
             fontFamily: K.fBody,
-            fontSize: 12,
+            fontSize: 13.5,
             color: K.brickHi,
           }}
         >

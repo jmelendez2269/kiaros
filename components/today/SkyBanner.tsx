@@ -88,7 +88,7 @@ export function SkyBanner({ context, firstName }: Props) {
           <div
             style={{
               fontFamily: K.fMono,
-              fontSize: 10,
+              fontSize: 11.5,
               color: K.ink,
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
@@ -101,7 +101,7 @@ export function SkyBanner({ context, firstName }: Props) {
             style={{
               fontFamily: K.fSerif,
               fontStyle: 'italic',
-              fontSize: 38,
+              fontSize: 42,
               color: K.ink,
               lineHeight: 1.08,
               marginTop: 8,
@@ -113,7 +113,7 @@ export function SkyBanner({ context, firstName }: Props) {
           <div
             style={{
               fontFamily: K.fBody,
-              fontSize: 13.5,
+              fontSize: 15,
               color: K.inkDim,
               marginTop: 12,
               lineHeight: 1.55,
@@ -130,7 +130,7 @@ export function SkyBanner({ context, firstName }: Props) {
             gap: 6,
             alignItems: 'flex-end',
             fontFamily: K.fMono,
-            fontSize: 10,
+            fontSize: 11.5,
             color: K.inkDim,
             letterSpacing: '0.16em',
             flexShrink: 0,
