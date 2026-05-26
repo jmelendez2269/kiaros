@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -37,7 +37,18 @@ const NAV: ReadonlyArray<{
   subItems?: ReadonlyArray<SubNavItem>
 }> = [
   { key: 'today', label: 'Today', hint: 'sky now · daily focus', glyph: '☉', tone: K.copper, href: '/today' },
-  { key: 'year', label: 'Year', hint: 'calendar · blueprint · arcs', glyph: '◐', tone: K.ember, href: '/year' },
+  {
+    key: 'year',
+    label: 'Year',
+    hint: 'calendar · blueprint · arcs',
+    glyph: '◐',
+    tone: K.ember,
+    href: '/year',
+    subItems: [
+      { label: 'Month', href: '/year?view=month', hint: 'lunar month · intentions' },
+      { label: 'Week',  href: '/year?view=week',  hint: 'current week · curriculum' },
+    ],
+  },
   { key: 'self', label: 'Self', hint: 'natal · design · areas', glyph: '✺', tone: K.sage, href: '/human-design' },
   {
     key: 'journal',
@@ -51,6 +62,15 @@ const NAV: ReadonlyArray<{
     ],
   },
 ]
+
+// Sub-items can carry a `?view=…` query (Month and Week share the /year
+// route). Map each sub-href to its plain pathname and the optional `view`
+// it expects, so the active check can match both halves.
+function splitSubHref(href: string): { pathname: string; view: string | null } {
+  const [pathname, query = ''] = href.split('?')
+  const params = new URLSearchParams(query)
+  return { pathname, view: params.get('view') }
+}
 
 const SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
 
@@ -112,10 +132,12 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
 
 function NavRow({
   pathname,
+  currentView,
   collapsed,
   onNavigate,
 }: {
   pathname: string
+  currentView: string | null
   collapsed: boolean
   onNavigate?: () => void
 }) {
@@ -134,7 +156,10 @@ function NavRow({
             (pathname.startsWith('/journal') || pathname.startsWith('/tracker')))
 
         const subItems = n.subItems ?? []
-        const showSubItems = isActive && !collapsed && subItems.length > 0
+        // Sub-items used to hide until the parent was active. They now
+        // render whenever the sidebar is expanded, so jumps like Today →
+        // Month are one click instead of two.
+        const showSubItems = !collapsed && subItems.length > 0
 
         return (
           <div key={n.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -211,7 +236,17 @@ function NavRow({
               }}
             >
               {subItems.map((sub) => {
-                const subActive = pathname === sub.href || pathname.startsWith(`${sub.href}/`)
+                const subParts = splitSubHref(sub.href)
+                const pathMatches =
+                  pathname === subParts.pathname ||
+                  pathname.startsWith(`${subParts.pathname}/`)
+                // When the sub-item targets a ?view= variant we require the
+                // current view to match too; otherwise Year's children would
+                // all light up whenever Year is active.
+                const viewMatches = subParts.view
+                  ? currentView === subParts.view
+                  : currentView === null || subParts.pathname !== pathname
+                const subActive = pathMatches && viewMatches
                 return (
                   <Link
                     key={sub.href}
@@ -312,12 +347,14 @@ function PinnedAreas({
 
 function SidebarBody({
   pathname,
+  currentView,
   categories,
   collapsed,
   onToggleDesktop,
   onNavigate,
 }: {
   pathname: string
+  currentView: string | null
   categories: CategorySummary[]
   collapsed: boolean
   onToggleDesktop?: () => void
@@ -378,7 +415,12 @@ function SidebarBody({
 
         <div style={{ height: 1, background: K.line }} />
 
-        <NavRow pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+        <NavRow
+          pathname={pathname}
+          currentView={currentView}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
 
         <div style={{ flex: 1 }} />
 
@@ -417,6 +459,8 @@ function SidebarBody({
 
 export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess = false }: SidebarProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentView = searchParams.get('view')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
@@ -458,6 +502,7 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
       >
         <SidebarBody
           pathname={pathname}
+          currentView={currentView}
           categories={categories}
           collapsed={collapsed}
           onToggleDesktop={() => setCollapsed((c) => !c)}
@@ -523,6 +568,7 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
           >
             <SidebarBody
               pathname={pathname}
+              currentView={currentView}
               categories={categories}
               collapsed={false}
               onNavigate={() => setMobileOpen(false)}

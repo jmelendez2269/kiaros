@@ -138,9 +138,30 @@ export function OracleConversation({
             </div>
           </div>
         ) : (
-          messages.map((message) => (
-            <OracleMessage key={message.id} message={message} onCapture={handleCapture} />
-          ))
+          messages.map((message, index) => {
+            let precedingUserText: string | undefined
+            if (message.role === 'assistant') {
+              for (let i = index - 1; i >= 0; i--) {
+                if (messages[i].role === 'user') {
+                  const parts = (messages[i] as unknown as { parts?: Array<{ type: string; text?: string }> }).parts
+                  const fromParts = Array.isArray(parts)
+                    ? parts.filter((p) => p.type === 'text' && typeof p.text === 'string').map((p) => p.text as string).join('')
+                    : ''
+                  const fromContent = (messages[i] as unknown as { content?: unknown }).content
+                  precedingUserText = fromParts || (typeof fromContent === 'string' ? fromContent : '')
+                  break
+                }
+              }
+            }
+            return (
+              <OracleMessage
+                key={message.id}
+                message={message}
+                precedingUserText={precedingUserText}
+                onCapture={handleCapture}
+              />
+            )
+          })
         )}
 
         {isLoading && lastRole === 'user' && (

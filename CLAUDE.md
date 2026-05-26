@@ -32,7 +32,7 @@ Kiaros went live ~2026-05-01. The original phase plan is no longer the right map
 **Shipped (production):**
 - Next.js + Clerk + Supabase wired, RLS-aware clients (`lib/supabase/{client,server,admin}.ts`)
 - Clerk webhook (`app/api/webhooks/clerk/route.ts`); full onboarding flow
-- Schema through migration 0019 (`supabase/migrations/`); `types/database.ts` generated from live schema
+- Schema through migration 0020 (`supabase/migrations/`); `types/database.ts` generated from live schema
 - Ephemeris engine (`lib/ephemeris/`) and blueprint generator (`lib/ai/blueprint-generator.ts`) — AI SDK v6 via Vercel AI Gateway
 - **Cosmic Calendar** — year/month/week views
 - **Tracker** — dynamic per-category metrics, daily logs auto-stamped with lunar phase / sign / cycle phase, 90-day grid + 14-day per-category bars
@@ -45,14 +45,15 @@ Kiaros went live ~2026-05-01. The original phase plan is no longer the right map
 - **Public pages** — homepage, contact, policy pages, manifest, icons
 - **Journal Insights** — `/journal/insights` surfaces `user_pattern_insights` with an AI synthesis layer (Haiku 4.5) on top of the SQL summary fallback; per-user voice control (`user_settings`) with three presets + custom prompt; bulk regen via Next 15 `after()` with page polling. See [`docs/handoff-2026-05-19-journal-insight-voice.md`](./docs/handoff-2026-05-19-journal-insight-voice.md).
 - **Quarterly Reviews** — create/edit surface live; deltas vs prior quarter shown under each activity stat. See [`docs/handoff-2026-05-19-quarterly-reviews-polish.md`](./docs/handoff-2026-05-19-quarterly-reviews-polish.md).
+- **Areas detail pages** — `/areas/[slug]` is a real detail page (hero, current window, year narrative, chart anchors, upcoming windows) plus an itemised goals surface (`area_goals` table, migration 0020 applied to prod) via `AreaGoalsPanel`. See [`docs/handoff-2026-05-20-areas-goals.md`](./docs/handoff-2026-05-20-areas-goals.md).
+- **HD + Gene Keys in the blueprint** — `blueprint-generator.ts` computes/stores Human Design and feeds it to `blueprint-system-prompt.ts` (`humanDesignToText`, per-Type weekly framing). `/human-design` surfaces the chart. (HD is framed as a tool, not an authority — it should admit uncertainty.)
+- **Journal Insights entry points** — JournalComposer CTA promoted to a bordered panel; AlmanacSidebar has an indented Insights sub-entry under Journal.
 
 **Gaps (priority order):**
-- **Areas detail pages** — `/areas/[slug]` is a 404 stub (~3 days)
-- **JournalComposer CTA + sidebar entry** for `/journal/insights` — destination shipped but the inline link in the composer is a tertiary text link and the sidebar has no entry (small follow-ups; see journal-insight-voice handoff §5 MEDIUM #6–7)
 - **Quarterly Reviews UI polish backlog** — see latest QR handoff for residual items (Q2 ends 2026-06-30)
-- **Areas detail pages** — `/areas/[slug]` is a 404 stub (~3 days)
-- **Year Unwrapped** — not built; Recharts not yet installed (Q4 seasonal)
-- **HD + Gene Keys integration** — math layer validated under `lib/ephemeris/human-design/`; blueprint integration deferred (Phase 4.5 in `docs/architecture-v2.md` §8)
+- **Year Unwrapped** — not built; distinct from the `/year` Cosmic Calendar (which is shipped). It's the Q4 year-end recap: 8-section retrospective with Recharts (not yet installed) + AI year-end letter. See `docs/architecture-v2.md` Phase 7.
+- **Areas → Oracle / quarterly-review wiring** — `area_goals` exists as a standalone surface; not yet pulled into Oracle's system prompt or QR activity stats (handoff-2026-05-20 §5 MEDIUM #5–6).
+- **HD + Gene Keys deepening** — math layer validated under `lib/ephemeris/human-design/`; further Gene Keys / onboarding work is Phase 4.5 in `docs/architecture-v2.md` §8.
 
 ## Conventions
 
@@ -117,4 +118,4 @@ A feature is done when:
 
 ---
 
-**Last updated:** 2026-05-20 — Journal Insights + Quarterly Reviews moved to Shipped; schema bumped to 0019; current HIGH gap is Areas detail pages.
+**Last updated:** 2026-05-22 — Doc reconciliation: Areas detail pages + goals (migration 0020 confirmed applied to prod), HD-in-blueprint, and Journal Insights entry points moved to Shipped (they were stale "gaps"). Schema at 0020. Remaining real gaps: Year Unwrapped (Q4), Areas→Oracle wiring, HD deepening.

@@ -36,6 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_area_goals_category_sort
 
 ALTER TABLE area_goals ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "own_area_goals" ON area_goals;
 CREATE POLICY "own_area_goals" ON area_goals FOR ALL
   USING (user_id = (
     SELECT id FROM user_profiles
@@ -46,6 +47,7 @@ CREATE POLICY "own_area_goals" ON area_goals FOR ALL
     WHERE clerk_user_id = app_current_clerk_user_id()
   ));
 
+DROP TRIGGER IF EXISTS trg_area_goals_updated_at ON area_goals;
 CREATE TRIGGER trg_area_goals_updated_at
   BEFORE UPDATE ON area_goals
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();

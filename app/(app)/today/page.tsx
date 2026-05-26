@@ -10,6 +10,7 @@ import { WeekRibbon } from '@/components/today/WeekRibbon'
 import { SkyNow } from '@/components/today/SkyNow'
 import { LineForToday } from '@/components/today/LineForToday'
 import { ActiveTransits } from '@/components/today/ActiveTransits'
+import { SeasonRead } from '@/components/today/SeasonRead'
 import { TodayIntention } from '@/components/today/TodayIntention'
 import { TodayCurriculum } from '@/components/today/TodayCurriculum'
 import { getActiveTransits } from '@/lib/today/get-active-transits'
@@ -17,6 +18,10 @@ import { getJournalStreak } from '@/lib/today/get-journal-streak'
 import { getTodayIntention } from '@/lib/today/get-today-intention'
 import { getTodayCurriculum } from '@/lib/today/get-today-curriculum'
 import { getSkyNow } from '@/lib/today/get-sky-now'
+import { getSeason } from '@/lib/today/get-season'
+import { YearChartShell } from '@/components/year/YearChartShell'
+import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import type { YearEphemeris } from '@/types/blueprint'
 
 export default async function TodayPage() {
   const { userId } = await auth()
@@ -33,13 +38,27 @@ export default async function TodayPage() {
     moonPhase: context.today.moonPhase,
     moonSign: context.today.moon.sign,
   })
-  const [activeTransits, journalStreak, intention, curriculum, skyNow] = await Promise.all([
+  const [activeTransits, journalStreak, intention, curriculum, skyNow, season] = await Promise.all([
     getActiveTransits(context.today.date),
     getJournalStreak(context.today.date),
     getTodayIntention(context.today.date),
     getTodayCurriculum(context.today.date),
     getSkyNow(context.today.date),
+    getSeason(context.today.date),
   ])
+
+  // Year-at-a-glance grid (same data the Year tab uses): the current
+  // blueprint's weeks plus the cached year ephemeris.
+  const blueprintLoaded = await loadCurrentBlueprint()
+  let yearEphemeris: YearEphemeris | null = null
+  if (blueprintLoaded) {
+    const { data: ephemerisRow } = await supabase
+      .from('ephemeris_cache')
+      .select('data')
+      .eq('year', blueprintLoaded.planYear)
+      .maybeSingle()
+    yearEphemeris = (ephemerisRow?.data as YearEphemeris | null) ?? null
+  }
 
   return (
     <div
@@ -107,6 +126,17 @@ export default async function TodayPage() {
           </Frame>
         )}
       </div>
+
+      {blueprintLoaded && yearEphemeris ? (
+        <Frame tone="umber" padding={20}>
+          <Kicker color={K.copper}>The year at a glance</Kicker>
+          <div style={{ marginTop: 12 }}>
+            <YearChartShell yearEphemeris={yearEphemeris} weeks={blueprintLoaded.blueprint.weeks} />
+          </div>
+        </Frame>
+      ) : null}
+
+      {season.status === 'ok' ? <SeasonRead data={season} /> : null}
 
       <div
         style={{

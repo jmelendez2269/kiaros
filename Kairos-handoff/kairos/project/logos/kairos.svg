@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" font-family="&#39;Cinzel&#39;, serif">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="62%">
+      <stop offset="0%" stop-color="#1a0830"></stop>
+      <stop offset="60%" stop-color="#0a0014"></stop>
+      <stop offset="100%" stop-color="#040007"></stop>
+    </radialGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"></stop>
+      <stop offset="30%" stop-color="#d9b8ff"></stop>
+      <stop offset="100%" stop-color="#9966FF" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"></stop>
+      <stop offset="50%" stop-color="#c8a8ff"></stop>
+      <stop offset="100%" stop-color="#9966FF" stop-opacity="0"></stop>
+    </radialGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c8a8ff"></stop>
+      <stop offset="100%" stop-color="#7a3fe0"></stop>
+    </linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3"></feGaussianBlur>
+    </filter>
+    <filter id="bloom" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"></feGaussianBlur>
+    </filter>
+  </defs>
+
+  
+  <rect width="800" height="800" fill="url(#bg)"></rect>
+
+  
+  <g transform="translate(400 320)">
+
+    
+    <polygon points="0,-180 156,90 -156,90" fill="none" stroke="#9966FF" stroke-width="14" stroke-linejoin="round" filter="url(#bloom)" opacity="0.55"></polygon>
+    
+    <polygon points="0,-180 156,90 -156,90" fill="none" stroke="url(#edge)" stroke-width="4" stroke-linejoin="round"></polygon>
+    <polygon points="0,-180 156,90 -156,90" fill="none" stroke="#ffffff" stroke-width="1" stroke-linejoin="round" opacity="0.55"></polygon>
+
+    
+    <circle cx="0" cy="0" r="92" fill="none" stroke="#c8a8ff" stroke-width="1.2" opacity="0.55"></circle>
+    <circle cx="0" cy="0" r="74" fill="none" stroke="#d9b8ff" stroke-width="0.9" stroke-dasharray="0.5 3" opacity="0.85"></circle>
+    <circle cx="0" cy="0" r="56" fill="none" stroke="#c8a8ff" stroke-width="0.9" opacity="0.65"></circle>
+
+    
+    <g stroke="#a878ff" stroke-width="0.8" opacity="0.55" fill="none">
+      <line x1="-156" y1="90" x2="0" y2="90"></line>
+      <line x1="156" y1="90" x2="0" y2="90"></line>
+      <line x1="-92" y1="0" x2="92" y2="0"></line>
+      <line x1="-92" y1="0" x2="0" y2="90"></line>
+      <line x1="92" y1="0" x2="0" y2="90"></line>
+    </g>
+
+    
+    <circle cx="0" cy="0" r="28" fill="url(#coreGlow)" opacity="0.9"></circle>
+    <path d="M0,-10 L2.2,-2.2 L10,0 L2.2,2.2 L0,10 L-2.2,2.2 L-10,0 L-2.2,-2.2 Z" fill="#ffffff"></path>
+
+    
+    <g>
+      
+      <circle cx="0" cy="-180" r="22" fill="url(#nodeGlow)"></circle>
+      <circle cx="0" cy="-180" r="5" fill="#ffffff"></circle>
+      
+      <circle cx="-156" cy="90" r="20" fill="url(#nodeGlow)"></circle>
+      <circle cx="-156" cy="90" r="4.5" fill="#ffffff"></circle>
+      
+      <circle cx="156" cy="90" r="20" fill="url(#nodeGlow)"></circle>
+      <circle cx="156" cy="90" r="4.5" fill="#ffffff"></circle>
+      
+      <circle cx="-92" cy="0" r="14" fill="url(#nodeGlow)" opacity="0.8"></circle>
+      <circle cx="-92" cy="0" r="3.2" fill="#ffffff"></circle>
+      
+      <circle cx="92" cy="0" r="14" fill="url(#nodeGlow)" opacity="0.8"></circle>
+      <circle cx="92" cy="0" r="3.2" fill="#ffffff"></circle>
+      
+      <circle cx="0" cy="90" r="16" fill="url(#nodeGlow)" opacity="0.85"></circle>
+      <circle cx="0" cy="90" r="3.6" fill="#ffffff"></circle>
+    </g>
+
+    
+    <g stroke="#ffffff" stroke-linecap="round" opacity="0.85">
+      <line x1="0" y1="-208" x2="0" y2="-188" stroke-width="1.4"></line>
+      <line x1="0" y1="-172" x2="0" y2="-152" stroke-width="1.4"></line>
+      <line x1="-28" y1="-180" x2="-8" y2="-180" stroke-width="1.4"></line>
+      <line x1="8" y1="-180" x2="28" y2="-180" stroke-width="1.4"></line>
+    </g>
+  </g>
+
+  
+  <text x="400" y="595" text-anchor="middle" font-size="92" font-weight="500" letter-spacing="14" fill="#b894ff" style="font-family: &#39;Cinzel&#39;, &#39;Trajan Pro&#39;, Georgia, serif;">
+    KAIROS
+  </text>
+
+  <text x="400" y="660" text-anchor="middle" font-size="32" font-weight="500" letter-spacing="10" fill="#a87fee" style="font-family: &#39;Cinzel&#39;, &#39;Trajan Pro&#39;, Georgia, serif;">
+    PLANNER
+  </text>
+
+  
+  <g transform="translate(400 690)" stroke="#7a4fc8" fill="#9966FF" opacity="0.75">
+    <line x1="-90" y1="0" x2="-10" y2="0" stroke-width="0.8"></line>
+    <line x1="10" y1="0" x2="90" y2="0" stroke-width="0.8"></line>
+    <path d="M0,-4 L4,0 L0,4 L-4,0 Z" stroke="none"></path>
+  </g>
+
+  
+  <text x="400" y="735" text-anchor="middle" font-size="16" font-weight="400" letter-spacing="5" fill="#8a6cc4" style="font-family: &#39;Space Grotesk&#39;, sans-serif;">
+    PLAN WITH THE RHYTHM OF YOUR LIFE
+  </text>
+</svg>

@@ -17,6 +17,7 @@ export type AIFeature =
   | "quarterly_review"
   | "month_brief"
   | "journal_insight"
+  | "season_read"
 
 export interface UsageTotals {
   messageCount: number

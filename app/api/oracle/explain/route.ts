@@ -127,6 +127,7 @@ export async function POST(req: Request) {
         Tables<'goal_categories'>,
         'name' | 'description' | 'success' | 'sort_order'
       >[],
+      areaGoals: [],
       curriculumPlans: [],
       curriculumSessions: [],
       dailyLogs: [],

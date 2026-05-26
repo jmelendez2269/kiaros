@@ -105,12 +105,8 @@ export default async function AreaDetailPage({
     notFound()
   }
 
-  // Goals for this area. Lives on a separate table (migration 0020). The
-  // boundary cast is here because supabase gen types may not yet include
-  // area_goals; once regenerated, the cast becomes a no-op.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any
-  const goalsRes = await sb
+  // Goals for this area. Lives on a separate table (migration 0020).
+  const goalsRes = await supabase
     .from('area_goals')
     .select('id, title, description, status, target_label, linked_week_number, sort_order, created_at, updated_at')
     .eq('category_id', category.id)
