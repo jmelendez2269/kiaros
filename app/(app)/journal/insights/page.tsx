@@ -1,6 +1,12 @@
 import Link from 'next/link'
 import { createServerSupabase } from '@/lib/supabase/server'
 import type { Json, Tables } from '@/types/database'
+import { VoicePanel } from '@/components/journal/VoicePanel'
+import { InsightsPollingShell } from '@/components/journal/InsightsPollingShell'
+import {
+  DEFAULT_VOICE_KEY,
+  VOICE_PRESETS,
+} from '@/lib/ai/journal-insight-synthesis'
 
 type PatternRow = Pick<
   Tables<'user_pattern_insights'>,
@@ -14,6 +20,9 @@ type PatternRow = Pick<
   | 'summary'
   | 'evidence'
   | 'updated_at'
+  | 'ai_summary'
+  | 'ai_summary_voice_label'
+  | 'ai_synthesizing_at'
 >
 
 type EvidenceEntry = {
@@ -75,6 +84,11 @@ function formatRange(first: string | null, last: string | null): string {
   return `${first ?? '—'} → ${last ?? '—'}`
 }
 
+function truncate(text: string, max: number): string {
+  if (text.length <= max) return text
+  return text.slice(0, max).trimEnd() + '…'
+}
+
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100)
   return (
@@ -93,10 +107,18 @@ function ConfidenceBar({ value }: { value: number }) {
   )
 }
 
-function PatternCard({ pattern }: { pattern: PatternRow }) {
+function PatternCard({
+  pattern,
+  bodyByEntryId,
+}: {
+  pattern: PatternRow
+  bodyByEntryId: Map<string, string>
+}) {
   const evidence = parseEvidence(pattern.evidence)
   const label = patternLabel(pattern.pattern_type, pattern.pattern_key)
   const range = formatRange(pattern.first_seen, pattern.last_seen)
+  const inFlight = Boolean(pattern.ai_synthesizing_at)
+  const useAi = Boolean(pattern.ai_summary)
 
   return (
     <article className="shell-panel-soft flex h-full flex-col gap-4 rounded-[1.25rem] border border-border/70 bg-stone-950/60 px-5 py-5">
@@ -112,23 +134,49 @@ function PatternCard({ pattern }: { pattern: PatternRow }) {
 
       <ConfidenceBar value={pattern.confidence} />
 
-      <p className="text-sm leading-7 text-bone-muted">{pattern.summary}</p>
+      {useAi ? (
+        <div>
+          <p className="text-sm leading-7 text-bone">{pattern.ai_summary}</p>
+          {pattern.ai_summary_voice_label ? (
+            <p className="mt-2 text-xs uppercase tracking-[0.16em] text-bone-muted/55">
+              Voice · {pattern.ai_summary_voice_label}
+            </p>
+          ) : null}
+        </div>
+      ) : inFlight ? (
+        <p className="flex items-center gap-2 text-sm leading-7 text-bone-muted">
+          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-leather-300" />
+          Synthesising in your voice…
+        </p>
+      ) : (
+        <p className="text-sm leading-7 text-bone-muted">{pattern.summary}</p>
+      )}
 
       {evidence.length > 0 && (
         <div className="border-t border-border/60 pt-3">
-          <p className="text-xs uppercase tracking-[0.16em] text-bone-muted/55">Recent evidence</p>
-          <ul className="mt-2 space-y-1.5">
-            {evidence.map((entry) => (
-              <li key={entry.entry_id} className="text-sm text-bone-muted">
-                <Link
-                  href={`/journal?entry=${entry.entry_id}`}
-                  className="text-bone underline decoration-leather-400/40 underline-offset-4 transition-colors hover:decoration-leather-300"
-                >
-                  {entry.title?.trim() || 'Untitled entry'}
-                </Link>
-                <span className="ml-2 text-xs uppercase tracking-[0.16em] text-bone-muted/55">{entry.entry_date}</span>
-              </li>
-            ))}
+          <p className="text-xs uppercase tracking-[0.16em] text-bone-muted/55">Built from</p>
+          <ul className="mt-2 space-y-2.5">
+            {evidence.map((entry) => {
+              const body = bodyByEntryId.get(entry.entry_id)
+              return (
+                <li key={entry.entry_id} className="text-sm">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <Link
+                      href={`/journal?entry=${entry.entry_id}`}
+                      className="text-bone underline decoration-leather-400/40 underline-offset-4 transition-colors hover:decoration-leather-300"
+                    >
+                      {entry.title?.trim() || 'Untitled entry'}
+                    </Link>
+                    <span className="shrink-0 text-xs uppercase tracking-[0.16em] text-bone-muted/55">
+                      {entry.entry_date}
+                    </span>
+                  </div>
+                  {body ? (
+                    <p className="mt-1 text-xs leading-6 text-bone-muted/85">{truncate(body, 160)}</p>
+                  ) : null}
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}
@@ -141,19 +189,45 @@ const MIN_ENTRIES_FOR_INSIGHTS = 10
 export default async function JournalInsightsPage() {
   const supabase = await createServerSupabase()
 
-  const [patternsRes, entryCountRes] = await Promise.all([
+  const [patternsRes, entryCountRes, settingsRes] = await Promise.all([
     supabase
       .from('user_pattern_insights')
       .select(
-        'id, pattern_type, pattern_key, sample_size, confidence, first_seen, last_seen, summary, evidence, updated_at',
+        'id, pattern_type, pattern_key, sample_size, confidence, first_seen, last_seen, summary, evidence, updated_at, ai_summary, ai_summary_voice_label, ai_synthesizing_at',
       )
       .order('sample_size', { ascending: false })
       .order('last_seen', { ascending: false }),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('user_settings')
+      .select('journal_insight_voice, journal_insight_voice_label')
+      .maybeSingle(),
   ])
 
   const patterns = (patternsRes.data ?? []) as PatternRow[]
+  const settingsRow = settingsRes.data
   const journalEntriesCount = entryCountRes.error ? 0 : entryCountRes.count ?? 0
+
+  // Pull the body for every entry mentioned in any pattern's evidence.
+  // Lets us show a 1-line excerpt under each entry link so users can see
+  // what the AI synthesis was reading from.
+  const evidenceEntryIds = Array.from(
+    new Set(
+      patterns.flatMap((p) => parseEvidence(p.evidence).map((e) => e.entry_id)),
+    ),
+  )
+  const bodyByEntryId = new Map<string, string>()
+  if (evidenceEntryIds.length > 0) {
+    const { data: entryBodies } = await supabase
+      .from('journal_entries')
+      .select('id, body')
+      .in('id', evidenceEntryIds)
+    for (const row of entryBodies ?? []) {
+      const id = row.id as unknown as string | null
+      const body = (row.body as unknown as string | null) ?? null
+      if (id && body) bodyByEntryId.set(id, body)
+    }
+  }
 
   const grouped = TYPE_ORDER.map((type) => ({
     type,
@@ -163,8 +237,18 @@ export default async function JournalInsightsPage() {
   const showEarlyState = journalEntriesCount < MIN_ENTRIES_FOR_INSIGHTS && patterns.length === 0
   const showQuietState = !showEarlyState && patterns.length === 0
 
+  const inFlightCount = patterns.filter((p) => Boolean(p.ai_synthesizing_at)).length
+
+  const savedVoiceLabel = settingsRow?.journal_insight_voice_label ?? null
+  const savedVoicePrompt = settingsRow?.journal_insight_voice ?? null
+  // If a custom prompt is saved, it won't match any preset's prompt verbatim.
+  const isCustomVoice =
+    Boolean(savedVoicePrompt) &&
+    !Object.values(VOICE_PRESETS).some((p) => p.prompt === savedVoicePrompt)
+  const initialCustomPrompt = isCustomVoice && savedVoicePrompt ? savedVoicePrompt : ''
+
   return (
-    <div className="space-y-8">
+    <InsightsPollingShell initialInFlight={inFlightCount}>
       <section className="shell-panel px-6 py-7 md:px-8">
         <p className="shell-kicker mb-3">Journal intelligence</p>
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -190,6 +274,13 @@ export default async function JournalInsightsPage() {
           </Link>
         </div>
       </section>
+
+      <VoicePanel
+        initialVoiceLabel={savedVoiceLabel ?? VOICE_PRESETS[DEFAULT_VOICE_KEY].label}
+        initialVoicePromptIsCustom={isCustomVoice}
+        initialCustomPrompt={initialCustomPrompt}
+        hasAnyPatterns={patterns.length > 0}
+      />
 
       {showEarlyState && (
         <section className="shell-panel px-6 py-10 text-center md:px-8">
@@ -229,12 +320,12 @@ export default async function JournalInsightsPage() {
             </header>
             <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {rows.map((pattern) => (
-                <PatternCard key={pattern.id} pattern={pattern} />
+                <PatternCard key={pattern.id} pattern={pattern} bodyByEntryId={bodyByEntryId} />
               ))}
             </div>
           </section>
         )
       })}
-    </div>
+    </InsightsPollingShell>
   )
 }

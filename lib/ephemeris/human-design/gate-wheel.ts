@@ -23,9 +23,11 @@ const COLOR_WIDTH_DEG = LINE_WIDTH_DEG / 6       // 0.15625
 const TONE_WIDTH_DEG = COLOR_WIDTH_DEG / 6       // ~0.026
 const BASE_WIDTH_DEG = TONE_WIDTH_DEG / 5        // ~0.0052
 
-// Calibrated against MyBodyGraph using Ra Uru Hu's chart: matches Sun, Earth,
-// Mercury, Venus D, and Uranus when set to 302.25° (15 arc-min later than the
-// often-cited "exactly 2° Aquarius" value). Slow planets agree at either anchor.
+// Calibrated against MyBodyGraph using Ra Uru Hu's chart with the canonical
+// Rave Mandala order (see GATE_SEQUENCE below): matches Sun, Earth, Moon, NN,
+// SN, Mercury, Venus, Mars, Jupiter, Saturn, Neptune, and most line numbers at
+// 302.25° (15 arc-min later than the often-cited "exactly 2° Aquarius" value).
+// Sub-line precision drift in a few slow planets remains and is not chased.
 const GATE_41_START_LONGITUDE = 302.25
 
 /**
@@ -42,9 +44,9 @@ export const GATE_SEQUENCE: readonly number[] = [
   // Aries      (5): idx 11–15
   17, 21, 51, 42, 3,
   // Taurus     (5): idx 16–20
-  27, 24, 23, 8, 20,
+  27, 24, 2, 23, 8,
   // Gemini     (6): idx 21–26
-  16, 35, 45, 12, 15, 2,
+  20, 16, 35, 45, 12, 15,
   // Cancer     (5): idx 27–31
   52, 39, 53, 62, 56,
   // Leo        (5): idx 32–36
@@ -71,6 +73,16 @@ export interface GateActivation {
   color: number     // 1-6
   tone: number      // 1-6
   base: number      // 1-5
+  boundaryDistance: number  // degrees to nearest gate boundary
+}
+
+// Documented VSOP87B vs JPL DE431 longitude drift at our era is ≤0.17°.
+// Activations within this distance of a gate boundary may disagree with
+// MyBodyGraph at the gate level; surface to the user for cross-check.
+export const GATE_BOUNDARY_PROXIMITY_THRESHOLD = 0.2
+
+export function isNearGateBoundary(activation: GateActivation): boolean {
+  return activation.boundaryDistance < GATE_BOUNDARY_PROXIMITY_THRESHOLD
 }
 
 /** Normalize to [0, 360). */
@@ -103,7 +115,9 @@ export function longitudeToActivation(longitude: number): GateActivation {
   const withinTone = withinColor - (tone - 1) * TONE_WIDTH_DEG
   const base = Math.min(5, Math.floor(withinTone / BASE_WIDTH_DEG) + 1)
 
-  return { gate, line, color, tone, base }
+  const boundaryDistance = Math.min(withinGate, GATE_WIDTH_DEG - withinGate)
+
+  return { gate, line, color, tone, base, boundaryDistance }
 }
 
 /**

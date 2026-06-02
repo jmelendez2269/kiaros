@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { BookOpen, Brain, CalendarDays, ChevronLeft, ChevronRight, FileText, LockKeyhole, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
+import { BookOpen, Brain, CalendarDays, CalendarRange, ChevronLeft, ChevronRight, FileText, Globe2, Hexagon, LockKeyhole, Menu, MessageSquare, Orbit, Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { slugifyAreaName } from '@/lib/areas'
 import { cn } from '@/lib/utils'
@@ -29,10 +29,36 @@ const NAV_LINKS = [
     },
   },
   {
-    href: '/calendar',
-    label: 'Cosmic Plan',
-    detailLead: 'Your year',
-    detailTrail: 'map',
+    href: '/year',
+    label: 'Year',
+    detailLead: 'Twelve months',
+    detailTrail: 'in view',
+    icon: Globe2,
+    tone: {
+      active: 'border-plum-400/60 bg-plum-400/18 text-bone shadow-glow',
+      accent: 'bg-plum-300',
+      icon: 'border-plum-300/30 bg-plum-400/12 text-plum-300',
+      detail: 'text-plum-300',
+    },
+  },
+  {
+    href: '/year?view=month',
+    label: 'Month',
+    detailLead: 'Lunar',
+    detailTrail: 'month',
+    icon: CalendarRange,
+    tone: {
+      active: 'border-plum-400/60 bg-plum-400/18 text-bone shadow-glow',
+      accent: 'bg-plum-300',
+      icon: 'border-plum-300/30 bg-plum-400/12 text-plum-300',
+      detail: 'text-plum-300',
+    },
+  },
+  {
+    href: '/year?view=week',
+    label: 'Week',
+    detailLead: 'Current',
+    detailTrail: 'week',
     icon: CalendarDays,
     tone: {
       active: 'border-plum-400/60 bg-plum-400/18 text-bone shadow-glow',
@@ -68,6 +94,19 @@ const NAV_LINKS = [
     },
   },
   {
+    href: '/human-design',
+    label: 'Human Design',
+    detailLead: 'Type & strategy',
+    detailTrail: 'chart',
+    icon: Hexagon,
+    tone: {
+      active: 'border-moss-400/60 bg-moss-500/18 text-bone shadow-glow',
+      accent: 'bg-moss-300',
+      icon: 'border-moss-300/30 bg-moss-500/12 text-moss-200',
+      detail: 'text-moss-200',
+    },
+  },
+  {
     href: '/curriculum',
     label: 'Curriculum',
     detailLead: 'AI study',
@@ -95,9 +134,9 @@ const NAV_LINKS = [
   },
   {
     href: '/oracle',
-    label: 'Oracle',
-    detailLead: 'Guidance',
-    detailTrail: 'channel',
+    label: 'Stelloquy',
+    detailLead: 'Conversation',
+    detailTrail: 'with the stars',
     icon: MessageSquare,
     tone: {
       active: 'border-leather-400/60 bg-leather-500/18 text-bone shadow-glow',
@@ -117,6 +156,7 @@ interface SidebarProps {
 
 function NavigationContent({
   pathname,
+  currentView,
   categories,
   isCollapsed,
   onNavigate,
@@ -124,6 +164,7 @@ function NavigationContent({
   hasOracleAccess = false,
 }: {
   pathname: string
+  currentView: string | null
   categories: CategorySummary[]
   isCollapsed: boolean
   onNavigate?: () => void
@@ -133,6 +174,9 @@ function NavigationContent({
   const isLinkActive = (href: string) => {
     if (href === '/areas') return pathname === href || pathname.startsWith('/areas/')
     if (href === '/journal') return pathname === href || pathname.startsWith('/journal/')
+    if (href === '/year') return pathname === '/year' && (currentView === null || currentView === 'year')
+    if (href === '/year?view=month') return pathname === '/year' && currentView === 'month'
+    if (href === '/year?view=week') return pathname === '/year' && currentView === 'week'
     return pathname === href
   }
 
@@ -185,7 +229,7 @@ function NavigationContent({
                 key={href}
                 href={linkHref}
                 onClick={onNavigate}
-                title={isCollapsed ? (isOracleLocked ? 'Upgrade Oracle' : label) : undefined}
+                title={isCollapsed ? (isOracleLocked ? 'Upgrade Stelloquy' : label) : undefined}
                 className={cn(
                   'group flex rounded-[1rem] border transition-all duration-200',
                   isCollapsed ? 'justify-center px-2 py-2.5' : 'items-center gap-2.5 px-2.5 py-2.5',
@@ -279,6 +323,8 @@ function NavigationContent({
 
 export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentView = searchParams.get('view')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
 
@@ -325,6 +371,7 @@ export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
       >
         <NavigationContent
           pathname={pathname}
+          currentView={currentView}
           categories={categories}
           isCollapsed={desktopCollapsed}
           hasOracleAccess={hasOracleAccess}
@@ -364,7 +411,7 @@ export function Sidebar({ categories, hasOracleAccess = false }: SidebarProps) {
             className="flex h-full w-[min(22rem,88vw)] flex-col overflow-y-auto border-r border-border/80 bg-stone-900/96 pb-[env(safe-area-inset-bottom)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <NavigationContent pathname={pathname} categories={categories} isCollapsed={false} hasOracleAccess={hasOracleAccess} onNavigate={() => setMobileOpen(false)} />
+            <NavigationContent pathname={pathname} currentView={currentView} categories={categories} isCollapsed={false} hasOracleAccess={hasOracleAccess} onNavigate={() => setMobileOpen(false)} />
           </div>
         </div>
       )}

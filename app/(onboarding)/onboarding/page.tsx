@@ -47,6 +47,7 @@ export default function OnboardingBirthPage() {
   const [selected, setSelected] = useState<NominatimResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
@@ -145,7 +146,7 @@ export default function OnboardingBirthPage() {
     if (values.birth_time_unknown) values.birth_time = undefined;
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(values));
 
-    await fetch("/api/profile", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -159,6 +160,11 @@ export default function OnboardingBirthPage() {
         birth_tz: values.birth_tz || null,
       }),
     });
+
+    if (!res.ok) {
+      setSaveError("Something went wrong saving your details. Please try again.");
+      return;
+    }
 
     router.push("/onboarding/goals");
   };
@@ -178,7 +184,7 @@ export default function OnboardingBirthPage() {
         </p>
         <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
           <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
-          Builds your Oracle&apos;s permanent chart foundation
+          Builds Stelloquy&apos;s permanent chart foundation
         </div>
       </div>
 
@@ -303,6 +309,7 @@ export default function OnboardingBirthPage() {
           {errors.birth_city && <p className="text-xs text-destructive">{errors.birth_city.message}</p>}
         </div>
 
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <button
           type="submit"
           disabled={isSubmitting || !birthCity}

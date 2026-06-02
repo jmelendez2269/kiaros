@@ -25,6 +25,7 @@ import {
   nutation,
   elliptic,
   planetposition,
+  pluto as plutoModule,
   coord,
 } from 'astronomia'
 
@@ -48,7 +49,6 @@ const vsop87Bneptune = require('astronomia/data/vsop87Bneptune').default
 
 import type { NatalChart, PlanetPosition, ZodiacSign, LunarPhase, MoonPhaseEvent, MoonPhase } from '@/types/blueprint'
 import { ZODIAC_SIGNS } from '@/types/blueprint'
-import { getPlutoLongitude } from './pluto-table'
 
 // ─── Planet instances (created once, reused) ──────────────────────────────
 
@@ -198,6 +198,19 @@ function planetGeocentricLon(planet: unknown, jde: number): number {
   return normalizeDeg(eclCoord.lon * DEG)
 }
 
+// Pluto: not in VSOP87. astronomia ships Meeus ch.37's analytical series,
+// valid 1885–2099, ~0.07° longitude accuracy — same regime as the truncated
+// VSOP87B series we use for the other outers.
+export function getPlutoLongitude(jde: number): number {
+  const eps = getObliquity(jde)
+  const { ra, dec } = (plutoModule as any).astrometric(jde, earthPlanet) as {
+    ra: number
+    dec: number
+  }
+  const eclCoord = new (coord as any).Equatorial(ra, dec).toEcliptic(eps)
+  return normalizeDeg(eclCoord.lon * DEG)
+}
+
 // ─── All planet longitudes ────────────────────────────────────────────────
 
 export interface DailyPlanetLongitudes {
@@ -213,7 +226,7 @@ export interface DailyPlanetLongitudes {
   pluto: number
 }
 
-export function getDailyLongitudes(jde: number, birthDateStr: string): DailyPlanetLongitudes {
+export function getDailyLongitudes(jde: number): DailyPlanetLongitudes {
   const sunLon = getSunLongitude(jde)
   return {
     sun: sunLon,
@@ -225,20 +238,15 @@ export function getDailyLongitudes(jde: number, birthDateStr: string): DailyPlan
     saturn: planetGeocentricLon(saturnPlanet, jde),
     uranus: planetGeocentricLon(uranusPlanet, jde),
     neptune: planetGeocentricLon(neptunePlanet, jde),
-    // Pluto: approximated from birth-year table (no VSOP87 data)
-    // For transit year, use the year-specific value instead
-    pluto: getPlutoLongitude(birthDateStr),
+    pluto: getPlutoLongitude(jde),
   }
 }
 
 /** Get daily longitudes for a specific calendar date (noon UTC) */
-export function getDailyLongitudesForDate(
-  dateStr: string,
-  birthDateStr: string
-): DailyPlanetLongitudes {
+export function getDailyLongitudesForDate(dateStr: string): DailyPlanetLongitudes {
   const utcNoon = new Date(`${dateStr}T12:00:00Z`)
   const jde = msToJDE(utcNoon.getTime())
-  return getDailyLongitudes(jde, birthDateStr)
+  return getDailyLongitudes(jde)
 }
 
 // ─── Retrograde detection ─────────────────────────────────────────────────
@@ -300,7 +308,7 @@ export function computeNatalChart(birth: BirthData): NatalChart {
   const saturnLon = planetGeocentricLon(saturnPlanet, birthJDE)
   const uranusLon = planetGeocentricLon(uranusPlanet, birthJDE)
   const neptuneLon = planetGeocentricLon(neptunePlanet, birthJDE)
-  const plutoLon = getPlutoLongitude(birth.date)
+  const plutoLon = getPlutoLongitude(birthJDE)
 
   // Ascendant (Whole Sign houses)
   let rising: ZodiacSign

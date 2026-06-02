@@ -5,6 +5,21 @@ import { MoonPhaseIcon } from '@/components/shared/MoonPhaseIcon'
 import { slugifyAreaName } from '@/lib/areas'
 import type { BlueprintOutput, EphemerisDay, MonthBlueprint, NatalChart, WeekBlueprint, YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
+import {
+  buildDailySignals,
+  buildPlainDailySummary,
+  buildSkyTimeline,
+  parseStoredHumanDesign,
+  type DailySignal,
+  type SkyTimelineEntry,
+  type TransitRarity,
+} from '@/lib/human-design'
+import { getDailyLongitudesForDate } from '@/lib/ephemeris'
+import { SkyPortrait, type SkyPortraitAspect } from '@/components/dashboard/SkyPortrait'
+import type { Planet } from '@/types/blueprint'
+import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { AskOracleButton } from '@/components/oracle/AskOracleButton'
+import { buildSignalPrompt, buildTransitPrompt } from '@/lib/oracle/preseed'
 
 type GoalCategorySummary = {
   id: string
@@ -30,8 +45,21 @@ type DailyInsightEvidence = {
   detail: string
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
+const APP_TIME_ZONE = 'America/New_York'
+
+function todayISO(timeZone = APP_TIME_ZONE): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+
+  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10)
 }
 
 function findCurrentWeek(weeks: WeekBlueprint[], today: string): WeekBlueprint | null {
@@ -543,7 +571,7 @@ interface DashboardOverviewProps {
 export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
   const supabase = await createServerSupabase()
   const today = todayISO()
-  const currentYear = new Date().getFullYear()
+  const currentYear = Number.parseInt(today.slice(0, 4), 10)
 
   const [
     profileRes,
@@ -558,7 +586,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
     await Promise.all([
       supabase
         .from('user_profiles')
-        .select('display_name, birth_date, plan_year, word_of_year, year_vision, what_to_release, study_focus, natal_chart')
+        .select('id, display_name, birth_date, plan_year, word_of_year, year_vision, what_to_release, study_focus, natal_chart, human_design')
         .maybeSingle(),
       supabase
         .from('blueprints')
@@ -584,12 +612,19 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
     ])
 
   const profile = profileRes.data
+  const { data: entitlements } = profile?.id
+    ? await supabase
+        .from('product_entitlements')
+        .select('id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan')
+        .eq('user_id', profile.id)
+        .neq('status', 'revoked')
+    : { data: [] }
+  const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[])
+  const hasOracleAccess = access.hasOracleAccess
   const categories = (categoriesRes.data ?? []) as GoalCategorySummary[]
   const blueprintRow = blueprintRes.data
   const oracleMemoryCount = oracleMemoryRes.error ? 0 : (oracleMemoryRes.count ?? 0)
   const journalEntriesCount = journalEntriesRes.error ? 0 : (journalEntriesRes.count ?? 0)
-  const _natalChart = (profile?.natal_chart as NatalChart | null) ?? null
-  void _natalChart
   const yearEphemeris = (ephemerisRes.data?.data as YearEphemeris | null) ?? null
   const weeks = (blueprintRow?.weeks as unknown as WeekBlueprint[]) ?? []
   const months = (blueprintRow?.months as unknown as MonthBlueprint[]) ?? []
@@ -630,8 +665,60 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
     )
   }
 
+  const humanDesign = parseStoredHumanDesign(profile?.human_design)
   const currentWeek = findCurrentWeek(weeks, today)
   const todayEphemeris = yearEphemeris ? findTodayEphemeris(yearEphemeris, today) : null
+  const plainSummary = todayEphemeris ? buildPlainDailySummary(todayEphemeris) : null
+  const dailySignals: DailySignal[] = todayEphemeris && yearEphemeris
+    ? buildDailySignals(humanDesign, todayEphemeris, yearEphemeris.moonPhases)
+    : []
+  const skyTimeline: SkyTimelineEntry[] = yearEphemeris ? buildSkyTimeline(yearEphemeris, today) : []
+
+  // Sky portrait data — today's transit positions + the user's natal chart
+  // longitudes + the day's active aspects (orb ≤ 3°, all 10 planets).
+  const natalChart = (profile?.natal_chart as NatalChart | null) ?? null
+  const skyPortrait = todayEphemeris && natalChart
+    ? (() => {
+        const transit = getDailyLongitudesForDate(today)
+        const natal = {
+          sun: natalChart.sun.longitude,
+          moon: natalChart.moon.longitude,
+          mercury: natalChart.mercury.longitude,
+          venus: natalChart.venus.longitude,
+          mars: natalChart.mars.longitude,
+          jupiter: natalChart.jupiter.longitude,
+          saturn: natalChart.saturn.longitude,
+          uranus: natalChart.uranus.longitude,
+          neptune: natalChart.neptune.longitude,
+          pluto: natalChart.pluto.longitude,
+        }
+        const houses = {
+          sun: natalChart.sun.house,
+          moon: natalChart.moon.house,
+          mercury: natalChart.mercury.house,
+          venus: natalChart.venus.house,
+          mars: natalChart.mars.house,
+          jupiter: natalChart.jupiter.house,
+          saturn: natalChart.saturn.house,
+          uranus: natalChart.uranus.house,
+          neptune: natalChart.neptune.house,
+          pluto: natalChart.pluto.house,
+        }
+        const retrogradePlanets: Planet[] = []
+        // todayEphemeris.retrogrades is Planet[] of currently-retrograde planets
+        for (const p of todayEphemeris.retrogrades) retrogradePlanets.push(p)
+        const aspects: SkyPortraitAspect[] = todayEphemeris.transits
+          .filter((t) => t.orb <= 3)
+          .map((t) => ({
+            planet: t.planet,
+            natalPlanet: t.natalPlanet,
+            aspect: t.aspect,
+            orb: t.orb,
+            applying: t.applying,
+          }))
+        return { transit, natal, houses, retrogradePlanets, aspects }
+      })()
+    : null
   const currentMonth =
     months.find((month) => month.month === Number.parseInt(today.slice(5, 7), 10)) ?? monthForWeek(months, currentWeek)
   const currentQuarter = quarterForDate(quarters, today)
@@ -734,7 +821,7 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
       id: 'oracle',
       href: '/oracle',
       icon: MessageSquare,
-      title: 'Oracle',
+      title: 'Stelloquy',
       kicker: `${oracleMemoryCount} ${oracleMemoryCount === 1 ? 'memory' : 'memories'}`,
       preview: oracleSuggestion,
       tint: 'border-ember-400/25 bg-ember-400/8',
@@ -770,50 +857,50 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
           ) : null}
         </div>
 
-        <div className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-start">
-          <div>
-            <p className="shell-kicker">{dailyInsight.label}</p>
-            <h1 className="mt-2 font-serif text-[2rem] leading-tight text-bone md:text-[2.5rem]">
-              {dailyInsight.title}
-            </h1>
-            <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-bone-muted">
+        <div className="mt-5">
+          <p className="shell-kicker">Today, in plain English</p>
+          <p className="mt-2 max-w-4xl font-serif text-[1.4rem] leading-snug text-bone md:text-[1.6rem]">
+            {plainSummary ?? dailyInsight.title}
+          </p>
+          {!plainSummary ? (
+            <p className="mt-4 max-w-4xl text-[0.98rem] leading-7 text-bone-muted">
               {dailyInsight.description}
             </p>
+          ) : null}
+        </div>
 
-            {dailyInsight.evidence.length > 0 ? (
-              <details className="mt-4 max-w-2xl rounded-[0.9rem] border border-border/65 bg-stone-950/45 px-4 py-3 text-sm text-bone-muted">
-                <summary className="cursor-pointer list-none font-medium text-bone-muted transition-colors hover:text-bone">
-                  Why this today?
-                </summary>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {dailyInsight.evidence.map((item) => (
-                    <div key={item.label} className="rounded-[0.75rem] border border-border/55 bg-stone-950/55 px-3 py-3">
-                      <p className="shell-eyebrow text-bone-muted/65">{item.label}</p>
-                      <p className="mt-1 text-sm font-semibold text-bone">{item.value}</p>
-                      <p className="mt-1 text-xs leading-5 text-bone-muted/80">{item.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </details>
-            ) : null}
-
-            {transitChips.length > 0 ? (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {transitChips.map((chip) => (
-                  <span
-                    key={chip.label}
-                    className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-stone-950/60 px-3 py-1.5 text-xs text-bone"
+        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-stretch">
+          {dailySignals.length > 0 ? (
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {dailySignals.map((signal) => {
+                const askable = signal.key === 'moon' || signal.key === 'transit' || signal.key === 'design'
+                return (
+                  <div
+                    key={signal.key}
+                    className="flex flex-col rounded-[0.9rem] border border-border/65 bg-stone-950/45 px-4 py-3"
                   >
-                    <span className={`h-1.5 w-1.5 rounded-full ${chip.applying ? 'bg-leather-300' : 'bg-bone-muted/60'}`} />
-                    <span className="font-medium">{chip.label}</span>
-                    <span className="text-bone-muted/70">{chip.orb}</span>
-                  </span>
-                ))}
-              </div>
-            ) : null}
-          </div>
+                    <p className="shell-eyebrow text-bone-muted/65">{signal.label}</p>
+                    <p className="mt-1 font-mono text-[0.78rem] leading-5 text-bone-muted/85">
+                      {signal.technical}
+                    </p>
+                    <p className="mt-1.5 text-sm leading-5 text-bone">{signal.plain}</p>
+                    {askable ? (
+                      <AskOracleButton
+                        prompt={buildSignalPrompt(signal)}
+                        hasOracleAccess={hasOracleAccess}
+                        label="why this matters today"
+                        size="chip"
+                      />
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div />
+          )}
 
-          <div className="rounded-[1.15rem] border border-border/70 bg-stone-950/55 px-5 py-5">
+          <div className="flex flex-col rounded-[1.15rem] border border-border/70 bg-stone-950/55 px-5 py-5">
             <div className="flex items-start gap-4">
               {todayEphemeris ? (
                 <MoonPhaseIcon phase={todayEphemeris.moon.lunarPhase} size={64} />
@@ -842,33 +929,44 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
                 <span className="font-semibold text-bone-muted">Sabian symbol</span> · {sabianMoonSymbol.symbol}
               </p>
             ) : null}
+            {nextMoonPreview ? (
+              <p className="mt-auto border-t border-border/60 pt-3 text-xs leading-5 text-bone-muted/80">
+                <span className="font-semibold text-bone-muted">Next phase</span> · {nextMoonPreview.label} {nextMoonPreview.when}
+              </p>
+            ) : null}
           </div>
         </div>
 
-        {temporalThemes.length > 0 ? (
-          <div className="mt-6 border-t border-border/60 pt-5">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="shell-eyebrow text-bone-muted/70">Longer arcs</p>
-              <Link
-                href="/blueprint"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-bone-muted hover:text-bone"
+        {transitChips.length > 0 ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {transitChips.map((chip) => (
+              <span
+                key={chip.label}
+                className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-stone-950/60 px-3 py-1.5 text-xs text-bone"
               >
-                View full blueprint
-                <ArrowUpRight size={12} />
-              </Link>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {temporalThemes.map((theme) => (
-                <div key={theme.label} className="rounded-[0.9rem] border border-border/60 bg-stone-950/35 px-4 py-3">
-                  <p className="shell-eyebrow text-bone-muted/65">{theme.label}</p>
-                  <p className="mt-1 text-sm font-semibold leading-5 text-bone">{theme.value}</p>
-                  {theme.detail ? (
-                    <p className="mt-2 text-xs leading-5 text-bone-muted/75">{theme.detail}</p>
-                  ) : null}
+                <span className={`h-1.5 w-1.5 rounded-full ${chip.applying ? 'bg-leather-300' : 'bg-bone-muted/60'}`} />
+                <span className="font-medium">{chip.label}</span>
+                <span className="text-bone-muted/70">{chip.orb}</span>
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {dailyInsight.evidence.length > 0 ? (
+          <details className="mt-4 max-w-4xl rounded-[0.9rem] border border-border/65 bg-stone-950/45 px-4 py-3 text-sm text-bone-muted">
+            <summary className="cursor-pointer list-none font-medium text-bone-muted transition-colors hover:text-bone">
+              Why this today?
+            </summary>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {dailyInsight.evidence.map((item) => (
+                <div key={item.label} className="rounded-[0.75rem] border border-border/55 bg-stone-950/55 px-3 py-3">
+                  <p className="shell-eyebrow text-bone-muted/65">{item.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-bone">{item.value}</p>
+                  <p className="mt-1 text-xs leading-5 text-bone-muted/80">{item.detail}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </details>
         ) : null}
 
         {/* Week ribbon */}
@@ -903,6 +1001,28 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
         </div>
       </section>
 
+      {/* SKY TIMELINE — active + upcoming with rarity context */}
+      {skyTimeline.length > 0 ? (
+        <SkyTimelineSection entries={skyTimeline} hasOracleAccess={hasOracleAccess} />
+      ) : null}
+
+      {/* SKY PORTRAIT — circular chart, today's sky over your birth chart */}
+      {skyPortrait ? (
+        <SkyPortrait
+          date={new Date(`${today}T12:00:00`).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+          transitLongitudes={skyPortrait.transit}
+          natalLongitudes={skyPortrait.natal}
+          natalHouses={skyPortrait.houses}
+          retrogradePlanets={skyPortrait.retrogradePlanets}
+          aspects={skyPortrait.aspects}
+          hasOracleAccess={hasOracleAccess}
+        />
+      ) : null}
+
       {/* CARD GRID — destinations */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => {
@@ -929,6 +1049,202 @@ export async function DashboardOverview({ firstName }: DashboardOverviewProps) {
           )
         })}
       </section>
+
+      {/* LONGER ARCS — year / quarter / month / week themes */}
+      {temporalThemes.length > 0 ? (
+        <section className="shell-panel px-5 py-5 md:px-7 md:py-6">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="shell-kicker">Longer arcs</p>
+              <p className="text-sm text-bone-muted">The shape of your year, quarter, month, and week — read when you want context, not every day.</p>
+            </div>
+            <Link
+              href="/blueprint"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-bone-muted hover:text-bone"
+            >
+              View full blueprint
+              <ArrowUpRight size={12} />
+            </Link>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {temporalThemes.map((theme) => (
+              <div key={theme.label} className="rounded-[0.9rem] border border-border/60 bg-stone-950/35 px-4 py-3">
+                <p className="shell-eyebrow text-bone-muted/65">{theme.label}</p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-bone">{theme.value}</p>
+                {theme.detail ? (
+                  <p className="mt-2 text-xs leading-5 text-bone-muted/75">{theme.detail}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
+  )
+}
+
+// ─── Sky timeline section ───────────────────────────────────────────────
+
+const RARITY_TONE: Record<TransitRarity, string> = {
+  common: 'border-border/60 bg-stone-950/45 text-bone-muted',
+  frequent: 'border-border/60 bg-stone-950/45 text-bone-muted',
+  uncommon: 'border-plum-400/35 bg-plum-400/12 text-plum-300',
+  rare: 'border-leather-400/45 bg-leather-500/14 text-leather-200',
+  'once-in-lifetime': 'border-ember-400/45 bg-ember-400/14 text-ember-300',
+}
+
+const VISIBLE_BEFORE_COLLAPSE = 2
+
+function shortDate(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function formatDurationLabel(days: number): string {
+  if (days <= 1) return '1 day'
+  if (days < 14) return `${days} days`
+  if (days < 60) return `${Math.round(days / 7)} weeks`
+  if (days < 365) return `${Math.round(days / 30)} months`
+  const years = days / 365
+  return years >= 1.5 ? `${years.toFixed(1)} years` : 'about a year'
+}
+
+function buildWindowDates(e: SkyTimelineEntry) {
+  return {
+    start: shortDate(e.startDate),
+    peak: shortDate(e.peakDate),
+    end: shortDate(e.endDate),
+    duration: formatDurationLabel(e.durationDays),
+    timing:
+      e.status === 'active'
+        ? e.daysFromTodayToEnd <= 0
+          ? 'ended today'
+          : e.daysFromTodayToEnd === 1
+            ? 'ends tomorrow'
+            : `ends in ${e.daysFromTodayToEnd} days`
+        : e.daysFromTodayToStart === 1
+          ? 'starts tomorrow'
+          : e.daysFromTodayToStart < 14
+            ? `starts in ${e.daysFromTodayToStart} days`
+            : `starts in ${Math.round(e.daysFromTodayToStart / 7)} weeks`,
+  }
+}
+
+function SkyTimelineSection({ entries, hasOracleAccess }: { entries: SkyTimelineEntry[]; hasOracleAccess: boolean }) {
+  const active = entries.filter((e) => e.status === 'active')
+  const upcoming = entries.filter((e) => e.status === 'upcoming')
+  return (
+    <section className="shell-panel px-5 py-5 md:px-7 md:py-6">
+      <header className="mb-4">
+        <p className="shell-kicker">Active &amp; upcoming sky</p>
+        <h2 className="text-lg font-semibold text-bone">What&apos;s active for you, and how rare it is</h2>
+        <p className="mt-1 text-sm leading-6 text-bone-muted">
+          A transit is a window, not a single day. Outer-planet transits can run months or years — duration matters as much as the peak. Rare events anchor a year; common ones colour a day.
+        </p>
+      </header>
+
+      {active.length > 0 ? (
+        <TimelineBucket label="Active right now" entries={active} hasOracleAccess={hasOracleAccess} />
+      ) : null}
+
+      {upcoming.length > 0 ? (
+        <TimelineBucket label="Coming up this year" entries={upcoming} hasOracleAccess={hasOracleAccess} className="mt-5" />
+      ) : null}
+
+      <p className="mt-4 border-t border-border/50 pt-3 text-[11px] leading-5 text-bone-muted/65">
+        Last/next occurrences across years aren&apos;t shown yet — slow planets like Saturn and Pluto can take decades to repeat, and we only compute the current year right now.
+      </p>
+    </section>
+  )
+}
+
+function TimelineBucket({
+  label,
+  entries,
+  className,
+  hasOracleAccess,
+}: {
+  label: string
+  entries: SkyTimelineEntry[]
+  className?: string
+  hasOracleAccess: boolean
+}) {
+  const visible = entries.slice(0, VISIBLE_BEFORE_COLLAPSE)
+  const hidden = entries.slice(VISIBLE_BEFORE_COLLAPSE)
+  return (
+    <div className={className}>
+      <p className="shell-eyebrow mb-2 text-bone-muted/70">{label}</p>
+      <ul className="grid gap-2.5 md:grid-cols-2">
+        {visible.map((e) => (
+          <TimelineCard key={`v-${e.planet}-${e.natalPlanet}-${e.aspect}`} entry={e} hasOracleAccess={hasOracleAccess} />
+        ))}
+      </ul>
+      {hidden.length > 0 ? (
+        <details className="group mt-3">
+          <summary className="cursor-pointer list-none text-xs font-medium text-bone-muted transition-colors hover:text-bone">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="rounded-full border border-border/70 bg-stone-950/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-bone-muted">
+                +{hidden.length} more
+              </span>
+              <span className="group-open:hidden">show all</span>
+              <span className="hidden group-open:inline">hide</span>
+            </span>
+          </summary>
+          <ul className="mt-3 grid gap-2.5 md:grid-cols-2">
+            {hidden.map((e) => (
+              <TimelineCard key={`h-${e.planet}-${e.natalPlanet}-${e.aspect}`} entry={e} hasOracleAccess={hasOracleAccess} />
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </div>
+  )
+}
+
+function TimelineCard({ entry: e, hasOracleAccess }: { entry: SkyTimelineEntry; hasOracleAccess: boolean }) {
+  const d = buildWindowDates(e)
+  return (
+    <li className="rounded-[0.9rem] border border-border/65 bg-stone-950/45 px-4 py-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-mono text-[0.78rem] leading-5 text-bone-muted/85">{e.technical}</p>
+        <RarityChip rarity={e.rarity} label={e.rarityLabel} />
+      </div>
+      <p className="mt-2 text-sm leading-5 text-bone">{e.plain}</p>
+
+      <div className="mt-3 grid grid-cols-3 gap-3 border-t border-border/45 pt-3">
+        <DateCell label="Starts" date={d.start} highlight={e.status === 'upcoming'} />
+        <DateCell label="Peak" date={d.peak} highlight />
+        <DateCell label="Ends" date={d.end} highlight={e.status === 'active'} />
+      </div>
+
+      <p className="mt-2 text-[11px] leading-5 text-bone-muted/75">
+        <span className="font-medium text-bone-muted/90">{d.timing}</span>
+        <span className="text-bone-muted/55"> · {d.duration} total · {e.periodLabel}</span>
+      </p>
+
+      <AskOracleButton
+        prompt={buildTransitPrompt(e)}
+        hasOracleAccess={hasOracleAccess}
+        label="this transit"
+        size="chip"
+      />
+    </li>
+  )
+}
+
+function DateCell({ label, date, highlight }: { label: string; date: string; highlight?: boolean }) {
+  return (
+    <div>
+      <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-bone-muted/55">{label}</p>
+      <p className={`mt-0.5 text-sm font-semibold ${highlight ? 'text-bone' : 'text-bone-muted'}`}>{date}</p>
+    </div>
+  )
+}
+
+function RarityChip({ rarity, label }: { rarity: TransitRarity; label: string }) {
+  return (
+    <span className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${RARITY_TONE[rarity]}`}>
+      {label}
+    </span>
   )
 }

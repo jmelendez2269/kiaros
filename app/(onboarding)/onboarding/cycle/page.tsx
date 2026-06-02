@@ -12,6 +12,7 @@ export default function OnboardingCyclePage() {
   const [periodLength, setPeriodLength] = useState(5);
   const [lastPeriodStart, setLastPeriodStart] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -35,11 +36,17 @@ export default function OnboardingCyclePage() {
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
-    await fetch("/api/profile", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+      setSaveError("Something went wrong saving your details. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
 
     router.push("/onboarding/theme");
   };
@@ -47,11 +54,18 @@ export default function OnboardingCyclePage() {
   const skip = async () => {
     setIsSubmitting(true);
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cycle_enabled: false }));
-    await fetch("/api/profile", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cycle_enabled: false }),
     });
+
+    if (!res.ok) {
+      setSaveError("Something went wrong saving your details. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
+
     router.push("/onboarding/theme");
   };
 
@@ -153,6 +167,7 @@ export default function OnboardingCyclePage() {
       )}
 
       <div className="space-y-3">
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <button
           type="button"
           onClick={onSubmit}

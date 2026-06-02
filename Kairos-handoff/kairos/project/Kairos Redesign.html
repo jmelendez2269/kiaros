@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kairos — Warm Almanac redesign</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&family=Cinzel:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #0d0907; color: #f4e8d4; font-family: 'DM Sans', system-ui, sans-serif; min-height: 100vh; }
+    #root { min-height: 100vh; }
+    *, *::before, *::after { box-sizing: border-box; }
+    button { cursor: pointer; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="kairos/tokens.jsx"></script>
+  <script type="text/babel" src="kairos/system.jsx"></script>
+  <script type="text/babel" src="kairos/today.jsx"></script>
+  <script type="text/babel" src="kairos/year.jsx"></script>
+  <script type="text/babel" src="kairos/self.jsx"></script>
+  <script type="text/babel" src="kairos/journal.jsx"></script>
+  <script type="text/babel" src="kairos/ambient.jsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+    const Canvas = window.DesignCanvas;
+    const Section = window.DCSection;
+    const Artboard = window.DCArtboard;
+    const SysScreen = window.SystemArtboard;
+    const TodayScreen = window.TodayArtboard;
+    const YearScreen = window.YearArtboard;
+    const SelfScreen = window.SelfArtboard;
+    const JournalScreen = window.JournalArtboard;
+    const AmbientScreen = window.AmbientArtboard;
+    const TPanel = window.TweaksPanel;
+    const TSection = window.TweakSection;
+    const TColor = window.TweakColor;
+    const TRadio = window.TweakRadio;
+    const tweakHook = window.useTweaks;
+    const K = window.K;
+
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "kairosAccent": [
+        "#9966FF",
+        "#B58FFF",
+        "#6B3FCC"
+      ]
+    }/*EDITMODE-END*/;
+
+    // Curated swatches — each option is a [primary, light, deep] triplet
+    const KAIROS_SWATCHES = [
+      ["#9966FF", "#B58FFF", "#6B3FCC"],  // Brand violet
+      ["#B8527D", "#D77FA0", "#7E2F50"],  // Mulberry rose
+      ["#FF3DAD", "#FF80C8", "#A02875"],  // Neon magenta
+      ["#7E5AD6", "#9F82DD", "#5A3FA4"],  // Soft iris
+      ["#E8826B", "#F4A78F", "#A0533F"],  // Warm coral
+      ["#9C3858", "#C25E84", "#5E1F36"],  // Wine garnet
+    ];
+
+    function App() {
+      const [t, setTweak] = tweakHook(TWEAK_DEFAULTS);
+
+      // Mutate K and the global window state BEFORE rendering children, so
+      // template-literal usages of K.kairos/K.kairosHi/K.kairosLo and the
+      // SkyBanner mode read fresh values on this render.
+      const accent = Array.isArray(t.kairosAccent) ? t.kairosAccent : KAIROS_SWATCHES[0];
+      K.kairos   = accent[0];
+      K.kairosHi = accent[1];
+      K.kairosLo = accent[2];
+      window.__kairosTweaks = { ...(window.__kairosTweaks || {}), sky: t.sky };
+
+      // Bump the canvas key on every tweak change to force a full re-mount of
+      // every artboard so the new K values propagate through inline styles.
+      const renderKey = accent.join(',') + '|' + t.sky;
+
+      return (
+        <>
+          <Canvas
+            key={renderKey}
+            title="Kairos · Warm Almanac"
+            subtitle="A full restructure + restyle. 8 nav items → 4. Stelloquy goes ambient. Calendar + Blueprint + Curriculum collapse together; HD + natal + Areas become one 'Self'; Journal + Tracker + Pattern memory become one practice."
+            defaultZoom={0.6}
+          >
+            <Section id="system" title="01 — The system">
+              <Artboard id="foundations" label="Warm Almanac · foundations" width={1320} height={920}>
+                <SysScreen />
+              </Artboard>
+            </Section>
+
+            <Section id="today" title="02 — Today">
+              <Artboard id="today-default" label="Today · the daily home" width={1400} height={920}>
+                <TodayScreen />
+              </Artboard>
+            </Section>
+
+            <Section id="year" title="03 — Year (Calendar + Blueprint baked in)">
+              <Artboard id="year-month" label="Year · month view with blueprint context" width={1400} height={980}>
+                <YearScreen />
+              </Artboard>
+            </Section>
+
+            <Section id="self" title="04 — Self (Human Design + Natal + Gene Keys + Areas)">
+              <Artboard id="self-default" label="Self · one chart, four lenses" width={1400} height={1640}>
+                <SelfScreen />
+              </Artboard>
+            </Section>
+
+            <Section id="journal" title="05 — Journal (Journal + Tracker + Pattern memory)">
+              <Artboard id="journal-default" label="Journal · the practice" width={1400} height={1180}>
+                <JournalScreen />
+              </Artboard>
+            </Section>
+
+            <Section id="ambient" title="06 — Stelloquy as ambient layer">
+              <Artboard id="ambient-default" label="Stelloquy · everywhere, never a tab" width={1320} height={1400}>
+                <AmbientScreen />
+              </Artboard>
+            </Section>
+          </Canvas>
+
+          <TPanel title="Tweaks" noDeckControls>
+            <TSection label="Brand accent">
+              <TColor
+                label="Kairos color"
+                value={t.kairosAccent}
+                options={KAIROS_SWATCHES}
+                onChange={v => setTweak('kairosAccent', v)}
+              />
+            </TSection>
+            <TSection label="Sky banner (Today screen)">
+              <TRadio
+                label="Style"
+                value={t.sky}
+                options={[
+                  ['sunset',  'Sunset'],
+                  ['nebula',  'Nebula'],
+                  ['starlit', 'Starlit'],
+                ]}
+                onChange={v => setTweak('sky', v)}
+              />
+            </TSection>
+          </TPanel>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

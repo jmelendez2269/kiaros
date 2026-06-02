@@ -5,6 +5,7 @@ import { deriveAstrologicalYearWord } from "@/lib/astrology/year-word";
 import { computeNatalChart } from "@/lib/ephemeris";
 import type { BirthData } from "@/lib/ephemeris";
 import type { NatalChart } from "@/types/blueprint";
+import { computeHumanDesign } from "@/lib/human-design";
 
 export async function GET() {
   const { userId } = await auth();
@@ -44,16 +45,21 @@ export async function PATCH(req: Request) {
   try {
     const clerkUser = await (await clerkClient()).users.getUser(userId);
     email = clerkUser.emailAddresses?.[0]?.emailAddress;
-  } catch {
-    // Non-fatal: email is best-effort here
+  } catch (err) {
+    console.error("[profile] Clerk user lookup failed:", err);
   }
+
+  // Only include email in the upsert when we have it — undefined is dropped by
+  // JSON serialisation so existing rows are updated safely without touching email,
+  // but a missing-webhook first-insert will fail at the DB NOT NULL constraint
+  // and return 500 to the client rather than silently saving nothing.
+  const upsertPayload = email
+    ? { clerk_user_id: userId, email, ...body }
+    : { clerk_user_id: userId, ...body };
 
   const { error } = await admin
     .from("user_profiles")
-    .upsert(
-      { clerk_user_id: userId, email, ...body },
-      { onConflict: "clerk_user_id" }
-    );
+    .upsert(upsertPayload, { onConflict: "clerk_user_id" });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -98,6 +104,20 @@ export async function PATCH(req: Request) {
       } catch (chartErr) {
         // Non-fatal: natal chart computation is best-effort at this stage.
         console.error("[profile] natal chart computation failed:", chartErr);
+      }
+
+      try {
+        const humanDesign = computeHumanDesign(profile);
+        if (humanDesign) {
+          await admin
+            .from("user_profiles")
+            .update({ human_design: humanDesign as unknown as Record<string, unknown> })
+            .eq("clerk_user_id", userId);
+        }
+      } catch (hdErr) {
+        // Non-fatal: HD is supplementary to the natal chart. Surface in UI
+        // as "not yet computed" rather than blocking profile save.
+        console.error("[profile] human design computation failed:", hdErr);
       }
     }
   }

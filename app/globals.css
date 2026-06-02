@@ -54,6 +54,37 @@
     /* Quaternary — deep plum */
     --plum-400: 270 52% 66%;
     --plum-300: 268 58% 80%;
+
+    /* ─── Almanac tokens (Obsidian-aligned) ────────────────────────────────
+       Originally a parallel cocoa/copper system. Retuned to mirror the
+       Obsidian palette so /today and /year/month feel like the same product
+       as /year/year (CosmicCalendar) and /calendar legacy surfaces. Keep in
+       sync with components/almanac/tokens.ts (the TS-side K constants). */
+    --almanac-bg: #0a0c14;
+    --almanac-bg2: #11131e;
+    --almanac-bg3: #181a2a;
+    --almanac-bg4: #21243a;
+    --almanac-line: rgba(227, 226, 237, 0.10);
+    --almanac-line-hi: rgba(227, 226, 237, 0.18);
+    --almanac-ink: #e3e2ed;
+    --almanac-ink-dim: #a4a3b1;
+    --almanac-ink-soft: #6e6d7c;
+    --almanac-ink-faint: rgba(227, 226, 237, 0.4);
+    --almanac-brick: #5a3eba;
+    --almanac-brick-hi: #704bd2;
+    --almanac-copper: #a98aef;
+    --almanac-copper-hi: #c7b3f5;
+    --almanac-ember: #df9b3f;
+    --almanac-sage: #6798cb;
+    --almanac-plum: #b08cdc;
+    --almanac-midnight: #080a11;
+    --almanac-starlight: #c1dcef;
+    /* Brand accents — anchor the Stelloquy orb in leather/violet */
+    --almanac-kairos: #704bd2;
+    --almanac-kairos-hi: #a98aef;
+    --almanac-kairos-lo: #5a3eba;
+    --almanac-prism: #4ee7fd;
+    --almanac-chronos: #df9b3f;
   }
 
   html {
@@ -318,4 +349,20 @@ html[data-theme="dawn"] ::selection {
 /* Smooth transitions */
 * {
   @apply transition-colors duration-200;
+}
+
+/* Stelloquy orb — three states. Defined globally so the orb stays animated
+   wherever it's mounted (header, message avatar, inline streaming indicator). */
+@keyframes stelloquy-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50%      { transform: scale(1.07); filter: brightness(1.12); }
+}
+@keyframes stelloquy-breathe {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50%      { transform: scale(0.95); filter: brightness(0.92); }
+}
+@keyframes stelloquy-think {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  33%      { transform: scale(1.04); }
+  66%      { transform: scale(0.97); }
 }

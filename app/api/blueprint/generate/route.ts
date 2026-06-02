@@ -1,6 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse, after } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
 
@@ -11,10 +10,12 @@ export async function POST() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const supabase = await createServerSupabase();
+    // Use admin client for all DB access in this route — avoids RLS/token
+    // fragility on the critical generation path. userId comes from Clerk auth.
+    const admin = createAdminSupabase();
 
     // Get user's Supabase UUID
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await admin
       .from("user_profiles")
       .select("id, plan_year")
       .eq("clerk_user_id", userId)
@@ -28,7 +29,7 @@ export async function POST() {
     const plan_year = profile.plan_year ?? new Date().getFullYear();
 
     // Compute next version number
-    const { data: latest } = await supabase
+    const { data: latest } = await admin
       .from("blueprints")
       .select("version")
       .eq("user_id", profile.id)
@@ -40,7 +41,6 @@ export async function POST() {
     const version = (latest?.version ?? 0) + 1;
 
     // Insert blueprint row with status=generating
-    const admin = createAdminSupabase();
     const { data: blueprint, error: insertError } = await admin
       .from("blueprints")
       .insert({ user_id: profile.id, plan_year, version, status: "generating" })

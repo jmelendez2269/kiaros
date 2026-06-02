@@ -13,6 +13,7 @@
 import type { NatalChart, YearEphemeris } from '@/types/blueprint'
 import type { Json, Tables } from '@/types/database'
 import { summariseTransitWindows } from '@/lib/ephemeris/transit-calculator'
+import type { HumanDesignChart } from '@/lib/human-design'
 
 interface GoalCategory {
   name: string
@@ -26,6 +27,7 @@ interface GoalCategory {
 interface BlueprintPromptContext {
   userName: string
   natalChart: NatalChart
+  humanDesign: HumanDesignChart | null
   ephemeris: YearEphemeris
   goals: GoalCategory[]
   journalPatterns: Pick<
@@ -67,6 +69,65 @@ function natalChartToText(chart: NatalChart): string {
     planet('Neptune', chart.neptune),
     planet('Pluto', chart.pluto),
   ].join('\n')
+}
+
+// ─── Human Design + Gene Keys → readable summary ────────────────────────
+
+/**
+ * Type-conditional weekly pacing framing. The handoff (A4) specifies these
+ * shape-of-the-week defaults; Claude is told to honour the user's Type when
+ * choosing `energyType` and writing weekly intentions. Phrased as
+ * suggestions, not assertions — HD is one input among many, not a verdict.
+ */
+function typeWeeklyFraming(type: HumanDesignChart['bodyGraph']['type']): string {
+  switch (type) {
+    case 'Manifestor':
+      return 'When choosing energyType and writing weekly intentions, hold the "inform before action" rhythm — Manifestors often move in initiating bursts followed by genuine rest. Push weeks land when the user has communicated their intent; rest weeks should not feel like apology.'
+    case 'Generator':
+      return 'When choosing energyType, favour a respond-then-engage rhythm — Generators come alive when something to respond to is in front of them. Intentions can invite noticing what lights up the gut, rather than forcing initiation.'
+    case 'Manifesting Generator':
+      return 'When choosing energyType, weave respond + inform — Manifesting Generators often move on multiple tracks at once and need permission to skip steps when something is no longer alive. Intentions can invite informing others before pivoting.'
+    case 'Projector':
+      return 'When choosing energyType, weight rest and reflect weeks more generously and keep push windows shorter — Projectors thrive on recognition and invitation, not sustained output. Intentions can invite waiting for the right opening rather than chasing.'
+    case 'Reflector':
+      return 'Pace at the lunar cycle (~28 days) rather than the calendar week — Reflectors take a full lunation to feel into a decision. Avoid daily-metric framing; favour "what does this whole moon cycle want to show me?" intentions and treat new and full moons as the real punctuation marks.'
+  }
+}
+
+function humanDesignToText(chart: HumanDesignChart): string {
+  const { bodyGraph, activationSequence, edgeCases } = chart
+
+  const definedCenters = bodyGraph.definedCenters.length > 0
+    ? bodyGraph.definedCenters.join(', ')
+    : 'none (Reflector signature)'
+  const channels = bodyGraph.activatedChannels.length > 0
+    ? bodyGraph.activatedChannels.map((c) => `${c.gates[0]}–${c.gates[1]} ${c.name}`).join('; ')
+    : 'none'
+
+  // Distribute the 4 Prime Gifts across the year (one per quarter). Q1 →
+  // Life's Work, Q2 → Evolution, Q3 → Radiance, Q4 → Purpose. Per the
+  // handoff: contemplation threads, not goals.
+  const gifts = [
+    `Q1 contemplation — Life's Work: ${activationSequence.lifesWork.geneKey}.${activationSequence.lifesWork.line} (Shadow: ${activationSequence.lifesWork.shadow} → Gift: ${activationSequence.lifesWork.gift} → Siddhi: ${activationSequence.lifesWork.siddhi})`,
+    `Q2 contemplation — Evolution: ${activationSequence.evolution.geneKey}.${activationSequence.evolution.line} (Shadow: ${activationSequence.evolution.shadow} → Gift: ${activationSequence.evolution.gift} → Siddhi: ${activationSequence.evolution.siddhi})`,
+    `Q3 contemplation — Radiance: ${activationSequence.radiance.geneKey}.${activationSequence.radiance.line} (Shadow: ${activationSequence.radiance.shadow} → Gift: ${activationSequence.radiance.gift} → Siddhi: ${activationSequence.radiance.siddhi})`,
+    `Q4 contemplation — Purpose: ${activationSequence.purpose.geneKey}.${activationSequence.purpose.line} (Shadow: ${activationSequence.purpose.shadow} → Gift: ${activationSequence.purpose.gift} → Siddhi: ${activationSequence.purpose.siddhi})`,
+  ].join('\n  ')
+
+  const edgeNote = edgeCases.length > 0
+    ? `\n(Note: ${edgeCases.length} placement${edgeCases.length === 1 ? '' : 's'} sit within 0.2° of a gate boundary and may disagree with other HD tools — treat the Type / Strategy / Authority / Profile as load-bearing, the channels and Prime Gifts as still useful but slightly softer signal.)`
+    : ''
+
+  return `Type: ${bodyGraph.type}
+Strategy: ${bodyGraph.strategy}
+Authority: ${bodyGraph.authority}
+Profile: ${bodyGraph.profile} (${bodyGraph.profileName})
+Signature when honoured: ${bodyGraph.signature}    Not-self when forced: ${bodyGraph.notSelf}
+Defined centers: ${definedCenters}
+Activated channels: ${channels}
+
+Gene Keys — Activation Sequence (one per quarter as contemplation threads):
+  ${gifts}${edgeNote}`
 }
 
 // ─── Moon phases → readable calendar ─────────────────────────────────────
@@ -209,6 +270,7 @@ export function assembleBlueprintUserPrompt(ctx: BlueprintPromptContext): string
   const {
     userName,
     natalChart,
+    humanDesign,
     ephemeris,
     goals,
     journalPatterns,
@@ -237,7 +299,12 @@ This blueprint must cover the full calendar year ${planYear}, from ${planYear}-0
 NATAL CHART (real astronomical positions at birth)
 ═══════════════════════════════════════════
 ${natalChartToText(natalChart)}
-
+${humanDesign ? `
+═══════════════════════════════════════════
+HUMAN DESIGN + GENE KEYS (computed from same birth moment)
+═══════════════════════════════════════════
+${humanDesignToText(humanDesign)}
+` : ''}
 ═══════════════════════════════════════════
 YEAR VISION & INTENTIONS
 ═══════════════════════════════════════════
@@ -287,7 +354,14 @@ INSTRUCTIONS
 
 Generate a complete blueprint as valid JSON matching the schema below. Do not include any text outside the JSON object.
 
-OUTPUT BUDGET: You have ~16,000 tokens. Favor clarity, resonance, and flexibility over rigid certainty. Every string is short and dense — no filler, no preamble, no restating the prompt. Week-level fields especially must be terse (1 sentence each unless otherwise noted).
+OUTPUT BUDGET: You have ~16,000 tokens TOTAL and the JSON must finish cleanly. Run-on prose will get truncated. Strict ceilings:
+- yearSummary: 3–4 sentences, not 5+
+- quarter.intention: 1 sentence
+- quarter.cosmicHighlights: 2 items max, ≤10 words each
+- month.energyArc: 1 sentence; month.keyTransits: ≤3 items
+- week.theme: ≤6 words; week.cosmicContext: 1 short sentence (≤18 words); week.intentions: 2 items of ≤8 words each
+- pushPeriods / restPeriods reason: 1 short clause
+No filler, no preamble, no restating the prompt. If a field starts to run long, cut it.
 
 Rules:
 1. yearTheme (≤12 words) and yearSummary (3–5 sentences) must reference ${userName}'s actual natal placements (e.g. "with your ${natalChart.moon.sign} Moon in House ${natalChart.moon.house}...") and actual transits listed above.
@@ -303,7 +377,9 @@ Rules:
 10. Do not make identity claims or promises of outcomes. Speak as if each theme is a timely suggestion, not a command.
 11. Never imply the user must act during a pushPeriods window. Frame those periods as invitations, openings, or supportive currents they may choose to engage with.
 12. Do not omit early-year months or weeks even if the user signs up later in the year. The output is always a full-year blueprint.
-13. Use observed journal patterns and Oracle captures marked for planner context as personalization evidence when they are relevant to matching transits, moons, retrogrades, or rest/push choices. Do not overfit them or present them as fate; use them as lived-history hints.
+13. Use observed journal patterns and Oracle captures marked for planner context as personalization evidence when they are relevant to matching transits, moons, retrogrades, or rest/push choices. Do not overfit them or present them as fate; use them as lived-history hints.${humanDesign ? `
+14. Let ${userName}'s Human Design Type shape the *rhythm* of energyType choices across weeks, but only name HD explicitly a handful of times across the whole year — at most once per quarter in the quarter's intention, and only in 3–4 weeks where it genuinely clarifies the timing. Most weeks should not mention HD at all. Framing for this Type: ${typeWeeklyFraming(humanDesign.bodyGraph.type)} When you do reference HD, phrase it as a working hypothesis ("your ${humanDesign.bodyGraph.authority} authority suggests...") not a label ("you are a ${humanDesign.bodyGraph.type}").
+15. The 4 Gene Keys Prime Gifts are quarterly contemplation threads — at most one gentle reference per quarter (in the quarter's intention or one cosmicHighlight). Not goals. Not week-level. Treat as spectrums (Shadow → Gift → Siddhi) to sit with.` : ''}
 
 JSON schema:
 {

@@ -40,6 +40,8 @@ export default function OnboardingYearFocusPage() {
   const [astrologicalWord, setAstrologicalWord] =
     useState<AstrologicalWordResponse["astrological_word_of_year"]>(null);
 
+  const [saveError, setSaveError] = useState<string>("");
+
   const {
     register,
     handleSubmit,
@@ -82,7 +84,7 @@ export default function OnboardingYearFocusPage() {
   const onSubmit = async (values: FormValues) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(values));
 
-    await fetch("/api/profile", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -92,6 +94,11 @@ export default function OnboardingYearFocusPage() {
         plan_year: new Date().getFullYear(),
       }),
     });
+
+    if (!res.ok) {
+      setSaveError("Something went wrong saving your details. Please try again.");
+      return;
+    }
 
     router.push("/onboarding/cycle");
   };
@@ -107,7 +114,7 @@ export default function OnboardingYearFocusPage() {
         </p>
         <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
           <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
-          Anchors your Oracle to this season of your life
+          Anchors Stelloquy to this season of your life
         </div>
         <p className="text-sm italic text-bone-muted/80">
           Messy, honest answers make better blueprints than polished ones.
@@ -190,6 +197,7 @@ export default function OnboardingYearFocusPage() {
           />
         </div>
 
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <button
           type="submit"
           disabled={isSubmitting}

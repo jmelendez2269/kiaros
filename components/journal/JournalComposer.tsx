@@ -146,8 +146,8 @@ export function JournalComposer({
 
       setSavedMessage(
         addToOracleMemory
-          ? 'Saved. This entry is now part of Oracle memory.'
-          : 'Saved. This entry can stay in your journal without being added to Oracle memory.'
+          ? 'Saved. This entry is now part of Stelloquy memory.'
+          : 'Saved. This entry can stay in your journal without being added to Stelloquy memory.'
       )
       setBody(initialPrompt ? `${initialPrompt}\n\n` : '')
       setTitle(initialPrompt ? truncate(initialPrompt, 120) : '')
@@ -170,7 +170,7 @@ export function JournalComposer({
               <h1 className="shell-section-title">Capture the prompt while the window is open</h1>
               <p className="mt-4 text-base leading-7 text-bone-muted">
                 Save a reflection from a timing window, ritual, or live question. This is also where you decide what
-                the Oracle should carry forward as memory.
+                Stelloquy should carry forward as memory.
               </p>
             </div>
             <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">
@@ -191,7 +191,7 @@ export function JournalComposer({
             </div>
 
             <div className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-4 py-4">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Oracle</p>
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Stelloquy</p>
               <div className="mt-2 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-bone">Memory saved</p>
                 <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-plum-300/20 bg-black/20 px-2 text-[0.68rem] font-semibold text-plum-200">
@@ -203,7 +203,7 @@ export function JournalComposer({
                   href="/oracle"
                   className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-3 py-1.5 text-[0.78rem] font-medium text-bone-muted transition-colors hover:text-bone"
                 >
-                  Open Oracle
+                  Open Stelloquy
                 </Link>
                 <Link
                   href="/journal?prompt=What%20feels%20worth%20keeping%20in%20memory%20right%20now%3F"
@@ -249,7 +249,7 @@ export function JournalComposer({
               href="/oracle"
               className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/80 px-4 py-2 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
             >
-              Open Oracle
+              Open Stelloquy
             </Link>
           </div>
 
@@ -326,7 +326,7 @@ export function JournalComposer({
                 onChange={(event) => setAddToOracleMemory(event.target.checked)}
                 className="h-4 w-4 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
               />
-              Add this entry to Oracle memory so future conversations can draw from it
+              Add this entry to Stelloquy memory so future conversations can draw from it
             </label>
 
             {error ? (
@@ -353,7 +353,7 @@ export function JournalComposer({
                 href="/oracle"
                 className="text-sm text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone"
               >
-                Ask Oracle after saving
+                Ask Stelloquy after saving
               </Link>
             </div>
           </form>
@@ -367,15 +367,35 @@ export function JournalComposer({
               <p className="mt-3 text-sm leading-7 text-bone-muted">
                 Revisit past entries, rituals, and timing-window notes in one place.
               </p>
-              <Link
-                href="/journal/insights"
-                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-leather-200 transition-colors hover:text-leather-100"
-              >
-                View patterns Kiaros has noticed →
-              </Link>
             </div>
             <span className="shell-pill">{entries.length} loaded</span>
           </div>
+
+          <Link
+            href="/journal/insights"
+            className="group mt-5 flex items-start gap-4 rounded-2xl border border-leather-400/40 bg-leather-500/10 px-5 py-4 transition-colors hover:border-leather-300/60 hover:bg-leather-500/20"
+          >
+            <span
+              aria-hidden="true"
+              className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-leather-400/50 bg-leather-500/20 font-serif text-base text-leather-100"
+            >
+              ✦
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-bone">
+                Patterns Kiaros has noticed
+              </p>
+              <p className="mt-1 text-xs leading-6 text-bone-muted">
+                Recurring moons, signs, and transits across your entries — synthesised in your chosen voice.
+              </p>
+            </div>
+            <span
+              aria-hidden="true"
+              className="self-center text-base text-leather-200 transition-transform group-hover:translate-x-0.5"
+            >
+              →
+            </span>
+          </Link>
 
           <div className="mt-5 space-y-3">
             {entries.length > 0 ? (
@@ -385,7 +405,7 @@ export function JournalComposer({
                     <p className="text-sm font-semibold text-bone">{entry.title || 'Untitled entry'}</p>
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       {getSkyLabel(entry) ? <span className="shell-pill">{getSkyLabel(entry)}</span> : null}
-                      {entry.oracle_memory ? <span className="shell-pill">In Oracle memory</span> : null}
+                      {entry.oracle_memory ? <span className="shell-pill">In Stelloquy memory</span> : null}
                       {entry.is_ritual ? <span className="shell-pill">Ritual</span> : null}
                     </div>
                   </div>
@@ -404,11 +424,11 @@ export function JournalComposer({
           <div className="mt-8 border-t border-border/70 pt-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="shell-kicker">Oracle captures</p>
+                <p className="shell-kicker">Stelloquy captures</p>
                 <h3 className="mt-2 text-[1.25rem] font-semibold text-bone">Conversation fragments</h3>
                 <p className="mt-2 text-sm leading-7 text-bone-muted">
-                  Highlighted Oracle moments stay separate from journal entries, and anything marked for insights is
-                  included in future Oracle context.
+                  Highlighted Stelloquy moments stay separate from journal entries, and anything marked for insights is
+                  included in future Stelloquy context.
                 </p>
               </div>
               <span className="shell-pill">{oracleCaptures.length} loaded</span>
@@ -439,7 +459,7 @@ export function JournalComposer({
                 ))
               ) : (
                 <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm leading-7 text-bone-muted">
-                  No Oracle captures yet. In a conversation, highlight the text you want to keep and use Capture.
+                  No Stelloquy captures yet. In a conversation, highlight the text you want to keep and use Capture.
                 </div>
               )}
             </div>
