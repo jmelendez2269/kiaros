@@ -1,15 +1,15 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminSupabase } from "@/lib/supabase/admin";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const supabase = await createServerSupabase();
+    const admin = createAdminSupabase();
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await admin
       .from("user_profiles")
       .select("id, plan_year")
       .eq("clerk_user_id", userId)
@@ -22,7 +22,7 @@ export async function GET() {
 
     const plan_year = profile.plan_year ?? new Date().getFullYear();
 
-    const { data: blueprint, error: blueprintError } = await supabase
+    const { data: blueprint, error: blueprintError } = await admin
       .from("blueprints")
       .select("status, id, error_message")
       .eq("user_id", profile.id)
