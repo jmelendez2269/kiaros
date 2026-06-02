@@ -20,7 +20,7 @@
 import 'server-only'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { recordUsage } from './usage'
 import type { SeasonHeavyWindow, SeasonHDContext } from '@/lib/today/get-season'
 
@@ -35,7 +35,7 @@ export interface SeasonSynthesisInput {
 }
 
 function buildModel() {
-  return process.env.VERCEL ? gateway(`anthropic/${MODEL_ID}`) : anthropic(MODEL_ID)
+  return anthropic(MODEL_ID)
 }
 
 const SYSTEM_PROMPT = [

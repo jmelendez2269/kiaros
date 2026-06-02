@@ -14,7 +14,7 @@
 import 'server-only'
 import { generateText, Output } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { recordUsage } from './usage'
@@ -78,7 +78,7 @@ export async function tagCaptureInBackground(params: {
   capturedText: string
   precedingPrompt: string | null
 }): Promise<void> {
-  const model = process.env.VERCEL ? gateway(`anthropic/${MODEL_ID}`) : anthropic(MODEL_ID)
+  const model = anthropic(MODEL_ID)
 
   let extraction: CaptureExtraction | null = null
   let inputTokens = 0

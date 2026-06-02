@@ -16,7 +16,7 @@
 
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { computeNatalChart, computeYearEphemeris } from '@/lib/ephemeris'
 import type { BirthData } from '@/lib/ephemeris'
@@ -242,11 +242,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     })
 
     // ── 7. Call Claude ────────────────────────────────────────────────
-    // Use Vercel AI Gateway in production (OIDC auth, no hardcoded key).
-    // Fall back to direct Anthropic SDK for local dev.
-    const model = process.env.VERCEL
-      ? gateway('anthropic/claude-sonnet-4-6')
-      : anthropic('claude-sonnet-4-6')
+    const model = anthropic('claude-sonnet-4-6')
     log(`calling Claude (systemPrompt ${systemPrompt.length}c, userPrompt ${userPrompt.length}c)`)
 
     const { text, usage, finishReason } = await generateText({

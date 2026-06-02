@@ -8,7 +8,7 @@
 
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import {
   assembleMonthBriefSystemPrompt,
@@ -218,9 +218,7 @@ export async function fetchOrGenerateMonthBrief(
   const systemPrompt = assembleMonthBriefSystemPrompt()
   const userPrompt = assembleMonthBriefUserPrompt(ctx)
 
-  const model = process.env.VERCEL
-    ? gateway(`anthropic/${MODEL_ID}`)
-    : anthropic(MODEL_ID)
+  const model = anthropic(MODEL_ID)
 
   const { text, usage, providerMetadata } = await generateText({
     model,

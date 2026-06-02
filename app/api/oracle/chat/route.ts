@@ -1,6 +1,6 @@
 import { streamText, convertToModelMessages, type UIMessage, type ModelMessage } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
@@ -232,9 +232,7 @@ export async function POST(req: Request) {
     }
     systemMessages.push({ role: 'system', content: dynamic })
 
-    const model = process.env.VERCEL
-      ? gateway(`anthropic/${ORACLE_MODEL_ID}`)
-      : anthropic(ORACLE_MODEL_ID)
+    const model = anthropic(ORACLE_MODEL_ID)
 
     const result = streamText({
       model,

@@ -21,7 +21,7 @@
 import 'server-only'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { recordUsage } from './usage'
 
@@ -151,7 +151,7 @@ function buildUserPrompt(pattern: PatternInput): string {
 }
 
 function buildModel() {
-  return process.env.VERCEL ? gateway(`anthropic/${MODEL_ID}`) : anthropic(MODEL_ID)
+  return anthropic(MODEL_ID)
 }
 
 export async function synthesizeInsight(opts: {

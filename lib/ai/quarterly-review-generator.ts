@@ -12,7 +12,7 @@
 
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import {
   assembleQuarterlyReviewSystemPrompt,
@@ -61,7 +61,7 @@ export const QUARTERLY_REVIEW_MODEL_ID = MODEL_ID
 export const QUARTERLY_REVIEW_MAX_OUTPUT_TOKENS = MAX_OUTPUT_TOKENS
 
 export function quarterlyReviewModel() {
-  return process.env.VERCEL ? gateway(`anthropic/${MODEL_ID}`) : anthropic(MODEL_ID)
+  return anthropic(MODEL_ID)
 }
 
 /**

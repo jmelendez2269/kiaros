@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { z } from 'zod'
 import type {
   CurriculumDraftSession,
@@ -106,9 +106,7 @@ Rules:
 export async function generateCurriculumSessionContent(
   input: GenerateSessionInput
 ): Promise<GeneratedSessionContent> {
-  const model = process.env.VERCEL
-    ? gateway(`anthropic/${CURRICULUM_SESSION_MODEL}`)
-    : anthropic(CURRICULUM_SESSION_MODEL)
+  const model = anthropic(CURRICULUM_SESSION_MODEL)
 
   const result = await generateText({
     model,

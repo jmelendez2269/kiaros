@@ -1,6 +1,6 @@
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { gateway } from '@ai-sdk/gateway'
+
 import { z } from 'zod'
 import type { CurriculumDraft, CurriculumIntensity } from '@/types/curriculum'
 
@@ -118,9 +118,7 @@ function clampText(value: string, max: number) {
 }
 
 export async function generateCurriculumDraft(input: GenerateCurriculumInput): Promise<CurriculumDraft> {
-  const model = process.env.VERCEL
-    ? gateway('anthropic/claude-sonnet-4-6')
-    : anthropic('claude-sonnet-4-6')
+  const model = anthropic('claude-sonnet-4-6')
 
   const { text } = await generateText({
     model,
