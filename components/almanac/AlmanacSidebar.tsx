@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -25,12 +25,54 @@ interface SidebarProps {
 // Four doors. The fifth (Stelloquy) is the orb, not a tab.
 // Year/Self/Journal hrefs point at existing routes for now; Phases 2/3/4
 // flip these to /year, /self, /journal-new as those screens land.
-const NAV = [
+type SubNavItem = { label: string; href: string; hint: string }
+
+const NAV: ReadonlyArray<{
+  key: 'today' | 'year' | 'self' | 'journal'
+  label: string
+  hint: string
+  glyph: string
+  tone: string
+  href: string
+  subItems?: ReadonlyArray<SubNavItem>
+}> = [
   { key: 'today', label: 'Today', hint: 'sky now · daily focus', glyph: '☉', tone: K.copper, href: '/today' },
-  { key: 'year', label: 'Year', hint: 'calendar · blueprint · arcs', glyph: '◐', tone: K.ember, href: '/calendar' },
+  {
+    key: 'year',
+    label: 'Year',
+    hint: 'calendar · blueprint · arcs',
+    glyph: '◐',
+    tone: K.ember,
+    href: '/year',
+    subItems: [
+      { label: 'Month',      href: '/year?view=month', hint: 'lunar month · intentions' },
+      { label: 'Week',       href: '/year?view=week',  hint: 'current week · curriculum' },
+      { label: 'Curriculum', href: '/curriculum',      hint: 'study plans · sessions' },
+    ],
+  },
   { key: 'self', label: 'Self', hint: 'natal · design · areas', glyph: '✺', tone: K.sage, href: '/human-design' },
-  { key: 'journal', label: 'Journal', hint: 'entries · tracker · memory', glyph: '✎', tone: K.brickHi, href: '/journal' },
-] as const
+  {
+    key: 'journal',
+    label: 'Journal',
+    hint: 'entries · tracker · memory',
+    glyph: '✎',
+    tone: K.brickHi,
+    href: '/journal',
+    subItems: [
+      { label: 'Insights', href: '/journal/insights', hint: 'patterns kiaros has noticed' },
+      { label: 'Mind map', href: '/insights/map', hint: 'capture topics as a living graph' },
+    ],
+  },
+]
+
+// Sub-items can carry a `?view=…` query (Month and Week share the /year
+// route). Map each sub-href to its plain pathname and the optional `view`
+// it expects, so the active check can match both halves.
+function splitSubHref(href: string): { pathname: string; view: string | null } {
+  const [pathname, query = ''] = href.split('?')
+  const params = new URLSearchParams(query)
+  return { pathname, view: params.get('view') }
+}
 
 const SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
 
@@ -75,7 +117,7 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
           <div
             style={{
               fontFamily: K.fMono,
-              fontSize: 9,
+              fontSize: 10.5,
               letterSpacing: '0.24em',
               textTransform: 'uppercase',
               marginTop: 4,
@@ -92,10 +134,12 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
 
 function NavRow({
   pathname,
+  currentView,
   collapsed,
   onNavigate,
 }: {
   pathname: string
+  currentView: string | null
   collapsed: boolean
   onNavigate?: () => void
 }) {
@@ -113,9 +157,15 @@ function NavRow({
           (n.key === 'journal' &&
             (pathname.startsWith('/journal') || pathname.startsWith('/tracker')))
 
+        const subItems = n.subItems ?? []
+        // Sub-items used to hide until the parent was active. They now
+        // render whenever the sidebar is expanded, so jumps like Today →
+        // Month are one click instead of two.
+        const showSubItems = !collapsed && subItems.length > 0
+
         return (
+          <div key={n.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <Link
-            key={n.key}
             href={n.href}
             onClick={onNavigate}
             title={collapsed ? n.label : undefined}
@@ -155,7 +205,7 @@ function NavRow({
                 <div
                   style={{
                     fontFamily: K.fBody,
-                    fontSize: 14,
+                    fontSize: 15.5,
                     fontWeight: 500,
                     color: isActive ? K.ink : K.inkDim,
                   }}
@@ -165,7 +215,7 @@ function NavRow({
                 <div
                   style={{
                     fontFamily: K.fMono,
-                    fontSize: 9.5,
+                    fontSize: 11,
                     letterSpacing: '0.1em',
                     color: K.inkSoft,
                     marginTop: 2,
@@ -176,6 +226,71 @@ function NavRow({
               </div>
             ) : null}
           </Link>
+          {showSubItems ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                paddingLeft: 22,
+                borderLeft: `1px solid ${n.tone}44`,
+                marginLeft: 19,
+              }}
+            >
+              {subItems.map((sub) => {
+                const subParts = splitSubHref(sub.href)
+                const pathMatches =
+                  pathname === subParts.pathname ||
+                  pathname.startsWith(`${subParts.pathname}/`)
+                // When the sub-item targets a ?view= variant we require the
+                // current view to match too; otherwise Year's children would
+                // all light up whenever Year is active.
+                const viewMatches = subParts.view
+                  ? currentView === subParts.view
+                  : currentView === null || subParts.pathname !== pathname
+                const subActive = pathMatches && viewMatches
+                return (
+                  <Link
+                    key={sub.href}
+                    href={sub.href}
+                    onClick={onNavigate}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1,
+                      padding: '6px 10px',
+                      borderRadius: 8,
+                      textDecoration: 'none',
+                      background: subActive ? `${n.tone}14` : 'transparent',
+                      transition: 'background 200ms ease',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: K.fBody,
+                        fontSize: 14.5,
+                        fontWeight: 500,
+                        color: subActive ? K.ink : K.inkDim,
+                      }}
+                    >
+                      {sub.label}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: K.fMono,
+                        fontSize: 10.5,
+                        letterSpacing: '0.1em',
+                        color: K.inkSoft,
+                      }}
+                    >
+                      {sub.hint}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : null}
+          </div>
         )
       })}
     </div>
@@ -195,7 +310,7 @@ function PinnedAreas({
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 10,
+          fontSize: 11.5,
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           color: K.inkSoft,
@@ -221,10 +336,10 @@ function PinnedAreas({
               color: K.inkDim,
             }}
           >
-            <span style={{ color: K.copper, fontSize: 12, width: 14, textAlign: 'center' }}>
+            <span style={{ color: K.copper, fontSize: 14, width: 16, textAlign: 'center' }}>
               {c.icon_key ?? '·'}
             </span>
-            <span style={{ fontFamily: K.fBody, fontSize: 12 }}>{c.name}</span>
+            <span style={{ fontFamily: K.fBody, fontSize: 13.5 }}>{c.name}</span>
           </Link>
         ))}
       </div>
@@ -234,12 +349,14 @@ function PinnedAreas({
 
 function SidebarBody({
   pathname,
+  currentView,
   categories,
   collapsed,
   onToggleDesktop,
   onNavigate,
 }: {
   pathname: string
+  currentView: string | null
   categories: CategorySummary[]
   collapsed: boolean
   onToggleDesktop?: () => void
@@ -287,7 +404,7 @@ function SidebarBody({
               background: 'transparent',
               color: K.inkDim,
               fontFamily: K.fMono,
-              fontSize: 10,
+              fontSize: 11,
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
               cursor: 'pointer',
@@ -300,7 +417,12 @@ function SidebarBody({
 
         <div style={{ height: 1, background: K.line }} />
 
-        <NavRow pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+        <NavRow
+          pathname={pathname}
+          currentView={currentView}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
 
         <div style={{ flex: 1 }} />
 
@@ -326,7 +448,7 @@ function SidebarBody({
           />
           {!collapsed ? (
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+              <div style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
                 Your chart
               </div>
             </div>
@@ -339,6 +461,8 @@ function SidebarBody({
 
 export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess = false }: SidebarProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentView = searchParams.get('view')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
@@ -380,6 +504,7 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
       >
         <SidebarBody
           pathname={pathname}
+          currentView={currentView}
           categories={categories}
           collapsed={collapsed}
           onToggleDesktop={() => setCollapsed((c) => !c)}
@@ -445,6 +570,7 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
           >
             <SidebarBody
               pathname={pathname}
+              currentView={currentView}
               categories={categories}
               collapsed={false}
               onNavigate={() => setMobileOpen(false)}

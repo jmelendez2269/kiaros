@@ -1,37 +1,44 @@
 /**
- * Warm Almanac design tokens, ported from Kairos-handoff/.../tokens.jsx.
+ * Almanac design tokens — Obsidian palette.
  *
- * Mirrors the CSS variables defined in app/globals.css (--almanac-*) so the
- * primitives can use inline styles without a Tailwind round-trip. Keep this
- * file in sync with the :root block in globals.css.
+ * Token names kept stable (K.copper, K.bg, etc.) so component code doesn't
+ * have to change. Values are hex equivalents of the Obsidian theme defined
+ * in app/globals.css :root, so /today and /year/month feel like the same
+ * product as /year/year (CosmicCalendar) and the rest of the app.
+ *
+ * Why hex (not hsl()): components concatenate alpha suffixes — `${K.copper}22`,
+ * `${tone}44` — which requires hex literals. If we ever migrate to Tailwind
+ * classes, this file goes away.
  */
 export const K = {
-  // ── palette ──
-  bg: "#15100c",
-  bg2: "#1f1814",
-  bg3: "#2a2018",
-  bg4: "#372a20",
-  line: "rgba(244, 232, 212, 0.10)",
-  lineHi: "rgba(244, 232, 212, 0.18)",
-  ink: "#f4e8d4",
-  inkDim: "#c7b69a",
-  inkSoft: "#8b7a60",
-  inkFaint: "rgba(244, 232, 212, 0.4)",
-  brick: "#7c2d2d",
-  brickHi: "#a04040",
-  copper: "#c9854c",
-  copperHi: "#e0a05c",
-  ember: "#d97c5e",
-  sage: "#7a8a6e",
-  plum: "#6b3d6e",
-  midnight: "#1a2240",
-  starlight: "#a9b4d8",
-  // ── brand accents ──
-  kairos: "#9966ff",
-  kairosHi: "#b58fff",
-  kairosLo: "#6b3fcc",
-  prism: "#4ee7fd",
-  chronos: "#ff9b2b",
+  // ── palette ── Obsidian-equivalent hex
+  bg: "#0a0c14",        // stone-950
+  bg2: "#11131e",       // stone-900
+  bg3: "#181a2a",       // stone-850
+  bg4: "#21243a",       // stone-800
+  line: "rgba(227, 226, 237, 0.10)",
+  lineHi: "rgba(227, 226, 237, 0.18)",
+  ink: "#e3e2ed",       // bone — cool near-white
+  inkDim: "#a4a3b1",    // bone-muted
+  inkSoft: "#6e6d7c",   // pushed brighter than Warm Almanac for AA contrast
+  inkFaint: "rgba(227, 226, 237, 0.4)",
+  // "copper" / "brick" keep their slot names but now resolve to Obsidian's
+  // hero violet — same role (primary accent) as leather-* in /calendar.
+  brick: "#5a3eba",
+  brickHi: "#704bd2",   // leather-500
+  copper: "#a98aef",    // leather-400
+  copperHi: "#c7b3f5",  // leather-300
+  ember: "#df9b3f",     // ember-400 — amber, used sparingly for warm signal
+  sage: "#6798cb",      // moss-400 — Obsidian's "moss" is steel blue
+  plum: "#b08cdc",      // plum-400
+  midnight: "#080a11",  // stone-950 darker — for gradient anchors
+  starlight: "#c1dcef", // moss-200 — pale steel
+  // ── brand accents ── Stelloquy / Kairos identity, anchored on leather
+  kairos: "#704bd2",
+  kairosHi: "#a98aef",
+  kairosLo: "#5a3eba",
+  prism: "#4ee7fd",     // unchanged — distinct cyan accent
+  chronos: "#df9b3f",   // amber
   // ── fonts ──
   fSerif: "var(--font-almanac-serif), \"EB Garamond\", Georgia, serif",
   fBody: "var(--font-almanac-body), ui-sans-serif, system-ui, sans-serif",

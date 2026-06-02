@@ -1,12 +1,13 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { BRAND } from '@/lib/brand'
 import { K } from '@/components/almanac/tokens'
 import { OracleConversation } from './OracleConversation'
 import { StelloquyOrb } from './StelloquyOrb'
+import { useStelloquy } from './StelloquyProvider'
 
 interface Props {
   /** Localized date string to pass into OracleChat's header. */
@@ -14,19 +15,18 @@ interface Props {
 }
 
 /**
- * Global Stelloquy chrome — owns the resting dock + the right-side drawer
- * and the ⌘K shortcut. Mounted once in (app)/layout.tsx so the orb appears
- * on every authed screen.
+ * Global Stelloquy chrome — the resting dock + the right-side drawer + the
+ * ⌘K shortcut. Mounted once in (app)/layout.tsx so the orb appears on every
+ * authed screen.
  *
- * The drawer renders OracleChat inside, so the existing streaming + capture
- * pipeline keeps working unchanged.
+ * Drawer open/close state lives in StelloquyProvider so feature surfaces
+ * (SkyBanner, ActiveTransits, AskOracleButton) can call `openWith(prompt)`
+ * to drop a preseeded question into the drawer. OracleConversation consumes
+ * the preseed on mount.
  */
 export function StelloquyShell({ today }: Props) {
   const pathname = usePathname()
-  const [open, setOpen] = useState(false)
-
-  const close = useCallback(() => setOpen(false), [])
-  const toggle = useCallback(() => setOpen((v) => !v), [])
+  const { open, closeDrawer: close, toggleDrawer: toggle } = useStelloquy()
 
   // ⌘K / Ctrl+K from anywhere. Skip when an input is focused so we don't
   // hijack the journal composer.

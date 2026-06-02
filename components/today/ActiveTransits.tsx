@@ -1,4 +1,9 @@
+'use client'
+
 import { Frame, K, Kicker, GLYPH } from '@/components/almanac'
+import { AskOracleButton } from '@/components/oracle/AskOracleButton'
+import { useStelloquy } from '@/components/oracle/StelloquyProvider'
+import { buildActiveTransitPrompt } from '@/lib/oracle/preseed'
 import type { ActiveTransitsResult, ActiveTransitRow } from '@/lib/today/get-active-transits'
 import type { AspectKind } from '@/components/almanac/tokens'
 import type { Planet } from '@/types/blueprint'
@@ -45,6 +50,8 @@ const RARITY_TONE: Record<string, string> = {
 }
 
 export function ActiveTransits({ data }: Props) {
+  const { hasOracleAccess } = useStelloquy()
+
   if (data.status === 'no-chart') {
     return (
       <Frame tone="umber" padding={22}>
@@ -54,7 +61,7 @@ export function ActiveTransits({ data }: Props) {
             marginTop: 10,
             fontFamily: K.fSerif,
             fontStyle: 'italic',
-            fontSize: 15,
+            fontSize: 16.5,
             color: K.inkDim,
             lineHeight: 1.5,
           }}
@@ -75,7 +82,7 @@ export function ActiveTransits({ data }: Props) {
             marginTop: 10,
             fontFamily: K.fSerif,
             fontStyle: 'italic',
-            fontSize: 15,
+            fontSize: 16.5,
             color: K.inkDim,
             lineHeight: 1.5,
           }}
@@ -92,7 +99,15 @@ export function ActiveTransits({ data }: Props) {
       <Kicker color={K.copper}>Active transits</Kicker>
       <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column' }}>
         {data.rows.map((row, i) => (
-          <TransitRow key={`${row.planet}-${row.aspect}-${row.natalPlanet}`} row={row} first={i === 0} />
+          <AskOracleButton
+            key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
+            prompt={buildActiveTransitPrompt(row)}
+            hasOracleAccess={hasOracleAccess}
+            label={`this ${row.technical}`}
+            triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
+          >
+            <TransitRow row={row} first={i === 0} />
+          </AskOracleButton>
         ))}
       </div>
     </Frame>
@@ -118,7 +133,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fSerif,
-          fontSize: 22,
+          fontSize: 24,
           color: tone,
           letterSpacing: '0.12em',
           whiteSpace: 'nowrap',
@@ -131,7 +146,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         <div
           style={{
             fontFamily: K.fBody,
-            fontSize: 13,
+            fontSize: 14.5,
             color: K.ink,
             lineHeight: 1.35,
           }}
@@ -140,9 +155,9 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         </div>
         <div
           style={{
-            marginTop: 2,
+            marginTop: 3,
             fontFamily: K.fMono,
-            fontSize: 9,
+            fontSize: 10.5,
             color: rarityColor,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
@@ -154,7 +169,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 10.5,
+          fontSize: 12,
           color: K.inkDim,
           whiteSpace: 'nowrap',
         }}
@@ -164,7 +179,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 8.5,
+          fontSize: 10,
           color: K.inkSoft,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',

@@ -51,7 +51,7 @@ export function WeekRibbon({ week }: Props) {
         <div
           style={{
             fontFamily: K.fMono,
-            fontSize: 10,
+            fontSize: 11.5,
             color: K.inkSoft,
             letterSpacing: '0.14em',
           }}
@@ -81,7 +81,7 @@ export function WeekRibbon({ week }: Props) {
               <div
                 style={{
                   fontFamily: K.fMono,
-                  fontSize: 9,
+                  fontSize: 10.5,
                   color: K.inkSoft,
                   letterSpacing: '0.16em',
                 }}
@@ -92,7 +92,7 @@ export function WeekRibbon({ week }: Props) {
                 style={{
                   fontFamily: K.fSerif,
                   fontStyle: 'italic',
-                  fontSize: 24,
+                  fontSize: 27,
                   color: day.isToday ? K.ink : K.inkDim,
                   lineHeight: 1,
                 }}
@@ -101,13 +101,13 @@ export function WeekRibbon({ week }: Props) {
               </div>
               <MoonGlyph
                 phase={day.moonIllumination}
-                size={14}
+                size={16}
                 color={hot ? K.copperHi : K.inkDim}
               />
               <div
                 style={{
                   fontFamily: K.fBody,
-                  fontSize: 10.5,
+                  fontSize: 12,
                   color: day.isToday ? K.copperHi : K.inkSoft,
                   fontStyle: 'italic',
                 }}

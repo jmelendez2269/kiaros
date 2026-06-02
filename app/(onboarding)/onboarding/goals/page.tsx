@@ -27,6 +27,7 @@ export default function OnboardingGoalsPage() {
   const [customInput, setCustomInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -77,7 +78,7 @@ export default function OnboardingGoalsPage() {
     setIsSubmitting(true);
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
 
-    await fetch("/api/goals", {
+    const res = await fetch("/api/goals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -88,6 +89,12 @@ export default function OnboardingGoalsPage() {
         })),
       }),
     });
+
+    if (!res.ok) {
+      setSaveError("Something went wrong saving your goals. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
 
     router.push("/onboarding/study-focus");
   };
@@ -146,6 +153,7 @@ export default function OnboardingGoalsPage() {
         </div>
 
         {error && <p className="text-xs text-destructive">{error}</p>}
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <p className="text-xs text-bone-muted">{selected.length}/7 selected</p>
       </div>
 

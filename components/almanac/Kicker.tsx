@@ -11,7 +11,7 @@ export function Kicker({ children, color = K.copperHi }: Props) {
     <div
       style={{
         fontFamily: K.fMono,
-        fontSize: 10,
+        fontSize: 11.5,
         letterSpacing: "0.22em",
         textTransform: "uppercase",
         color,

@@ -45,16 +45,21 @@ export async function PATCH(req: Request) {
   try {
     const clerkUser = await (await clerkClient()).users.getUser(userId);
     email = clerkUser.emailAddresses?.[0]?.emailAddress;
-  } catch {
-    // Non-fatal: email is best-effort here
+  } catch (err) {
+    console.error("[profile] Clerk user lookup failed:", err);
   }
+
+  // Only include email in the upsert when we have it — undefined is dropped by
+  // JSON serialisation so existing rows are updated safely without touching email,
+  // but a missing-webhook first-insert will fail at the DB NOT NULL constraint
+  // and return 500 to the client rather than silently saving nothing.
+  const upsertPayload = email
+    ? { clerk_user_id: userId, email, ...body }
+    : { clerk_user_id: userId, ...body };
 
   const { error } = await admin
     .from("user_profiles")
-    .upsert(
-      { clerk_user_id: userId, email, ...body },
-      { onConflict: "clerk_user_id" }
-    );
+    .upsert(upsertPayload, { onConflict: "clerk_user_id" });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

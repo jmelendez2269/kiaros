@@ -49,6 +49,36 @@ export interface CurriculumPlanRow {
   created_at: string | null
 }
 
+export interface CurriculumSessionExercise {
+  prompt: string
+  detail?: string | null
+}
+
+export interface CurriculumSessionContent {
+  body: string
+  exercises: CurriculumSessionExercise[]
+  reflectionPrompt: string | null
+}
+
+export interface CurriculumSessionContentRow extends CurriculumSessionContent {
+  id: string
+  curriculum_plan_id: string
+  week_number: number
+  session_order: number
+  model: string
+  generated_at: string
+  updated_at: string
+}
+
+export interface CurriculumSessionProgressRow {
+  id: string
+  curriculum_plan_id: string
+  week_number: number
+  session_order: number
+  completed_at: string | null
+  updated_at: string
+}
+
 export interface CurriculumSessionRow {
   id: string
   curriculum_plan_id: string

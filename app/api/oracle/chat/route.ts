@@ -70,6 +70,7 @@ export async function POST(req: Request) {
       ephemerisRes,
       blueprintRes,
       goalCategoriesRes,
+      areaGoalsRes,
       curriculumPlansRes,
       curriculumSessionsRes,
       dailyLogsRes,
@@ -93,6 +94,12 @@ export async function POST(req: Request) {
         .from('goal_categories')
         .select('name, description, success, sort_order')
         .order('sort_order', { ascending: true }),
+      supabase
+        .from('area_goals')
+        .select('title, description, status, target_label, linked_week_number, goal_categories(name)')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+        .limit(30),
       supabase
         .from('curriculum_plans')
         .select('topic, title, status, intensity, duration_weeks, weekly_hours, objectives, outcomes, skills, summary, start_date, approved_at, created_at')
@@ -158,6 +165,24 @@ export async function POST(req: Request) {
         Tables<'goal_categories'>,
         'name' | 'description' | 'success' | 'sort_order'
       >[],
+      areaGoals: ((areaGoalsRes.data ?? []) as unknown as Array<{
+        title: string
+        description: string | null
+        status: string
+        target_label: string | null
+        linked_week_number: number | null
+        goal_categories: { name: string } | { name: string }[] | null
+      }>).map((g) => {
+        const cat = Array.isArray(g.goal_categories) ? g.goal_categories[0] : g.goal_categories
+        return {
+          title: g.title,
+          description: g.description,
+          status: g.status,
+          target_label: g.target_label,
+          linked_week_number: g.linked_week_number,
+          category_name: cat?.name ?? null,
+        }
+      }),
       curriculumPlans: (curriculumPlansRes.data ?? []) as Pick<
         Tables<'curriculum_plans'>,
         | 'topic' | 'title' | 'status' | 'intensity' | 'duration_weeks' | 'weekly_hours'

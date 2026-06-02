@@ -18,6 +18,7 @@
  */
 
 import type { PlacementExplanation, DailySignal, SkyTimelineEntry } from '@/lib/human-design'
+import type { ActiveTransitRow } from '@/lib/today/get-active-transits'
 
 const SESSION_STORAGE_KEY = 'kiaros.oracle.preseed'
 
@@ -86,6 +87,29 @@ export function buildTransitPrompt(entry: SkyTimelineEntry): string {
 
 export function buildSignalPrompt(signal: DailySignal): string {
   return `On the dashboard today, this signal is showing for me: "${signal.label} — ${signal.technical}. ${signal.plain}". Why does this matter today, specifically for me?`
+}
+
+export function buildActiveTransitPrompt(row: ActiveTransitRow): string {
+  const motion = row.applying ? 'applying' : 'separating'
+  return `Tell me about ${row.technical} — currently ${motion} at orb ${row.orb.toFixed(1)}°. Context: ${row.rarityLabel.toLowerCase()}. ${row.plain} What does it mean for me right now given my chart and what I'm working on?`
+}
+
+export function buildSeasonPrompt(input: {
+  onceInLifetimeCount: number
+  rareCount: number
+  windows: string[] // technical names, e.g. "Pluto opposition natal Moon"
+  hdType?: string | null
+}): string {
+  const { onceInLifetimeCount, rareCount, windows, hdType } = input
+  const counts = [
+    onceInLifetimeCount > 0 ? `${onceInLifetimeCount} once-in-a-lifetime` : null,
+    rareCount > 0 ? `${rareCount} rare` : null,
+  ]
+    .filter(Boolean)
+    .join(' and ')
+  const list = windows.join(', ')
+  const hdPart = hdType ? ` I'm a ${hdType} in Human Design.` : ''
+  return `I'm in a rare season — ${counts} transit window(s) are active at once: ${list}.${hdPart} What does it mean to have several of these slow, once-in-a-lifetime currents overlapping right now, and how should I hold this stretch of my life?`
 }
 
 function formatDuration(days: number): string {

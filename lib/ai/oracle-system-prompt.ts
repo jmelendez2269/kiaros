@@ -1,5 +1,15 @@
-import type { NatalChart, QuarterBlueprint, WeekBlueprint, YearEphemeris } from '@/types/blueprint'
+import type { AspectType, NatalChart, PlanetPosition, QuarterBlueprint, WeekBlueprint, YearEphemeris } from '@/types/blueprint'
 import type { Json, Tables } from '@/types/database'
+import { parseStoredHumanDesign } from '@/lib/human-design'
+
+export interface AreaGoalForPrompt {
+  title: string
+  description: string | null
+  status: string
+  target_label: string | null
+  linked_week_number: number | null
+  category_name: string | null
+}
 
 export interface OraclePromptContext {
   profile: Tables<'user_profiles'> | null
@@ -11,6 +21,7 @@ export interface OraclePromptContext {
     weeks: Json | null
   } | null
   goalCategories: Pick<Tables<'goal_categories'>, 'name' | 'description' | 'success' | 'sort_order'>[]
+  areaGoals: AreaGoalForPrompt[]
   curriculumPlans: Pick<
     Tables<'curriculum_plans'>,
     | 'topic'
@@ -118,7 +129,73 @@ function getSafeQuarterBlueprints(value: Json | null): QuarterBlueprint[] {
 }
 
 function buildLayer1(): string {
-  return `You are Stelloquy (steh-LOH-kwee — from stella + loqui, "a conversation with the stars"), the voice woven through Kiaros. You speak from the intersection of real astronomical data and the user's lived experience. You are warm, grounded, and gently clear. You never give generic astrology. You never use hustle language. You reference real placements and transits when they are relevant, but you offer them as invitations and observations rather than fixed truths. Avoid rigid language like "exact" or "concrete" when speaking about a person's path. Rest is strategy; reflection is data. Assume everyone is moving through different cycles at different speeds. Your grounding context includes the user's life areas and the body of records they have produced in Kiaros, so your guidance should feel longitudinal, personal, and aware of what they are already building. If the user asks who you are or what to call you, you are Stelloquy. Keep responses under 200 words unless the user asks for more detail.`
+  return `You are Stelloquy (steh-LOH-kwee — from stella + loqui, "a conversation with the stars"), the voice woven through Kiaros. You speak from the intersection of real astronomical data and the user's lived experience. You are warm, grounded, and gently clear. You never give generic astrology. You never use hustle language. Avoid rigid language like "exact" or "concrete" when speaking about a person's path. Rest is strategy; reflection is data. Assume everyone is moving through different cycles at different speeds. If the user asks who you are or what to call you, you are Stelloquy.
+
+## Grounding requirement
+
+When the user shares an emotional state, describes feeling "off" or out of sorts, asks why something is happening, or asks for perspective on a current situation, you MUST ground your response in their actual data before offering perspective. Specifically, weave in at least:
+
+1. One CURRENT signal from the dynamic context — a tight transit, a moon phase, a retrograde, or a recent journal/tracker pattern.
+2. One NATAL placement or natal aspect that is relevant to what they are describing.
+3. One HUMAN DESIGN framing (their Type, Strategy, Authority, or a defined/undefined center) if HD data is available.
+
+Do NOT open with generic reassurance like "you're not broken," "that makes so much sense," or "you're in a liminal space." The user came for grounding in their actual chart, not therapist-speak. Start with the data; let interpretation follow.
+
+## Voice on Human Design
+
+HD is a tool the user is thinking with, not a verdict. Phrase Type and Authority framings as "with your [Type] design, you may find..." not "as a [Type], you are X." Admit uncertainty when relevant — especially around edge-case gates.
+
+## Length
+
+Default to ~200 words. For diagnostic or emotional questions ("why am I feeling X", "what's going on for me right now", "what is this"), expand to ~350 words so you can actually thread current transits + natal + HD together. Don't pad to hit a length; expand only when the data merits it.`
+}
+
+type NatalPlanetKey = 'sun' | 'moon' | 'mercury' | 'venus' | 'mars' | 'jupiter' | 'saturn' | 'uranus' | 'neptune' | 'pluto'
+
+const NATAL_PLANETS: { key: NatalPlanetKey; label: string }[] = [
+  { key: 'sun', label: 'Sun' },
+  { key: 'moon', label: 'Moon' },
+  { key: 'mercury', label: 'Mercury' },
+  { key: 'venus', label: 'Venus' },
+  { key: 'mars', label: 'Mars' },
+  { key: 'jupiter', label: 'Jupiter' },
+  { key: 'saturn', label: 'Saturn' },
+  { key: 'uranus', label: 'Uranus' },
+  { key: 'neptune', label: 'Neptune' },
+  { key: 'pluto', label: 'Pluto' },
+]
+
+const NATAL_ASPECTS: { type: AspectType; angle: number; orb: number }[] = [
+  { type: 'conjunction', angle: 0,   orb: 5.0 },
+  { type: 'opposition',  angle: 180, orb: 5.0 },
+  { type: 'square',      angle: 90,  orb: 4.5 },
+  { type: 'trine',       angle: 120, orb: 4.5 },
+  { type: 'sextile',     angle: 60,  orb: 3.0 },
+]
+
+function angularSeparation(a: number, b: number): number {
+  const diff = Math.abs(((a - b) % 360 + 360) % 360)
+  return diff > 180 ? 360 - diff : diff
+}
+
+function computeNatalAspects(chart: NatalChart): Array<{ a: string; b: string; aspect: AspectType; orb: number }> {
+  const out: Array<{ a: string; b: string; aspect: AspectType; orb: number }> = []
+  for (let i = 0; i < NATAL_PLANETS.length; i++) {
+    for (let j = i + 1; j < NATAL_PLANETS.length; j++) {
+      const pa = chart[NATAL_PLANETS[i].key] as PlanetPosition
+      const pb = chart[NATAL_PLANETS[j].key] as PlanetPosition
+      if (typeof pa?.longitude !== 'number' || typeof pb?.longitude !== 'number') continue
+      const sep = angularSeparation(pa.longitude, pb.longitude)
+      for (const aspect of NATAL_ASPECTS) {
+        const orb = Math.abs(sep - aspect.angle)
+        if (orb <= aspect.orb) {
+          out.push({ a: NATAL_PLANETS[i].label, b: NATAL_PLANETS[j].label, aspect: aspect.type, orb })
+          break
+        }
+      }
+    }
+  }
+  return out.sort((x, y) => x.orb - y.orb).slice(0, 10)
 }
 
 function buildLayer2(profile: Tables<'user_profiles'>): string {
@@ -157,6 +234,48 @@ function buildLayer2(profile: Tables<'user_profiles'>): string {
     formatPlanetLine('Pluto', chart.pluto),
   ].filter(Boolean) as string[]
 
+  const aspects = computeNatalAspects(chart)
+  if (aspects.length > 0) {
+    lines.push('', 'Tight natal aspects (within orb):')
+    aspects.forEach((a) => {
+      lines.push(`- ${a.a} ${a.aspect} ${a.b} (${a.orb.toFixed(1)} deg orb)`)
+    })
+  }
+
+  return lines.join('\n')
+}
+
+function buildHumanDesignLayer(profile: Tables<'user_profiles'>): string | null {
+  const hd = parseStoredHumanDesign(profile.human_design)
+  if (!hd) return null
+
+  const bg = hd.bodyGraph
+  const defined = bg.definedCenters.length > 0 ? bg.definedCenters.join(', ') : 'none (Reflector signature)'
+  const undefined_ = (['head','ajna','throat','g','heart','spleen','sacral','solarPlexus','root'] as const)
+    .filter((c) => !bg.definedCenters.includes(c))
+  const undefinedLine = undefined_.length > 0 ? undefined_.join(', ') : 'all defined'
+
+  const channels = bg.activatedChannels.length > 0
+    ? bg.activatedChannels.slice(0, 6).map((c) => `${c.gates[0]}-${c.gates[1]} ${c.name}`).join('; ')
+    : 'none'
+
+  const edgeNote = hd.edgeCases.length > 0
+    ? `\n(${hd.edgeCases.length} placement${hd.edgeCases.length === 1 ? '' : 's'} sit within 0.2 deg of a gate boundary; other HD tools may show different gates here. Treat Type/Strategy/Authority/Profile as load-bearing, channels as slightly softer signal.)`
+    : ''
+
+  const lines = [
+    '## Human Design',
+    `Type: ${bg.type}`,
+    `Strategy: ${bg.strategy}`,
+    `Authority: ${bg.authority}`,
+    `Profile: ${bg.profile} (${bg.profileName})`,
+    `Signature when honoured: ${bg.signature}. Not-self when forced: ${bg.notSelf}.`,
+    `Defined centers: ${defined}`,
+    `Undefined centers (often where the user takes in and amplifies others' energy): ${undefinedLine}`,
+    `Activated channels: ${channels}${edgeNote}`,
+    '',
+    'Use HD as a tool the user is thinking with, not an authority. Phrase framings as invitations ("with your design, you may notice...") not verdicts. The undefined centers are particularly useful when the user is asking why they feel scattered, overwhelmed, or unlike themselves — they may be amplifying conditioning from their environment in those centers.',
+  ]
   return lines.join('\n')
 }
 
@@ -348,6 +467,19 @@ function buildLayer5(ctx: OraclePromptContext): string {
     lines.push('Life areas: not yet defined.')
   }
 
+  if (ctx.areaGoals.length > 0) {
+    lines.push('\nItemised area goals (the user\'s declared specifics inside each life area):')
+    ctx.areaGoals.forEach((goal) => {
+      const parts = [`${goal.category_name ?? 'Area'}: ${goal.title}`]
+      if (goal.status && goal.status !== 'active') parts.push(`status: ${goal.status}`)
+      if (goal.target_label) parts.push(`target: ${goal.target_label}`)
+      if (goal.linked_week_number) parts.push(`linked to week ${goal.linked_week_number}`)
+      const description = summarizeText(goal.description, 100)
+      if (description) parts.push(description)
+      lines.push(`- ${parts.join(' | ')}`)
+    })
+  }
+
   if (ctx.curriculumPlans.length > 0) {
     lines.push('\nCurriculum plans:')
     ctx.curriculumPlans.forEach((plan) => {
@@ -461,15 +593,17 @@ export function buildOracleSystemPrompt(ctx: OraclePromptContext): string {
     return `You are Stelloquy (steh-LOH-kwee), the warm, grounded voice of Kiaros. The user's profile data is not yet available. Encourage them to complete onboarding to unlock personalized guidance.`
   }
 
+  const hdLayer = buildHumanDesignLayer(ctx.profile)
   const layers = [
     buildLayer1(),
     buildLayer2(ctx.profile),
+    hdLayer,
     ctx.ephemeris
       ? buildLayer3(ctx.ephemeris, ctx.today)
       : '## Current Cosmic Context\nEphemeris data unavailable.',
     buildLayer4(ctx.profile, ctx.blueprint, ctx.today),
     buildLayer5(ctx),
-  ]
+  ].filter(Boolean) as string[]
 
   return layers.join('\n\n---\n\n')
 }
@@ -488,11 +622,13 @@ export function buildOracleSystemPromptSegments(ctx: OraclePromptContext): {
     }
   }
 
+  const hdLayer = buildHumanDesignLayer(ctx.profile)
   const cached = [
     buildLayer1(),
     buildLayer2(ctx.profile),
+    hdLayer,
     buildLayer4(ctx.profile, ctx.blueprint, ctx.today),
-  ].join('\n\n---\n\n')
+  ].filter(Boolean).join('\n\n---\n\n')
 
   const dynamic = [
     ctx.ephemeris

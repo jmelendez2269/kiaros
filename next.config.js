@@ -6,6 +6,9 @@ const nextConfig = {
       // Kairos redesign — Today supersedes the dashboard. Permanent so the
       // browser remembers; tracker route folds into the Journal screen.
       { source: '/dashboard', destination: '/today', permanent: true },
+      // /calendar consolidates into /year — CosmicCalendar moves to the new
+      // IA, leather palette preserved. Old /calendar links still resolve.
+      { source: '/calendar', destination: '/year', permanent: true },
       // /oracle still resolves to the legacy chat page in Phase 1.B — the
       // drawer mounted globally is the recommended entry point. Once Phase
       // 4 ships the new Journal screen we can also redirect /tracker.

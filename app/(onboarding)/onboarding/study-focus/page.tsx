@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +16,8 @@ type FormValues = z.infer<typeof schema>;
 
 export default function OnboardingStudyFocusPage() {
   const router = useRouter();
+
+  const [saveError, setSaveError] = useState("");
 
   const {
     register,
@@ -36,13 +38,18 @@ export default function OnboardingStudyFocusPage() {
   const onSubmit = async (values: FormValues) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(values));
 
-    await fetch("/api/profile", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         study_focus: values.study_focus || null,
       }),
     });
+
+    if (!res.ok) {
+      setSaveError("Something went wrong saving your details. Please try again.");
+      return;
+    }
 
     router.push("/onboarding/year-focus");
   };
@@ -78,6 +85,7 @@ export default function OnboardingStudyFocusPage() {
           />
         </div>
 
+        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <button
           type="submit"
           disabled={isSubmitting}

@@ -30,11 +30,11 @@ function ToneCard({ tone }: { tone: ShapeTone }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ color, fontSize: 18, fontFamily: K.fSerif }}>{tone.glyph}</span>
+        <span style={{ color, fontSize: 20, fontFamily: K.fSerif }}>{tone.glyph}</span>
         <span
           style={{
             fontFamily: K.fMono,
-            fontSize: 9,
+            fontSize: 10.5,
             color: K.inkSoft,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
@@ -47,15 +47,15 @@ function ToneCard({ tone }: { tone: ShapeTone }) {
         style={{
           fontFamily: K.fSerif,
           fontStyle: 'italic',
-          fontSize: 22,
+          fontSize: 25,
           color: K.ink,
-          lineHeight: 1,
+          lineHeight: 1.05,
           marginTop: 2,
         }}
       >
         {tone.value}
       </div>
-      <div style={{ fontFamily: K.fBody, fontSize: 11.5, color: K.inkDim }}>{tone.note}</div>
+      <div style={{ fontFamily: K.fBody, fontSize: 13, color: K.inkDim, lineHeight: 1.4 }}>{tone.note}</div>
     </div>
   )
 }
@@ -75,7 +75,7 @@ export function ShapeOfTodayCards({ shape, isoWeek, dayOfYear }: Props) {
         <div
           style={{
             fontFamily: K.fMono,
-            fontSize: 10,
+            fontSize: 11.5,
             color: K.inkSoft,
             letterSpacing: '0.14em',
           }}

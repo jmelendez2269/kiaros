@@ -1,11 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 
 import { createServerSupabase } from '@/lib/supabase/server'
+import { tagCaptureInBackground } from '@/lib/ai/capture-topic-extractor'
 
 const createCaptureSchema = z.object({
-  captured_text: z.string().trim().min(1).max(4000),
+  captured_text: z.string().trim().min(1).max(20000),
   source_message_id: z.string().trim().max(160).optional().nullable(),
   source_role: z.enum(['user', 'assistant', 'system']).default('assistant'),
   source_excerpt: z.string().trim().max(800).optional().nullable(),
@@ -56,6 +57,15 @@ export async function POST(req: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    after(() =>
+      tagCaptureInBackground({
+        userProfileId: profile.id,
+        captureId: data.id,
+        capturedText: data.captured_text,
+        precedingPrompt: data.source_excerpt ?? null,
+      }).catch((err) => console.error('[oracle-captures] tag extraction failed:', err))
+    )
 
     return NextResponse.json(data, { status: 201 })
   } catch (error) {

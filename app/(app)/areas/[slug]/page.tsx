@@ -12,6 +12,7 @@ import {
   slugifyAreaName,
 } from '@/lib/areas'
 import type { MonthBlueprint, NatalChart, WeekBlueprint } from '@/types/blueprint'
+import { AreaGoalsPanel, type AreaGoal } from '@/components/areas/AreaGoalsPanel'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -103,6 +104,15 @@ export default async function AreaDetailPage({
   if (!category || slugifyAreaName(category.name) !== slug) {
     notFound()
   }
+
+  // Goals for this area. Lives on a separate table (migration 0020).
+  const goalsRes = await supabase
+    .from('area_goals')
+    .select('id, title, description, status, target_label, linked_week_number, sort_order, created_at, updated_at')
+    .eq('category_id', category.id)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+  const initialGoals = (goalsRes.data ?? []) as AreaGoal[]
 
   const area = getAreaDefinition(category.name)
   const natalChart = (profileRes.data?.natal_chart as NatalChart | null) ?? null
@@ -393,13 +403,17 @@ export default async function AreaDetailPage({
         </div>
       </section>
 
-      {/* GOALS PLACEHOLDER — quieter callout */}
-      <section className="rounded-[1.2rem] border border-dashed border-leather-400/25 bg-leather-500/4 px-6 py-5">
-        <p className="shell-eyebrow mb-2">Coming next</p>
-        <p className="text-sm leading-[1.65] text-bone-muted">
-          Area-specific goals will live here, linked to the timing windows above so they flow straight into your planner.
-        </p>
-      </section>
+      {/* GOALS — itemised intentions per area */}
+      <AreaGoalsPanel
+        slug={slug}
+        areaName={category.name}
+        initialGoals={initialGoals}
+        upcomingWindows={upcomingWindows.map((w) => ({
+          weekNumber: w.weekNumber,
+          theme: w.theme,
+          startDate: w.startDate,
+        }))}
+      />
     </div>
   )
 }
