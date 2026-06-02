@@ -14,10 +14,12 @@ export type AIFeature =
   | "oracle_explain"
   | "blueprint"
   | "curriculum"
+  | "curriculum_session"
   | "quarterly_review"
   | "month_brief"
   | "journal_insight"
   | "season_read"
+  | "capture_topic_extract"
 
 export interface UsageTotals {
   messageCount: number

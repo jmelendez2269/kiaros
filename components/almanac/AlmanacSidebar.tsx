@@ -45,8 +45,9 @@ const NAV: ReadonlyArray<{
     tone: K.ember,
     href: '/year',
     subItems: [
-      { label: 'Month', href: '/year?view=month', hint: 'lunar month · intentions' },
-      { label: 'Week',  href: '/year?view=week',  hint: 'current week · curriculum' },
+      { label: 'Month',      href: '/year?view=month', hint: 'lunar month · intentions' },
+      { label: 'Week',       href: '/year?view=week',  hint: 'current week · curriculum' },
+      { label: 'Curriculum', href: '/curriculum',      hint: 'study plans · sessions' },
     ],
   },
   { key: 'self', label: 'Self', hint: 'natal · design · areas', glyph: '✺', tone: K.sage, href: '/human-design' },
@@ -59,6 +60,7 @@ const NAV: ReadonlyArray<{
     href: '/journal',
     subItems: [
       { label: 'Insights', href: '/journal/insights', hint: 'patterns kiaros has noticed' },
+      { label: 'Mind map', href: '/insights/map', hint: 'capture topics as a living graph' },
     ],
   },
 ]
