@@ -17,6 +17,7 @@ export default function OnboardingThemePage() {
   const router = useRouter();
   const [selected, setSelected] = useState<ThemeId>("obsidian");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
@@ -40,11 +41,17 @@ export default function OnboardingThemePage() {
     setIsSubmitting(true);
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: selected }));
 
-    await fetch("/api/profile", {
+    const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ theme: selected }),
     });
+
+    if (!res.ok) {
+      setSaveError("Something went wrong saving your theme. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
 
     router.push("/onboarding/generating");
   };
@@ -71,6 +78,7 @@ export default function OnboardingThemePage() {
         </p>
       </div>
 
+      {saveError && <p className="text-sm text-destructive">{saveError}</p>}
       <button
         type="button"
         onClick={onSubmit}
