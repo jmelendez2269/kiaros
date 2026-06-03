@@ -30,7 +30,7 @@ export default async function TodayPage() {
   const admin = createAdminSupabase()
   const { data: profile } = await admin
     .from('user_profiles')
-    .select('id, first_name')
+    .select('id, display_name')
     .eq('clerk_user_id', userId)
     .maybeSingle()
 
@@ -80,7 +80,7 @@ export default async function TodayPage() {
         gap: 18,
       }}
     >
-      <SkyBanner context={context} firstName={profile?.first_name ?? null} />
+      <SkyBanner context={context} firstName={profile?.display_name ?? null} />
 
       <div
         style={{
