@@ -2,9 +2,9 @@
 
 ## Sources of truth
 
-1. **[`PRODUCT_BIBLE.md`](./PRODUCT_BIBLE.md)** — product vision, feature specs, design system, AI architecture. This is the "what" and "why."
-2. **[`docs/architecture-v2.md`](./docs/architecture-v2.md)** — engineering plan, database migration, phase order, open decisions. This is the "how" and "in what order." Reading it before touching code is mandatory.
-3. This file — conventions, common mistakes, and how the current code differs from the target.
+1. **[`PRODUCT_BIBLE.md`](./PRODUCT_BIBLE.md)** — product vision, all shipped features, AI architecture, schema reference. Updated 2026-06-02 from live code audit — this is the definitive feature list.
+2. **[`docs/architecture-v2.md`](./docs/architecture-v2.md)** — engineering phase plan and open decisions. Check before adding new features.
+3. This file — conventions, common mistakes, known gaps.
 
 Anything in `docs/kiaros-*-v1.md` or the `phase2/phase3` handoffs is **archived**. Those describe a watered-down beta that we no longer build. Do not treat them as authoritative.
 
@@ -19,41 +19,41 @@ Kiaros (formerly "Cosmic Life Planner") is a personalised yearly planning system
 - Tailwind CSS (dark-mode first)
 - Clerk — auth
 - Supabase (Postgres, RLS) — data
-- Anthropic via Vercel AI Gateway + AI SDK v6 — Claude Sonnet 4.6 and Haiku 4.5
+- Anthropic SDK (direct, no AI Gateway) — Claude Sonnet 4.6 and Haiku 4.5
 - `astronomia` — ephemeris
 - shadcn/ui — components
 - Recharts — charts (Phase 7)
 - `@dnd-kit/sortable` — DnD (Phase 2)
 
-## Current state (2026-05-20)
+## Current state (2026-06-02)
 
-Kiaros went live ~2026-05-01. The original phase plan is no longer the right map — see [`docs/handoff-2026-05-08.md`](./docs/handoff-2026-05-08.md) for the authoritative snapshot.
+Kiaros went live ~2026-05-01. Schema is at migration 0025. See [`PRODUCT_BIBLE.md`](./PRODUCT_BIBLE.md) for the full shipped feature inventory.
 
-**Shipped (production):**
-- Next.js + Clerk + Supabase wired, RLS-aware clients (`lib/supabase/{client,server,admin}.ts`)
-- Clerk webhook (`app/api/webhooks/clerk/route.ts`); full onboarding flow
-- Schema through migration 0020 (`supabase/migrations/`); `types/database.ts` generated from live schema
-- Ephemeris engine (`lib/ephemeris/`) and blueprint generator (`lib/ai/blueprint-generator.ts`) — AI SDK v6 via Vercel AI Gateway
-- **Cosmic Calendar** — year/month/week views
-- **Tracker** — dynamic per-category metrics, daily logs auto-stamped with lunar phase / sign / cycle phase, 90-day grid + 14-day per-category bars
-- **Oracle chat** — 4-layer system prompt, streaming Sonnet 4.6 with prompt caching, captures (`oracle_captures`) with `include_in_insights` / `include_in_planner` flags, monthly limit
-- **Journal** — entry creation with transit context; `journal_entry_sky` and `journal_entry_aspects` populated per save; `refresh_user_pattern_insight` RPC keeps `user_pattern_insights` current
-- **Curriculum** — AI-generated week-by-week study plans, sessions, approval flow, fed into Oracle context
-- **Areas** — list view enriched with house interpretations (`lib/areas.ts`)
-- **Commerce** — Stripe subscriptions (yearly/monthly) + Etsy `marketplace_orders`; `npm run stripe:sync-catalog`
-- **Admin console** — `app/(admin)/admin/*` (internal)
-- **Public pages** — homepage, contact, policy pages, manifest, icons
-- **Journal Insights** — `/journal/insights` surfaces `user_pattern_insights` with an AI synthesis layer (Haiku 4.5) on top of the SQL summary fallback; per-user voice control (`user_settings`) with three presets + custom prompt; bulk regen via Next 15 `after()` with page polling. See [`docs/handoff-2026-05-19-journal-insight-voice.md`](./docs/handoff-2026-05-19-journal-insight-voice.md).
-- **Quarterly Reviews** — create/edit surface live; deltas vs prior quarter shown under each activity stat. See [`docs/handoff-2026-05-19-quarterly-reviews-polish.md`](./docs/handoff-2026-05-19-quarterly-reviews-polish.md).
-- **Areas detail pages** — `/areas/[slug]` is a real detail page (hero, current window, year narrative, chart anchors, upcoming windows) plus an itemised goals surface (`area_goals` table, migration 0020 applied to prod) via `AreaGoalsPanel`. See [`docs/handoff-2026-05-20-areas-goals.md`](./docs/handoff-2026-05-20-areas-goals.md).
-- **HD + Gene Keys in the blueprint** — `blueprint-generator.ts` computes/stores Human Design and feeds it to `blueprint-system-prompt.ts` (`humanDesignToText`, per-Type weekly framing). `/human-design` surfaces the chart. (HD is framed as a tool, not an authority — it should admit uncertainty.)
-- **Journal Insights entry points** — JournalComposer CTA promoted to a bordered panel; AlmanacSidebar has an indented Insights sub-entry under Journal.
+**All of the following are live in production:**
+- Auth (Clerk), DB (Supabase), RLS clients, Clerk webhook
+- Blueprint generation (Sonnet 4.6, `after()` async, `maxDuration = 300`)
+- Stelloquy / Oracle — streaming chat, 4-layer prompt caching, captures, topic extraction, capture network graph
+- Journal — transit-stamped entries, pattern insights, voice-customizable AI synthesis
+- Cosmic Calendar — year / month / week / review tabs
+- Daily Tracker — 90-day consistency grid, lunar-stamped logs
+- Today Dashboard — sky now, active transits, season read, daily intention, curriculum session
+- Curriculum — AI plan generation, session detail, progress tracking
+- Areas + Goals — detail pages, natal house mappings, timing windows, `area_goals`
+- Quarterly Reviews — user fills wins/challenges/pivots, AI summary, delta vs prior quarter
+- Month Briefs — generated per month, editable, shown in month view
+- Human Design — bodygraph chart, type/strategy/authority/profile
+- Blueprint page — full 52-week read view
+- Settings — profile, theme, oracle usage, billing
+- Commerce — Stripe + Etsy + activation codes + `product_entitlements`
+- Admin console — content import / card approval workflow
+- Onboarding — 6-step flow → blueprint generation polling page
 
 **Gaps (priority order):**
-- **Quarterly Reviews UI polish backlog** — see latest QR handoff for residual items (Q2 ends 2026-06-30)
-- **Year Unwrapped** — not built; distinct from the `/year` Cosmic Calendar (which is shipped). It's the Q4 year-end recap: 8-section retrospective with Recharts (not yet installed) + AI year-end letter. See `docs/architecture-v2.md` Phase 7.
-- **Areas → Oracle / quarterly-review wiring** — `area_goals` exists as a standalone surface; not yet pulled into Oracle's system prompt or QR activity stats (handoff-2026-05-20 §5 MEDIUM #5–6).
-- **HD + Gene Keys deepening** — math layer validated under `lib/ephemeris/human-design/`; further Gene Keys / onboarding work is Phase 4.5 in `docs/architecture-v2.md` §8.
+- **Quarterly Reviews Q2 polish** — Q2 ends 2026-06-30; see latest QR handoff
+- **Year Unwrapped** — not built. Q4 year-end retrospective: 8 sections + Recharts + AI year-end letter. `docs/architecture-v2.md` Phase 7.
+- **Areas → Oracle / QR wiring** — `area_goals` not yet pulled into Oracle system prompt or QR activity stats
+- **Gene Keys deepening** — HD math validated; IQ/EQ/SQ/Core/Culture/Vocation paths not implemented
+- **Cycle onboarding step** — page exists but cycle data unused downstream
 
 ## Conventions
 
@@ -118,4 +118,4 @@ A feature is done when:
 
 ---
 
-**Last updated:** 2026-05-22 — Doc reconciliation: Areas detail pages + goals (migration 0020 confirmed applied to prod), HD-in-blueprint, and Journal Insights entry points moved to Shipped (they were stale "gaps"). Schema at 0020. Remaining real gaps: Year Unwrapped (Q4), Areas→Oracle wiring, HD deepening.
+**Last updated:** 2026-06-02 — Full live code audit; PRODUCT_BIBLE.md created from scratch. Schema at 0025. maxDuration on blueprint/generate raised to 300. AI stack: direct Anthropic SDK (no Vercel AI Gateway).

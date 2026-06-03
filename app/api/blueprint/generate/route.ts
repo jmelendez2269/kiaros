@@ -3,7 +3,9 @@ import { NextResponse, after } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
 
-export const maxDuration = 60;
+// Blueprint generation calls Claude with a large prompt — 5+ minutes is normal.
+// after() runs within this window, so it must be large enough for the full AI call.
+export const maxDuration = 300;
 
 export async function POST() {
   const { userId } = await auth();
