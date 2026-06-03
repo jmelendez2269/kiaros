@@ -34,7 +34,9 @@ export default async function TodayPage() {
     .eq('clerk_user_id', userId)
     .maybeSingle()
 
-  if (!profile?.id) redirect('/sign-in')
+  // If no profile row exists the app layout would have already redirected to
+  // /onboarding, so this is a safety net only — don't loop back to /sign-in.
+  if (!profile?.id) redirect('/onboarding')
   const supabaseUserId = profile.id
 
   const context = getTodayContext()
