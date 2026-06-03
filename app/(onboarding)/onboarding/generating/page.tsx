@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BRAND } from "@/lib/brand";
+import { TOUR_PENDING_KEY } from "@/lib/tour/config";
 
-const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 min — generous ceiling for Claude generation
+const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_INTERVAL_MS = 8000;
+const STUDY_FOCUS_KEY = "kiaros_onboarding_step3_study_focus";
 
 // ─── Feature slides ────────────────────────────────────────────────────────
 
@@ -62,15 +64,38 @@ const SLIDES = [
   },
 ];
 
+const DURATION_OPTIONS = [
+  { label: "4 weeks", value: 4 },
+  { label: "8 weeks", value: 8 },
+  { label: "12 weeks", value: 12 },
+  { label: "16 weeks", value: 16 },
+];
+
+const INTENSITY_OPTIONS: { label: string; description: string; value: "light" | "balanced" | "dense" }[] = [
+  { label: "Light", description: "1–2 hrs/week", value: "light" },
+  { label: "Balanced", description: "3–5 hrs/week", value: "balanced" },
+  { label: "Dense", description: "6+ hrs/week", value: "dense" },
+];
+
+type Phase = "loading" | "nudge" | "building";
+
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default function OnboardingGeneratingPage() {
   const router = useRouter();
   const hasFired = useRef(false);
+
+  const [phase, setPhase] = useState<Phase>("loading");
   const [failed, setFailed] = useState(false);
   const [errorDetail, setErrorDetail] = useState<string>("");
   const [slideIndex, setSlideIndex] = useState(0);
   const [, setRetrying] = useState(false);
+
+  // Nudge form state
+  const [topic, setTopic] = useState("");
+  const [durationWeeks, setDurationWeeks] = useState(8);
+  const [intensity, setIntensity] = useState<"light" | "balanced" | "dense">("balanced");
+  const [nudgeError, setNudgeError] = useState("");
 
   // Auto-advance slides every 7 seconds
   useEffect(() => {
@@ -79,6 +104,38 @@ export default function OnboardingGeneratingPage() {
     }, 7000);
     return () => clearInterval(id);
   }, []);
+
+  function clearOnboardingStorage() {
+    ["kiaros_onboarding_step1", "kiaros_onboarding_step2", "kiaros_onboarding_step3", "kiaros_onboarding_step4"].forEach(
+      (k) => sessionStorage.removeItem(k)
+    );
+  }
+
+  function finishAndRedirect() {
+    sessionStorage.removeItem(STUDY_FOCUS_KEY);
+    // Signal TourOverlay to start the tour on first login
+    localStorage.setItem(TOUR_PENDING_KEY, '1');
+    router.replace("/dashboard");
+  }
+
+  function onBlueprintReady() {
+    clearOnboardingStorage();
+    try {
+      const raw = sessionStorage.getItem(STUDY_FOCUS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { study_focus?: string };
+        const text = parsed.study_focus?.trim() ?? "";
+        if (text.length > 0) {
+          setTopic(text.slice(0, 140));
+          setPhase("nudge");
+          return;
+        }
+      }
+    } catch {
+      // sessionStorage parse failed — just redirect
+    }
+    finishAndRedirect();
+  }
 
   async function startGeneration() {
     try {
@@ -125,17 +182,15 @@ export default function OnboardingGeneratingPage() {
 
         if (status === "ready" || status === "error") {
           clearInterval(poll);
-          ["kiaros_onboarding_step1", "kiaros_onboarding_step2", "kiaros_onboarding_step3", "kiaros_onboarding_step4"].forEach(
-            (k) => sessionStorage.removeItem(k)
-          );
 
           if (status === "error") {
+            clearOnboardingStorage();
             setErrorDetail(error || "Something went wrong during generation.");
             setFailed(true);
             return;
           }
 
-          router.replace("/dashboard");
+          onBlueprintReady();
         }
       } catch (err) {
         console.error("[generating] Poll error:", err);
@@ -162,8 +217,37 @@ export default function OnboardingGeneratingPage() {
     await startGeneration();
   }
 
+  async function handleBuildCurriculum() {
+    const trimmed = topic.trim();
+    if (!trimmed) {
+      setNudgeError("Please enter a topic so Kiaros knows what to plan.");
+      return;
+    }
+    setNudgeError("");
+    setPhase("building");
+    try {
+      const res = await fetch("/api/curriculum/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: trimmed, durationWeeks, intensity, skills: [] }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setNudgeError((data as { error?: string }).error ?? "Couldn't build the curriculum right now — you can create one from the Curriculum page.");
+        setPhase("nudge");
+        return;
+      }
+    } catch {
+      setNudgeError("Couldn't reach the server — you can create a curriculum from the Curriculum page.");
+      setPhase("nudge");
+      return;
+    }
+    finishAndRedirect();
+  }
+
   const slide = SLIDES[slideIndex];
 
+  // ── Error state ──────────────────────────────────────────────────────────
   if (failed) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -190,6 +274,107 @@ export default function OnboardingGeneratingPage() {
     );
   }
 
+  // ── Curriculum nudge ─────────────────────────────────────────────────────
+  if (phase === "nudge" || phase === "building") {
+    const isBuilding = phase === "building";
+    return (
+      <div className="flex min-h-[80vh] flex-col items-center justify-center gap-8 px-4 py-12">
+        <div className="w-full max-w-md space-y-8">
+          <div className="space-y-3 text-center">
+            <p className="shell-kicker">Your planner is ready</p>
+            <h2 className="font-serif text-3xl text-bone">Build your first curriculum?</h2>
+            <p className="text-sm leading-relaxed text-bone-muted">
+              You mentioned what you want to study. Kiaros can generate a week-by-week plan around it right now — tied to your blueprint timeline.
+            </p>
+          </div>
+
+          <div className="shell-panel space-y-6 px-6 py-7">
+            {/* Topic */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-bone">What are you studying?</label>
+              <textarea
+                value={topic}
+                onChange={(e) => setTopic(e.target.value.slice(0, 140))}
+                disabled={isBuilding}
+                rows={3}
+                placeholder="e.g., Depth psychology and Jungian archetypes"
+                className="w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400 disabled:opacity-50"
+              />
+              <p className="text-right text-[10px] text-bone-muted/50">{topic.length}/140</p>
+            </div>
+
+            {/* Duration */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-bone">How long?</label>
+              <div className="flex gap-2">
+                {DURATION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={isBuilding}
+                    onClick={() => setDurationWeeks(opt.value)}
+                    className={`flex-1 rounded-xl border py-2 text-xs font-medium transition-colors disabled:opacity-50 ${
+                      durationWeeks === opt.value
+                        ? "border-leather-400 bg-leather-500/30 text-bone"
+                        : "border-border/60 bg-transparent text-bone-muted hover:border-leather-400/50 hover:text-bone"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Intensity */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-bone">Intensity</label>
+              <div className="flex gap-2">
+                {INTENSITY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={isBuilding}
+                    onClick={() => setIntensity(opt.value)}
+                    className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl border py-2.5 transition-colors disabled:opacity-50 ${
+                      intensity === opt.value
+                        ? "border-leather-400 bg-leather-500/30 text-bone"
+                        : "border-border/60 bg-transparent text-bone-muted hover:border-leather-400/50 hover:text-bone"
+                    }`}
+                  >
+                    <span className="text-xs font-medium">{opt.label}</span>
+                    <span className="text-[10px] opacity-70">{opt.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {nudgeError && (
+              <p className="rounded-xl bg-stone-950/60 p-3 text-sm text-bone-muted/80">{nudgeError}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleBuildCurriculum}
+              disabled={isBuilding}
+              className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-60"
+            >
+              {isBuilding ? "Building your curriculum…" : "Yes, build my curriculum"}
+            </button>
+            <button
+              onClick={finishAndRedirect}
+              disabled={isBuilding}
+              className="w-full rounded-2xl border border-border/40 bg-transparent px-4 py-3 text-sm text-bone-muted hover:text-bone disabled:opacity-50"
+            >
+              Skip for now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Loading state ─────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center gap-10 px-4 py-12">
 

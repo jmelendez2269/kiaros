@@ -169,6 +169,7 @@ function NavRow({
             href={n.href}
             onClick={onNavigate}
             title={collapsed ? n.label : undefined}
+            data-tour={`nav-${n.key}`}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -254,6 +255,7 @@ function NavRow({
                     key={sub.href}
                     href={sub.href}
                     onClick={onNavigate}
+                    data-tour={sub.href === '/curriculum' ? 'nav-curriculum' : undefined}
                     style={{
                       display: 'flex',
                       flexDirection: 'column',

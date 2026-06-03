@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { CalendarDays, MessageCircle, Palette, Sparkles, UserRound } from "lucide-react";
 import { ThemePicker } from "@/components/shared/ThemePicker";
 import { THEMES, type ThemeId } from "@/lib/constants";
+import { startTour } from "@/lib/tour/config";
 
 const COOKIE_NAME = "kiaros-theme";
 
@@ -484,6 +485,19 @@ export default function SettingsPage() {
             >
               Open journal
             </Link>
+            <Link
+              href="/onboarding/curriculum"
+              className="rounded-xl border border-border/80 bg-stone-950/75 px-4 py-2.5 text-sm font-medium text-bone-muted transition-colors hover:text-bone"
+            >
+              Set up curriculum
+            </Link>
+            <button
+              type="button"
+              onClick={startTour}
+              className="rounded-xl border border-border/80 bg-stone-950/75 px-4 py-2.5 text-sm font-medium text-bone-muted transition-colors hover:text-bone"
+            >
+              Restart tour
+            </button>
             <button
               type="button"
               onClick={handleSave}

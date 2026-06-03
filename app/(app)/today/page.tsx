@@ -67,6 +67,10 @@ export default async function TodayPage() {
     yearEphemeris = (ephemerisRow?.data as YearEphemeris | null) ?? null
   }
 
+  const currentWeek = blueprintLoaded?.blueprint.weeks.find(
+    (w) => w.weekNumber === context.meta.isoWeek
+  ) ?? null
+
   return (
     <div
       style={{
@@ -80,7 +84,7 @@ export default async function TodayPage() {
         gap: 18,
       }}
     >
-      <SkyBanner context={context} firstName={profile?.display_name ?? null} />
+      <SkyBanner context={context} firstName={profile?.display_name ?? null} weekTheme={currentWeek?.theme ?? null} />
 
       <div
         style={{

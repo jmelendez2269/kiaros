@@ -11,6 +11,7 @@ import type { Planet, ZodiacSign } from '@/types/blueprint'
 interface Props {
   context: TodayContext
   firstName?: string | null
+  weekTheme?: string | null
 }
 
 function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: number): string {
@@ -27,7 +28,7 @@ function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: numb
 
 // The editorial moment of the page. Uses a sunset gradient by default;
 // later we can vary by time of day or season via window.__kairosTweaks.
-export function SkyBanner({ context, firstName }: Props) {
+export function SkyBanner({ context, firstName, weekTheme }: Props) {
   const { today, sabian, meta } = context
   const { hasOracleAccess } = useStelloquy()
   const moonPos = `${Math.round(today.moon.degreeInSign)}° ${signGlyph(today.moon.sign)}`
@@ -108,7 +109,7 @@ export function SkyBanner({ context, firstName }: Props) {
               textWrap: 'balance',
             }}
           >
-            {firstName ? `${firstName}, ` : ''}the sky is editing. Trust the small revision.
+            {firstName ? `${firstName} — ` : ''}{weekTheme ?? 'the sky is editing. Trust the small revision.'}
           </div>
           <div
             style={{
