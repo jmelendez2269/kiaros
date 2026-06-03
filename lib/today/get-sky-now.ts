@@ -1,5 +1,5 @@
 import 'server-only'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { getDailyLongitudesForDate } from '@/lib/ephemeris'
 import type { AspectType, NatalChart, Planet, YearEphemeris } from '@/types/blueprint'
 
@@ -37,21 +37,22 @@ export type SkyNowResult =
  * user's natal chart and the day's active aspects. Returns `no-chart` when the
  * user hasn't completed onboarding or the year's ephemeris hasn't been cached.
  */
-export async function getSkyNow(date: string): Promise<SkyNowResult> {
-  const supabase = await createServerSupabase()
+export async function getSkyNow(date: string, supabaseUserId: string): Promise<SkyNowResult> {
+  const admin = createAdminSupabase()
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('user_profiles')
     .select('id, natal_chart')
+    .eq('id', supabaseUserId)
     .maybeSingle()
 
   if (!profile?.id || !profile.natal_chart) return { status: 'no-chart' }
 
   const year = Number.parseInt(date.slice(0, 4), 10)
-  const { data: cached } = await supabase
+  const { data: cached } = await admin
     .from('ephemeris_cache')
     .select('data')
-    .eq('user_id', profile.id)
+    .eq('user_id', supabaseUserId)
     .eq('year', year)
     .maybeSingle()
 

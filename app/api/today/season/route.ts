@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { getUserProfileId } from '@/lib/ai/usage'
 import { getTodayContext } from '@/lib/today/get-today-context'
 import { getSeason } from '@/lib/today/get-season'
@@ -27,7 +27,7 @@ export async function POST() {
     }
 
     const date = getTodayContext().today.date
-    const season = await getSeason(date)
+    const season = await getSeason(date, profileId)
 
     // No active heavy windows (or no chart) → nothing to synthesise.
     if (season.status !== 'ok') {
@@ -49,8 +49,8 @@ export async function POST() {
       },
     })
 
-    const supabase = await createServerSupabase()
-    const { error } = await supabase.from('user_settings').upsert(
+    const admin = createAdminSupabase()
+    const { error } = await admin.from('user_settings').upsert(
       {
         user_id: profileId,
         season_read: read,

@@ -1,4 +1,4 @@
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import {
   buildSkyTimeline,
   parseStoredHumanDesign,
@@ -117,14 +117,15 @@ function buildFallback(heavy: SeasonHeavyWindow[]): string {
   return `${planetList} ${planets.length === 1 ? 'is' : 'are'} each touching your chart at once. These are the slowest movers in the sky — this exact configuration won't return in your lifetime.`
 }
 
-export async function getSeason(date: string): Promise<SeasonResult> {
-  const supabase = await createServerSupabase()
+export async function getSeason(date: string, supabaseUserId: string): Promise<SeasonResult> {
+  const admin = createAdminSupabase()
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('user_profiles')
     .select(
       'id, natal_chart, human_design, birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng',
     )
+    .eq('id', supabaseUserId)
     .maybeSingle()
 
   if (!profile?.id || !profile.natal_chart) {
@@ -132,10 +133,10 @@ export async function getSeason(date: string): Promise<SeasonResult> {
   }
 
   const year = Number.parseInt(date.slice(0, 4), 10)
-  const { data: cached } = await supabase
+  const { data: cached } = await admin
     .from('ephemeris_cache')
     .select('data')
-    .eq('user_id', profile.id)
+    .eq('user_id', supabaseUserId)
     .eq('year', year)
     .maybeSingle()
 
@@ -188,10 +189,10 @@ export async function getSeason(date: string): Promise<SeasonResult> {
   }
 
   // Cached read — only valid if the stored signature still matches.
-  const { data: settings } = await supabase
+  const { data: settings } = await admin
     .from('user_settings')
     .select('season_read, season_read_signature')
-    .eq('user_id', profile.id)
+    .eq('user_id', supabaseUserId)
     .maybeSingle()
 
   const cachedRead =

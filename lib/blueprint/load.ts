@@ -1,4 +1,4 @@
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import type { BlueprintOutput, MoonPhase } from '@/types/blueprint'
 import type { ArcPeriod } from '@/components/year/PushRestRibbon'
 import { sanitizePushRestArc } from '@/lib/year/push-rest-arc'
@@ -79,15 +79,16 @@ export interface LoadedBlueprint {
   pushRestArc: ArcPeriod[] | null
 }
 
-export async function loadCurrentBlueprint(): Promise<LoadedBlueprint | null> {
-  const supabase = await createServerSupabase()
+export async function loadCurrentBlueprint(supabaseUserId: string): Promise<LoadedBlueprint | null> {
+  const admin = createAdminSupabase()
   const currentYear = new Date().getFullYear()
 
-  const { data: row } = await supabase
+  const { data: row } = await admin
     .from('blueprints')
     .select(
       'id, plan_year, year_theme, year_summary, quarters, months, weeks, push_periods, rest_periods, push_rest_arc'
     )
+    .eq('user_id', supabaseUserId)
     .eq('plan_year', currentYear)
     .eq('status', 'ready')
     .order('version', { ascending: false })

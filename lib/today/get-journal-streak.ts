@@ -1,4 +1,4 @@
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 
 const LOOKBACK_DAYS = 90
 
@@ -7,16 +7,17 @@ const LOOKBACK_DAYS = 90
  * which the user wrote at least one journal entry. A streak that ended
  * yesterday still counts — today's blank slate hasn't broken it yet.
  */
-export async function getJournalStreak(today: string): Promise<number> {
-  const supabase = await createServerSupabase()
+export async function getJournalStreak(today: string, supabaseUserId: string): Promise<number> {
+  const admin = createAdminSupabase()
 
   const start = new Date(`${today}T12:00:00`)
   start.setDate(start.getDate() - (LOOKBACK_DAYS - 1))
   const startIso = start.toISOString().slice(0, 10)
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('journal_entries')
     .select('entry_date')
+    .eq('user_id', supabaseUserId)
     .gte('entry_date', startIso)
     .lte('entry_date', today)
     .order('entry_date', { ascending: false })

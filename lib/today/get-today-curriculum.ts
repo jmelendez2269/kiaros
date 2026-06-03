@@ -1,5 +1,5 @@
 import 'server-only'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 
 export interface TodayCurriculumSession {
   id: string
@@ -30,12 +30,13 @@ function daysBetween(fromISO: string, toISO: string): number {
  * today is empty. Sessions are scoped to approved (ready) plans via RLS —
  * draft/pending plans don't have sessions inserted yet.
  */
-export async function getTodayCurriculum(date: string): Promise<TodayCurriculumResult> {
-  const supabase = await createServerSupabase()
+export async function getTodayCurriculum(date: string, supabaseUserId: string): Promise<TodayCurriculumResult> {
+  const admin = createAdminSupabase()
 
-  const { data: todayRows } = await supabase
+  const { data: todayRows } = await admin
     .from('curriculum_sessions')
     .select('id, curriculum_plan_id, curriculum_title, title, description, session_type, estimated_minutes, week_number, scheduled_for, status')
+    .eq('user_id', supabaseUserId)
     .eq('scheduled_for', date)
     .order('session_order', { ascending: true })
 
@@ -57,9 +58,10 @@ export async function getTodayCurriculum(date: string): Promise<TodayCurriculumR
     }
   }
 
-  const { data: nextRow } = await supabase
+  const { data: nextRow } = await admin
     .from('curriculum_sessions')
     .select('id, curriculum_plan_id, curriculum_title, title, description, session_type, estimated_minutes, week_number, scheduled_for, status')
+    .eq('user_id', supabaseUserId)
     .gt('scheduled_for', date)
     .eq('status', 'scheduled')
     .order('scheduled_for', { ascending: true })

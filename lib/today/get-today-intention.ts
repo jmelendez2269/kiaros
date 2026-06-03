@@ -1,5 +1,5 @@
 import 'server-only'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import type { MonthBlueprint, QuarterBlueprint, WeekBlueprint } from '@/types/blueprint'
 
 export interface TodayIntention {
@@ -36,14 +36,15 @@ function firstSentence(text: string | null): string | null {
   return (match ? match[0] : normalized).trim()
 }
 
-export async function getTodayIntention(date: string): Promise<TodayIntentionResult> {
-  const supabase = await createServerSupabase()
+export async function getTodayIntention(date: string, supabaseUserId: string): Promise<TodayIntentionResult> {
+  const admin = createAdminSupabase()
 
   const [{ data: profile }, { data: blueprint }] = await Promise.all([
-    supabase.from('user_profiles').select('word_of_year').maybeSingle(),
-    supabase
+    admin.from('user_profiles').select('word_of_year').eq('id', supabaseUserId).maybeSingle(),
+    admin
       .from('blueprints')
       .select('year_theme, year_summary, quarters, months, weeks, plan_year')
+      .eq('user_id', supabaseUserId)
       .eq('plan_year', Number.parseInt(date.slice(0, 4), 10))
       .eq('status', 'ready')
       .order('version', { ascending: false })

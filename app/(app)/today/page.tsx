@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { Frame, K, Kicker } from '@/components/almanac'
 import { getTodayContext } from '@/lib/today/get-today-context'
 import { getShapeOfToday } from '@/lib/today/shape-of-today'
@@ -27,11 +27,15 @@ export default async function TodayPage() {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const supabase = await createServerSupabase()
-  const { data: profile } = await supabase
+  const admin = createAdminSupabase()
+  const { data: profile } = await admin
     .from('user_profiles')
     .select('id, first_name')
+    .eq('clerk_user_id', userId)
     .maybeSingle()
+
+  if (!profile?.id) redirect('/sign-in')
+  const supabaseUserId = profile.id
 
   const context = getTodayContext()
   const shape = getShapeOfToday({
@@ -39,22 +43,23 @@ export default async function TodayPage() {
     moonSign: context.today.moon.sign,
   })
   const [activeTransits, journalStreak, intention, curriculum, skyNow, season] = await Promise.all([
-    getActiveTransits(context.today.date),
-    getJournalStreak(context.today.date),
-    getTodayIntention(context.today.date),
-    getTodayCurriculum(context.today.date),
-    getSkyNow(context.today.date),
-    getSeason(context.today.date),
+    getActiveTransits(context.today.date, supabaseUserId),
+    getJournalStreak(context.today.date, supabaseUserId),
+    getTodayIntention(context.today.date, supabaseUserId),
+    getTodayCurriculum(context.today.date, supabaseUserId),
+    getSkyNow(context.today.date, supabaseUserId),
+    getSeason(context.today.date, supabaseUserId),
   ])
 
   // Year-at-a-glance grid (same data the Year tab uses): the current
   // blueprint's weeks plus the cached year ephemeris.
-  const blueprintLoaded = await loadCurrentBlueprint()
+  const blueprintLoaded = await loadCurrentBlueprint(supabaseUserId)
   let yearEphemeris: YearEphemeris | null = null
   if (blueprintLoaded) {
-    const { data: ephemerisRow } = await supabase
+    const { data: ephemerisRow } = await admin
       .from('ephemeris_cache')
       .select('data')
+      .eq('user_id', supabaseUserId)
       .eq('year', blueprintLoaded.planYear)
       .maybeSingle()
     yearEphemeris = (ephemerisRow?.data as YearEphemeris | null) ?? null

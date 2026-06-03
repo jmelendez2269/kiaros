@@ -5,7 +5,7 @@ import { CosmicPlanView } from '@/components/cosmic-plan/CosmicPlanView'
 import { WeekView } from '@/components/calendar/WeekView'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import type { EphemerisDay, MonthBlueprint, MoonPhase, YearEphemeris } from '@/types/blueprint'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import { Frame, Kicker, K } from '@/components/almanac'
@@ -122,20 +122,33 @@ interface PageProps {
 }
 
 async function loadYearData() {
-  const loaded = await loadCurrentBlueprint()
-  if (!loaded) return { loaded: null, yearEphemeris: null, curriculumSessions: [] as CurriculumSessionRow[] }
+  const { userId } = await auth()
+  if (!userId) return { loaded: null, yearEphemeris: null, curriculumSessions: [] as CurriculumSessionRow[], supabaseUserId: null }
 
-  const supabase = await createServerSupabase()
+  const admin = createAdminSupabase()
+  const { data: profileRow } = await admin
+    .from('user_profiles')
+    .select('id')
+    .eq('clerk_user_id', userId)
+    .maybeSingle()
+
+  const supabaseUserId = profileRow?.id ?? null
+  if (!supabaseUserId) return { loaded: null, yearEphemeris: null, curriculumSessions: [] as CurriculumSessionRow[], supabaseUserId: null }
+
+  const loaded = await loadCurrentBlueprint(supabaseUserId)
+  if (!loaded) return { loaded: null, yearEphemeris: null, curriculumSessions: [] as CurriculumSessionRow[], supabaseUserId }
+
   const startDate = `${loaded.planYear}-01-01`
   const endDate = `${loaded.planYear}-12-31`
 
   const [ephemerisRes, sessionsRes] = await Promise.all([
-    supabase.from('ephemeris_cache').select('data').eq('year', loaded.planYear).maybeSingle(),
-    supabase
+    admin.from('ephemeris_cache').select('data').eq('user_id', supabaseUserId).eq('year', loaded.planYear).maybeSingle(),
+    admin
       .from('curriculum_sessions')
       .select(
         'id, curriculum_plan_id, curriculum_title, week_number, session_order, title, description, session_type, estimated_minutes, scheduled_for, status'
       )
+      .eq('user_id', supabaseUserId)
       .gte('scheduled_for', startDate)
       .lte('scheduled_for', endDate)
       .order('scheduled_for', { ascending: true }),
@@ -145,6 +158,7 @@ async function loadYearData() {
     loaded,
     yearEphemeris: (ephemerisRes.data?.data as YearEphemeris | null) ?? null,
     curriculumSessions: (sessionsRes.data ?? []) as CurriculumSessionRow[],
+    supabaseUserId,
   }
 }
 
@@ -304,7 +318,7 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
   const today = { year: now.getFullYear(), month: now.getMonth(), day: now.getDate() }
   const selected = parseMonth(searchParams.month, { year: today.year, month: today.month })
 
-  const { loaded, yearEphemeris, curriculumSessions } = await loadYearData()
+  const { loaded, yearEphemeris, curriculumSessions, supabaseUserId } = await loadYearData()
 
   const weekStart = new Date(selected.year, selected.month, 1)
   const weekNumber = isoWeek(weekStart)
@@ -323,19 +337,14 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
   const lastDay = new Date(selected.year, selected.month + 1, 0).getDate()
   const monthStart = `${monthPrefix}01`
   const monthEnd = `${monthPrefix}${String(lastDay).padStart(2, '0')}`
-  const supabase = await createServerSupabase()
+  const admin = createAdminSupabase()
   const [journalRes, briefRes] = await Promise.all([
-    supabase
-      .from('journal_entries')
-      .select('entry_date')
-      .gte('entry_date', monthStart)
-      .lte('entry_date', monthEnd),
-    supabase
-      .from('month_briefs')
-      .select('brief_text, generated_at, edited_at, pinned')
-      .eq('plan_year', selected.year)
-      .eq('month', selected.month + 1)
-      .maybeSingle(),
+    supabaseUserId
+      ? admin.from('journal_entries').select('entry_date').eq('user_id', supabaseUserId).gte('entry_date', monthStart).lte('entry_date', monthEnd)
+      : Promise.resolve({ data: [] }),
+    supabaseUserId
+      ? admin.from('month_briefs').select('brief_text, generated_at, edited_at, pinned').eq('user_id', supabaseUserId).eq('plan_year', selected.year).eq('month', selected.month + 1).maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
   const journalDays = new Set<number>()
   for (const row of journalRes.data ?? []) {
@@ -797,7 +806,7 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
   const currentQ = currentQuarter(now.getMonth())
   const selectedQuarter = parseQuarter(searchParams.quarter, currentQ)
 
-  const { loaded } = await loadYearData()
+  const { loaded, supabaseUserId } = await loadYearData()
 
   if (!loaded) {
     return (
@@ -808,11 +817,14 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
     )
   }
 
-  const supabase = await createServerSupabase()
-  const reviewsRes = await supabase
-    .from('quarterly_reviews')
-    .select('quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, stats_snapshot, created_at')
-    .eq('plan_year', loaded.planYear)
+  const admin = createAdminSupabase()
+  const reviewsRes = supabaseUserId
+    ? await admin
+        .from('quarterly_reviews')
+        .select('quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, stats_snapshot, created_at')
+        .eq('user_id', supabaseUserId)
+        .eq('plan_year', loaded.planYear)
+    : { data: [] }
 
   const reviewsByQuarter = new Map<number, NonNullable<typeof reviewsRes.data>[number]>()
   for (const row of reviewsRes.data ?? []) {
@@ -838,12 +850,9 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
       priorStatsSnapshot = priorRow.stats_snapshot as Record<string, number>
     }
   } else {
-    const priorYearRes = await supabase
-      .from('quarterly_reviews')
-      .select('stats_snapshot')
-      .eq('plan_year', priorCoords.year)
-      .eq('quarter', priorCoords.quarter)
-      .maybeSingle()
+    const priorYearRes = supabaseUserId
+      ? await admin.from('quarterly_reviews').select('stats_snapshot').eq('user_id', supabaseUserId).eq('plan_year', priorCoords.year).eq('quarter', priorCoords.quarter).maybeSingle()
+      : { data: null }
     if (priorYearRes.data?.stats_snapshot && typeof priorYearRes.data.stats_snapshot === 'object') {
       priorStatsSnapshot = priorYearRes.data.stats_snapshot as Record<string, number>
     }

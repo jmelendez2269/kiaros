@@ -1,4 +1,4 @@
-import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { buildSkyTimeline, type TransitRarity } from '@/lib/human-design'
 import type { AspectType, Planet, Transit, YearEphemeris } from '@/types/blueprint'
 
@@ -34,13 +34,15 @@ export type ActiveTransitsResult =
  */
 export async function getActiveTransits(
   date: string,
+  supabaseUserId: string,
   limit = 4,
 ): Promise<ActiveTransitsResult> {
-  const supabase = await createServerSupabase()
+  const admin = createAdminSupabase()
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('user_profiles')
     .select('id, natal_chart')
+    .eq('id', supabaseUserId)
     .maybeSingle()
 
   if (!profile?.id || !profile.natal_chart) {
@@ -48,10 +50,10 @@ export async function getActiveTransits(
   }
 
   const year = Number.parseInt(date.slice(0, 4), 10)
-  const { data: cached } = await supabase
+  const { data: cached } = await admin
     .from('ephemeris_cache')
     .select('data')
-    .eq('user_id', profile.id)
+    .eq('user_id', supabaseUserId)
     .eq('year', year)
     .maybeSingle()
 
