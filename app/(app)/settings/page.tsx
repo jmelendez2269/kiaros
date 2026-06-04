@@ -486,7 +486,7 @@ export default function SettingsPage() {
               Open journal
             </Link>
             <Link
-              href="/onboarding/curriculum"
+              href="/curriculum/setup"
               className="rounded-xl border border-border/80 bg-stone-950/75 px-4 py-2.5 text-sm font-medium text-bone-muted transition-colors hover:text-bone"
             >
               Set up curriculum
