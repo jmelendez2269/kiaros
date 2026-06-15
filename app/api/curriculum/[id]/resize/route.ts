@@ -5,14 +5,14 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { generateCurriculumDraft } from '@/lib/ai/curriculum-generator'
 
 const requestSchema = z.object({
-  prompt: z.string().min(10).max(2000),
-  targetWeeks: z.number().int().min(1).max(52).optional(),
+  targetWeeks: z.number().int().min(1).max(52),
 })
 
 export const maxDuration = 60
 
-export async function POST(req: Request) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const body = requestSchema.parse(await req.json())
     const supabase = await createServerSupabase()
     const admin = createAdminSupabase()
@@ -26,20 +26,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
+    const { data: existing, error: fetchError } = await supabase
+      .from('curriculum_plans')
+      .select('id, constraints, status')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+    }
+
+    if (existing.status !== 'draft') {
+      return NextResponse.json({ error: 'Only draft plans can be resized.' }, { status: 400 })
+    }
+
+    const storedPrompt = existing.constraints
+    if (!storedPrompt || storedPrompt.length < 10) {
+      return NextResponse.json({ error: 'No original prompt found for this plan.' }, { status: 400 })
+    }
+
     const draft = await generateCurriculumDraft({
-      prompt: body.prompt,
-      targetWeeks: body.targetWeeks ?? null,
+      prompt: storedPrompt,
+      targetWeeks: body.targetWeeks,
       studyFocus: profile.study_focus ?? null,
       displayName: profile.display_name ?? null,
     })
 
-    const { data: plan, error: insertError } = await admin
+    const { data: plan, error: updateError } = await admin
       .from('curriculum_plans')
-      .insert({
-        user_id: profile.id,
+      .update({
         topic: draft.topic,
         title: draft.title,
-        status: 'draft',
         intensity: draft.intensity,
         duration_weeks: draft.durationWeeks,
         weekly_hours: draft.weeklyHours,
@@ -48,45 +65,30 @@ export async function POST(req: Request) {
         skills: draft.skills,
         curriculum: draft,
         summary: draft.summary,
-        constraints: body.prompt,
       })
+      .eq('id', id)
       .select(
         'id, topic, title, status, intensity, duration_weeks, weekly_hours, objectives, outcomes, skills, curriculum, summary, constraints, start_date, approved_at, created_at'
       )
       .single()
 
-    if (insertError || !plan) {
-      const rawMessage = insertError?.message || 'Failed to save draft curriculum'
-      const relationMissing =
-        rawMessage.toLowerCase().includes('relation') &&
-        rawMessage.toLowerCase().includes('curriculum_plans')
-
-      console.error('[curriculum.generate] insert failed:', insertError)
-
+    if (updateError || !plan) {
       return NextResponse.json(
-        {
-          error: relationMissing
-            ? 'The curriculum tables are not in Supabase yet. Run migration 0004_curriculum_plans.sql and try again.'
-            : rawMessage,
-        },
+        { error: updateError?.message || 'Failed to update plan' },
         { status: 500 }
       )
     }
 
     return NextResponse.json({ plan })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to generate curriculum'
+    const message = error instanceof Error ? error.message : 'Unable to resize curriculum'
     const timedOut =
       message.toLowerCase().includes('timeout') ||
       message.toLowerCase().includes('aborted') ||
       (error instanceof Error && error.name === 'AbortError')
 
     return NextResponse.json(
-      {
-        error: timedOut
-          ? 'Curriculum generation took too long. Try a shorter duration or lighter density, or run it again now that the timeout window is larger.'
-          : message,
-      },
+      { error: timedOut ? 'Resize took too long. Try again.' : message },
       { status: timedOut ? 504 : 400 }
     )
   }

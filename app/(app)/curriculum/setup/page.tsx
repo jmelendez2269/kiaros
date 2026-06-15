@@ -1,49 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { K } from "@/components/almanac/tokens";
-
-const DURATION_OPTIONS = [
-  { label: "4 weeks", value: 4 },
-  { label: "8 weeks", value: 8 },
-  { label: "12 weeks", value: 12 },
-  { label: "16 weeks", value: 16 },
-];
-
-const INTENSITY_OPTIONS: {
-  label: string;
-  description: string;
-  value: "light" | "balanced" | "dense";
-}[] = [
-  { label: "Light", description: "1–2 hrs/week", value: "light" },
-  { label: "Balanced", description: "3–5 hrs/week", value: "balanced" },
-  { label: "Dense", description: "6+ hrs/week", value: "dense" },
-];
 
 export default function CurriculumSetupPage() {
   const router = useRouter();
 
-  const [topic, setTopic] = useState("");
-  const [durationWeeks, setDurationWeeks] = useState(8);
-  const [intensity, setIntensity] = useState<"light" | "balanced" | "dense">("balanced");
+  const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetch("/api/profile", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        const sf = (data?.profile?.study_focus as string | null) ?? "";
-        if (sf.trim()) setTopic(sf.slice(0, 140));
-      })
-      .catch(() => {});
-  }, []);
-
   async function handleSubmit() {
-    const trimmed = topic.trim();
+    const trimmed = prompt.trim();
     if (!trimmed) {
-      setError("Please enter a topic so Kiaros knows what to plan.");
+      setError("Tell us what you want to learn first.");
       return;
     }
     setError("");
@@ -52,7 +23,7 @@ export default function CurriculumSetupPage() {
       const res = await fetch("/api/curriculum/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: trimmed, durationWeeks, intensity, skills: [] }),
+        body: JSON.stringify({ prompt: trimmed }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -76,12 +47,12 @@ export default function CurriculumSetupPage() {
       style={{
         fontFamily: K.fBody,
         color: K.ink,
-        maxWidth: 560,
+        maxWidth: 600,
         margin: "0 auto",
-        padding: "40px 24px",
+        padding: "48px 24px",
         display: "flex",
         flexDirection: "column",
-        gap: 28,
+        gap: 32,
       }}
     >
       <div>
@@ -95,114 +66,47 @@ export default function CurriculumSetupPage() {
             marginBottom: 10,
           }}
         >
-          Curriculum setup
+          New course
         </div>
-        <div style={{ fontFamily: K.fSerif, fontStyle: "italic", fontSize: 32, lineHeight: 1.15, marginBottom: 10 }}>
-          Build your first study plan
+        <div style={{ fontFamily: K.fSerif, fontStyle: "italic", fontSize: 32, lineHeight: 1.15, marginBottom: 12 }}>
+          What do you want to learn?
         </div>
-        <p style={{ fontSize: 14.5, color: K.inkDim, lineHeight: 1.65 }}>
-          Kiaros generates a week-by-week curriculum tied to your blueprint timeline. Sessions schedule themselves and surface on Today so nothing falls through.
+        <p style={{ fontSize: 15, color: K.inkDim, lineHeight: 1.7 }}>
+          Describe it in your own words — your goal, your deadline, your tools, where you&apos;re starting from.
+          Kiaros will figure out the structure, the pacing, and the depth.
         </p>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {/* Topic */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 13.5, fontWeight: 500, color: K.ink }}>What are you studying?</label>
-          <p style={{ fontSize: 12, color: K.inkDim, lineHeight: 1.5 }}>
-            A short description of the topic, track, or outcome you want to study toward.
-          </p>
-          <textarea
-            value={topic}
-            onChange={(e) => setTopic(e.target.value.slice(0, 140))}
-            disabled={loading}
-            rows={3}
-            placeholder="e.g., Depth psychology and Jungian archetypes"
-            style={{
-              width: "100%",
-              resize: "none",
-              borderRadius: 12,
-              border: `1px solid ${K.line}`,
-              background: "rgba(0,0,0,0.3)",
-              padding: "12px 14px",
-              color: K.ink,
-              fontFamily: K.fBody,
-              fontSize: 14,
-              outline: "none",
-              opacity: loading ? 0.5 : 1,
-            }}
-          />
-          <span style={{ fontSize: 10, color: K.inkSoft, textAlign: "right" }}>{topic.length}/140</span>
-        </div>
-
-        {/* Duration */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <label style={{ fontSize: 13.5, fontWeight: 500, color: K.ink }}>How long?</label>
-          <div style={{ display: "flex", gap: 8 }}>
-            {DURATION_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                disabled={loading}
-                onClick={() => setDurationWeeks(opt.value)}
-                style={{
-                  flex: 1,
-                  padding: "8px 4px",
-                  borderRadius: 10,
-                  border: `1px solid ${durationWeeks === opt.value ? K.copper : K.line}`,
-                  background: durationWeeks === opt.value ? `${K.copper}22` : "transparent",
-                  color: durationWeeks === opt.value ? K.ink : K.inkDim,
-                  fontFamily: K.fBody,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  opacity: loading ? 0.5 : 1,
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Intensity */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <label style={{ fontSize: 13.5, fontWeight: 500, color: K.ink }}>Intensity</label>
-          <div style={{ display: "flex", gap: 8 }}>
-            {INTENSITY_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                disabled={loading}
-                onClick={() => setIntensity(opt.value)}
-                style={{
-                  flex: 1,
-                  padding: "10px 4px",
-                  borderRadius: 10,
-                  border: `1px solid ${intensity === opt.value ? K.copper : K.line}`,
-                  background: intensity === opt.value ? `${K.copper}22` : "transparent",
-                  color: intensity === opt.value ? K.ink : K.inkDim,
-                  fontFamily: K.fBody,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  opacity: loading ? 0.5 : 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 2,
-                }}
-              >
-                <span style={{ fontWeight: 500 }}>{opt.label}</span>
-                <span style={{ fontSize: 10.5, opacity: 0.7 }}>{opt.description}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {error && (
-          <p style={{ fontSize: 13.5, color: "#f87171", lineHeight: 1.5 }}>{error}</p>
-        )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value.slice(0, 2000))}
+          disabled={loading}
+          rows={9}
+          placeholder={`e.g. I want to learn to DJ for my sister's wedding next May. I have a Launchpad MK2 and Resolume, and I've been freestyling melodic bass and afro house for about a year. I need to learn transitions, effects, and how to put on a real performance — not just press play.`}
+          style={{
+            width: "100%",
+            resize: "vertical",
+            borderRadius: 14,
+            border: `1px solid ${K.line}`,
+            background: "rgba(0,0,0,0.3)",
+            padding: "16px 18px",
+            color: K.ink,
+            fontFamily: K.fBody,
+            fontSize: 14.5,
+            lineHeight: 1.65,
+            outline: "none",
+            opacity: loading ? 0.5 : 1,
+          }}
+        />
+        <span style={{ fontSize: 10, color: K.inkSoft, textAlign: "right" }}>
+          {prompt.length}/2000
+        </span>
       </div>
+
+      {error && (
+        <p style={{ fontSize: 13.5, color: "#f87171", lineHeight: 1.5 }}>{error}</p>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <button
@@ -210,7 +114,7 @@ export default function CurriculumSetupPage() {
           onClick={handleSubmit}
           disabled={loading}
           style={{
-            padding: "12px 20px",
+            padding: "13px 20px",
             borderRadius: 14,
             border: `1px solid ${K.copper}88`,
             background: `${K.copper}22`,
@@ -222,7 +126,7 @@ export default function CurriculumSetupPage() {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "Building your curriculum…" : "Build my curriculum"}
+          {loading ? "Building your plan…" : "Build my plan"}
         </button>
         <button
           type="button"

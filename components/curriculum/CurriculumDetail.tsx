@@ -58,6 +58,7 @@ export function CurriculumDetail({ initialPlan, initialProgress = [] }: Curricul
   const router = useRouter()
   const [plan, setPlan] = useState(initialPlan)
   const [isApproving, startApproving] = useTransition()
+  const [isResizing, startResizing] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [openWeek, setOpenWeek] = useState<number | null>(plan.curriculum.weeks[0]?.weekNumber ?? null)
   const [completedAt, setCompletedAt] = useState<Record<string, string | null>>(() => {
@@ -116,6 +117,31 @@ export function CurriculumDetail({ initialPlan, initialProgress = [] }: Curricul
     } finally {
       setTogglingKey(null)
     }
+  }
+
+  function handleResize(targetWeeks: number) {
+    setError(null)
+    startResizing(async () => {
+      const response = await fetch(`/api/curriculum/${plan.id}/resize`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetWeeks }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        setError(payload.error || 'Unable to resize this curriculum right now.')
+        return
+      }
+      const updated = payload.plan
+      setPlan({
+        ...updated,
+        objectives: Array.isArray(updated.objectives) ? updated.objectives : [],
+        outcomes: Array.isArray(updated.outcomes) ? updated.outcomes : [],
+        skills: Array.isArray(updated.skills) ? updated.skills : [],
+      })
+      setOpenWeek(updated.curriculum?.weeks?.[0]?.weekNumber ?? null)
+      router.refresh()
+    })
   }
 
   function handleApprove() {
@@ -188,6 +214,28 @@ export function CurriculumDetail({ initialPlan, initialProgress = [] }: Curricul
               <PenSquare size={14} />
               Journal
             </Link>
+            {plan.status === 'draft' ? (
+              <>
+                <button
+                  type="button"
+                  disabled={isResizing || plan.duration_weeks <= 4}
+                  onClick={() => handleResize(Math.max(4, plan.duration_weeks - 4))}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-border/80 bg-stone-950/70 px-4 py-2 text-sm text-bone-muted hover:border-leather-400/45 hover:text-bone disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Regenerate with 4 fewer weeks"
+                >
+                  {isResizing ? <Loader2 size={13} className="animate-spin" /> : '−4 wks'}
+                </button>
+                <button
+                  type="button"
+                  disabled={isResizing || plan.duration_weeks >= 48}
+                  onClick={() => handleResize(Math.min(52, plan.duration_weeks + 4))}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-border/80 bg-stone-950/70 px-4 py-2 text-sm text-bone-muted hover:border-leather-400/45 hover:text-bone disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Regenerate with 4 more weeks"
+                >
+                  {isResizing ? <Loader2 size={13} className="animate-spin" /> : '+4 wks'}
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               disabled={isApproving || plan.status === 'approved'}

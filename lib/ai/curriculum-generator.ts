@@ -2,7 +2,7 @@ import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 
 import { z } from 'zod'
-import type { CurriculumDraft, CurriculumIntensity } from '@/types/curriculum'
+import type { CurriculumDraft } from '@/types/curriculum'
 
 const sessionSchema = z.object({
   title: z.string().min(3).max(120),
@@ -32,13 +32,9 @@ const curriculumSchema = z.object({
   weeks: z.array(weekSchema).min(1).max(52),
 })
 
-interface GenerateCurriculumInput {
-  topic: string
-  durationWeeks: number
-  intensity: CurriculumIntensity
-  skills: string[]
-  goals?: string | null
-  constraints?: string | null
+export interface GenerateCurriculumInput {
+  prompt: string
+  targetWeeks?: number | null
   studyFocus?: string | null
   displayName?: string | null
 }
@@ -46,29 +42,35 @@ interface GenerateCurriculumInput {
 function buildSystemPrompt() {
   return [
     'You are Kiaros, an expert curriculum designer.',
+    'Read the learner\'s prompt carefully.',
+    'Determine the best duration (in weeks) and intensity (light/balanced/dense) from context clues: deadlines, scope, experience level, gear complexity.',
+    'If targetWeeks is specified, use that exact number of weeks.',
     'Create practical self-study curricula that feel motivating, realistic, and progressive.',
     'Return only valid JSON with no markdown fences or extra commentary.',
     'Design for an independent learner, not a university registrar.',
     'Each week must have a clear theme, one concrete goal, one deliverable, and a small set of sessions.',
     'Session types must be one of: lesson, practice, review, project.',
-    'Minutes must be realistic and proportional to the requested density.',
+    'Minutes must be realistic and proportional to the chosen density.',
     'Avoid filler, repeated weeks, vague advice, or impossible pacing.',
+    'When the prompt describes specific tools or gear, weave them into sessions — do not treat them as optional extras.',
   ].join(' ')
 }
 
 function buildUserPrompt(input: GenerateCurriculumInput) {
-  const skillsLine = input.skills.length > 0 ? input.skills.join(', ') : 'No explicit skills supplied.'
+  const durationLine = input.targetWeeks
+    ? `Target duration: Exactly ${input.targetWeeks} weeks. Your weeks array must have exactly ${input.targetWeeks} entries.`
+    : 'Duration: Determine the best number of weeks from the learner\'s context (deadlines, depth, scope). Typical range: 4–24 weeks.'
 
   return `
-Create a self-study curriculum in JSON for this learner:
-- Learner name: ${input.displayName || 'Learner'}
-- Topic: ${input.topic}
-- Duration: ${input.durationWeeks} weeks
-- Density: ${input.intensity}
-- Skills or outcomes requested: ${skillsLine}
-- Extra goals: ${input.goals || 'None provided'}
-- Constraints or preferences: ${input.constraints || 'None provided'}
-- Existing study focus context: ${input.studyFocus || 'None provided'}
+Learner: ${input.displayName || 'Learner'}
+${input.studyFocus ? `Study focus context: ${input.studyFocus}` : ''}
+
+Learner's prompt:
+"""
+${input.prompt}
+"""
+
+${durationLine}
 
 Return JSON with exactly this shape:
 {
@@ -100,15 +102,13 @@ Return JSON with exactly this shape:
 }
 
 Rules:
-- The number of weeks must equal ${input.durationWeeks}.
-- Keep total effort aligned with "${input.intensity}".
-- Keep the summary to 2-4 sentences and under 500 characters.
-- Light usually means 2-4 hours per week.
-- Balanced usually means 4-6 hours per week.
-- Dense usually means 6-9 hours per week.
+- Infer topic and title from the learner's prompt.
+- summary: 2–4 sentences, under 500 characters.
+- intensity: light = 2–4h/wk, balanced = 4–6h/wk, dense = 6–9h/wk.
+- The weeks array length must equal durationWeeks.
 - Include progressive layering from foundations to synthesis.
 - Include review and project moments, not just passive study.
-- Make the titles clear enough to show in a planner.
+- Titles must be clear enough to show in a planner.
 `.trim()
 }
 
@@ -138,8 +138,12 @@ export async function generateCurriculumDraft(input: GenerateCurriculumInput): P
 
   parsed.summary = clampText(parsed.summary, 600)
 
-  if (parsed.weeks.length !== input.durationWeeks) {
-    throw new Error(`Curriculum returned ${parsed.weeks.length} weeks instead of ${input.durationWeeks}.`)
+  if (parsed.weeks.length !== parsed.durationWeeks) {
+    throw new Error(`Curriculum returned ${parsed.weeks.length} weeks but durationWeeks says ${parsed.durationWeeks}.`)
+  }
+
+  if (input.targetWeeks && parsed.durationWeeks !== input.targetWeeks) {
+    throw new Error(`Curriculum returned ${parsed.durationWeeks} weeks instead of requested ${input.targetWeeks}.`)
   }
 
   return parsed

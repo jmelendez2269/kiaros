@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Brain, Loader2, Plus, Search, Sparkles, X } from 'lucide-react'
-import type { CurriculumIntensity, CurriculumPlanRow } from '@/types/curriculum'
+import type { CurriculumPlanRow } from '@/types/curriculum'
 
 interface CurriculumWorkspaceProps {
   initialPlans: CurriculumPlanRow[]
@@ -13,21 +13,6 @@ interface CurriculumWorkspaceProps {
 }
 
 type StatusFilter = 'all' | 'draft' | 'approved' | 'archived'
-
-const INTENSITY_COPY: Record<CurriculumIntensity, string> = {
-  light: 'Lighter lane. Steady progress with breathing room.',
-  balanced: 'Sustainable middle path with weekly momentum.',
-  dense: 'Deeper sprint. More hours, stronger project load.',
-}
-
-const DEFAULT_FORM = {
-  topic: '',
-  durationWeeks: 8,
-  intensity: 'balanced' as CurriculumIntensity,
-  skills: '',
-  goals: '',
-  constraints: '',
-}
 
 function normalizePlan(plan: any): CurriculumPlanRow {
   return {
@@ -64,7 +49,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [createOpen, setCreateOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState(DEFAULT_FORM)
+  const [prompt, setPrompt] = useState('')
 
   const counts = useMemo(() => {
     return plans.reduce(
@@ -96,31 +81,15 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
     return () => window.removeEventListener('keydown', onKey)
   }, [createOpen])
 
-  function updateField<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
-    setForm((current) => ({ ...current, [key]: value }))
-  }
-
   function handleGenerate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
 
     startGenerating(async () => {
-      const skills = form.skills
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean)
-
       const response = await fetch('/api/curriculum/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: form.topic,
-          durationWeeks: Number(form.durationWeeks),
-          intensity: form.intensity,
-          skills,
-          goals: form.goals || undefined,
-          constraints: form.constraints || undefined,
-        }),
+        body: JSON.stringify({ prompt }),
       })
 
       const payload = await response.json()
@@ -132,7 +101,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
 
       const plan = normalizePlan(payload.plan)
       setPlans((current) => [plan, ...current.filter((item) => item.id !== plan.id)])
-      setForm(DEFAULT_FORM)
+      setPrompt('')
       setCreateOpen(false)
       router.push(`/curriculum/${plan.id}`)
       router.refresh()
@@ -250,7 +219,10 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
             <div className="flex items-start justify-between gap-4 border-b border-border/60 px-6 py-5">
               <div>
                 <p className="shell-kicker mb-1">New course</p>
-                <h2 className="text-xl font-semibold text-bone">Generate a curriculum draft</h2>
+                <h2 className="text-xl font-semibold text-bone">What do you want to learn?</h2>
+                <p className="mt-1.5 text-sm text-bone-muted">
+                  Describe it in your own words — your goal, your deadline, your tools, where you&apos;re starting from.
+                </p>
               </div>
               <button
                 type="button"
@@ -263,96 +235,36 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
             </div>
 
             <form onSubmit={handleGenerate} className="flex flex-1 flex-col">
-              <div className="flex-1 space-y-4 px-6 py-5">
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-bone">Topic</span>
-                <input
-                  required
-                  autoFocus
-                  value={form.topic}
-                  onChange={(e) => updateField('topic', e.target.value)}
-                  className="w-full rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none placeholder:text-bone-muted/45 focus:border-leather-400/50"
-                  placeholder="Ex. Music theory for songwriting"
-                />
-              </label>
-
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex-1 px-6 py-5 space-y-4">
                 <label className="block space-y-2">
-                  <span className="text-sm font-medium text-bone">Duration</span>
-                  <select
-                    value={form.durationWeeks}
-                    onChange={(e) => updateField('durationWeeks', Number(e.target.value))}
-                    className="w-full rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none focus:border-leather-400/50"
-                  >
-                    {[4, 6, 8, 12, 16, 24].map((weeks) => (
-                      <option key={weeks} value={weeks}>{weeks} weeks</option>
-                    ))}
-                  </select>
+                  <textarea
+                    required
+                    autoFocus
+                    rows={10}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value.slice(0, 2000))}
+                    className="w-full resize-none rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none placeholder:text-bone-muted/40 focus:border-leather-400/50 leading-relaxed"
+                    placeholder={`e.g. I want to learn to DJ for my sister's wedding next May. I have a Launchpad MK2 and Resolume. I've been freestyling melodic bass and afro house for about a year. I need to learn transitions, effects, and how to put on a real performance.`}
+                  />
+                  <span className="block text-right text-xs text-bone-muted/50">{prompt.length}/2000</span>
                 </label>
 
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium text-bone">Density</span>
-                  <select
-                    value={form.intensity}
-                    onChange={(e) => updateField('intensity', e.target.value as CurriculumIntensity)}
-                    className="w-full rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none focus:border-leather-400/50"
-                  >
-                    <option value="light">Light</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="dense">Dense</option>
-                  </select>
-                </label>
-              </div>
-              <p className="-mt-1 text-xs leading-6 text-bone-muted/85">{INTENSITY_COPY[form.intensity]}</p>
-
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-bone">Skills or outcomes</span>
-                <input
-                  value={form.skills}
-                  onChange={(e) => updateField('skills', e.target.value)}
-                  className="w-full rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none placeholder:text-bone-muted/45 focus:border-leather-400/50"
-                  placeholder="harmony, ear training, chord progressions"
-                />
-              </label>
-
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-bone">Goals</span>
-                <textarea
-                  rows={3}
-                  value={form.goals}
-                  onChange={(e) => updateField('goals', e.target.value)}
-                  className="w-full rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none placeholder:text-bone-muted/45 focus:border-leather-400/50"
-                  placeholder="What you want this to unlock for you."
-                />
-              </label>
-
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-bone">Constraints or preferences</span>
-                <textarea
-                  rows={2}
-                  value={form.constraints}
-                  onChange={(e) => updateField('constraints', e.target.value)}
-                  className="w-full rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none placeholder:text-bone-muted/45 focus:border-leather-400/50"
-                  placeholder="Pace, level, time-of-day, learning style..."
-                />
-              </label>
-
-              {goalNames.length > 0 ? (
-                <div className="rounded-2xl border border-border/70 bg-stone-950/40 px-4 py-3">
-                  <p className="shell-kicker mb-2">Active focus areas</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {goalNames.slice(0, 8).map((goal) => (
-                      <span key={goal} className="shell-pill">{goal}</span>
-                    ))}
+                {goalNames.length > 0 ? (
+                  <div className="rounded-2xl border border-border/70 bg-stone-950/40 px-4 py-3">
+                    <p className="shell-kicker mb-2">Active focus areas</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {goalNames.slice(0, 8).map((goal) => (
+                        <span key={goal} className="shell-pill">{goal}</span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              {error ? (
-                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  {error}
-                </div>
-              ) : null}
+                {error ? (
+                  <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                    {error}
+                  </div>
+                ) : null}
               </div>
 
               <div className="flex items-center justify-end gap-3 border-t border-border/60 bg-stone-950/80 px-6 py-4">
@@ -369,7 +281,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
                   className="inline-flex items-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                  {isGenerating ? 'Generating...' : 'Generate'}
+                  {isGenerating ? 'Building...' : 'Build my plan'}
                 </button>
               </div>
             </form>
