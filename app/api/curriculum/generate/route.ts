@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { auth } from '@clerk/nextjs/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { generateCurriculumDraft } from '@/lib/ai/curriculum-generator'
 
@@ -14,12 +14,15 @@ export const maxDuration = 60
 export async function POST(req: Request) {
   try {
     const body = requestSchema.parse(await req.json())
-    const supabase = await createServerSupabase()
+    const { userId } = await auth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const admin = createAdminSupabase()
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await admin
       .from('user_profiles')
       .select('id, display_name, study_focus')
+      .eq('clerk_user_id', userId)
       .maybeSingle()
 
     if (profileError || !profile) {

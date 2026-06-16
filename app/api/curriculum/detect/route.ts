@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createServerSupabase } from '@/lib/supabase/server'
+import { auth } from '@clerk/nextjs/server'
 import { detectCurriculumSplit } from '@/lib/ai/curriculum-detector'
 
 const requestSchema = z.object({
@@ -12,16 +12,8 @@ export const maxDuration = 30
 export async function POST(req: Request) {
   try {
     const body = requestSchema.parse(await req.json())
-    const supabase = await createServerSupabase()
-
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .select('id')
-      .maybeSingle()
-
-    if (profileError) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-    }
+    const { userId } = await auth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const result = await detectCurriculumSplit(body.prompt)
     return NextResponse.json(result)
