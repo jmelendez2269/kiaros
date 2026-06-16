@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Brain, Loader2, Plus, Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, Brain, Loader2, Plus, Search, Sparkles, X } from 'lucide-react'
 import type { CurriculumPlanRow } from '@/types/curriculum'
 
 interface CurriculumWorkspaceProps {
@@ -13,6 +13,12 @@ interface CurriculumWorkspaceProps {
 }
 
 type StatusFilter = 'all' | 'draft' | 'approved' | 'archived'
+type DrawerPhase = 'compose' | 'detecting' | 'split' | 'generating'
+
+interface SplitCourse {
+  label: string
+  prompt: string
+}
 
 function normalizePlan(plan: any): CurriculumPlanRow {
   return {
@@ -43,13 +49,15 @@ function relativeTime(iso: string | null) {
 
 export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: CurriculumWorkspaceProps) {
   const router = useRouter()
-  const [isGenerating, startGenerating] = useTransition()
   const [plans, setPlans] = useState(() => initialPlans.map(normalizePlan))
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [createOpen, setCreateOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
+  const [phase, setPhase] = useState<DrawerPhase>('compose')
+  const [splitCourses, setSplitCourses] = useState<SplitCourse[]>([])
+  const [generatingStatus, setGeneratingStatus] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const counts = useMemo(() => {
     return plans.reduce(
@@ -75,38 +83,100 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
   useEffect(() => {
     if (!createOpen) return
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setCreateOpen(false)
+      if (e.key === 'Escape') handleClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [createOpen])
 
-  function handleGenerate(event: React.FormEvent<HTMLFormElement>) {
+  function handleClose() {
+    setCreateOpen(false)
+    setPhase('compose')
+    setSplitCourses([])
+    setError(null)
+  }
+
+  async function generateOne(p: string): Promise<CurriculumPlanRow | null> {
+    const response = await fetch('/api/curriculum/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: p }),
+    })
+    const payload = await response.json()
+    if (!response.ok) {
+      setError(payload.error || 'Unable to generate curriculum right now.')
+      return null
+    }
+    return normalizePlan(payload.plan)
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
+    setPhase('detecting')
 
-    startGenerating(async () => {
-      const response = await fetch('/api/curriculum/generate', {
+    let detected: { split: boolean; courses?: SplitCourse[] }
+    try {
+      const res = await fetch('/api/curriculum/detect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       })
+      detected = res.ok ? await res.json() : { split: false }
+    } catch {
+      detected = { split: false }
+    }
 
-      const payload = await response.json()
+    if (detected.split && detected.courses && detected.courses.length >= 2) {
+      setSplitCourses(detected.courses)
+      setPhase('split')
+      return
+    }
 
-      if (!response.ok) {
-        setError(payload.error || 'Unable to generate curriculum right now.')
+    await runGenerate([prompt])
+  }
+
+  async function handleGenerateSingle() {
+    await runGenerate([prompt])
+  }
+
+  async function handleGenerateBoth() {
+    await runGenerate(splitCourses.map((c) => c.prompt))
+  }
+
+  async function runGenerate(prompts: string[]) {
+    setPhase('generating')
+    setError(null)
+    const generated: CurriculumPlanRow[] = []
+
+    for (let i = 0; i < prompts.length; i++) {
+      setGeneratingStatus(
+        prompts.length > 1
+          ? `Building course ${i + 1} of ${prompts.length}…`
+          : 'Building your plan…'
+      )
+      const plan = await generateOne(prompts[i])
+      if (!plan) {
+        setPhase(prompts.length > 1 ? 'split' : 'compose')
         return
       }
+      generated.push(plan)
+    }
 
-      const plan = normalizePlan(payload.plan)
-      setPlans((current) => [plan, ...current.filter((item) => item.id !== plan.id)])
-      setPrompt('')
-      setCreateOpen(false)
-      router.push(`/curriculum/${plan.id}`)
-      router.refresh()
+    setPlans((current) => {
+      const ids = new Set(generated.map((p) => p.id))
+      return [...generated, ...current.filter((p) => !ids.has(p.id))]
     })
+    setPrompt('')
+    handleClose()
+
+    if (generated.length === 1) {
+      router.push(`/curriculum/${generated[0].id}`)
+    }
+    router.refresh()
   }
+
+  const isBusy = phase === 'detecting' || phase === 'generating'
 
   return (
     <div className="space-y-6">
@@ -212,79 +282,146 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
           <button
             type="button"
             aria-label="Close"
-            onClick={() => setCreateOpen(false)}
+            onClick={handleClose}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col overflow-y-auto border-l border-border/70 bg-stone-950 shadow-2xl">
+
+            {/* Header */}
             <div className="flex items-start justify-between gap-4 border-b border-border/60 px-6 py-5">
               <div>
                 <p className="shell-kicker mb-1">New course</p>
-                <h2 className="text-xl font-semibold text-bone">What do you want to learn?</h2>
-                <p className="mt-1.5 text-sm text-bone-muted">
-                  Describe it in your own words — your goal, your deadline, your tools, where you&apos;re starting from.
-                </p>
+                {phase === 'split' ? (
+                  <>
+                    <h2 className="text-xl font-semibold text-bone">I see two courses in here</h2>
+                    <p className="mt-1.5 text-sm text-bone-muted">Generate them separately for cleaner pacing, or keep everything as one.</p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-xl font-semibold text-bone">What do you want to learn?</h2>
+                    <p className="mt-1.5 text-sm text-bone-muted">Describe it in your own words — your goal, your deadline, your tools, where you&apos;re starting from.</p>
+                  </>
+                )}
               </div>
               <button
                 type="button"
-                onClick={() => setCreateOpen(false)}
-                className="rounded-full border border-border/70 bg-stone-950/80 p-2 text-bone-muted hover:text-bone"
+                onClick={handleClose}
+                disabled={isBusy}
+                className="rounded-full border border-border/70 bg-stone-950/80 p-2 text-bone-muted hover:text-bone disabled:opacity-40"
                 aria-label="Close"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleGenerate} className="flex flex-1 flex-col">
-              <div className="flex-1 px-6 py-5 space-y-4">
-                <label className="block space-y-2">
-                  <textarea
-                    required
-                    autoFocus
-                    rows={10}
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value.slice(0, 2000))}
-                    className="w-full resize-none rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none placeholder:text-bone-muted/40 focus:border-leather-400/50 leading-relaxed"
-                    placeholder={`e.g. I want to learn to DJ for my sister's wedding next May. I have a Launchpad MK2 and Resolume. I've been freestyling melodic bass and afro house for about a year. I need to learn transitions, effects, and how to put on a real performance.`}
-                  />
-                  <span className="block text-right text-xs text-bone-muted/50">{prompt.length}/2000</span>
-                </label>
+            {/* Compose phase */}
+            {(phase === 'compose' || phase === 'detecting') ? (
+              <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                <div className="flex-1 px-6 py-5 space-y-4">
+                  <label className="block space-y-2">
+                    <textarea
+                      required
+                      autoFocus
+                      rows={10}
+                      value={prompt}
+                      disabled={phase === 'detecting'}
+                      onChange={(e) => setPrompt(e.target.value.slice(0, 2000))}
+                      className="w-full resize-none rounded-2xl border border-border/80 bg-stone-950/80 px-4 py-3 text-bone outline-none placeholder:text-bone-muted/40 focus:border-leather-400/50 leading-relaxed disabled:opacity-50"
+                      placeholder={`e.g. I want to learn to DJ for my sister's wedding next May. I have a Launchpad MK2 and Resolume. I've been freestyling melodic bass and afro house for about a year. I need to learn transitions, effects, and how to put on a real performance.`}
+                    />
+                    <span className="block text-right text-xs text-bone-muted/50">{prompt.length}/2000</span>
+                  </label>
 
-                {goalNames.length > 0 ? (
-                  <div className="rounded-2xl border border-border/70 bg-stone-950/40 px-4 py-3">
-                    <p className="shell-kicker mb-2">Active focus areas</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {goalNames.slice(0, 8).map((goal) => (
-                        <span key={goal} className="shell-pill">{goal}</span>
-                      ))}
+                  {goalNames.length > 0 ? (
+                    <div className="rounded-2xl border border-border/70 bg-stone-950/40 px-4 py-3">
+                      <p className="shell-kicker mb-2">Active focus areas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {goalNames.slice(0, 8).map((goal) => (
+                          <span key={goal} className="shell-pill">{goal}</span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {error ? (
-                  <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                    {error}
-                  </div>
-                ) : null}
-              </div>
+                  {error ? (
+                    <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>
+                  ) : null}
+                </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-border/60 bg-stone-950/80 px-6 py-4">
-                <button
-                  type="button"
-                  onClick={() => setCreateOpen(false)}
-                  className="rounded-full border border-border/70 bg-stone-950/60 px-4 py-2 text-sm text-bone-muted hover:text-bone"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isGenerating}
-                  className="inline-flex items-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                  {isGenerating ? 'Building...' : 'Build my plan'}
-                </button>
+                <div className="flex items-center justify-end gap-3 border-t border-border/60 bg-stone-950/80 px-6 py-4">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={phase === 'detecting'}
+                    className="rounded-full border border-border/70 bg-stone-950/60 px-4 py-2 text-sm text-bone-muted hover:text-bone disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={phase === 'detecting'}
+                    className="inline-flex items-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {phase === 'detecting' ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                    {phase === 'detecting' ? 'Reading your prompt…' : 'Build my plan'}
+                  </button>
+                </div>
+              </form>
+            ) : null}
+
+            {/* Split confirmation phase */}
+            {phase === 'split' ? (
+              <div className="flex flex-1 flex-col">
+                <div className="flex-1 space-y-3 px-6 py-5">
+                  {splitCourses.map((course, i) => (
+                    <div key={i} className="rounded-2xl border border-border/70 bg-stone-950/50 px-5 py-4">
+                      <p className="shell-kicker mb-1.5">Course {i + 1}</p>
+                      <p className="mb-2 text-[0.95rem] font-semibold text-bone">{course.label}</p>
+                      <p className="line-clamp-3 text-sm leading-6 text-bone-muted">{course.prompt}</p>
+                    </div>
+                  ))}
+
+                  {error ? (
+                    <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-2 border-t border-border/60 bg-stone-950/80 px-6 py-4">
+                  <button
+                    type="button"
+                    onClick={handleGenerateBoth}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2.5 text-sm font-semibold text-bone shadow-glow"
+                  >
+                    <Sparkles size={14} />
+                    Generate both separately
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGenerateSingle}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-stone-950/60 px-4 py-2.5 text-sm text-bone-muted hover:text-bone"
+                  >
+                    Keep as one course
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setPhase('compose'); setError(null) }}
+                    className="inline-flex items-center justify-center gap-1.5 text-xs text-bone-muted/60 hover:text-bone-muted pt-1"
+                  >
+                    <ArrowLeft size={12} />
+                    Edit my prompt
+                  </button>
+                </div>
               </div>
-            </form>
+            ) : null}
+
+            {/* Generating phase */}
+            {phase === 'generating' ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-12 text-center">
+                <Loader2 size={28} className="animate-spin text-leather-400/70" />
+                <p className="text-sm text-bone-muted">{generatingStatus}</p>
+              </div>
+            ) : null}
+
           </aside>
         </div>
       ) : null}
