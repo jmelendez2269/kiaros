@@ -3,8 +3,21 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Brain, Loader2, Plus, Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, Brain, Check, Loader2, Plus, Search, Sparkles, X } from 'lucide-react'
 import type { CurriculumPlanRow } from '@/types/curriculum'
+
+type GenerateStep = 'analyzing' | 'generating' | 'saving'
+
+const GENERATE_STEPS: { key: GenerateStep; label: string }[] = [
+  { key: 'analyzing', label: 'Analyzing your prompt' },
+  { key: 'generating', label: 'Building your curriculum' },
+  { key: 'saving', label: 'Saving your plan' },
+]
+
+function gStepIndex(key: GenerateStep | null) {
+  if (!key) return -1
+  return GENERATE_STEPS.findIndex((s) => s.key === key)
+}
 
 interface CurriculumWorkspaceProps {
   initialPlans: CurriculumPlanRow[]
@@ -57,7 +70,15 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
   const [phase, setPhase] = useState<DrawerPhase>('compose')
   const [splitCourses, setSplitCourses] = useState<SplitCourse[]>([])
   const [generatingStatus, setGeneratingStatus] = useState('')
+  const [generatingStep, setGeneratingStep] = useState<GenerateStep | null>(null)
+  const [elapsed, setElapsed] = useState(0)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (phase !== 'generating') { setElapsed(0); return }
+    const interval = setInterval(() => setElapsed((e) => e + 1), 1000)
+    return () => clearInterval(interval)
+  }, [phase])
 
   const counts = useMemo(() => {
     return plans.reduce(
@@ -97,17 +118,54 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
   }
 
   async function generateOne(p: string): Promise<CurriculumPlanRow | null> {
+    setGeneratingStep(null)
     const response = await fetch('/api/curriculum/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: p }),
     })
-    const payload = await response.json()
-    if (!response.ok) {
-      setError(payload.error || 'Unable to generate curriculum right now.')
+
+    if (!response.ok || !response.body) {
+      const payload = await response.json().catch(() => ({}))
+      setError((payload as { error?: string }).error || 'Unable to generate curriculum right now.')
       return null
     }
-    return normalizePlan(payload.plan)
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let plan: CurriculumPlanRow | null = null
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue
+        try {
+          const event = JSON.parse(line.slice(6)) as { step: string; error?: string; plan?: unknown }
+          if (event.step === 'error') {
+            setError(event.error ?? 'Something went wrong.')
+            return null
+          }
+          if (event.step === 'done' && event.plan) {
+            plan = normalizePlan(event.plan)
+          }
+          if (event.step === 'analyzing' || event.step === 'generating' || event.step === 'saving') {
+            setGeneratingStep(event.step)
+          }
+        } catch {
+          // ignore malformed lines
+        }
+      }
+    }
+
+    if (!plan) setError('Generation completed but no plan was returned. Try again.')
+    return plan
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -416,9 +474,49 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
 
             {/* Generating phase */}
             {phase === 'generating' ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-12 text-center">
-                <Loader2 size={28} className="animate-spin text-leather-400/70" />
-                <p className="text-sm text-bone-muted">{generatingStatus}</p>
+              <div className="flex flex-1 flex-col items-center justify-center px-8 py-12">
+                <div className="w-full max-w-xs space-y-6">
+                  {generatingStatus ? (
+                    <p className="shell-kicker text-center">{generatingStatus}</p>
+                  ) : null}
+
+                  <div className="space-y-4">
+                    {GENERATE_STEPS.map((step, i) => {
+                      const activeIdx = gStepIndex(generatingStep)
+                      const isDone = i < activeIdx
+                      const isActive = i === activeIdx
+                      const isPending = i > activeIdx
+
+                      return (
+                        <div key={step.key} className="flex items-start gap-3">
+                          <div className="mt-0.5 flex-shrink-0">
+                            {isDone ? (
+                              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-leather-400/80">
+                                <Check size={9} className="text-stone-950" strokeWidth={3} />
+                              </div>
+                            ) : isActive ? (
+                              <div className="h-4 w-4 rounded-full border-2 border-leather-400 bg-leather-500/30 animate-pulse" />
+                            ) : (
+                              <div className="h-4 w-4 rounded-full border border-border/60 opacity-35" />
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <p className={`text-sm ${isDone ? 'text-bone-muted' : isActive ? 'font-medium text-bone' : 'text-bone-muted/40'}`}>
+                              {step.label}
+                            </p>
+                            {isActive && step.key === 'generating' && elapsed >= 10 ? (
+                              <p className="text-xs text-bone-muted/60 leading-relaxed">
+                                {elapsed < 45
+                                  ? 'This usually takes 1–2 minutes…'
+                                  : `Still working — ${Math.floor(elapsed / 60)}m ${String(elapsed % 60).padStart(2, '0')}s`}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
             ) : null}
 
