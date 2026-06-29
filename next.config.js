@@ -12,6 +12,8 @@ const nextConfig = {
       // /oracle still resolves to the legacy chat page in Phase 1.B — the
       // drawer mounted globally is the recommended entry point. Once Phase
       // 4 ships the new Journal screen we can also redirect /tracker.
+      // Curriculum setup moved from onboarding flow to /curriculum/setup.
+      { source: '/onboarding/curriculum', destination: '/curriculum/setup', permanent: true },
     ]
   },
 }

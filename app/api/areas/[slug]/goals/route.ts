@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { slugifyAreaName } from '@/lib/areas'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
 const MAX_TITLE = 200
 const MAX_DESCRIPTION = 1000
@@ -40,6 +41,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const accessError = await requireActivePlannerAccess(userId)
+  if (accessError) return accessError
 
   const { slug } = await params
   const body = await req.json().catch(() => null)

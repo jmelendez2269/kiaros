@@ -7,6 +7,7 @@ import {
   setMonthBriefText,
 } from '@/lib/ai/month-brief-generator'
 import { getUserProfileId } from '@/lib/ai/usage'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
 export const maxDuration = 90
 
@@ -33,6 +34,8 @@ export async function POST(req: Request) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const accessError = await requireActivePlannerAccess(userId)
+    if (accessError) return accessError
 
     const body = (await req.json().catch(() => ({}))) as RequestBody
     const year = Number(body.year)

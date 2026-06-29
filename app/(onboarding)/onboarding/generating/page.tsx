@@ -107,12 +107,12 @@ export default function OnboardingGeneratingPage() {
 
   function clearOnboardingStorage() {
     ["kiaros_onboarding_step1", "kiaros_onboarding_step2", "kiaros_onboarding_step3", "kiaros_onboarding_step4"].forEach(
-      (k) => sessionStorage.removeItem(k)
+      (k) => localStorage.removeItem(k)
     );
   }
 
   function finishAndRedirect() {
-    sessionStorage.removeItem(STUDY_FOCUS_KEY);
+    localStorage.removeItem(STUDY_FOCUS_KEY);
     // Signal TourOverlay to start the tour on first login
     localStorage.setItem(TOUR_PENDING_KEY, '1');
     router.replace("/dashboard");
@@ -121,7 +121,7 @@ export default function OnboardingGeneratingPage() {
   function onBlueprintReady() {
     clearOnboardingStorage();
     try {
-      const raw = sessionStorage.getItem(STUDY_FOCUS_KEY);
+      const raw = localStorage.getItem(STUDY_FOCUS_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { study_focus?: string };
         const text = parsed.study_focus?.trim() ?? "";
@@ -132,7 +132,7 @@ export default function OnboardingGeneratingPage() {
         }
       }
     } catch {
-      // sessionStorage parse failed — just redirect
+      // localStorage parse failed — just redirect
     }
     finishAndRedirect();
   }

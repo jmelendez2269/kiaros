@@ -1,5 +1,7 @@
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 import {
   buildJournalAspectInserts,
   buildJournalSkyInsert,
@@ -36,6 +38,11 @@ const createJournalEntrySchema = z.object({
 })
 
 export async function POST(req: Request) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const accessError = await requireActivePlannerAccess(userId)
+  if (accessError) return accessError
+
   const supabase = await createServerSupabase()
 
   try {

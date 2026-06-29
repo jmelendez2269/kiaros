@@ -30,7 +30,7 @@ export default function OnboardingGoalsPage() {
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         setSelected(JSON.parse(saved));
@@ -76,7 +76,7 @@ export default function OnboardingGoalsPage() {
       return;
     }
     setIsSubmitting(true);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
 
     const res = await fetch("/api/goals", {
       method: "POST",

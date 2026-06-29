@@ -45,30 +45,41 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
   try {
     const result = await finalizeCheckoutSession({ sessionId, clerkUserId: userId });
 
+    const bodyText = result.accessPlan === "monthly"
+      ? `Checkout is complete, your monthly subscription is active, and your Kiaros access is linked to ${result.email}.`
+      : `Checkout is complete, your annual entitlement is active, and your loyalty reward for next year has been reserved for ${result.email}.`;
+
     return (
       <div className="page-wrapper">
         <div className="container py-12 md:py-16">
           <div className="shell-panel-hero p-8 md:p-10">
             <p className="shell-kicker mb-4">Purchase Complete</p>
             <h1 className="shell-hero-title max-w-3xl">Your {result.tier.shortName} access is live.</h1>
-            <p className="shell-prose-lead mt-4">
-              {result.accessPlan === "monthly"
-                ? `Checkout is complete, your monthly subscription is active, and your Kiaros access is linked to ${result.email}.`
-                : `Checkout is complete, your annual entitlement is active, and your loyalty reward for next year has been reserved for ${result.email}.`}
-            </p>
+            <p className="shell-prose-lead mt-4">{bodyText}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/onboarding"
-                className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
-              >
-                Begin onboarding
-              </Link>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
-              >
-                Go to dashboard
-              </Link>
+              {result.isRenewal ? (
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
+                >
+                  Go to dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/onboarding"
+                    className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
+                  >
+                    Begin onboarding
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
+                  >
+                    Go to dashboard
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { getUserProfileId } from '@/lib/ai/usage'
 import { saveQuarterlyReview, updateQuarterlyReviewSynthesis } from '@/lib/reviews/save-review'
 import { generateQuarterlyReviewSummary } from '@/lib/ai/quarterly-review-generator'
 import type { QuarterlyReviewStats } from '@/lib/ai/quarterly-review-system-prompt'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
 export const maxDuration = 90
 
@@ -106,6 +107,8 @@ export async function POST(req: Request) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const accessError = await requireActivePlannerAccess(userId)
+    if (accessError) return accessError
 
     const body = (await req.json().catch(() => ({}))) as RequestBody
     const year = Number(body.year)

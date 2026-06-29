@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServerSupabase } from '@/lib/supabase/server'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
 const MAX_TITLE = 200
 const MAX_DESCRIPTION = 1000
@@ -10,6 +11,8 @@ const STATUSES = new Set(['active', 'paused', 'completed', 'archived'])
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const accessError = await requireActivePlannerAccess(userId)
+  if (accessError) return accessError
 
   const { id } = await params
   const body = await req.json().catch(() => null)

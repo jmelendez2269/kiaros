@@ -1,5 +1,7 @@
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase/server'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 import type { YearEphemeris } from '@/types/blueprint'
 
 function computeCyclePhase(
@@ -60,6 +62,11 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const accessError = await requireActivePlannerAccess(userId)
+  if (accessError) return accessError
+
   const supabase = await createServerSupabase()
   const body = await req.json()
   const { log_date, values, energy_level, mood_tag, notes } = body

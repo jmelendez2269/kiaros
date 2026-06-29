@@ -300,10 +300,14 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       .eq('id', blueprintId)
 
     // Mark onboarding complete only after a blueprint is successfully written.
-    await admin
+    const { error: completionError } = await admin
       .from('user_profiles')
       .update({ onboarding_completed_at: new Date().toISOString() })
       .eq('id', userId)
+
+    if (completionError) {
+      console.error('[blueprint-generator] Failed to set onboarding_completed_at:', completionError)
+    }
 
     log('written to DB — done')
   } catch (err) {

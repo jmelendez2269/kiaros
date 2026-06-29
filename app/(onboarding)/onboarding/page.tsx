@@ -65,7 +65,7 @@ export default function OnboardingBirthPage() {
   const birthCity = watch("birth_city");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
     try {
       const data = JSON.parse(saved) as Partial<FormValues>;
@@ -144,7 +144,7 @@ export default function OnboardingBirthPage() {
 
   const onSubmit = async (values: FormValues) => {
     if (values.birth_time_unknown) values.birth_time = undefined;
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
 
     const res = await fetch("/api/profile", {
       method: "PATCH",

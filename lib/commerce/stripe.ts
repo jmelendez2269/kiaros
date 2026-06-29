@@ -6,8 +6,8 @@ import {
   AccessPlan,
   buildTierMetadata,
   CommerceTier,
-  getTierPriceCents,
   getCommerceTier,
+  getTierPriceCents,
   LOYALTY_REWARD_AMOUNT_OFF_CENTS,
   NEXT_PLANNER_YEAR,
   parseAccessPlan,
@@ -159,7 +159,7 @@ async function fulfillOneTimeCheckout(params: {
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profiles")
-    .select("id, email")
+    .select("id, email, onboarding_completed_at")
     .eq("clerk_user_id", clerkUserId)
     .single();
 
@@ -254,6 +254,7 @@ async function fulfillOneTimeCheckout(params: {
     tier,
     email: profile.email,
     accessPlan: "yearly" as const,
+    isRenewal: !!profile.onboarding_completed_at,
   };
 }
 
@@ -303,7 +304,7 @@ async function fulfillSubscriptionCheckout(params: {
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profiles")
-    .select("id, email")
+    .select("id, email, onboarding_completed_at")
     .eq("clerk_user_id", clerkUserId)
     .single();
 
@@ -386,6 +387,7 @@ async function fulfillSubscriptionCheckout(params: {
     tier,
     email: profile.email,
     accessPlan: "monthly" as const,
+    isRenewal: !!profile.onboarding_completed_at,
   };
 }
 

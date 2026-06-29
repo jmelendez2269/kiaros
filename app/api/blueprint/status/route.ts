@@ -11,7 +11,7 @@ export async function GET() {
 
     const { data: profile, error: profileError } = await admin
       .from("user_profiles")
-      .select("id, plan_year")
+      .select("id, plan_year, onboarding_completed_at")
       .eq("clerk_user_id", userId)
       .single();
 
@@ -39,6 +39,15 @@ export async function GET() {
     if (!blueprint) {
       console.warn("[status] No blueprint found for user:", profile.id, "year:", plan_year);
       return NextResponse.json({ status: "error", error: "Blueprint not found" });
+    }
+
+    // Recovery: if the generator set the blueprint to ready but failed to update
+    // onboarding_completed_at, fix it here so the user isn't stuck in onboarding.
+    if (blueprint.status === "ready" && !profile.onboarding_completed_at) {
+      await admin
+        .from("user_profiles")
+        .update({ onboarding_completed_at: new Date().toISOString() })
+        .eq("id", profile.id);
     }
 
     return NextResponse.json({ status: blueprint.status, error: blueprint.error_message ?? null });

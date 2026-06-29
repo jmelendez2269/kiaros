@@ -16,14 +16,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/(.*)",
 ]);
 
-const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
-const isApiRoute = createRouteMatcher(["/api/(.*)"]);
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return;
 
-  const { userId, sessionClaims, redirectToSignIn } = await auth();
+  const { userId, redirectToSignIn } = await auth();
   if (!userId) {
     return redirectToSignIn({ returnBackUrl: req.url });
   }
@@ -32,15 +28,9 @@ export default clerkMiddleware(async (auth, req) => {
   // not here - avoids Clerk JWT staleness causing redirect loops after
   // publicMetadata is updated server-side.
 
-  // Admin route guard - redirect non-admins to home
-  if (isAdminRoute(req) && !isApiRoute(req)) {
-    const isAdmin =
-      (sessionClaims?.publicMetadata as { isAdmin?: boolean } | undefined)
-        ?.isAdmin === true;
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-  }
+  // Admin route guard is handled in app/(admin)/layout.tsx via currentUser(),
+  // not here — sessionClaims does not include publicMetadata by default in
+  // Clerk v7 without a custom JWT template, so middleware checks are unreliable.
 });
 
 export const config = {

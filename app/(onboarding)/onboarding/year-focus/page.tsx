@@ -50,7 +50,7 @@ export default function OnboardingYearFocusPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
     try {
       const data = JSON.parse(saved) as Partial<FormValues>;
@@ -82,7 +82,7 @@ export default function OnboardingYearFocusPage() {
   }, []);
 
   const onSubmit = async (values: FormValues) => {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
 
     const res = await fetch("/api/profile", {
       method: "PATCH",

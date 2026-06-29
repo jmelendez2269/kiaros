@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
@@ -7,12 +7,10 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId, sessionClaims } = await auth();
-  const isAdmin =
-    (sessionClaims?.publicMetadata as { isAdmin?: boolean } | undefined)
-      ?.isAdmin === true;
+  const user = await currentUser();
+  const isAdmin = user?.publicMetadata?.isAdmin === true;
 
-  if (!userId || !isAdmin) {
+  if (!user || !isAdmin) {
     redirect("/");
   }
 

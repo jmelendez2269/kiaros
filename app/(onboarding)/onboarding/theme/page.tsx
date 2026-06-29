@@ -20,7 +20,7 @@ export default function OnboardingThemePage() {
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const { theme } = JSON.parse(saved);
@@ -39,7 +39,7 @@ export default function OnboardingThemePage() {
 
   const onSubmit = async () => {
     setIsSubmitting(true);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: selected }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: selected }));
 
     const res = await fetch("/api/profile", {
       method: "PATCH",

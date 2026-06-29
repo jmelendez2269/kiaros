@@ -15,7 +15,7 @@ export default function OnboardingCyclePage() {
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
     try {
       const data = JSON.parse(saved);
@@ -34,7 +34,7 @@ export default function OnboardingCyclePage() {
       avg_period_length: enabled ? periodLength : null,
       last_period_start: enabled && lastPeriodStart ? lastPeriodStart : null,
     };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
     const res = await fetch("/api/profile", {
       method: "PATCH",
@@ -53,7 +53,7 @@ export default function OnboardingCyclePage() {
 
   const skip = async () => {
     setIsSubmitting(true);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ cycle_enabled: false }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cycle_enabled: false }));
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

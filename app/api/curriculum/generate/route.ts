@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { auth } from '@clerk/nextjs/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { generateCurriculumDraft } from '@/lib/ai/curriculum-generator'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
 const requestSchema = z.object({
   prompt: z.string().min(10).max(2000),
@@ -25,6 +26,8 @@ export async function POST(req: Request) {
 
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const accessError = await requireActivePlannerAccess(userId)
+  if (accessError) return accessError
 
   const stream = new ReadableStream({
     async start(controller) {
