@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -10,10 +10,10 @@ import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { userId, sessionClaims } = await auth()
+  const [{ userId }, clerkUser] = await Promise.all([auth(), currentUser()])
   if (!userId) redirect('/sign-in')
 
-  const isAppAdmin = ((sessionClaims as Record<string, Record<string, unknown>>)?.public_metadata?.isAdmin) === true
+  const isAppAdmin = clerkUser?.publicMetadata?.isAdmin === true
 
   const admin = createAdminSupabase()
   const { data: profile } = await admin

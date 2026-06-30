@@ -1,7 +1,7 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { resolveUserAccess, type ProductEntitlementRecord } from "./entitlements";
@@ -15,9 +15,8 @@ import { resolveUserAccess, type ProductEntitlementRecord } from "./entitlements
  * their blueprint, journal history, and tracker logs.
  */
 export async function requireActivePlannerAccess(clerkUserId: string): Promise<NextResponse | null> {
-  const { sessionClaims } = await auth()
-  const isAppAdmin = ((sessionClaims as Record<string, Record<string, unknown>>)?.public_metadata?.isAdmin) === true
-  if (isAppAdmin) return null
+  const clerkUser = await currentUser()
+  if (clerkUser?.publicMetadata?.isAdmin === true) return null
 
   const admin = createAdminSupabase();
 
