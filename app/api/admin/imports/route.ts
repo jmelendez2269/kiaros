@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse, after } from "next/server";
 import { listImports, createImport, updateImportStatus } from "@/lib/admin/imports";
 import { getTranscriptFetcher } from "@/lib/admin/transcript-ingestion";
@@ -6,17 +6,10 @@ import type { CreateImportPayload } from "@/types/admin";
 
 export const maxDuration = 60;
 
-function isAdminSession(sessionClaims: unknown): boolean {
-  return (
-    (sessionClaims as { publicMetadata?: { isAdmin?: boolean } } | null)
-      ?.publicMetadata?.isAdmin === true
-  );
-}
-
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -37,9 +30,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

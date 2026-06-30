@@ -1,23 +1,16 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getMapping, updateMapping, deleteMapping } from "@/lib/admin/mapping";
 import type { UpdateMappingPayload } from "@/types/admin";
-
-function isAdminSession(sessionClaims: unknown): boolean {
-  return (
-    (sessionClaims as { publicMetadata?: { isAdmin?: boolean } } | null)
-      ?.publicMetadata?.isAdmin === true
-  );
-}
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
   const { id } = await params;
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -34,10 +27,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
   const { id } = await params;
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -56,10 +49,10 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
   const { id } = await params;
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

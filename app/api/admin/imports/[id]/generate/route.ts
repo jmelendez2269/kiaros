@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse, after } from "next/server";
 import { getImport, updateImportStatus } from "@/lib/admin/imports";
 import { getSource } from "@/lib/admin/sources";
@@ -8,21 +8,14 @@ import type { AdminSource } from "@/types/admin";
 
 export const maxDuration = 60;
 
-function isAdminSession(sessionClaims: unknown): boolean {
-  return (
-    (sessionClaims as { publicMetadata?: { isAdmin?: boolean } } | null)
-      ?.publicMetadata?.isAdmin === true
-  );
-}
-
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
   const { id } = await params;
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

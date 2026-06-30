@@ -1,19 +1,12 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { listCards, createCard } from "@/lib/admin/cards";
 import type { CreateCardPayload } from "@/types/admin";
 
-function isAdminSession(sessionClaims: unknown): boolean {
-  return (
-    (sessionClaims as { publicMetadata?: { isAdmin?: boolean } } | null)
-      ?.publicMetadata?.isAdmin === true
-  );
-}
-
 export async function GET(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -36,9 +29,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

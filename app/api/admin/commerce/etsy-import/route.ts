@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { parseEtsyOrdersCsv, validateEtsyCsvInput } from "@/lib/commerce/etsy";
@@ -6,17 +6,10 @@ import { upsertMarketplaceOrders } from "@/lib/commerce/marketplace-orders";
 
 export const runtime = "nodejs";
 
-function isAdminSession(sessionClaims: unknown): boolean {
-  return (
-    (sessionClaims as { publicMetadata?: { isAdmin?: boolean } } | null)?.publicMetadata?.isAdmin ===
-    true
-  );
-}
-
 export async function POST(request: Request) {
-  const { userId, sessionClaims } = await auth();
+  const user = await currentUser();
 
-  if (!userId || !isAdminSession(sessionClaims)) {
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
