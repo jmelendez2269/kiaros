@@ -213,7 +213,7 @@ export function PublicPricingPage({
               <>
                 <Link
                   href="/sign-in"
-                  className="hidden text-sm text-bone-muted transition-colors hover:text-bone sm:inline-flex"
+                  className="text-sm text-bone-muted transition-colors hover:text-bone"
                 >
                   Sign in
                 </Link>

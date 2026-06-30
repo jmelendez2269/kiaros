@@ -1,4 +1,5 @@
 import { EtsyImportForm } from "@/components/commerce/EtsyImportForm";
+import { ManualOrderForm } from "@/components/commerce/ManualOrderForm";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
 export default async function CommerceAdminPage() {
@@ -18,6 +19,8 @@ export default async function CommerceAdminPage() {
           Import Etsy orders so the public activation flow can verify purchases end-to-end.
         </p>
       </div>
+
+      <ManualOrderForm />
 
       <EtsyImportForm />
 
