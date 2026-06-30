@@ -10,8 +10,10 @@ import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth()
+  const { userId, sessionClaims } = await auth()
   if (!userId) redirect('/sign-in')
+
+  const isAppAdmin = ((sessionClaims as Record<string, Record<string, unknown>>)?.public_metadata?.isAdmin) === true
 
   const admin = createAdminSupabase()
   const { data: profile } = await admin
@@ -75,15 +77,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         (new Date(activeYearlyEntitlement.ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       )
     : null
-  const showExpiredBanner = access.hasReadOnlyPlannerAccess
-  const showExpiringSoonBanner = !showExpiredBanner && daysUntilExpiry !== null && daysUntilExpiry <= 30
-  const showNoAccessBanner = !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length === 0
+  const showExpiredBanner = !isAppAdmin && access.hasReadOnlyPlannerAccess
+  const showExpiringSoonBanner = !isAppAdmin && !showExpiredBanner && daysUntilExpiry !== null && daysUntilExpiry <= 30
+  // entitlements exist but none are active/read-only → lapsed monthly sub or other expired state
+  const showLapsedBanner = !isAppAdmin && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length > 0
+  const showNoAccessBanner = !isAppAdmin && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length === 0
 
   return (
-    <StelloquyProvider hasOracleAccess={access.hasOracleAccess}>
+    <StelloquyProvider hasOracleAccess={isAppAdmin || access.hasOracleAccess}>
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
-          <AlmanacSidebar categories={sidebarCategories} hasOracleAccess={access.hasOracleAccess} />
+          <AlmanacSidebar categories={sidebarCategories} hasOracleAccess={isAppAdmin || access.hasOracleAccess} />
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
             <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
               <div className="mx-auto w-full max-w-[1480px]">
@@ -91,13 +95,35 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-amber-500/40 bg-amber-500/10 px-5 py-3.5">
                     <p className="text-sm text-bone">
                       Your planner access isn&apos;t active yet.{' '}
-                      <span className="text-bone-muted">If you purchased on Etsy, finish activating your order.</span>
+                      <span className="text-bone-muted">Purchase a plan to get started, or finish activating an Etsy order.</span>
+                    </p>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <Link
+                        href="/activate"
+                        className="inline-flex items-center rounded-full border border-amber-400/50 px-4 py-2 text-xs font-semibold text-bone shrink-0"
+                      >
+                        Activate Etsy order →
+                      </Link>
+                      <Link
+                        href="/pricing"
+                        className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-xs font-semibold text-stone-950 shrink-0"
+                      >
+                        Get access →
+                      </Link>
+                    </div>
+                  </div>
+                )}
+                {showLapsedBanner && (
+                  <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-amber-500/40 bg-amber-500/10 px-5 py-3.5">
+                    <p className="text-sm text-bone">
+                      Your subscription has lapsed.{' '}
+                      <span className="text-bone-muted">Renew to continue creating new content.</span>
                     </p>
                     <Link
-                      href="/activate"
+                      href="/pricing"
                       className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-xs font-semibold text-stone-950 shrink-0"
                     >
-                      Finish activation →
+                      Renew access →
                     </Link>
                   </div>
                 )}
