@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     product_tier: order.product_tier,
     planner_year: order.planner_year,
     oracle_enabled: order.oracle_enabled,
-    startAt: order.purchased_at ?? new Date(),
+    startAt: new Date(),
   });
 
   const { error: entitlementError } = await supabase

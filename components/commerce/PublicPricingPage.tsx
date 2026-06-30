@@ -213,7 +213,7 @@ export function PublicPricingPage({
               <>
                 <Link
                   href="/sign-in"
-                  className="text-sm text-bone-muted transition-colors hover:text-bone"
+                  className="inline-flex items-center rounded-full border border-border/80 px-4 py-2 text-sm font-medium text-bone transition-colors hover:border-leather-400/50"
                 >
                   Sign in
                 </Link>
@@ -221,7 +221,8 @@ export function PublicPricingPage({
                   href="/sign-up"
                   className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90"
                 >
-                  Create account
+                  <span className="sm:hidden">Get started</span>
+                  <span className="hidden sm:inline">Create account</span>
                 </Link>
               </>
             )}

@@ -59,7 +59,14 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
 
-  const claimReady = useMemo(() => claimToken.length > 0, [claimToken]);
+  const claimReady = useMemo(() => claimToken.length > 0, [claimToken])
+
+  useEffect(() => {
+    if (claimReady && isSignedIn && !completionMessage) {
+      handleFinishActivation()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleVerifyPurchase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -172,13 +179,13 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
             {!isSignedIn ? (
               <div className="flex flex-wrap gap-3">
                 <Link
-                  href="/sign-up"
+                  href={`/sign-up?redirect_url=${encodeURIComponent(`/activate?claim=${claimToken}`)}`}
                   className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
                 >
                   Create account
                 </Link>
                 <Link
-                  href="/sign-in"
+                  href={`/sign-in?redirect_url=${encodeURIComponent(`/activate?claim=${claimToken}`)}`}
                   className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
                 >
                   Sign in

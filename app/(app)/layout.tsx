@@ -76,6 +76,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     : null
   const showExpiredBanner = access.hasReadOnlyPlannerAccess
   const showExpiringSoonBanner = !showExpiredBanner && daysUntilExpiry !== null && daysUntilExpiry <= 30
+  const showNoAccessBanner = !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length === 0
 
   return (
     <StelloquyProvider hasOracleAccess={access.hasOracleAccess}>
@@ -85,6 +86,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
             <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
               <div className="mx-auto w-full max-w-[1480px]">
+                {showNoAccessBanner && (
+                  <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-amber-500/40 bg-amber-500/10 px-5 py-3.5">
+                    <p className="text-sm text-bone">
+                      Your planner access isn&apos;t active yet.{' '}
+                      <span className="text-bone-muted">If you purchased on Etsy, finish activating your order.</span>
+                    </p>
+                    <Link
+                      href="/activate"
+                      className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-xs font-semibold text-stone-950 shrink-0"
+                    >
+                      Finish activation →
+                    </Link>
+                  </div>
+                )}
                 {showExpiredBanner && (
                   <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-ember-500/40 bg-ember-500/10 px-5 py-3.5">
                     <p className="text-sm text-bone">
