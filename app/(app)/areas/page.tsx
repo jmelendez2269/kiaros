@@ -54,7 +54,7 @@ export default async function AreasPage() {
       </section>
 
       {categories.length > 0 ? (
-        <section className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+        <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {categories.map((category) => {
             const area = getAreaDefinition(category.name)
             const slug = slugifyAreaName(category.name)
@@ -66,7 +66,7 @@ export default async function AreasPage() {
               <Link
                 key={category.id}
                 href={`/areas/${slug}`}
-                className="shell-panel group flex h-full flex-col justify-between px-6 py-6 transition-colors hover:border-leather-400/35 hover:bg-leather-500/8"
+                className="shell-panel group flex h-full flex-col justify-between px-4 py-5 transition-colors hover:border-leather-400/35 hover:bg-leather-500/8 sm:px-6 sm:py-6"
               >
                 <div>
                   <div className="flex items-start justify-between gap-4">

@@ -73,40 +73,24 @@ export default async function TodayPage() {
 
   return (
     <div
+      className="grid gap-[18px] p-4 sm:p-6 md:p-7"
       style={{
         fontFamily: K.fBody,
         color: K.ink,
         background: K.bg,
         backgroundImage: `radial-gradient(ellipse at top, ${K.brick}26 0%, transparent 40%), radial-gradient(ellipse at bottom right, ${K.kairos}14 0%, transparent 50%)`,
         minHeight: '100%',
-        padding: 28,
-        display: 'grid',
-        gap: 18,
       }}
     >
       <SkyBanner context={context} firstName={profile?.display_name ?? null} weekTheme={currentWeek?.theme ?? null} />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
-          gap: 16,
-          alignItems: 'start',
-        }}
-      >
+      <div className="grid gap-4 items-start md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <TodayIntention result={intention} />
         <TodayCurriculum result={curriculum} />
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
-          gap: 16,
-          alignItems: 'start',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+      <div className="grid gap-4 items-start md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-4 min-w-0">
           <Frame tone="umber" padding={22}>
             <ShapeOfTodayCards
               shape={shape}
@@ -149,13 +133,7 @@ export default async function TodayPage() {
 
       {season.status === 'ok' ? <SeasonRead data={season} /> : null}
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)',
-          gap: 16,
-        }}
-      >
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Frame tone="umber" padding={20}>
           <WeekRibbon week={context.week} />
         </Frame>

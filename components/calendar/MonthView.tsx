@@ -32,7 +32,7 @@ export function MonthView({
   }
 
   return (
-    <div className="shell-panel px-6 py-6">
+    <div className="shell-panel px-3 py-4 sm:px-6 sm:py-6">
       <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="shell-kicker mb-2">Month view</p>
@@ -51,7 +51,8 @@ export function MonthView({
             key={d}
             className="py-2 text-center text-[10px] font-medium uppercase tracking-wider text-bone-muted/45"
           >
-            {d}
+            <span className="sm:hidden">{d[0]}</span>
+            <span className="hidden sm:inline">{d}</span>
           </div>
         ))}
       </div>
@@ -59,7 +60,7 @@ export function MonthView({
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-[1.1rem] bg-border/80">
         {grid.map((date, i) => {
           if (!date) {
-            return <div key={`pad-${i}`} className="min-h-[86px] bg-stone-950/40" aria-hidden />
+            return <div key={`pad-${i}`} className="min-h-[52px] bg-stone-950/40 sm:min-h-[86px]" aria-hidden />
           }
 
           const day = dayMap.get(date)
@@ -74,7 +75,7 @@ export function MonthView({
               key={date}
               onClick={() => onDayClick(date)}
               className={cn(
-                'flex min-h-[86px] flex-col gap-1 bg-stone-900/90 p-2 text-left transition-colors hover:bg-stone-850/95',
+                'flex min-h-[52px] flex-col gap-1 bg-stone-900/90 p-1.5 text-left transition-colors hover:bg-stone-850/95 sm:min-h-[86px] sm:p-2',
                 isToday && 'bg-leather-500/14'
               )}
             >

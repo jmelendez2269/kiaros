@@ -267,7 +267,8 @@ export function WeekView({ selectedDate, dayMap, weeks, curriculumByDate, today 
             Daily transits, moon movement, and the week&apos;s blueprint guidance in one lane.
           </p>
         </div>
-        <div className="grid grid-cols-7 gap-px bg-border/80">
+        <div className="overflow-x-auto">
+        <div className="grid min-w-[560px] grid-cols-7 gap-px bg-border/80">
           {weekDates.map((date, i) => {
             const day = dayMap.get(date)
             const curriculumSessions = curriculumByDate.get(date) ?? []
@@ -339,6 +340,7 @@ export function WeekView({ selectedDate, dayMap, weeks, curriculumByDate, today 
               </div>
             )
           })}
+        </div>
         </div>
       </div>
 
