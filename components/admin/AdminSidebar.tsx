@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
+  { href: '/admin/users', label: 'Users', glyph: '~' },
   { href: '/admin/sources', label: 'Sources', glyph: '*' },
   { href: '/admin/imports', label: 'Imports', glyph: 'v' },
   { href: '/admin/commerce', label: 'Commerce', glyph: '$' },
