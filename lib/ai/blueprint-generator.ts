@@ -242,7 +242,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     })
 
     // ── 7. Call Claude ────────────────────────────────────────────────
-    const model = anthropic('claude-sonnet-4.6')
+    const model = anthropic('claude-sonnet-4-6')
     log(`calling Claude (systemPrompt ${systemPrompt.length}c, userPrompt ${userPrompt.length}c)`)
 
     const { text, usage, finishReason } = await generateText({
@@ -295,7 +295,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
           significantTransits: ephemeris.significantTransits.slice(0, 50),
         }),
         generated_at: new Date().toISOString(),
-        model_used: 'claude-sonnet-4.6',
+        model_used: 'claude-sonnet-4-6',
         tradition: profile.tradition ?? null,
         house_system: profile.house_system ?? null,
       })
