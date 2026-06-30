@@ -95,7 +95,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     const { data: profile, error: profileError } = await admin
       .from('user_profiles')
       .select(
-        'display_name, birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng, natal_chart, human_design, year_vision, word_of_year, what_to_release, study_focus'
+        'display_name, birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng, natal_chart, human_design, year_vision, word_of_year, what_to_release, study_focus, tradition, house_system'
       )
       .eq('id', userId)
       .single()
@@ -224,7 +224,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     log(`ephemeris ready (${ephemeris.days.length} days, ${ephemeris.significantTransits.length} transits)`)
 
     // ── 6. Assemble prompt ────────────────────────────────────────────
-    const systemPrompt = assembleBlueprintSystemPrompt()
+    const systemPrompt = assembleBlueprintSystemPrompt(profile.tradition ?? null)
     const userPrompt = assembleBlueprintUserPrompt({
       userName: profile.display_name ?? 'there',
       natalChart,
@@ -242,7 +242,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
     })
 
     // ── 7. Call Claude ────────────────────────────────────────────────
-    const model = anthropic('claude-sonnet-4-6')
+    const model = anthropic('claude-sonnet-4.6')
     log(`calling Claude (systemPrompt ${systemPrompt.length}c, userPrompt ${userPrompt.length}c)`)
 
     const { text, usage, finishReason } = await generateText({
@@ -295,7 +295,9 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
           significantTransits: ephemeris.significantTransits.slice(0, 50),
         }),
         generated_at: new Date().toISOString(),
-        model_used: 'claude-sonnet-4-6',
+        model_used: 'claude-sonnet-4.6',
+        tradition: profile.tradition ?? null,
+        house_system: profile.house_system ?? null,
       })
       .eq('id', blueprintId)
 

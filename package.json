@@ -37,6 +37,7 @@
     "react-dom": "^18.3.1",
     "react-force-graph-2d": "^1.29.1",
     "react-hook-form": "^7.51.3",
+    "resend": "^6.16.0",
     "stripe": "22.0.2",
     "svix": "^1.90.0",
     "tailwind-merge": "^2.3.0",

@@ -31,6 +31,17 @@ export type Planet =
 
 export type AspectType = 'conjunction' | 'opposition' | 'square' | 'trine' | 'sextile'
 
+export type HouseSystem = 'whole_sign' | 'porphyry' | 'placidus'
+export type Tradition = 'evolutionary' | 'karmic' | 'psychological' | 'traditional' | 'synthesis'
+
+export const TRADITION_HOUSE_DEFAULTS: Record<Tradition, HouseSystem> = {
+  evolutionary: 'porphyry',
+  karmic: 'porphyry',
+  psychological: 'placidus',
+  traditional: 'whole_sign',
+  synthesis: 'placidus',
+}
+
 export type MoonPhase = 'new' | 'first-quarter' | 'full' | 'last-quarter'
 
 export type LunarPhase =
@@ -51,7 +62,7 @@ export interface PlanetPosition {
   longitude: number   // 0–360 geocentric ecliptic
   sign: ZodiacSign
   degree: number      // 0–30 within sign
-  house: number       // 1–12, Whole Sign
+  house: number       // 1–12; system determined by NatalChart.houseSystem
   retrograde?: boolean
 }
 
@@ -66,8 +77,11 @@ export interface NatalChart {
   uranus: PlanetPosition
   neptune: PlanetPosition
   pluto: PlanetPosition
-  rising: ZodiacSign    // Ascendant sign = House 1 in Whole Sign
+  rising: ZodiacSign
   birthTimeUnknown: boolean
+  houseSystem: HouseSystem
+  ascendantLongitude?: number   // ecliptic degrees; undefined when birth time unknown
+  houseCusps?: number[]         // 12 cusp longitudes; defined when birth time known and houseSystem !== 'whole_sign'
 }
 
 // ─── Ephemeris ───────────────────────────────────────────────────────────────

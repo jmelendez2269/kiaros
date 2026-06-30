@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
@@ -173,7 +173,7 @@ export function JournalComposer({
             </p>
           </div>
           <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">
-            {initialPrompt ? ‘Prompt-loaded entry’ : ‘Open reflection’}
+            {initialPrompt ? 'Prompt-loaded entry' : 'Open reflection'}
           </div>
         </div>
       </section>
@@ -286,7 +286,7 @@ export function JournalComposer({
               disabled={isSaving || body.trim().length === 0}
               className="rounded-xl border border-leather-400/50 bg-leather-500/35 px-5 py-3 text-sm font-medium text-bone shadow-glow transition-colors hover:bg-leather-500/45 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSaving ? ‘Saving...’ : ‘Save entry’}
+              {isSaving ? 'Saving...' : 'Save entry'}
             </button>
             <Link
               href="/oracle"
@@ -308,7 +308,7 @@ export function JournalComposer({
                 {entryCount}
               </span>
             </div>
-            <p className="mt-3 text-sm leading-6 text-bone-muted">Everything you’ve captured lives here, with your latest reflections below.</p>
+            <p className="mt-3 text-sm leading-6 text-bone-muted">Everything you've captured lives here, with your latest reflections below.</p>
           </div>
 
           <div className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-4 py-4">
@@ -338,7 +338,7 @@ export function JournalComposer({
           <div className="rounded-[1rem] border border-border/80 bg-stone-900/80 px-4 py-4">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/75">Architecture</p>
             <p className="mt-2 text-sm font-medium text-bone-muted">
-              {blueprintYear ? `${blueprintYear} blueprint ready` : ‘Annual blueprint’}
+              {blueprintYear ? `${blueprintYear} blueprint ready` : 'Annual blueprint'}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Link

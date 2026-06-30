@@ -38,11 +38,12 @@ export const PROTECTED_ROUTES = ["/dashboard", "/blueprint"];
 // URLs
 export const ONBOARDING_STEPS = [
   { step: 1, path: "/onboarding", title: "Timing Foundation" },
-  { step: 2, path: "/onboarding/goals", title: "Focus Layers" },
-  { step: 3, path: "/onboarding/study-focus", title: "Study Layer" },
-  { step: 4, path: "/onboarding/year-focus", title: "Year Customization" },
-  { step: 5, path: "/onboarding/cycle", title: "Energy Layer" },
-  { step: 6, path: "/onboarding/theme", title: "Your Aesthetic" },
+  { step: 2, path: "/onboarding/tradition", title: "Your Tradition" },
+  { step: 3, path: "/onboarding/goals", title: "Focus Layers" },
+  { step: 4, path: "/onboarding/study-focus", title: "Study Layer" },
+  { step: 5, path: "/onboarding/year-focus", title: "Year Customization" },
+  { step: 6, path: "/onboarding/cycle", title: "Energy Layer" },
+  { step: 7, path: "/onboarding/theme", title: "Your Aesthetic" },
 ];
 
 export type ThemeId = "obsidian" | "celestial" | "dawn";

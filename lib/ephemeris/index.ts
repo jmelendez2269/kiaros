@@ -6,6 +6,9 @@ export {
   isPlanetRetrograde,
   lonToSign,
   lonToDegreeInSign,
+  houseFromCusps,
+  computePorphyryCusps,
+  computePlacidusCusps,
 } from './astronomia-adapter'
 export type { BirthData, DailyPlanetLongitudes } from './astronomia-adapter'
 

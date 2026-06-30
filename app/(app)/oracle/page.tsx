@@ -63,7 +63,7 @@ export default async function OraclePage() {
   }).format(new Date())
 
   const supabase = await createServerSupabase()
-  const { data: profile } = await supabase.from('user_profiles').select('id').maybeSingle()
+  const { data: profile } = await supabase.from('user_profiles').select('id, tradition').maybeSingle()
 
   const { data: entitlements } = profile?.id
     ? await supabase
@@ -79,5 +79,5 @@ export default async function OraclePage() {
     return <OracleUpgradeState hasReadOnlyPlannerAccess={access.hasReadOnlyPlannerAccess} />
   }
 
-  return <OracleChat today={today} />
+  return <OracleChat today={today} userTradition={profile?.tradition ?? null} />
 }

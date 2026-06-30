@@ -181,7 +181,7 @@ const AREA_DEFINITIONS: AreaDefinition[] = [
   },
 ]
 
-const PLANET_LABELS: Record<keyof Omit<NatalChart, 'rising' | 'birthTimeUnknown'>, Planet> = {
+const PLANET_LABELS: Record<keyof Omit<NatalChart, 'rising' | 'birthTimeUnknown' | 'houseSystem' | 'ascendantLongitude' | 'houseCusps'>, Planet> = {
   sun: 'Sun',
   moon: 'Moon',
   mercury: 'Mercury',

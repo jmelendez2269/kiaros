@@ -1,7 +1,15 @@
 import Link from 'next/link'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { BlueprintView } from '@/components/blueprint/BlueprintView'
-import type { BlueprintOutput, MoonPhase } from '@/types/blueprint'
+import type { BlueprintOutput, MoonPhase, Tradition } from '@/types/blueprint'
+
+const TRADITION_LABELS: Record<Tradition, string> = {
+  evolutionary: 'Evolutionary Astrology',
+  karmic: 'Karmic Astrology',
+  psychological: 'Psychological Astrology',
+  traditional: 'Traditional / Hellenistic',
+  synthesis: 'Synthesis',
+}
 
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
@@ -76,16 +84,32 @@ export default async function BlueprintPage() {
   const supabase = await createServerSupabase()
   const currentYear = new Date().getFullYear()
 
-  const { data: row } = await supabase
-    .from('blueprints')
-    .select(
-      'id, plan_year, year_theme, year_summary, quarters, months, weeks, push_periods, rest_periods'
+  const [{ data: row }, { data: profile }] = await Promise.all([
+    supabase
+      .from('blueprints')
+      .select(
+        'id, plan_year, year_theme, year_summary, quarters, months, weeks, push_periods, rest_periods, tradition, house_system'
+      )
+      .eq('plan_year', currentYear)
+      .eq('status', 'ready')
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('user_profiles')
+      .select('tradition, house_system')
+      .maybeSingle(),
+  ])
+
+  const needsRegeneration =
+    !!row &&
+    !!profile &&
+    (
+      (profile.tradition !== null && row.tradition !== profile.tradition) ||
+      (profile.house_system !== null && row.house_system !== profile.house_system)
     )
-    .eq('plan_year', currentYear)
-    .eq('status', 'ready')
-    .order('version', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+
+  const currentTradition = profile?.tradition as Tradition | null
 
   if (!row) {
     return (
@@ -116,5 +140,33 @@ export default async function BlueprintPage() {
     restPeriods: sanitizePeriodRanges(row.rest_periods),
   }
 
-  return <BlueprintView blueprint={blueprint} planYear={row.plan_year} />
+  return (
+    <>
+      {needsRegeneration && (
+        <div className="mx-auto mb-6 max-w-3xl rounded-2xl border border-leather-400/40 bg-leather-500/15 px-5 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium text-bone">
+                {row.tradition === null
+                  ? 'Tradition-aware readings are now available'
+                  : 'Your tradition or house system has changed'}
+              </p>
+              <p className="text-xs leading-relaxed text-bone-muted">
+                {row.tradition === null
+                  ? `Regenerate your blueprint to weave in your ${currentTradition ? TRADITION_LABELS[currentTradition] : 'chosen tradition'} lens.`
+                  : `Regenerate your blueprint to reflect your ${currentTradition ? TRADITION_LABELS[currentTradition] : 'updated'} path.`}
+              </p>
+            </div>
+            <Link
+              href="/onboarding/generating"
+              className="shrink-0 rounded-xl border border-leather-400/50 bg-leather-500/30 px-4 py-2 text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+            >
+              Regenerate
+            </Link>
+          </div>
+        </div>
+      )}
+      <BlueprintView blueprint={blueprint} planYear={row.plan_year} />
+    </>
+  )
 }

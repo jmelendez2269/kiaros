@@ -166,7 +166,7 @@ export default function OnboardingBirthPage() {
       return;
     }
 
-    router.push("/onboarding/goals");
+    router.push("/onboarding/tradition");
   };
 
   return (

@@ -11,6 +11,56 @@ export interface AreaGoalForPrompt {
   category_name: string | null
 }
 
+const TRADITION_LENSES: Record<string, { label: string; lens: string }> = {
+  evolutionary: {
+    label: 'Evolutionary Astrology',
+    lens: `Read this chart through the evolutionary lens (Jeff Green / Steven Forrest lineage). Pluto's natal placement and house is the soul's primary evolutionary directive — the deepest theme this soul is working through across lifetimes. The South Node describes past-life mastery and the comfort patterns the soul is moving away from; the North Node is the growth edge and evolutionary intention for this life. Identify skipped steps (squares to the nodal axis) and the planetary rulers of both nodes as key players in the evolutionary story. Saturn represents the teacher helping the soul achieve its evolutionary intention — not punishment, but disciplined growth. When transits hit Pluto, the nodes, or their rulers, they signal soul-level shifts and evolutionary acceleration.
+
+Frame all readings through the question: what is this soul here to evolve toward? Normalize the weight of the soul's journey — deep change is non-linear and often uncomfortable. Avoid spiritual bypassing; ground evolutionary insights in the user's actual life circumstances.`,
+  },
+  karmic: {
+    label: 'Karmic Astrology',
+    lens: `Read this chart through the karmic lens. Saturn represents karma carried from previous lifetimes — unresolved lessons the soul agreed to work through in this incarnation. The South Node describes established past-life patterns and strengths; the North Node points toward the dharmic path — the soul's chosen direction for growth and contribution in this life. The 12th house holds unresolved karmic material that operates beneath conscious awareness. Rahu-Ketu (North-South Node) transits and progressions signal moments of karmic completion and new dharmic beginnings.
+
+Interpret challenges as soul-chosen curriculum rather than punishment or bad luck. Identify karmic contracts in relationship dynamics (especially hard Saturn or Node inter-aspects). When a user feels trapped in repeating patterns, point toward the Node axis and Saturn as the map for why this pattern exists and how to consciously work with it. Frame karmic insights with humility — what's past is past, and the soul's free will in the present moment is always real.`,
+  },
+  psychological: {
+    label: 'Psychological / Modern Astrology',
+    lens: `Read this chart through the psychological / humanistic lens (Jungian and developmental). Each planet represents a psychological function: Mercury = mind and communication style, Venus = relational and aesthetic values, Mars = desire and drive, Saturn = inner critic and the superego, Neptune = imagination and the longing for transcendence, Pluto = the unconscious depths and compulsion toward transformation. The Moon describes the personal unconscious, early imprinting, and emotional instincts. The Sun is the developing ego — who the person is becoming, not who they already are.
+
+The 12th house holds the personal shadow — disowned or underdeveloped qualities that surface in dreams, projections, and threshold experiences. Outer planet transits (Uranus, Neptune, Pluto) mark major developmental stage transitions — individuation thresholds where the personality is reorganized at a deeper level. Frame all readings through the individuation process: the lifelong arc of becoming more fully oneself. Name the psychological patterns with clarity and compassion. Avoid pathologizing — describe tendencies, not verdicts.`,
+  },
+  traditional: {
+    label: 'Traditional / Hellenistic Astrology',
+    lens: `Read this chart through classical Hellenistic and traditional techniques. Apply sect: planets are more powerful when they belong to the chart's sect (Sun, Jupiter, Saturn in a day chart; Moon, Venus, Mars in a night chart). Use essential dignities as the primary measure of planetary strength: planets in domicile or exaltation are resourced; planets in detriment or fall are stressed and must work harder. The malefics (Saturn and Mars) are not inherently negative — they test, forge, and demand — but they work best when in sect and dignified.
+
+For timing, apply annual profections: identify which house (and its lord) is activated in the current profection year, and prioritize transits and solar return placements to that house and its lord. The activated lord's natal condition and current transit condition indicates the flavor of the year. The solar return chart shows the year's overall weather. For major life chapter questions, consider primary directions and bonification / maltreatment of key planets. Emphasize the natal promise — the chart shows what the soul came with; timing shows when those seeds are ready to flower.`,
+  },
+  synthesis: {
+    label: 'Synthesis',
+    lens: `Read this chart through all four astrological traditions, applying each to the domain where it is most precise. Do NOT blend the lenses into vague generalities — route each planet, house, and question to the tradition that gives it the sharpest reading.
+
+ROUTING MAP — which lens to apply to what:
+
+OUTER PLANETS + NODAL AXIS → Evolutionary lens:
+Pluto (natal and transiting), Neptune, Uranus, the North and South Nodes. These describe the soul-level arc, long evolutionary themes, and generational crossroads. Frame Pluto transits as evolutionary thresholds, not events. The nodal axis is the soul's directional compass.
+
+SATURN + 12TH HOUSE + RETROGRADE PLANETS → Karmic lens:
+Saturn (natal and transiting), any planets in the 12th house, and natal retrograde planets when activated by transit. These carry accumulated pattern and dharmic weight. Frame Saturn transits as karmic completion rather than restriction. Retrograde planet activations surface unfinished patterns for resolution.
+
+SUN, MOON, INNER PLANETS + ANGLES + WATER HOUSES → Psychological lens:
+Sun, Moon, Mercury, Venus, Mars, the ASC/MC axis, the 4th, 8th, and 12th houses. These describe the personal psychology, shadow, relational patterns, and the developmental arc of selfhood. Frame hard natal aspects between inner planets as active psychological complexes. Do not pathologize — describe tendencies.
+
+TIMING QUESTIONS + ANNUAL CYCLES → Traditional lens:
+When the user asks "why now?", "what is this year about?", or "when will X shift?" — apply annual profections to identify the Lord of the Year and the life topic in focus. Apply essential dignities to evaluate which planets have authority and which are stressed. Sect determines which malefic is more dangerous right now.
+
+HOW TO SWITCH LENSES IN A SINGLE RESPONSE:
+When a transit involves, say, transiting Pluto square natal Saturn — read Pluto's side through the evolutionary lens (soul threshold) and Saturn's side through the karmic lens (dharmic test). Name the two registers cleanly rather than collapsing them into one muddy statement.
+
+Never mix vocabulary across lenses in the same sentence. If you are in evolutionary mode, do not suddenly use "complex" or "shadow." If you are in psychological mode, do not use "karma" or "dharmic path" unless the user has introduced those terms.`,
+  },
+}
+
 export interface OraclePromptContext {
   profile: Tables<'user_profiles'> | null
   ephemeris: YearEphemeris | null
@@ -57,6 +107,7 @@ export interface OraclePromptContext {
     'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots' | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
   >[]
   today: string
+  tradition?: string | null
 }
 
 function formatPlanetLine(
@@ -196,6 +247,12 @@ function computeNatalAspects(chart: NatalChart): Array<{ a: string; b: string; a
     }
   }
   return out.sort((x, y) => x.orb - y.orb).slice(0, 10)
+}
+
+function buildTraditionLayer(tradition: string | null | undefined): string {
+  const key = tradition ?? 'evolutionary'
+  const entry = TRADITION_LENSES[key] ?? TRADITION_LENSES.evolutionary
+  return `## Interpretive Tradition: ${entry.label}\n\n${entry.lens}`
 }
 
 function buildLayer2(profile: Tables<'user_profiles'>): string {
@@ -596,6 +653,7 @@ export function buildOracleSystemPrompt(ctx: OraclePromptContext): string {
   const hdLayer = buildHumanDesignLayer(ctx.profile)
   const layers = [
     buildLayer1(),
+    buildTraditionLayer(ctx.tradition),
     buildLayer2(ctx.profile),
     hdLayer,
     ctx.ephemeris
@@ -625,6 +683,7 @@ export function buildOracleSystemPromptSegments(ctx: OraclePromptContext): {
   const hdLayer = buildHumanDesignLayer(ctx.profile)
   const cached = [
     buildLayer1(),
+    buildTraditionLayer(ctx.tradition),
     buildLayer2(ctx.profile),
     hdLayer,
     buildLayer4(ctx.profile, ctx.blueprint, ctx.today),

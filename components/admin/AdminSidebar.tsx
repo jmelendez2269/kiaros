@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/admin/drafts", label: "Drafts", glyph: "#" },
   { href: "/admin/published", label: "Published", glyph: "+" },
   { href: "/admin/mapping", label: "Mapping", glyph: "@" },
+  { href: "/admin/feedback", label: "Feedback", glyph: "!" },
 ];
 
 export function AdminSidebar() {

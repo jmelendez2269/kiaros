@@ -17,7 +17,7 @@ import type { Tables } from '@/types/database'
 
 export const maxDuration = 60
 
-const ORACLE_MODEL_ID = 'claude-sonnet-4-6'
+const ORACLE_MODEL_ID = 'claude-sonnet-4.6'
 
 function getErrorMessage(error: unknown): string {
   if (error == null) return 'unknown error'
@@ -37,11 +37,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = (await req.json()) as { messages?: UIMessage[] }
+    const body = (await req.json()) as { messages?: UIMessage[]; tradition?: string }
     const messages = body.messages ?? []
     if (messages.length === 0) {
       return NextResponse.json({ error: 'No messages provided' }, { status: 400 })
     }
+    const requestTradition = body.tradition ?? null
 
     const profileId = await getUserProfileId(userId)
     if (!profileId) {
@@ -214,6 +215,7 @@ export async function POST(req: Request) {
         | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
       >[],
       today,
+      tradition: requestTradition ?? profileRes.data?.tradition ?? null,
     })
 
     const userMessages = await convertToModelMessages(messages)

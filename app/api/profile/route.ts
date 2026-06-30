@@ -4,7 +4,7 @@ import { createAdminSupabase } from "@/lib/supabase/admin";
 import { deriveAstrologicalYearWord } from "@/lib/astrology/year-word";
 import { computeNatalChart } from "@/lib/ephemeris";
 import type { BirthData } from "@/lib/ephemeris";
-import type { NatalChart } from "@/types/blueprint";
+import type { HouseSystem, NatalChart } from "@/types/blueprint";
 import { computeHumanDesign } from "@/lib/human-design";
 
 export async function GET() {
@@ -14,7 +14,7 @@ export async function GET() {
   const admin = createAdminSupabase();
   const { data: profile, error } = await admin
     .from("user_profiles")
-    .select("display_name, theme, birth_date, birth_time, birth_time_unknown, birth_city, birth_tz, natal_chart, plan_year, word_of_year, year_vision, what_to_release, study_focus")
+    .select("display_name, theme, birth_date, birth_time, birth_time_unknown, birth_city, birth_tz, natal_chart, plan_year, word_of_year, year_vision, what_to_release, study_focus, tradition, house_system")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -73,15 +73,15 @@ export async function PATCH(req: Request) {
     });
   }
 
-  // If this update includes birth data, recompute the natal chart.
-  // We need the full birth record (some fields may already be stored).
+  // Recompute natal chart when birth data or house system changes.
   const birthFields = ["birth_date", "birth_lat", "birth_lng", "birth_time", "birth_tz", "birth_time_unknown"];
-  const touchesBirthData = birthFields.some((f) => f in body);
+  const chartTriggerFields = [...birthFields, "house_system"];
+  const touchesChart = chartTriggerFields.some((f) => f in body);
 
-  if (touchesBirthData) {
+  if (touchesChart) {
     const { data: profile } = await admin
       .from("user_profiles")
-      .select("birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng")
+      .select("birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng, house_system")
       .eq("clerk_user_id", userId)
       .single();
 
@@ -96,7 +96,8 @@ export async function PATCH(req: Request) {
       };
 
       try {
-        const natalChart = computeNatalChart(birthData);
+        const houseSystem = (profile.house_system ?? "porphyry") as HouseSystem;
+        const natalChart = computeNatalChart(birthData, houseSystem);
         await admin
           .from("user_profiles")
           .update({ natal_chart: natalChart as unknown as Record<string, unknown> })

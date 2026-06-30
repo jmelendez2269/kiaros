@@ -63,6 +63,9 @@ interface Props {
    *  needing the parent to render its own. Default false (legacy page
    *  renders its own header orb). */
   showStatusOrb?: boolean
+  /** Tradition tab this conversation belongs to. Sent to the API so the
+   *  system prompt uses the matching interpretive lens. */
+  tradition?: string
 }
 
 /**
@@ -79,8 +82,12 @@ interface Props {
 export function OracleConversation({
   className = 'flex min-h-0 flex-1 flex-col px-5 py-5',
   showStatusOrb = false,
+  tradition,
 }: Props) {
-  const transport = useMemo(() => new DefaultChatTransport({ api: '/api/oracle/chat' }), [])
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: '/api/oracle/chat', body: tradition ? { tradition } : undefined }),
+    [tradition]
+  )
   const { messages, sendMessage, status, error } = useChat({ transport })
   const [captureError, setCaptureError] = useState<string | null>(null)
   const [showThreadPanel, setShowThreadPanel] = useState(false)

@@ -1,4 +1,5 @@
 import { ZODIAC_SIGNS, type NatalChart, type ZodiacSign } from '@/types/blueprint'
+import { lonToSign } from '@/lib/ephemeris'
 
 const HOUSE_YEAR_WORDS: Record<number, string> = {
   1: 'Embodiment',
@@ -67,8 +68,11 @@ function calculateAgeAtDate(birthDate: string, referenceDate: Date): number {
   return Math.max(age, 0)
 }
 
-function wholeSignHouseSign(rising: ZodiacSign, house: number): ZodiacSign {
-  const risingIndex = ZODIAC_SIGNS.indexOf(rising)
+function profectionSign(natalChart: NatalChart, house: number): ZodiacSign {
+  if (natalChart.houseCusps && natalChart.houseSystem !== 'whole_sign') {
+    return lonToSign(natalChart.houseCusps[house - 1])
+  }
+  const risingIndex = ZODIAC_SIGNS.indexOf(natalChart.rising)
   return ZODIAC_SIGNS[(risingIndex + house - 1) % ZODIAC_SIGNS.length]
 }
 
@@ -97,16 +101,16 @@ export function deriveAstrologicalYearWord({
   const referenceDate = buildReferenceDate(planYear)
   const age = calculateAgeAtDate(birthDate, referenceDate)
   const profectionHouse = (age % 12) + 1
-  const profectionSign = wholeSignHouseSign(natalChart.rising, profectionHouse)
+  const sign = profectionSign(natalChart, profectionHouse)
   const word = HOUSE_YEAR_WORDS[profectionHouse]
   const theme = HOUSE_THEMES[profectionHouse]
-  const flavor = SIGN_FLAVORS[profectionSign]
+  const flavor = SIGN_FLAVORS[sign]
 
   return {
     word,
     profectionHouse,
-    profectionSign,
-    rationale: `Your ${planYear} profection emphasizes the ${profectionHouse}${ordinalSuffix(profectionHouse)} house in ${profectionSign}, highlighting ${theme} ${flavor}.`,
+    profectionSign: sign,
+    rationale: `Your ${planYear} profection emphasizes the ${profectionHouse}${ordinalSuffix(profectionHouse)} house in ${sign}, highlighting ${theme} ${flavor}.`,
   }
 }
 

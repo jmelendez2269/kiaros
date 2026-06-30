@@ -47,7 +47,7 @@ const vsop87Buranus = require('astronomia/data/vsop87Buranus').default
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const vsop87Bneptune = require('astronomia/data/vsop87Bneptune').default
 
-import type { NatalChart, PlanetPosition, ZodiacSign, LunarPhase, MoonPhaseEvent, MoonPhase } from '@/types/blueprint'
+import type { NatalChart, PlanetPosition, ZodiacSign, LunarPhase, MoonPhaseEvent, MoonPhase, HouseSystem } from '@/types/blueprint'
 import { ZODIAC_SIGNS } from '@/types/blueprint'
 
 // ─── Planet instances (created once, reused) ──────────────────────────────
@@ -269,6 +269,125 @@ export function isPlanetRetrograde(
   return diff < 0
 }
 
+// ─── House cusp calculators ───────────────────────────────────────────────
+
+/**
+ * Returns the ecliptic longitude of a planet's house (1–12) given the 12 cusp
+ * longitudes where cusps[0] is the H1 cusp, cusps[1] is H2, etc.
+ * All values in degrees [0, 360).
+ */
+export function houseFromCusps(lon: number, cusps: number[]): number {
+  const normalized = normalizeDeg(lon)
+  for (let i = 0; i < 12; i++) {
+    const start = cusps[i]
+    const end = cusps[(i + 1) % 12]
+    const arc = end >= start ? end - start : end + 360 - start
+    const dist = normalized >= start ? normalized - start : normalized + 360 - start
+    if (dist < arc) return i + 1
+  }
+  return 1
+}
+
+/**
+ * Porphyry house cusps — divides each of the four quadrants (ASC→IC, IC→DSC,
+ * DSC→MC, MC→ASC) into equal thirds by ecliptic arc.
+ * Returns 12 cusp longitudes, index 0 = H1 cusp (= ascLon).
+ */
+export function computePorphyryCusps(ascLon: number, mcLon: number): number[] {
+  const icLon = normalizeDeg(mcLon + 180)
+  const dscLon = normalizeDeg(ascLon + 180)
+
+  function arcBetween(from: number, to: number): number {
+    const arc = to - from
+    return arc < 0 ? arc + 360 : arc
+  }
+
+  const q1 = arcBetween(ascLon, icLon)
+  const q2 = arcBetween(icLon, dscLon)
+  const q3 = arcBetween(dscLon, mcLon)
+  const q4 = arcBetween(mcLon, ascLon)
+
+  return [
+    ascLon,                            // H1
+    normalizeDeg(ascLon + q1 / 3),     // H2
+    normalizeDeg(ascLon + 2 * q1 / 3), // H3
+    icLon,                             // H4
+    normalizeDeg(icLon + q2 / 3),      // H5
+    normalizeDeg(icLon + 2 * q2 / 3),  // H6
+    dscLon,                            // H7
+    normalizeDeg(dscLon + q3 / 3),     // H8
+    normalizeDeg(dscLon + 2 * q3 / 3), // H9
+    mcLon,                             // H10
+    normalizeDeg(mcLon + q4 / 3),      // H11
+    normalizeDeg(mcLon + 2 * q4 / 3),  // H12
+  ]
+}
+
+/**
+ * Placidus house cusps via fixed-point iteration.
+ * lastRad = Local Apparent Sidereal Time in radians (= RAMC).
+ * eps = obliquity of ecliptic in radians.
+ * lat = geographic latitude in degrees.
+ * Returns 12 cusp longitudes, index 0 = H1 cusp (= ASC).
+ */
+export function computePlacidusCusps(lastRad: number, eps: number, lat: number): number[] {
+  const latRad = lat * RAD
+  const cosEps = Math.cos(eps)
+  const sinEps = Math.sin(eps)
+
+  const mcLon = normalizeDeg(Math.atan2(Math.sin(lastRad), Math.cos(lastRad) * cosEps) * DEG)
+  const ascLon = normalizeDeg(Math.atan2(
+    -Math.cos(lastRad),
+    cosEps * Math.sin(lastRad) + Math.tan(latRad) * sinEps
+  ) * DEG)
+  const icLon = normalizeDeg(mcLon + 180)
+  const dscLon = normalizeDeg(ascLon + 180)
+
+  // Find ecliptic longitude for an intermediate Placidus house.
+  // fromMC=true  → above horizon, fraction of diurnal semi-arc from RAMC toward ASC (H11, H12)
+  // fromMC=false → below horizon, fraction of nocturnal semi-arc from IC toward ASC (H2, H3)
+  function placidusHouse(fraction: number, fromMC: boolean): number {
+    let lon = (fromMC ? mcLon : icLon) * RAD
+
+    for (let iter = 0; iter < 30; iter++) {
+      const sinDec = Math.max(-1, Math.min(1, sinEps * Math.sin(lon)))
+      const dec = Math.asin(sinDec)
+      const inner = Math.max(-1, Math.min(1, -Math.tan(latRad) * Math.tan(dec)))
+      const dsa = Math.acos(inner) // diurnal semi-arc [0, π]
+
+      const raTarget = fromMC
+        ? lastRad + fraction * dsa
+        : (lastRad + Math.PI) + fraction * (Math.PI - dsa)
+
+      const newLon = Math.atan2(Math.sin(raTarget), Math.cos(raTarget) * cosEps)
+      if (Math.abs(newLon - lon) < 1e-6) break
+      lon = newLon
+    }
+
+    return normalizeDeg(lon * DEG)
+  }
+
+  const h11 = placidusHouse(1 / 3, true)
+  const h12 = placidusHouse(2 / 3, true)
+  const h2  = placidusHouse(1 / 3, false)
+  const h3  = placidusHouse(2 / 3, false)
+
+  return [
+    ascLon,                    // H1
+    h2,                        // H2
+    h3,                        // H3
+    icLon,                     // H4
+    normalizeDeg(h11 + 180),   // H5
+    normalizeDeg(h12 + 180),   // H6
+    dscLon,                    // H7
+    normalizeDeg(h2 + 180),    // H8
+    normalizeDeg(h3 + 180),    // H9
+    mcLon,                     // H10
+    h11,                       // H11
+    h12,                       // H12
+  ]
+}
+
 // ─── Natal chart computation ──────────────────────────────────────────────
 
 export interface BirthData {
@@ -280,7 +399,7 @@ export interface BirthData {
   timeUnknown: boolean
 }
 
-export function computeNatalChart(birth: BirthData): NatalChart {
+export function computeNatalChart(birth: BirthData, houseSystem: HouseSystem = 'whole_sign'): NatalChart {
   // Determine birth JDE
   let birthJDE: number
   if (!birth.timeUnknown && birth.time && birth.timezone) {
@@ -310,8 +429,12 @@ export function computeNatalChart(birth: BirthData): NatalChart {
   const neptuneLon = planetGeocentricLon(neptunePlanet, birthJDE)
   const plutoLon = getPlutoLongitude(birthJDE)
 
-  // Ascendant (Whole Sign houses)
+  // Ascendant + house cusps
   let rising: ZodiacSign
+  let ascendantLongitude: number | undefined
+  let houseCusps: number[] | undefined
+  let activeHouseSystem = houseSystem
+
   if (!birth.timeUnknown && birth.time && birth.timezone) {
     const gastSecs = (sidereal as any).apparent(birthJDE) as number
     const gastRad = gastSecs * Math.PI / 43200
@@ -324,14 +447,26 @@ export function computeNatalChart(birth: BirthData): NatalChart {
     )
     const ascDeg = normalizeDeg(ascRad * DEG)
     rising = lonToSign(ascDeg)
+    ascendantLongitude = ascDeg
+
+    if (houseSystem !== 'whole_sign') {
+      const mcLon = normalizeDeg(
+        Math.atan2(Math.sin(lastRad), Math.cos(lastRad) * Math.cos(eps)) * DEG
+      )
+      houseCusps = houseSystem === 'porphyry'
+        ? computePorphyryCusps(ascDeg, mcLon)
+        : computePlacidusCusps(lastRad, eps, birth.lat)
+    }
   } else {
-    // No birth time → use Sun sign as proxy for rising (common convention)
+    // No birth time → Sun sign as rising proxy; whole sign only
     rising = lonToSign(sunLon)
+    activeHouseSystem = 'whole_sign'
   }
 
-  // Whole Sign house assignment: House 1 = rising sign, House 2 = next, etc.
+  // House assignment
   const risingSignIndex = ZODIAC_SIGNS.indexOf(rising)
-  function wholeSignHouse(lon: number): number {
+  function assignHouse(lon: number): number {
+    if (houseCusps) return houseFromCusps(lon, houseCusps)
     const signIndex = Math.floor(normalizeDeg(lon) / 30)
     return ((signIndex - risingSignIndex + 12) % 12) + 1
   }
@@ -341,7 +476,7 @@ export function computeNatalChart(birth: BirthData): NatalChart {
       longitude: lon,
       sign: lonToSign(lon),
       degree: lonToDegreeInSign(lon),
-      house: wholeSignHouse(lon),
+      house: assignHouse(lon),
     }
   }
 
@@ -358,6 +493,9 @@ export function computeNatalChart(birth: BirthData): NatalChart {
     pluto: makePosition(plutoLon),
     rising,
     birthTimeUnknown: birth.timeUnknown,
+    houseSystem: activeHouseSystem,
+    ascendantLongitude,
+    houseCusps,
   }
 }
 

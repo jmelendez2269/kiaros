@@ -6,6 +6,7 @@ import { AlmanacSidebar } from '@/components/almanac/AlmanacSidebar'
 import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
 import { TourOverlay } from '@/components/tour/TourOverlay'
+import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -141,6 +142,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           })}
         />
         <TourOverlay />
+        <FeedbackButton />
       </div>
     </StelloquyProvider>
   )

@@ -6,6 +6,7 @@ import { CalendarDays, MessageCircle, Palette, Sparkles, UserRound } from "lucid
 import { ThemePicker } from "@/components/shared/ThemePicker";
 import { THEMES, type ThemeId } from "@/lib/constants";
 import { startTour } from "@/lib/tour/config";
+import { TRADITION_HOUSE_DEFAULTS, type HouseSystem, type Tradition } from "@/types/blueprint";
 
 const COOKIE_NAME = "kiaros-theme";
 
@@ -22,6 +23,8 @@ type SettingsProfile = {
   year_vision: string | null;
   what_to_release: string | null;
   study_focus: string | null;
+  tradition: Tradition | null;
+  house_system: HouseSystem | null;
 };
 
 type SettingsState = {
@@ -36,6 +39,30 @@ type SettingsState = {
   year_vision: string;
   what_to_release: string;
   study_focus: string;
+  tradition: Tradition | null;
+  house_system: HouseSystem | null;
+};
+
+const TRADITION_LABELS: Record<Tradition, string> = {
+  evolutionary: "Evolutionary",
+  karmic: "Karmic",
+  psychological: "Psychological",
+  traditional: "Traditional / Hellenistic",
+  synthesis: "Synthesis",
+};
+
+const TRADITION_DESCRIPTIONS: Record<Tradition, string> = {
+  evolutionary: "Soul growth and evolutionary purpose through Pluto, the South Node, and lifelong themes.",
+  karmic: "Karma, dharma, and the soul's contracts — Saturn, the nodes, and past-life patterns.",
+  psychological: "Jungian archetypes, shadow work, and the inner landscape of your chart.",
+  traditional: "Hellenistic roots — sect, essential dignities, time lords, and ancient timing methods.",
+  synthesis: "A bit of everything — weaving all four lenses based on what each chart placement calls for.",
+};
+
+const HOUSE_SYSTEM_LABELS: Record<HouseSystem, string> = {
+  whole_sign: "Whole Sign",
+  porphyry: "Porphyry",
+  placidus: "Placidus",
 };
 
 function applyTheme(theme: ThemeId) {
@@ -56,6 +83,8 @@ function buildInitialState(profile?: SettingsProfile | null): SettingsState {
     year_vision: profile?.year_vision ?? "",
     what_to_release: profile?.what_to_release ?? "",
     study_focus: profile?.study_focus ?? "",
+    tradition: profile?.tradition ?? null,
+    house_system: profile?.house_system ?? null,
   };
 }
 
@@ -139,6 +168,15 @@ export default function SettingsPage() {
     applyTheme(theme);
   };
 
+  const handleTraditionChange = (tradition: Tradition) => {
+    setForm((current) => ({
+      ...current,
+      tradition,
+      house_system: TRADITION_HOUSE_DEFAULTS[tradition],
+    }));
+    setSaved(false);
+  };
+
   const handleSave = () => {
     startTransition(async () => {
       setSaved(false);
@@ -155,6 +193,8 @@ export default function SettingsPage() {
         year_vision: form.year_vision.trim() || null,
         what_to_release: form.what_to_release.trim() || null,
         study_focus: form.study_focus.trim() || null,
+        tradition: form.tradition,
+        house_system: form.house_system,
       };
 
       const res = await fetch("/api/profile", {
@@ -314,6 +354,68 @@ export default function SettingsPage() {
           </div>
         </section>
       </div>
+
+      <section className="shell-panel px-6 py-6 md:px-8">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-plum-400/30 bg-plum-400/12 text-plum-300">
+            <Sparkles size={18} />
+          </div>
+          <div>
+            <p className="shell-kicker">Interpretive lens</p>
+            <h2 className="shell-subsection-title mt-1">Astrological tradition</h2>
+          </div>
+        </div>
+
+        <p className="mb-4 text-sm leading-7 text-bone-muted">
+          Your tradition shapes how Kiaros reads your chart — which techniques it emphasizes and which house system it uses as a default. You can override the house system below if you want to diverge from the tradition default.
+        </p>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {(Object.keys(TRADITION_LABELS) as Tradition[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => handleTraditionChange(t)}
+              className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                form.tradition === t
+                  ? "border-leather-400/60 bg-leather-500/20 text-bone"
+                  : "border-border/60 bg-stone-950/50 text-bone-muted hover:border-border hover:text-bone"
+              }`}
+            >
+              <p className="text-sm font-medium">{TRADITION_LABELS[t]}</p>
+              <p className="mt-1 text-xs leading-5 text-bone-muted">{TRADITION_DESCRIPTIONS[t]}</p>
+              <p className="mt-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-bone-muted/60">
+                Default: {HOUSE_SYSTEM_LABELS[TRADITION_HOUSE_DEFAULTS[t]]}
+              </p>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-5">
+          <p className="mb-2 text-sm font-medium text-bone">House system</p>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(HOUSE_SYSTEM_LABELS) as HouseSystem[]).map((hs) => (
+              <button
+                key={hs}
+                type="button"
+                onClick={() => { setField("house_system", hs); setSaved(false); }}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  form.house_system === hs
+                    ? "border-leather-400/60 bg-leather-500/20 text-bone"
+                    : "border-border/60 bg-stone-950/50 text-bone-muted hover:text-bone"
+                }`}
+              >
+                {HOUSE_SYSTEM_LABELS[hs]}
+              </button>
+            ))}
+          </div>
+          {form.tradition !== null && form.house_system !== null && form.house_system !== TRADITION_HOUSE_DEFAULTS[form.tradition] && (
+            <p className="mt-2 text-xs text-leather-300/80">
+              Overriding the {TRADITION_LABELS[form.tradition]} default ({HOUSE_SYSTEM_LABELS[TRADITION_HOUSE_DEFAULTS[form.tradition]]})
+            </p>
+          )}
+        </div>
+      </section>
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <section className="shell-panel px-6 py-6 md:px-8">
