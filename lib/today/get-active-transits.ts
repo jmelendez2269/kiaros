@@ -19,23 +19,23 @@ export interface ActiveTransitRow {
 }
 
 export type ActiveTransitsResult =
-  | { status: 'ok'; rows: ActiveTransitRow[] }
+  | { status: 'ok'; current: ActiveTransitRow[]; lifetime: ActiveTransitRow[] }
   | { status: 'no-chart' }
 
 /**
- * Returns the user's tightest currently-active transits for a given date,
- * enriched with rarity (from the planet's orbital period) and a plain-text
- * description. Sorted by rarity-then-orb so outer-planet transits surface
- * first — those are the ones that actually shape a life.
+ * Returns the user's currently-active transits for a given date split into
+ * two buckets:
+ *   current  — common/frequent/uncommon planets (Moon → Jupiter): change
+ *              week to week and are the "weather" of the day.
+ *   lifetime — rare/once-in-lifetime (Saturn → Pluto): slow tectonic waves
+ *              that last months or years; shown collapsed in the UI.
  *
  * Returns `{ status: 'no-chart' }` when the user hasn't completed their
- * natal chart or the year's ephemeris hasn't been cached yet; UI uses that
- * to render the empty state instead of a stale list.
+ * natal chart or the year's ephemeris hasn't been cached yet.
  */
 export async function getActiveTransits(
   date: string,
   supabaseUserId: string,
-  limit = 4,
 ): Promise<ActiveTransitsResult> {
   const admin = createAdminSupabase()
 
@@ -66,7 +66,9 @@ export async function getActiveTransits(
   const timeline = buildSkyTimeline(ephemeris, date)
   const active = timeline.filter((e) => e.status === 'active')
 
-  const rows: ActiveTransitRow[] = []
+  const current: ActiveTransitRow[] = []
+  const lifetime: ActiveTransitRow[] = []
+
   for (const entry of active) {
     // Match the window back to today's per-day Transit to get applying state
     // and current orb. If the per-day list dropped the row (orb widened off
@@ -78,7 +80,8 @@ export async function getActiveTransits(
         t.aspect === entry.aspect,
     )
     if (!todayHit) continue
-    rows.push({
+
+    const row: ActiveTransitRow = {
       planet: entry.planet,
       natalPlanet: entry.natalPlanet,
       aspect: entry.aspect,
@@ -88,9 +91,19 @@ export async function getActiveTransits(
       applying: todayHit.applying,
       rarity: entry.rarity,
       rarityLabel: entry.rarityLabel,
-    })
-    if (rows.length >= limit) break
+    }
+
+    if (entry.rarity === 'rare' || entry.rarity === 'once-in-lifetime') {
+      lifetime.push(row)
+    } else {
+      current.push(row)
+    }
   }
 
-  return { status: 'ok', rows }
+  // Within each bucket sort tightest orb first — rarity ordering already
+  // handled by the bucket split.
+  current.sort((a, b) => a.orb - b.orb)
+  lifetime.sort((a, b) => a.orb - b.orb)
+
+  return { status: 'ok', current, lifetime }
 }

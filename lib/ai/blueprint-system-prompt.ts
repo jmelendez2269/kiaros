@@ -507,7 +507,7 @@ OUTPUT BUDGET: You have ~16,000 tokens TOTAL and the JSON must finish cleanly. R
 - quarter.intention: 1 sentence
 - quarter.cosmicHighlights: 2 items max, ≤10 words each
 - month.energyArc: 1 sentence; month.keyTransits: ≤3 items
-- week.theme: ≤6 words; week.cosmicContext: 1 short sentence (≤18 words); week.intentions: 2 items of ≤8 words each
+- week.theme: ≤6 words; must name a specific transit, nodal dynamic, or tradition-relevant turning point — not generic solar/lunar imagery (good: "Pluto threshold, choose consciously"; bad: "Preparing for the Sun"); week.cosmicContext: 1 short sentence (≤18 words); week.intentions: 2 items of ≤8 words each
 - pushPeriods / restPeriods reason: 1 short clause
 No filler, no preamble, no restating the prompt. If a field starts to run long, cut it.
 

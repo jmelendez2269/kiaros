@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Frame, K, Kicker, GLYPH } from '@/components/almanac'
 import { AskOracleButton } from '@/components/oracle/AskOracleButton'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
@@ -51,6 +52,7 @@ const RARITY_TONE: Record<string, string> = {
 
 export function ActiveTransits({ data }: Props) {
   const { hasOracleAccess } = useStelloquy()
+  const [lifetimeOpen, setLifetimeOpen] = useState(false)
 
   if (data.status === 'no-chart') {
     return (
@@ -66,14 +68,17 @@ export function ActiveTransits({ data }: Props) {
             lineHeight: 1.5,
           }}
         >
-          Complete your birth chart on the Self screen to see today’s personal
+          Complete your birth chart on the Self screen to see today's personal
           transits.
         </p>
       </Frame>
     )
   }
 
-  if (data.rows.length === 0) {
+  const { current, lifetime } = data
+  const hasAny = current.length > 0 || lifetime.length > 0
+
+  if (!hasAny) {
     return (
       <Frame tone="umber" padding={22}>
         <Kicker color={K.copper}>Active transits</Kicker>
@@ -97,19 +102,100 @@ export function ActiveTransits({ data }: Props) {
   return (
     <Frame tone="umber" padding={22}>
       <Kicker color={K.copper}>Active transits</Kicker>
-      <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column' }}>
-        {data.rows.map((row, i) => (
-          <AskOracleButton
-            key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
-            prompt={buildActiveTransitPrompt(row)}
-            hasOracleAccess={hasOracleAccess}
-            label={`this ${row.technical}`}
-            triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
+
+      {/* Current / short-wave transits */}
+      {current.length > 0 ? (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column' }}>
+          {current.map((row, i) => (
+            <AskOracleButton
+              key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
+              prompt={buildActiveTransitPrompt(row)}
+              hasOracleAccess={hasOracleAccess}
+              label={`this ${row.technical}`}
+              triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
+            >
+              <TransitRow row={row} first={i === 0} />
+            </AskOracleButton>
+          ))}
+        </div>
+      ) : (
+        <p
+          style={{
+            marginTop: 10,
+            fontFamily: K.fSerif,
+            fontStyle: 'italic',
+            fontSize: 15,
+            color: K.inkDim,
+            lineHeight: 1.5,
+          }}
+        >
+          No fast-moving transits today — the slower planets are holding the field.
+        </p>
+      )}
+
+      {/* Lifetime / outer-planet transits — collapsible */}
+      {lifetime.length > 0 && (
+        <div style={{ marginTop: 14, borderTop: `1px solid ${K.line}`, paddingTop: 12 }}>
+          <button
+            type="button"
+            onClick={() => setLifetimeOpen((o) => !o)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              color: K.ember,
+              fontFamily: K.fMono,
+              fontSize: 10.5,
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+            }}
           >
-            <TransitRow row={row} first={i === 0} />
-          </AskOracleButton>
-        ))}
-      </div>
+            <span
+              style={{
+                display: 'inline-block',
+                transition: 'transform 180ms',
+                transform: lifetimeOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                fontSize: 10,
+              }}
+            >
+              ▶
+            </span>
+            Lifetime currents ({lifetime.length})
+          </button>
+
+          {lifetimeOpen && (
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column' }}>
+              <p
+                style={{
+                  fontFamily: K.fSerif,
+                  fontStyle: 'italic',
+                  fontSize: 13,
+                  color: K.inkSoft,
+                  lineHeight: 1.5,
+                  marginBottom: 8,
+                }}
+              >
+                Slow outer-planet transits that define a years-long season of your life.
+              </p>
+              {lifetime.map((row, i) => (
+                <AskOracleButton
+                  key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
+                  prompt={buildActiveTransitPrompt(row)}
+                  hasOracleAccess={hasOracleAccess}
+                  label={`this ${row.technical}`}
+                  triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
+                >
+                  <TransitRow row={row} first={i === 0} />
+                </AskOracleButton>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </Frame>
   )
 }

@@ -9,14 +9,49 @@ const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_INTERVAL_MS = 8000;
 const STUDY_FOCUS_KEY = "kiaros_onboarding_step3_study_focus";
 
+// ─── Tradition-specific copy ───────────────────────────────────────────────
+
+type Tradition = "evolutionary" | "karmic" | "psychological" | "traditional" | "synthesis";
+
+const TRADITION_SLIDES: Record<Tradition, { kicker: string; title: string; body: string }> = {
+  evolutionary: {
+    kicker: "Your lens",
+    title: "Built through an evolutionary lens",
+    body: "Kiaros is reading your chart the way evolutionary astrology does — Pluto's current position and what it's asking of your soul, the South Node story you're evolving beyond, and the North Node calling you forward. Every week in your blueprint reflects those themes.",
+  },
+  karmic: {
+    kicker: "Your lens",
+    title: "Built through a karmic lens",
+    body: "Kiaros is reading your chart through karma and dharma — Saturn's current position and what it's consolidating, the nodal axis and the soul contracts encoded in it, and the past-life patterns that surface as present-life patterns.",
+  },
+  psychological: {
+    kicker: "Your lens",
+    title: "Built through a psychological lens",
+    body: "Kiaros is reading your chart through a Jungian lens — the archetypes at work in your life this year, the shadow material activated by current transits, and the inner figures that show up as outer events.",
+  },
+  traditional: {
+    kicker: "Your lens",
+    title: "Built through a Hellenistic lens",
+    body: "Kiaros is reading your chart the traditional way — sect light, essential dignities, and time lords. The ancient timing techniques determine which planets carry the most weight in your year.",
+  },
+  synthesis: {
+    kicker: "Your lens",
+    title: "Woven from all four traditions",
+    body: "Kiaros is reading your chart through all four lenses — evolutionary, karmic, psychological, and traditional — letting each placement determine which framework fits best. The result holds more complexity than any single tradition can.",
+  },
+};
+
+const TRADITION_PROGRESS: Record<Tradition, [string, string]> = {
+  evolutionary: ["Tracing your Pluto arc", "Mapping your evolutionary year"],
+  karmic: ["Reading your nodal story", "Mapping your karmic year"],
+  psychological: ["Reading your archetypes", "Mapping your psyche's year"],
+  traditional: ["Reading your sect light", "Mapping your time lords"],
+  synthesis: ["Reading all four lenses", "Weaving your blueprint"],
+};
+
 // ─── Feature slides ────────────────────────────────────────────────────────
 
-const SLIDES = [
-  {
-    kicker: "Your planner",
-    title: "Built around your year, not a template",
-    body: "Kairos weaves your birth chart, goals, and the actual sky overhead into a week-by-week plan. This generation happens once — and it's yours forever.",
-  },
+const FEATURE_SLIDES = [
   {
     kicker: "The blueprint",
     title: "52 weeks shaped around you",
@@ -55,14 +90,43 @@ const SLIDES = [
   {
     kicker: "Areas + Goals",
     title: "Your life, organized by what matters",
-    body: "Kairos tracks the areas of your life you care about — career, relationships, health, creativity — and ties specific goals to each one. Your quarterly reviews measure real movement, not abstract scores.",
+    body: "Kiaros tracks the areas of your life you care about and ties specific goals to each one. Your quarterly reviews measure real movement in those areas, not abstract scores.",
   },
   {
     kicker: "Curriculum",
     title: "A study path, week by week",
-    body: "If you're working toward something that requires learning, Kairos can generate a week-by-week curriculum tied to your timeline. Study sessions feed into your blueprint context.",
+    body: "If you're working toward something that requires learning, Kiaros can generate a week-by-week curriculum tied to your timeline. Study sessions feed into your blueprint context.",
   },
 ];
+
+// ─── Build slide deck from profile ────────────────────────────────────────
+
+function buildSlides(tradition: Tradition | null, goals: string[]) {
+  const slides: { kicker: string; title: string; body: string }[] = [];
+
+  if (tradition && tradition in TRADITION_SLIDES) {
+    slides.push(TRADITION_SLIDES[tradition]);
+  }
+
+  if (goals.length > 0) {
+    const listed =
+      goals.length <= 3
+        ? goals.join(", ")
+        : `${goals.slice(0, 2).join(", ")}, and ${goals.length - 2} more`;
+    slides.push({
+      kicker: "Your focus areas",
+      title:
+        goals.length === 1
+          ? `Anchored to ${goals[0]}`
+          : `Anchored to ${listed}`,
+      body: `${goals.join(", ")} — each gets its own timing windows, transit phases, and milestone rhythm across the year. Not general advice for those areas. Yours.`,
+    });
+  }
+
+  return [...slides, ...FEATURE_SLIDES];
+}
+
+// ─── Other constants ───────────────────────────────────────────────────────
 
 const DURATION_OPTIONS = [
   { label: "4 weeks", value: 4 },
@@ -91,19 +155,54 @@ export default function OnboardingGeneratingPage() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [, setRetrying] = useState(false);
 
+  // Personalization state
+  const [firstName, setFirstName] = useState("");
+  const [tradition, setTradition] = useState<Tradition | null>(null);
+  const [goalAreas, setGoalAreas] = useState<string[]>([]);
+  const [slides, setSlides] = useState(() => buildSlides(null, []));
+
   // Nudge form state
   const [topic, setTopic] = useState("");
   const [durationWeeks, setDurationWeeks] = useState(8);
   const [intensity, setIntensity] = useState<"light" | "balanced" | "dense">("balanced");
   const [nudgeError, setNudgeError] = useState("");
 
+  // Load personalization from localStorage + profile API
+  useEffect(() => {
+    let goals: string[] = [];
+    try {
+      const raw = localStorage.getItem("kiaros_onboarding_step2");
+      if (raw) {
+        const parsed = JSON.parse(raw) as { name: string }[];
+        goals = parsed.map((g) => g.name);
+        setGoalAreas(goals);
+      }
+    } catch {}
+
+    fetch("/api/profile", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data?.profile) return;
+        const name = (data.profile.display_name as string | null)?.split(" ")[0] ?? "";
+        const t = (data.profile.tradition as Tradition | null) ?? null;
+        setFirstName(name);
+        setTradition(t);
+        setSlides(buildSlides(t, goals));
+        setSlideIndex(0);
+      })
+      .catch(() => {
+        setSlides(buildSlides(null, goals));
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-advance slides every 7 seconds
   useEffect(() => {
     const id = setInterval(() => {
-      setSlideIndex((i) => (i + 1) % SLIDES.length);
+      setSlideIndex((i) => (i + 1) % slides.length);
     }, 7000);
     return () => clearInterval(id);
-  }, []);
+  }, [slides.length]);
 
   function clearOnboardingStorage() {
     ["kiaros_onboarding_step1", "kiaros_onboarding_step2", "kiaros_onboarding_step3", "kiaros_onboarding_step4"].forEach(
@@ -113,8 +212,7 @@ export default function OnboardingGeneratingPage() {
 
   function finishAndRedirect() {
     localStorage.removeItem(STUDY_FOCUS_KEY);
-    // Signal TourOverlay to start the tour on first login
-    localStorage.setItem(TOUR_PENDING_KEY, '1');
+    localStorage.setItem(TOUR_PENDING_KEY, "1");
     router.replace("/dashboard");
   }
 
@@ -229,7 +327,7 @@ export default function OnboardingGeneratingPage() {
       const res = await fetch("/api/curriculum/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: trimmed, durationWeeks, intensity, skills: [] }),
+        body: JSON.stringify({ prompt: trimmed, targetWeeks: durationWeeks }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -245,7 +343,11 @@ export default function OnboardingGeneratingPage() {
     finishAndRedirect();
   }
 
-  const slide = SLIDES[slideIndex];
+  const slide = slides[slideIndex] ?? slides[0];
+  const [progressLeft, progressRight] =
+    tradition && tradition in TRADITION_PROGRESS
+      ? TRADITION_PROGRESS[tradition]
+      : ["Reading your chart", "Shaping your year"];
 
   // ── Error state ──────────────────────────────────────────────────────────
   if (failed) {
@@ -380,10 +482,22 @@ export default function OnboardingGeneratingPage() {
 
       {/* Header */}
       <div className="space-y-2 text-center">
-        <p className="shell-kicker">Building your planner</p>
+        <p className="shell-kicker">
+          {firstName ? `Building ${firstName}'s planner` : "Building your planner"}
+        </p>
         <h2 className="font-serif text-3xl text-bone">
           Creating your personalized {BRAND.product}
         </h2>
+        {(tradition || goalAreas.length > 0) && (
+          <p className="text-xs uppercase tracking-[0.16em] text-bone-muted/60">
+            {[
+              tradition ? `${tradition.charAt(0).toUpperCase() + tradition.slice(1)} tradition` : null,
+              goalAreas.length > 0 ? `${goalAreas.length} focus area${goalAreas.length !== 1 ? "s" : ""}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        )}
         <p className="mx-auto max-w-sm text-sm text-bone-muted">
           This takes <strong className="text-bone/80">5–15 minutes</strong> depending on your
           connection. Go get a coffee — this only ever happens once.
@@ -396,8 +510,8 @@ export default function OnboardingGeneratingPage() {
           <div className="h-full rounded-full bg-gradient-to-r from-leather-500 via-leather-300 to-leather-500 animate-[loading-bar_2s_ease-in-out_infinite]" />
         </div>
         <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-bone-muted/60">
-          <span>Reading your chart</span>
-          <span>Shaping your year</span>
+          <span>{progressLeft}</span>
+          <span>{progressRight}</span>
         </div>
       </div>
 
@@ -410,7 +524,7 @@ export default function OnboardingGeneratingPage() {
 
           {/* Slide dots */}
           <div className="mt-8 flex items-center justify-center gap-1.5">
-            {SLIDES.map((_, i) => (
+            {slides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setSlideIndex(i)}
