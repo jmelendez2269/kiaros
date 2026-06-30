@@ -1,23 +1,16 @@
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse, after } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
 
 export const maxDuration = 300;
 
-function isAdminSession(sessionClaims: unknown): boolean {
-  return (
-    (sessionClaims as { publicMetadata?: { isAdmin?: boolean } } | null)
-      ?.publicMetadata?.isAdmin === true
-  );
-}
-
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  const { userId: adminClerkId, sessionClaims } = await auth();
-  if (!adminClerkId || !isAdminSession(sessionClaims)) {
+  const user = await currentUser();
+  if (!user || user.publicMetadata?.isAdmin !== true) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
