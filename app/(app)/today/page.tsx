@@ -10,7 +10,8 @@ import { WeekRibbon } from '@/components/today/WeekRibbon'
 import { SkyNow } from '@/components/today/SkyNow'
 import { LineForToday } from '@/components/today/LineForToday'
 import { ActiveTransits } from '@/components/today/ActiveTransits'
-import { SeasonRead } from '@/components/today/SeasonRead'
+import { LifeArcRead } from '@/components/today/LifeArcRead'
+import { JupiterSeason } from '@/components/today/JupiterSeason'
 import { TodayIntention } from '@/components/today/TodayIntention'
 import { TodayCurriculum } from '@/components/today/TodayCurriculum'
 import { getActiveTransits } from '@/lib/today/get-active-transits'
@@ -18,7 +19,8 @@ import { getJournalStreak } from '@/lib/today/get-journal-streak'
 import { getTodayIntention } from '@/lib/today/get-today-intention'
 import { getTodayCurriculum } from '@/lib/today/get-today-curriculum'
 import { getSkyNow } from '@/lib/today/get-sky-now'
-import { getSeason } from '@/lib/today/get-season'
+import { getLifeArc } from '@/lib/today/get-life-arc'
+import { getJupiterSeason } from '@/lib/today/get-jupiter-season'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { YearEphemeris } from '@/types/blueprint'
@@ -44,14 +46,16 @@ export default async function TodayPage() {
     moonPhase: context.today.moonPhase,
     moonSign: context.today.moon.sign,
   })
-  const [activeTransits, journalStreak, intention, curriculum, skyNow, season] = await Promise.all([
-    getActiveTransits(context.today.date, supabaseUserId),
-    getJournalStreak(context.today.date, supabaseUserId),
-    getTodayIntention(context.today.date, supabaseUserId),
-    getTodayCurriculum(context.today.date, supabaseUserId),
-    getSkyNow(context.today.date, supabaseUserId),
-    getSeason(context.today.date, supabaseUserId),
-  ])
+  const [activeTransits, journalStreak, intention, curriculum, skyNow, lifeArc, jupiterSeason] =
+    await Promise.all([
+      getActiveTransits(context.today.date, supabaseUserId),
+      getJournalStreak(context.today.date, supabaseUserId),
+      getTodayIntention(context.today.date, supabaseUserId),
+      getTodayCurriculum(context.today.date, supabaseUserId),
+      getSkyNow(context.today.date, supabaseUserId),
+      getLifeArc(context.today.date, supabaseUserId),
+      getJupiterSeason(context.today.date, supabaseUserId),
+    ])
 
   // Year-at-a-glance grid (same data the Year tab uses): the current
   // blueprint's weeks plus the cached year ephemeris.
@@ -86,20 +90,6 @@ export default async function TodayPage() {
 
       <div className="grid gap-4 items-start md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <TodayIntention result={intention} />
-        <TodayCurriculum result={curriculum} />
-      </div>
-
-      <div className="grid gap-4 items-start md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-4 min-w-0">
-          <Frame tone="umber" padding={22}>
-            <ShapeOfTodayCards
-              shape={shape}
-              isoWeek={context.meta.isoWeek}
-              dayOfYear={context.meta.dayOfYear}
-            />
-          </Frame>
-          <ActiveTransits data={activeTransits} />
-        </div>
         {skyNow.status === 'ok' ? (
           <SkyNow data={skyNow.data} />
         ) : (
@@ -122,6 +112,30 @@ export default async function TodayPage() {
         )}
       </div>
 
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <Frame tone="umber" padding={20}>
+          <WeekRibbon week={context.week} />
+        </Frame>
+        <LineForToday streak={journalStreak} />
+      </div>
+
+      <div className="grid gap-4 items-start md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-4 min-w-0">
+          <Frame tone="umber" padding={22}>
+            <ShapeOfTodayCards
+              shape={shape}
+              isoWeek={context.meta.isoWeek}
+              dayOfYear={context.meta.dayOfYear}
+            />
+          </Frame>
+          <ActiveTransits data={activeTransits} />
+        </div>
+        <TodayCurriculum result={curriculum} />
+      </div>
+
+      {/* Jupiter season — changes ~yearly, sits between the daily and the era */}
+      {jupiterSeason.status === 'ok' ? <JupiterSeason data={jupiterSeason} /> : null}
+
       {blueprintLoaded && yearEphemeris ? (
         <Frame tone="umber" padding={20}>
           <Kicker color={K.copper}>The year at a glance</Kicker>
@@ -131,14 +145,8 @@ export default async function TodayPage() {
         </Frame>
       ) : null}
 
-      {season.status === 'ok' ? <SeasonRead data={season} /> : null}
-
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <Frame tone="umber" padding={20}>
-          <WeekRibbon week={context.week} />
-        </Frame>
-        <LineForToday streak={journalStreak} />
-      </div>
+      {/* Life arc — Saturn/Uranus/Neptune/Pluto; years-long eras */}
+      {lifeArc.status === 'ok' ? <LifeArcRead data={lifeArc} /> : null}
     </div>
   )
 }

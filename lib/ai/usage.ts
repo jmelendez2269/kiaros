@@ -19,6 +19,7 @@ export type AIFeature =
   | "month_brief"
   | "journal_insight"
   | "season_read"
+  | "jupiter_season_read"
   | "capture_topic_extract"
 
 export interface UsageTotals {

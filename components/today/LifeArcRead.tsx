@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Frame, K, Kicker, GLYPH } from '@/components/almanac'
 import { AskOracleButton } from '@/components/oracle/AskOracleButton'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
-import { buildSeasonPrompt } from '@/lib/oracle/preseed'
-import type { SeasonData } from '@/lib/today/get-season'
+import { buildLifeArcPrompt } from '@/lib/oracle/preseed'
+import type { LifeArcData } from '@/lib/today/get-life-arc'
 import type { Planet } from '@/types/blueprint'
 
 interface Props {
-  data: SeasonData
+  data: LifeArcData
 }
 
 const PLANET_GLYPH: Record<Planet, string> = {
@@ -30,7 +30,7 @@ const RARITY_TONE: Record<string, string> = {
   'once-in-lifetime': K.ember,
 }
 
-export function SeasonRead({ data }: Props) {
+export function LifeArcRead({ data }: Props) {
   const { hasOracleAccess } = useStelloquy()
   const [read, setRead] = useState<string | null>(data.cachedRead)
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>(
@@ -39,9 +39,6 @@ export function SeasonRead({ data }: Props) {
   const fetchedFor = useRef<string | null>(null)
 
   useEffect(() => {
-    // Only fetch when we don't already have prose for this exact
-    // configuration. The signature guards against re-firing on re-render
-    // and against a stale cached read for a configuration that just changed.
     if (data.cachedRead && data.cachedRead === read) {
       setRead(data.cachedRead)
       setStatus('idle')
@@ -54,7 +51,7 @@ export function SeasonRead({ data }: Props) {
     setStatus('loading')
     ;(async () => {
       try {
-        const res = await fetch('/api/today/season', {
+        const res = await fetch('/api/today/life-arc', {
           method: 'POST',
           signal: controller.signal,
         })
@@ -76,7 +73,7 @@ export function SeasonRead({ data }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.signature])
 
-  const oraclePrompt = buildSeasonPrompt({
+  const oraclePrompt = buildLifeArcPrompt({
     onceInLifetimeCount: data.onceInLifetimeCount,
     rareCount: data.rareCount,
     windows: data.heavy.map((h) => h.technical),
@@ -94,7 +91,7 @@ export function SeasonRead({ data }: Props) {
           flexWrap: 'wrap',
         }}
       >
-        <Kicker color={K.ember}>The season you&rsquo;re in</Kicker>
+        <Kicker color={K.ember}>The era you&rsquo;re in</Kicker>
         <span
           style={{
             fontFamily: K.fMono,
@@ -104,7 +101,7 @@ export function SeasonRead({ data }: Props) {
             textTransform: 'uppercase',
           }}
         >
-          The long view · not a daily reading
+          Years, not seasons
         </span>
       </div>
 
@@ -122,7 +119,6 @@ export function SeasonRead({ data }: Props) {
         {data.headline}.
       </h2>
 
-      {/* The AI synthesis (or its deterministic fallback). */}
       <div style={{ marginTop: 14, minHeight: 24 }}>
         {status === 'loading' && !read ? (
           <p
@@ -134,7 +130,7 @@ export function SeasonRead({ data }: Props) {
               lineHeight: 1.55,
             }}
           >
-            Reading the season&hellip;
+            Reading the arc&hellip;
           </p>
         ) : (
           <p
@@ -152,10 +148,6 @@ export function SeasonRead({ data }: Props) {
         )}
       </div>
 
-      {/* Only the once-in-a-lifetime windows render as full rows — those are
-          the headline. Saturn rolls into a single summary line below so the
-          card stays focused on what makes this season actually rare. The AI
-          synthesis still sees every heavy window in its prompt context. */}
       <div
         style={{
           marginTop: 18,
@@ -255,7 +247,7 @@ export function SeasonRead({ data }: Props) {
         <AskOracleButton
           prompt={oraclePrompt}
           hasOracleAccess={hasOracleAccess}
-          label="this season"
+          label="this era"
         />
       </div>
     </Frame>
