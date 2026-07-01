@@ -403,7 +403,7 @@ export interface BirthData {
   timeUnknown: boolean
 }
 
-export function computeNatalChart(birth: BirthData, houseSystem: HouseSystem = 'placidus'): NatalChart {
+export function computeNatalChart(birth: BirthData, houseSystem: HouseSystem = 'whole_sign'): NatalChart {
   // Determine birth JDE
   let birthJDE: number
   if (!birth.timeUnknown && birth.time && birth.timezone) {

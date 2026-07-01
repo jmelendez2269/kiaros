@@ -169,7 +169,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
         lng: profile.birth_lng,
         timeUnknown: profile.birth_time_unknown ?? false,
       }
-      natalChart = computeNatalChart(birthData, (profile.house_system as HouseSystem | null) ?? 'placidus')
+      natalChart = computeNatalChart(birthData, (profile.house_system as HouseSystem | null) ?? 'whole_sign')
 
       // Persist the natal chart so we don't recompute it
       await admin
