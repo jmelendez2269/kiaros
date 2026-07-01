@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Props {
   userId: string;
@@ -13,6 +14,7 @@ const POLL_INTERVAL_MS = 8000;
 const POLL_TIMEOUT_MS = 20 * 60 * 1000;
 
 export function RegenerateBlueprintButton({ userId, displayName }: Props) {
+  const router = useRouter();
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
 
@@ -29,8 +31,8 @@ export function RegenerateBlueprintButton({ userId, displayName }: Props) {
         const res = await fetch(`/api/admin/blueprint/${blueprintId}`);
         if (!res.ok) { clearInterval(interval); setError("Status check failed"); setState("error"); return; }
         const { status, error: errMsg } = await res.json() as { status: string; error?: string };
-        if (status === "ready") { clearInterval(interval); setState("done"); }
-        else if (status === "error") { clearInterval(interval); setError(errMsg ?? "Generation failed"); setState("error"); }
+        if (status === "ready") { clearInterval(interval); setState("done"); router.refresh(); }
+        else if (status === "error") { clearInterval(interval); setError(errMsg ?? "Generation failed"); setState("error"); router.refresh(); }
       } catch {
         clearInterval(interval);
         setError("Lost connection during polling");
@@ -72,8 +74,8 @@ export function RegenerateBlueprintButton({ userId, displayName }: Props) {
 
   if (state === "error") {
     return (
-      <span className="text-xs text-red-400" title={error}>
-        Error — {error}
+      <span className="block max-w-xs text-xs text-red-400" title={error}>
+        Error — <span className="break-all">{error}</span>
       </span>
     );
   }

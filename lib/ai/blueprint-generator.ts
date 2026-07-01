@@ -72,11 +72,29 @@ function validateFullYearBlueprint(blueprint: BlueprintOutput, planYear: number)
   }
 
   const sortedWeeks = [...blueprint.weeks].sort((a, b) => a.startDate.localeCompare(b.startDate))
-  if (sortedWeeks[0]?.startDate !== `${planYear}-01-01`) {
-    throw new Error(`Blueprint must start on ${planYear}-01-01, received ${sortedWeeks[0]?.startDate ?? 'none'}`)
+
+  // Weeks may use any day-of-week convention (Mon-Sun ISO, Sun-Sat, etc.), so
+  // the first week can start up to 6 days before Jan 1 and the last week can
+  // end up to 6 days after Dec 31. What we enforce is full-year coverage —
+  // no gap between the boundary dates and the actual Jan 1 / Dec 31.
+  const firstStart = sortedWeeks[0]?.startDate ?? ''
+  const lastEnd   = sortedWeeks[sortedWeeks.length - 1]?.endDate ?? ''
+  const yearStart = `${planYear}-01-01`
+  const yearEnd   = `${planYear}-12-31`
+  const prevDec25 = `${planYear - 1}-12-25`
+  const nextJan06 = `${planYear + 1}-01-06`
+
+  if (firstStart > yearStart) {
+    throw new Error(`Blueprint weeks don't cover Jan 1 — first week starts ${firstStart}`)
   }
-  if (sortedWeeks[sortedWeeks.length - 1]?.endDate !== `${planYear}-12-31`) {
-    throw new Error(`Blueprint must end on ${planYear}-12-31, received ${sortedWeeks[sortedWeeks.length - 1]?.endDate ?? 'none'}`)
+  if (firstStart < prevDec25) {
+    throw new Error(`Blueprint first week starts implausibly early: ${firstStart}`)
+  }
+  if (lastEnd < yearEnd) {
+    throw new Error(`Blueprint weeks don't cover Dec 31 — last week ends ${lastEnd}`)
+  }
+  if (lastEnd > nextJan06) {
+    throw new Error(`Blueprint last week ends implausibly late: ${lastEnd}`)
   }
 }
 
