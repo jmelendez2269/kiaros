@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
 import {
@@ -11,6 +11,7 @@ import {
   getPatternRefreshTargets,
   humanizeLunarPhase,
 } from '@/lib/journal/intelligence'
+import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
 import { createServerSupabase } from '@/lib/supabase/server'
 import type { YearEphemeris } from '@/types/blueprint'
 
@@ -147,8 +148,10 @@ export async function POST(req: Request) {
         }
       }
 
+      const refreshTargets = getPatternRefreshTargets(ephemerisDay)
+
       await Promise.all(
-        getPatternRefreshTargets(ephemerisDay).map((target) =>
+        refreshTargets.map((target) =>
           supabase.rpc('refresh_user_pattern_insight', {
             p_user_id: profile.id,
             p_pattern_type: target.patternType,
@@ -159,6 +162,12 @@ export async function POST(req: Request) {
       ).catch((patternError) => {
         console.error('[journal] Failed to refresh pattern insights:', patternError)
       })
+
+      after(() =>
+        resyncPatternSynthesisForTargets({ userProfileId: profile.id, targets: refreshTargets }).catch(
+          (err) => console.error('[journal] Failed to resync AI pattern synthesis:', err)
+        )
+      )
     }
 
     return NextResponse.json(data, { status: 201 })

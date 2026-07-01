@@ -24,6 +24,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { recordUsage } from './usage'
+import type { PatternRefreshTarget } from '@/lib/journal/intelligence'
 
 const MODEL_ID = 'claude-haiku-4-5'
 const MAX_OUTPUT_TOKENS = 220
@@ -417,4 +418,80 @@ export async function regenerateAllForUser(opts: {
   await Promise.all(workers)
 
   return { attempted: rows.length, succeeded }
+}
+
+/**
+ * Re-synthesise the AI summary for whichever patterns a new journal entry
+ * just touched (after refresh_user_pattern_insight has already updated
+ * their sample_size/evidence). Keeps ai_summary from going stale relative
+ * to sample_size as new entries land, using the user's saved voice.
+ *
+ * Meant to be called from a route/action that's about to return a
+ * response, via Next's `after()` — errors are logged, never thrown, so a
+ * synthesis failure can't affect the journal entry that triggered it.
+ */
+export async function resyncPatternSynthesisForTargets(opts: {
+  userProfileId: string
+  targets: PatternRefreshTarget[]
+}): Promise<void> {
+  const { userProfileId, targets } = opts
+  if (targets.length === 0) return
+
+  const admin = createAdminSupabase()
+
+  const { data: settings } = await admin
+    .from('user_settings')
+    .select('journal_insight_voice, journal_insight_voice_label')
+    .eq('user_id', userProfileId)
+    .maybeSingle()
+
+  const voiceLabel = settings?.journal_insight_voice_label?.trim() || VOICE_PRESETS[DEFAULT_VOICE_KEY].label
+  const voicePrompt = resolveVoicePrompt(settings?.journal_insight_voice ?? null)
+
+  await Promise.all(
+    targets.map(async (target) => {
+      try {
+        const { data: row } = await admin
+          .from('user_pattern_insights')
+          .select('id, sample_size, first_seen, last_seen')
+          .eq('user_id', userProfileId)
+          .eq('pattern_type', target.patternType)
+          .eq('pattern_key', target.patternKey)
+          .maybeSingle()
+
+        if (!row) return
+
+        const entries = await loadEntriesForPattern(
+          userProfileId,
+          target.patternType,
+          target.patternKey,
+          ENTRIES_PER_SYNTHESIS,
+        )
+
+        const text = await synthesizeInsight({
+          userProfileId,
+          pattern: {
+            pattern_type: target.patternType,
+            pattern_key: target.patternKey,
+            sample_size: row.sample_size as number,
+            first_seen: (row.first_seen as unknown as string | null) ?? null,
+            last_seen: (row.last_seen as unknown as string | null) ?? null,
+            entries,
+          },
+          voicePrompt,
+        })
+
+        await admin
+          .from('user_pattern_insights')
+          .update({
+            ai_summary: text,
+            ai_summary_voice_label: voiceLabel,
+            ai_synthesizing_at: null,
+          })
+          .eq('id', row.id as unknown as string)
+      } catch (err) {
+        console.error('[journal-insight-synthesis] resync failed for', target, err)
+      }
+    }),
+  )
 }

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { LOYALTY_REWARD_AMOUNT_OFF_CENTS, NEXT_PLANNER_YEAR } from "@/lib/commerce/config";
 import { buildAnnualEntitlementRecord } from "@/lib/commerce/entitlements";
 import { activationCompleteSchema } from "@/lib/commerce/activation";
+import { createLoyaltyRewardCoupon } from "@/lib/commerce/stripe";
 import { createServerSupabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
     })
     .eq("id", order.id);
 
-  await supabase
+  const { data: reward } = await supabase
     .from("loyalty_rewards")
     .upsert(
       {
@@ -144,7 +145,15 @@ export async function POST(request: Request) {
         },
       },
       { onConflict: "user_id,reward_year" }
+    )
+    .select("id, amount_off_cents, currency, stripe_customer_id, stripe_promotion_code_id")
+    .single();
+
+  if (reward && !reward.stripe_promotion_code_id) {
+    await createLoyaltyRewardCoupon(reward).catch((err) =>
+      console.error("[activate/complete] Failed to create loyalty reward coupon:", err)
     );
+  }
 
   return NextResponse.json({
     success: true,

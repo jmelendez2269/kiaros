@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import {
   buildJournalAspectInserts,
   buildJournalSkyInsert,
@@ -10,6 +11,7 @@ import {
   getPatternRefreshTargets,
   humanizeLunarPhase,
 } from '@/lib/journal/intelligence'
+import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
 import { createServerSupabase } from '@/lib/supabase/server'
 import type { YearEphemeris } from '@/types/blueprint'
 
@@ -144,8 +146,10 @@ export async function saveLineForToday(
       if (aspectError) console.error('[today/save-line] aspect upsert failed:', aspectError)
     }
 
+    const refreshTargets = getPatternRefreshTargets(ephemerisDay)
+
     await Promise.all(
-      getPatternRefreshTargets(ephemerisDay).map((target) =>
+      refreshTargets.map((target) =>
         supabase.rpc('refresh_user_pattern_insight', {
           p_user_id: profile.id,
           p_pattern_type: target.patternType,
@@ -156,6 +160,12 @@ export async function saveLineForToday(
     ).catch((patternError) => {
       console.error('[today/save-line] pattern refresh failed:', patternError)
     })
+
+    after(() =>
+      resyncPatternSynthesisForTargets({ userProfileId: profile.id, targets: refreshTargets }).catch(
+        (err) => console.error('[today/save-line] AI pattern resync failed:', err),
+      ),
+    )
   }
 
   revalidatePath('/today')

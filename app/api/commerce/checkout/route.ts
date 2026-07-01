@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { getCommerceTier, parseAccessPlan, parseCommerceTierKey } from "@/lib/commerce/config";
-import { createCheckoutSession } from "@/lib/commerce/stripe";
+import { createCheckoutSession, findRedeemableLoyaltyReward } from "@/lib/commerce/stripe";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profiles")
-    .select("email")
+    .select("id, email")
     .eq("clerk_user_id", userId)
     .single();
 
@@ -38,12 +38,18 @@ export async function POST(request: Request) {
     );
   }
 
+  const loyaltyReward = await findRedeemableLoyaltyReward({
+    userProfileId: profile.id,
+    plannerYear: tier.plannerYear,
+  });
+
   try {
     const session = await createCheckoutSession({
       tier,
       accessPlan,
       clerkUserId: userId,
       customerEmail: profile.email,
+      loyaltyReward,
     });
 
     return NextResponse.json({ url: session.url });

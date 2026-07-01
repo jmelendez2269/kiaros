@@ -89,18 +89,105 @@ function buildLineItem(tier: CommerceTier, accessPlan: AccessPlan) {
   };
 }
 
+/**
+ * Creates a Stripe coupon + a single-use promotion code for a pending
+ * loyalty reward, then marks the reward row 'created' with the Stripe
+ * ids. Safe to call more than once for the same reward (idempotent by
+ * skipping rows that already have a promotion code).
+ */
+export async function createLoyaltyRewardCoupon(reward: {
+  id: string;
+  amount_off_cents: number | null;
+  currency: string | null;
+  stripe_customer_id: string | null;
+}) {
+  if (!reward.amount_off_cents) return null;
+
+  const stripe = getStripeClient();
+  const supabase = createAdminSupabase();
+
+  const coupon = await stripe.coupons.create({
+    amount_off: reward.amount_off_cents,
+    currency: reward.currency ?? "usd",
+    duration: "once",
+    name: "Kiaros loyalty reward",
+  });
+
+  const promotionCode = await stripe.promotionCodes.create({
+    promotion: { type: "coupon", coupon: coupon.id },
+    max_redemptions: 1,
+    ...(reward.stripe_customer_id ? { customer: reward.stripe_customer_id } : {}),
+  });
+
+  await supabase
+    .from("loyalty_rewards")
+    .update({
+      status: "created",
+      stripe_coupon_id: coupon.id,
+      stripe_promotion_code_id: promotionCode.id,
+      promotion_code: promotionCode.code,
+    })
+    .eq("id", reward.id);
+
+  return { couponId: coupon.id, promotionCodeId: promotionCode.id, code: promotionCode.code };
+}
+
+/**
+ * Finds a still-redeemable loyalty reward for this user against the
+ * tier's planner year, so checkout can apply it automatically.
+ */
+export async function findRedeemableLoyaltyReward(params: {
+  userProfileId: string;
+  plannerYear: number;
+}) {
+  const supabase = createAdminSupabase();
+  const { data } = await supabase
+    .from("loyalty_rewards")
+    .select("id, stripe_promotion_code_id")
+    .eq("user_id", params.userProfileId)
+    .eq("reward_year", params.plannerYear)
+    .eq("status", "created")
+    .not("stripe_promotion_code_id", "is", null)
+    .maybeSingle();
+
+  if (!data?.stripe_promotion_code_id) return null;
+  return { rewardId: data.id as string, promotionCodeId: data.stripe_promotion_code_id as string };
+}
+
+/**
+ * Marks a loyalty reward redeemed if this checkout session was created
+ * with one attached (see createCheckoutSession's loyaltyReward param).
+ */
+async function redeemLoyaltyRewardFromSession(session: Stripe.Checkout.Session) {
+  const rewardId = session.metadata?.loyalty_reward_id;
+  if (!rewardId) return;
+
+  const supabase = createAdminSupabase();
+  await supabase
+    .from("loyalty_rewards")
+    .update({ status: "redeemed", redeemed_at: new Date().toISOString() })
+    .eq("id", rewardId)
+    .eq("status", "created");
+}
+
 export async function createCheckoutSession(params: {
   tier: CommerceTier;
   accessPlan?: AccessPlan;
   clerkUserId: string;
   customerEmail: string;
+  loyaltyReward?: { rewardId: string; promotionCodeId: string } | null;
 }) {
   const stripe = getStripeClient();
   const appUrl = getAppUrl();
   const accessPlan = params.accessPlan ?? "yearly";
-  const metadata = buildTierMetadata(params.tier, accessPlan);
+  const metadata = {
+    ...buildTierMetadata(params.tier, accessPlan),
+    ...(params.loyaltyReward ? { loyalty_reward_id: params.loyaltyReward.rewardId } : {}),
+  };
   const commonParams = {
-    allow_promotion_codes: true,
+    ...(params.loyaltyReward
+      ? { discounts: [{ promotion_code: params.loyaltyReward.promotionCodeId }] }
+      : { allow_promotion_codes: true }),
     billing_address_collection: "auto" as const,
     client_reference_id: params.clerkUserId,
     customer_email: params.customerEmail,
@@ -225,7 +312,7 @@ async function fulfillOneTimeCheckout(params: {
     throw new Error("We couldn't activate your planner access yet.");
   }
 
-  await supabase
+  const { data: reward } = await supabase
     .from("loyalty_rewards")
     .upsert(
       {
@@ -243,7 +330,17 @@ async function fulfillOneTimeCheckout(params: {
         },
       },
       { onConflict: "user_id,reward_year" }
+    )
+    .select("id, amount_off_cents, currency, stripe_customer_id, stripe_promotion_code_id")
+    .single();
+
+  if (reward && !reward.stripe_promotion_code_id) {
+    await createLoyaltyRewardCoupon(reward).catch((err) =>
+      console.error("[stripe] Failed to create loyalty reward coupon:", err)
     );
+  }
+
+  await redeemLoyaltyRewardFromSession(session);
 
   await supabase
     .from("direct_purchase_orders")
@@ -377,6 +474,8 @@ async function fulfillSubscriptionCheckout(params: {
   if (entitlementError) {
     throw new Error("We couldn't activate your planner access yet.");
   }
+
+  await redeemLoyaltyRewardFromSession(session);
 
   await supabase
     .from("direct_purchase_orders")
