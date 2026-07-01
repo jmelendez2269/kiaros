@@ -20,8 +20,8 @@ const CONTACT_EMAILS = [
 ] as const;
 
 export const metadata = {
-  title: "Contact | Kiaros",
-  description: "Reach Kiaros support for account, planner, checkout, or Etsy activation help.",
+  title: "Contact | Kairos",
+  description: "Reach Kairos support for account, planner, checkout, or Etsy activation help.",
 };
 
 export default function ContactPage() {
@@ -30,7 +30,7 @@ export default function ContactPage() {
       <div className="container py-12 md:py-16">
         <section className="shell-panel-hero p-8 md:p-10">
           <p className="shell-kicker mb-4">Contact</p>
-          <h1 className="shell-hero-title max-w-3xl">Need help with Kiaros?</h1>
+          <h1 className="shell-hero-title max-w-3xl">Need help with Kairos?</h1>
           <p className="shell-prose-lead mt-4 max-w-3xl">
             For account questions, checkout issues, Etsy activation help, or anything that feels
             stuck, send a note and we&apos;ll help you get settled.

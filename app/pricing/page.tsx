@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { PublicPricingPage } from "@/components/commerce/PublicPricingPage";
 
 export const metadata: Metadata = {
-  title: "Pricing | Kiaros",
+  title: "Pricing | Kairos",
   description:
-    "Compare monthly, annual, and Etsy access for Kiaros Planner and Planner + Oracle, including journal memory and sky-pattern intelligence.",
+    "Compare monthly, annual, and Etsy access for Kairos Planner and Planner + Oracle, including journal memory and sky-pattern intelligence.",
 };
 
 interface Props {

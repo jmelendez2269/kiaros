@@ -891,6 +891,62 @@ export function PublicPricingPage({
           </div>
         </section>
 
+        {/* ── Rest of the system ───────────────────────────────────────────── */}
+        <section className="mt-5 shell-panel p-6 md:p-8">
+          <p className="shell-kicker mb-3">The rest of the system</p>
+          <h2 className="shell-section-title max-w-3xl">
+            Blueprint, journal, and Oracle get you started. This is what else is already in there.
+          </h2>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
+            The same chart and the same year power everything below — no extra setup, no separate
+            app.
+          </p>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                eyebrow: "A 90-day rhythm, not a guilt trip",
+                title: "Daily Tracker",
+                body: "Check in on what actually matters to you — energy, focus, whatever you're building — and watch a quiet consistency grid fill in over 90 days. Every entry is silently stamped with that day's moon phase, so patterns surface on their own.",
+              },
+              {
+                eyebrow: "Whatever you're studying this year, structured into it",
+                title: "Curriculum",
+                body: "Tell Kairos what you want to learn or work through, and it builds a multi-week plan with real sessions — content generated the first time you open each one, not a static PDF.",
+              },
+              {
+                eyebrow: "One more honest input, not a verdict",
+                title: "Human Design",
+                body: "Your Type, Strategy, Authority, and Profile, computed from the same birth data as your chart — presented as one more way to understand your own timing, never as the final word.",
+              },
+              {
+                eyebrow: "Your own words, reflected back with real timing",
+                title: "Quarterly Reviews",
+                body: "At the end of each quarter, tell Kairos your wins, challenges, and pivots. It writes back a short reflection grounded in what you actually said and what your sky actually did.",
+              },
+              {
+                eyebrow: "A short read for where you are, each month",
+                title: "Month Briefs",
+                body: "A brief, AI-written narrative for the month ahead, editable and pinnable, so it stays useful instead of stale.",
+              },
+              {
+                eyebrow: "The shape of what you keep coming back to",
+                title: "Insights Map",
+                body: "Every Oracle conversation you save feeds a living map of your recurring themes and placements — not a transcript, a pattern.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="shell-panel-soft p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+              >
+                <p className="shell-eyebrow">{card.eyebrow}</p>
+                <p className="mt-2 text-lg font-semibold text-bone">{card.title}</p>
+                <p className="mt-3 text-sm leading-7 text-bone-muted">{card.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {showCanceledMessage ? (
           <div className="mt-6 rounded-[1.15rem] border border-border/80 bg-card/90 px-5 py-4 text-sm text-bone-muted">
             Your checkout was canceled before payment completed. Your tier is still here when
