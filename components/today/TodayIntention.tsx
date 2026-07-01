@@ -86,7 +86,7 @@ export function TodayIntention({ result }: Props) {
         style={{
           fontFamily: K.fSerif,
           fontStyle: 'italic',
-          fontSize: 25,
+          fontSize: 29,
           color: K.ink,
           lineHeight: 1.25,
           textWrap: 'balance',
@@ -100,7 +100,7 @@ export function TodayIntention({ result }: Props) {
           style={{
             marginTop: 12,
             fontFamily: K.fBody,
-            fontSize: 14,
+            fontSize: 15.5,
             color: K.inkDim,
             lineHeight: 1.55,
           }}
@@ -115,7 +115,7 @@ export function TodayIntention({ result }: Props) {
           style={{
             marginTop: 10,
             fontFamily: K.fBody,
-            fontSize: 13.5,
+            fontSize: 15,
             color: K.inkSoft,
             lineHeight: 1.55,
           }}

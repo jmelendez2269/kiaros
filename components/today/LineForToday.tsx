@@ -83,7 +83,7 @@ export function LineForToday({ streak = 0 }: Props) {
         style={{
           fontFamily: K.fSerif,
           fontStyle: 'italic',
-          fontSize: 21,
+          fontSize: 24,
           color: K.ink,
           marginTop: 8,
           lineHeight: 1.25,
@@ -106,7 +106,7 @@ export function LineForToday({ streak = 0 }: Props) {
           borderRadius: 10,
           padding: 14,
           fontFamily: K.fSerif,
-          fontSize: 15.5,
+          fontSize: 17,
           color: K.ink,
           fontStyle: 'italic',
           lineHeight: 1.6,

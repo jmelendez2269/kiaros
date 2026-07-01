@@ -149,7 +149,7 @@ export function ActiveTransits({ data }: Props) {
               padding: 0,
               color: K.ember,
               fontFamily: K.fMono,
-              fontSize: 10.5,
+              fontSize: 15,
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
             }}
@@ -159,12 +159,12 @@ export function ActiveTransits({ data }: Props) {
                 display: 'inline-block',
                 transition: 'transform 180ms',
                 transform: lifetimeOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                fontSize: 10,
+                fontSize: 13,
               }}
             >
               ▶
             </span>
-            Lifetime currents ({lifetime.length})
+            Era currents ({lifetime.length})
           </button>
 
           {lifetimeOpen && (
@@ -173,7 +173,7 @@ export function ActiveTransits({ data }: Props) {
                 style={{
                   fontFamily: K.fSerif,
                   fontStyle: 'italic',
-                  fontSize: 13,
+                  fontSize: 16,
                   color: K.inkSoft,
                   lineHeight: 1.5,
                   marginBottom: 8,
@@ -232,7 +232,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         <div
           style={{
             fontFamily: K.fBody,
-            fontSize: 14.5,
+            fontSize: 16,
             color: K.ink,
             lineHeight: 1.35,
           }}
@@ -243,7 +243,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
           style={{
             marginTop: 3,
             fontFamily: K.fMono,
-            fontSize: 10.5,
+            fontSize: 12,
             color: rarityColor,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
@@ -255,7 +255,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 12,
+          fontSize: 13,
           color: K.inkDim,
           whiteSpace: 'nowrap',
         }}
@@ -265,7 +265,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 10,
+          fontSize: 11,
           color: K.inkSoft,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',

@@ -12,11 +12,12 @@ export interface TodayCurriculumSession {
   weekNumber: number
   scheduledFor: string
   status: 'scheduled' | 'done' | 'skipped'
+  isToday: boolean
+  daysAway: number
 }
 
 export type TodayCurriculumResult =
-  | { status: 'today'; sessions: TodayCurriculumSession[] }
-  | { status: 'upcoming'; session: TodayCurriculumSession; daysAway: number }
+  | { status: 'sessions'; sessions: TodayCurriculumSession[] }
   | { status: 'none' }
 
 function daysBetween(fromISO: string, toISO: string): number {
@@ -25,65 +26,35 @@ function daysBetween(fromISO: string, toISO: string): number {
   return Math.round((to - from) / 86_400_000)
 }
 
-/**
- * Returns today's scheduled curriculum sessions, or the next upcoming one if
- * today is empty. Sessions are scoped to approved (ready) plans via RLS —
- * draft/pending plans don't have sessions inserted yet.
- */
 export async function getTodayCurriculum(date: string, supabaseUserId: string): Promise<TodayCurriculumResult> {
   const admin = createAdminSupabase()
 
-  const { data: todayRows } = await admin
+  const { data: rows } = await admin
     .from('curriculum_sessions')
     .select('id, curriculum_plan_id, curriculum_title, title, description, session_type, estimated_minutes, week_number, scheduled_for, status')
     .eq('user_id', supabaseUserId)
-    .eq('scheduled_for', date)
-    .order('session_order', { ascending: true })
-
-  if (todayRows && todayRows.length > 0) {
-    return {
-      status: 'today',
-      sessions: todayRows.map((r) => ({
-        id: r.id,
-        planId: r.curriculum_plan_id,
-        curriculumTitle: r.curriculum_title,
-        title: r.title,
-        description: r.description,
-        sessionType: r.session_type as TodayCurriculumSession['sessionType'],
-        estimatedMinutes: r.estimated_minutes,
-        weekNumber: r.week_number,
-        scheduledFor: r.scheduled_for,
-        status: r.status as TodayCurriculumSession['status'],
-      })),
-    }
-  }
-
-  const { data: nextRow } = await admin
-    .from('curriculum_sessions')
-    .select('id, curriculum_plan_id, curriculum_title, title, description, session_type, estimated_minutes, week_number, scheduled_for, status')
-    .eq('user_id', supabaseUserId)
-    .gt('scheduled_for', date)
-    .eq('status', 'scheduled')
+    .gte('scheduled_for', date)
     .order('scheduled_for', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+    .order('session_order', { ascending: true })
+    .limit(3)
 
-  if (!nextRow) return { status: 'none' }
+  if (!rows || rows.length === 0) return { status: 'none' }
 
   return {
-    status: 'upcoming',
-    daysAway: daysBetween(date, nextRow.scheduled_for),
-    session: {
-      id: nextRow.id,
-      planId: nextRow.curriculum_plan_id,
-      curriculumTitle: nextRow.curriculum_title,
-      title: nextRow.title,
-      description: nextRow.description,
-      sessionType: nextRow.session_type as TodayCurriculumSession['sessionType'],
-      estimatedMinutes: nextRow.estimated_minutes,
-      weekNumber: nextRow.week_number,
-      scheduledFor: nextRow.scheduled_for,
-      status: nextRow.status as TodayCurriculumSession['status'],
-    },
+    status: 'sessions',
+    sessions: rows.map((r) => ({
+      id: r.id,
+      planId: r.curriculum_plan_id,
+      curriculumTitle: r.curriculum_title,
+      title: r.title,
+      description: r.description,
+      sessionType: r.session_type as TodayCurriculumSession['sessionType'],
+      estimatedMinutes: r.estimated_minutes,
+      weekNumber: r.week_number,
+      scheduledFor: r.scheduled_for,
+      status: r.status as TodayCurriculumSession['status'],
+      isToday: r.scheduled_for === date,
+      daysAway: daysBetween(date, r.scheduled_for),
+    })),
   }
 }

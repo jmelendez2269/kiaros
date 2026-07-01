@@ -26,18 +26,19 @@ const STATUS_TONE: Record<TodayCurriculumSession['status'], string> = {
   skipped: K.inkSoft,
 }
 
-function relativeDay(daysAway: number): string {
-  if (daysAway <= 1) return 'tomorrow'
-  if (daysAway < 7) return `in ${daysAway} days`
-  if (daysAway < 14) return 'next week'
-  return `in ${Math.round(daysAway / 7)} weeks`
+function dayLabel(daysAway: number): string {
+  if (daysAway === 0) return 'Today'
+  if (daysAway === 1) return 'Tomorrow'
+  if (daysAway < 7) return `In ${daysAway} days`
+  if (daysAway < 14) return 'Next week'
+  return `In ${Math.round(daysAway / 7)} weeks`
 }
 
 export function TodayCurriculum({ result }: Props) {
   if (result.status === 'none') {
     return (
       <Frame tone="umber" padding={22}>
-        <Kicker color={K.copper}>Today&rsquo;s study</Kicker>
+        <Kicker color={K.copper}>Next study</Kicker>
         <p
           style={{
             marginTop: 10,
@@ -70,37 +71,6 @@ export function TodayCurriculum({ result }: Props) {
     )
   }
 
-  if (result.status === 'upcoming') {
-    const s = result.session
-    return (
-      <Frame tone="umber" padding={22}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            marginBottom: 8,
-          }}
-        >
-          <Kicker color={K.copper}>Today&rsquo;s study</Kicker>
-          <span
-            style={{
-              fontFamily: K.fMono,
-              fontSize: 10.5,
-              color: K.inkSoft,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Next · {relativeDay(result.daysAway)}
-          </span>
-        </div>
-        <SessionRow session={s} muted />
-      </Frame>
-    )
-  }
-
-  // status === 'today'
   return (
     <Frame tone="umber" padding={22}>
       <div
@@ -108,43 +78,36 @@ export function TodayCurriculum({ result }: Props) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'baseline',
-          marginBottom: 8,
+          marginBottom: 12,
         }}
       >
-        <Kicker color={K.copper}>Today&rsquo;s study</Kicker>
-        <span
+        <Kicker color={K.copper}>Next study</Kicker>
+        <Link
+          href="/curriculum"
           style={{
             fontFamily: K.fMono,
-            fontSize: 9,
+            fontSize: 10.5,
             color: K.inkSoft,
-            letterSpacing: '0.16em',
+            letterSpacing: '0.14em',
             textTransform: 'uppercase',
+            textDecoration: 'none',
           }}
         >
-          {result.sessions.length === 1
-            ? '1 session'
-            : `${result.sessions.length} sessions`}
-        </span>
+          All sessions →
+        </Link>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {result.sessions.map((s, i) => (
-          <SessionRow key={s.id} session={s} first={i === 0} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${result.sessions.length}, minmax(0, 1fr))`, gap: 8 }}>
+        {result.sessions.map((s) => (
+          <SessionCard key={s.id} session={s} />
         ))}
       </div>
     </Frame>
   )
 }
 
-function SessionRow({
-  session,
-  first,
-  muted,
-}: {
-  session: TodayCurriculumSession
-  first?: boolean
-  muted?: boolean
-}) {
-  const tone = SESSION_TYPE_TONE[session.sessionType]
+function SessionCard({ session }: { session: TodayCurriculumSession }) {
+  const typeTone = SESSION_TYPE_TONE[session.sessionType]
   const statusTone = STATUS_TONE[session.status]
 
   return (
@@ -152,84 +115,99 @@ function SessionRow({
       href={`/curriculum/${session.planId}`}
       style={{
         display: 'block',
-        padding: '10px 0',
-        borderTop: first ? 'none' : `1px solid ${K.line}`,
+        background: session.isToday ? `${K.copper}12` : K.bg,
+        border: `1px solid ${session.isToday ? K.copper + '44' : K.line}`,
+        borderRadius: 12,
+        padding: '12px 14px',
         textDecoration: 'none',
         color: 'inherit',
-        opacity: muted ? 0.85 : 1,
+        transition: 'border-color 120ms',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+      {/* Top row: type + when + status */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
         <span
           style={{
             fontFamily: K.fMono,
-            fontSize: 10.5,
-            color: tone,
+            fontSize: 12,
+            color: typeTone,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
           }}
         >
           {SESSION_TYPE_LABEL[session.sessionType]}
         </span>
+        <span style={{ fontFamily: K.fMono, fontSize: 12, color: K.line }}>·</span>
         <span
           style={{
             fontFamily: K.fMono,
-            fontSize: 10.5,
-            color: K.inkSoft,
-            letterSpacing: '0.14em',
+            fontSize: 12,
+            color: session.isToday ? K.copperHi : K.inkSoft,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            fontWeight: session.isToday ? 600 : 400,
           }}
         >
-          Wk {session.weekNumber} · {session.estimatedMinutes} min
+          {dayLabel(session.daysAway)}
         </span>
         <span
           style={{
             marginLeft: 'auto',
             fontFamily: K.fMono,
-            fontSize: 10.5,
+            fontSize: 12,
             color: statusTone,
-            letterSpacing: '0.16em',
+            letterSpacing: '0.14em',
             textTransform: 'uppercase',
           }}
         >
           {session.status}
         </span>
       </div>
+
+      {/* Title */}
       <div
         style={{
-          marginTop: 5,
+          marginTop: 8,
           fontFamily: K.fSerif,
           fontStyle: 'italic',
-          fontSize: 20,
+          fontSize: 22,
           color: K.ink,
           lineHeight: 1.25,
         }}
       >
         {session.title}
       </div>
+
+      {/* Curriculum + meta */}
       <div
         style={{
-          marginTop: 3,
-          fontFamily: K.fBody,
-          fontSize: 13,
-          color: K.inkDim,
-          letterSpacing: '0.02em',
+          marginTop: 6,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
         }}
       >
-        {session.curriculumTitle}
-      </div>
-      {session.description ? (
-        <div
+        <span
           style={{
-            marginTop: 6,
             fontFamily: K.fBody,
-            fontSize: 13.5,
-            color: K.inkSoft,
-            lineHeight: 1.5,
+            fontSize: 15,
+            color: K.inkDim,
           }}
         >
-          {session.description}
-        </div>
-      ) : null}
+          {session.curriculumTitle}
+        </span>
+        <span
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 12,
+            color: K.inkSoft,
+            letterSpacing: '0.1em',
+          }}
+        >
+          Wk {session.weekNumber} · {session.estimatedMinutes} min
+        </span>
+      </div>
     </Link>
   )
 }

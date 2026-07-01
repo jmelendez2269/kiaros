@@ -206,7 +206,7 @@ function NavRow({
                 <div
                   style={{
                     fontFamily: K.fBody,
-                    fontSize: 15.5,
+                    fontSize: 18,
                     fontWeight: 500,
                     color: isActive ? K.ink : K.inkDim,
                   }}
@@ -216,7 +216,7 @@ function NavRow({
                 <div
                   style={{
                     fontFamily: K.fMono,
-                    fontSize: 11,
+                    fontSize: 13,
                     letterSpacing: '0.1em',
                     color: K.inkSoft,
                     marginTop: 2,
@@ -270,7 +270,7 @@ function NavRow({
                     <span
                       style={{
                         fontFamily: K.fBody,
-                        fontSize: 14.5,
+                        fontSize: 16.5,
                         fontWeight: 500,
                         color: subActive ? K.ink : K.inkDim,
                       }}
@@ -280,7 +280,7 @@ function NavRow({
                     <span
                       style={{
                         fontFamily: K.fMono,
-                        fontSize: 10.5,
+                        fontSize: 12,
                         letterSpacing: '0.1em',
                         color: K.inkSoft,
                       }}
@@ -312,7 +312,7 @@ function PinnedAreas({
       <div
         style={{
           fontFamily: K.fMono,
-          fontSize: 11.5,
+          fontSize: 13,
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           color: K.inkSoft,
@@ -341,7 +341,7 @@ function PinnedAreas({
             <span style={{ color: K.copper, fontSize: 14, width: 16, textAlign: 'center' }}>
               {c.icon_key ?? '·'}
             </span>
-            <span style={{ fontFamily: K.fBody, fontSize: 13.5 }}>{c.name}</span>
+            <span style={{ fontFamily: K.fBody, fontSize: 15.5 }}>{c.name}</span>
           </Link>
         ))}
       </div>
@@ -450,7 +450,7 @@ function SidebarBody({
           />
           {!collapsed ? (
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+              <div style={{ fontFamily: K.fMono, fontSize: 13, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
                 Your chart
               </div>
             </div>
@@ -500,7 +500,7 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
       <aside
         className={cn(
           'hidden shrink-0 border-r border-almanac-line transition-[width] duration-300 md:flex md:min-h-screen md:flex-col',
-          collapsed ? 'w-[5.25rem]' : 'w-[15.5rem]'
+          collapsed ? 'w-[5.25rem]' : 'w-[19rem]'
         )}
         style={{ background: K.bg2 }}
       >

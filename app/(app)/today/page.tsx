@@ -77,7 +77,7 @@ export default async function TodayPage() {
 
   return (
     <div
-      className="grid gap-[18px] p-4 sm:p-6 md:p-7"
+      className="grid gap-5 p-4 sm:p-6 md:p-7"
       style={{
         fontFamily: K.fBody,
         color: K.ink,
@@ -88,39 +88,13 @@ export default async function TodayPage() {
     >
       <SkyBanner context={context} firstName={profile?.display_name ?? null} weekTheme={currentWeek?.theme ?? null} />
 
-      <div className="grid gap-4 items-start md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <TodayIntention result={intention} />
-        {skyNow.status === 'ok' ? (
-          <SkyNow data={skyNow.data} />
-        ) : (
-          <Frame tone="cocoa" padding={20} stars>
-            <Kicker color={K.copper}>Sky now</Kicker>
-            <p
-              style={{
-                marginTop: 10,
-                fontFamily: K.fSerif,
-                fontStyle: 'italic',
-                fontSize: 16,
-                color: K.inkDim,
-                lineHeight: 1.5,
-              }}
-            >
-              Complete your birth chart on the Self screen to see today&rsquo;s sky over your natal
-              chart with live aspect lines.
-            </p>
-          </Frame>
-        )}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <Frame tone="umber" padding={20}>
-          <WeekRibbon week={context.week} />
-        </Frame>
-        <LineForToday streak={journalStreak} />
-      </div>
-
-      <div className="grid gap-4 items-start md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        {/* Left column — stacks naturally, no row-height coupling to SkyNow */}
         <div className="flex flex-col gap-4 min-w-0">
+          <TodayIntention result={intention} />
+          <Frame tone="umber" padding={20}>
+            <WeekRibbon week={context.week} />
+          </Frame>
           <Frame tone="umber" padding={22}>
             <ShapeOfTodayCards
               shape={shape}
@@ -130,8 +104,34 @@ export default async function TodayPage() {
           </Frame>
           <ActiveTransits data={activeTransits} />
         </div>
-        <TodayCurriculum result={curriculum} />
+
+        {/* Right column */}
+        <div className="flex flex-col gap-4 min-w-0">
+          {skyNow.status === 'ok' ? (
+            <SkyNow data={skyNow.data} />
+          ) : (
+            <Frame tone="cocoa" padding={20} stars>
+              <Kicker color={K.copper}>Sky now</Kicker>
+              <p
+                style={{
+                  marginTop: 10,
+                  fontFamily: K.fSerif,
+                  fontStyle: 'italic',
+                  fontSize: 16,
+                  color: K.inkDim,
+                  lineHeight: 1.5,
+                }}
+              >
+                Complete your birth chart on the Self screen to see today&rsquo;s sky over your natal
+                chart with live aspect lines.
+              </p>
+            </Frame>
+          )}
+          <LineForToday streak={journalStreak} />
+        </div>
       </div>
+
+      <TodayCurriculum result={curriculum} />
 
       {/* Jupiter season — changes ~yearly, sits between the daily and the era */}
       {jupiterSeason.status === 'ok' ? <JupiterSeason data={jupiterSeason} /> : null}
