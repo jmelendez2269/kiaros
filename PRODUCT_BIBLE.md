@@ -69,20 +69,23 @@ Generation runs asynchronously via Next.js `after()` (5-minute max). The UI poll
 
 **Route:** `POST /api/oracle/chat` → `lib/ai/oracle-system-prompt.ts`
 
-Stelloquy is a streaming conversational AI grounded in four context layers:
+Stelloquy is a streaming conversational AI assembled from two prompt-caching segments
+(`lib/ai/oracle-system-prompt.ts`, `buildOracleSystemPromptSegments`):
 
-1. **Natal chart layer** — planets, aspects, house placements
-2. **Live sky layer** — current transits, this week's ephemeris
-3. **Goals & areas layer** — user's goal categories + area_goals
-4. **Journal memory layer** — recent oracle captures and pattern insights
+- **Cached segment** (Anthropic ephemeral cache) — persona, chosen interpretive tradition, natal chart +
+  aspects, Human Design bodygraph, and Goals + Blueprint (current week/quarter theme). Expensive to
+  assemble, rarely changes within a conversation.
+- **Dynamic segment** (uncached, rebuilt per request) — today's live transits/moon phase, plus a "Produced
+  Context" block: goal categories, itemized `area_goals`, curriculum plans/sessions, daily tracker logs,
+  journal entries, Oracle captures flagged for planning, pattern insights, and quarterly reviews.
 
-Prompt caching is active on layers 1–3 (expensive, rarely changes). Layer 4 rotates per conversation. Cache hit rate is shown in Settings.
+Cache hit rate is shown in Settings.
 
 **Monthly message limits** are enforced via the `ai_usage` table. Oracle access is gated by `product_entitlements` (active planner + oracle subscription, or Etsy activation code).
 
 **Captures:** users can save any oracle response to `oracle_captures`. Topics are auto-extracted by a separate Claude call (`capture-topic-extractor.ts`) and stored in `capture_topics`. Captures feed back into the Oracle's memory layer and into the Insights surface.
 
-**Capture network:** `/insights/map` renders all saves as a network graph where nodes = captures, edges = shared topics/moods.
+**Capture network:** `/insights/map` renders a network graph where nodes = unique topics/tags (themes, natal aspects, transit aspects, Human Design elements, moods), sized by frequency, and edges connect topics that co-occurred within the same saved capture — it's a map of recurring topics, not a graph of individual captures.
 
 ---
 
