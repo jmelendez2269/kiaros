@@ -13,6 +13,7 @@ import {
 } from '@/lib/areas'
 import type { MonthBlueprint, NatalChart, WeekBlueprint } from '@/types/blueprint'
 import { AreaGoalsPanel, type AreaGoal } from '@/components/areas/AreaGoalsPanel'
+import { BRAND } from '@/lib/brand'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -247,7 +248,7 @@ export default async function AreaDetailPage({
         <p className="shell-prose">
           {areaYearNarrative.direction ||
             profileRes.data?.year_vision ||
-            'Kiaros will synthesize your natal chart, house rulers, and yearly transits into a focused narrative for this area.'}
+            `${BRAND.product} will synthesize your natal chart, house rulers, and yearly transits into a focused narrative for this area.`}
         </p>
         <p className="shell-prose mt-4">
           {category.success || area.plannerPrompt}

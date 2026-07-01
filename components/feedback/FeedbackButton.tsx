@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { BRAND } from '@/lib/brand'
 
 const CATEGORIES = [
   { id: 'general', label: 'General feedback' },
@@ -104,7 +105,7 @@ export function FeedbackButton() {
                 <p className="text-2xl">✦</p>
                 <p className="font-serif text-xl text-bone">Thank you</p>
                 <p className="text-sm leading-relaxed text-bone-muted">
-                  Your feedback shapes how Kiaros improves. We read every submission.
+                  Your feedback shapes how {BRAND.product} improves. We read every submission.
                 </p>
                 <button
                   type="button"
@@ -120,7 +121,7 @@ export function FeedbackButton() {
                 <div>
                   <p id="feedback-title" className="font-serif text-xl text-bone">Help us improve</p>
                   <p className="mt-1.5 text-xs leading-relaxed text-bone-muted">
-                    Kiaros is built on real ephemeris data and AI synthesis. If a reading feels generic, inaccurate, or just off — we want to know. Your feedback directly shapes how we improve the generations.
+                    {BRAND.product} is built on real ephemeris data and AI synthesis. If a reading feels generic, inaccurate, or just off — we want to know. Your feedback directly shapes how we improve the generations.
                   </p>
                 </div>
 

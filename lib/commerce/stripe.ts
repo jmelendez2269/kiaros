@@ -15,6 +15,7 @@ import {
 } from "@/lib/commerce/config";
 import { buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { BRAND } from "@/lib/brand";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -110,7 +111,7 @@ export async function createLoyaltyRewardCoupon(reward: {
     amount_off: reward.amount_off_cents,
     currency: reward.currency ?? "usd",
     duration: "once",
-    name: "Kiaros loyalty reward",
+    name: `${BRAND.product} loyalty reward`,
   });
 
   const promotionCode = await stripe.promotionCodes.create({
@@ -251,7 +252,7 @@ async function fulfillOneTimeCheckout(params: {
     .single();
 
   if (profileError || !profile) {
-    throw new Error("Your Kiaros profile is not ready yet. Please try again.");
+    throw new Error(`Your ${BRAND.product} profile is not ready yet. Please try again.`);
   }
 
   const purchasedAt = session.created
@@ -406,7 +407,7 @@ async function fulfillSubscriptionCheckout(params: {
     .single();
 
   if (profileError || !profile) {
-    throw new Error("Your Kiaros profile is not ready yet. Please try again.");
+    throw new Error(`Your ${BRAND.product} profile is not ready yet. Please try again.`);
   }
 
   const purchasedAt = session.created

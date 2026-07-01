@@ -6,6 +6,7 @@ import { buildAnnualEntitlementRecord } from "@/lib/commerce/entitlements";
 import { activationCompleteSchema } from "@/lib/commerce/activation";
 import { createLoyaltyRewardCoupon } from "@/lib/commerce/stripe";
 import { createServerSupabase } from "@/lib/supabase";
+import { BRAND } from "@/lib/brand";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 
   if (profileError || !profile) {
     return NextResponse.json(
-      { success: false, error: "Your Kiaros profile is not ready yet. Please try again in a moment." },
+      { success: false, error: `Your ${BRAND.product} profile is not ready yet. Please try again in a moment.` },
       { status: 409 }
     );
   }

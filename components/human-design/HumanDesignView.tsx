@@ -1,6 +1,7 @@
 import { AlertCircle } from 'lucide-react'
 import type { HumanDesignChart } from '@/lib/human-design'
 import { centerLabel, describeEdgeCase } from '@/lib/human-design'
+import { BRAND } from '@/lib/brand'
 
 interface HumanDesignViewProps {
   chart: HumanDesignChart
@@ -293,7 +294,7 @@ function ChartMeta({ chart }: { chart: HumanDesignChart }) {
     : computed.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
   return (
     <footer className="border-t border-border/50 pt-4 text-[11px] leading-5 text-bone-muted/70">
-      Computed {formatted} · methodology v{chart.version} · Kiaros uses an open-source ephemeris
+      Computed {formatted} · methodology v{chart.version} · {BRAND.product} uses an open-source ephemeris
       (astronomia / VSOP87B). Edge-case placements may differ from Swiss-Ephemeris-based tools
       by up to ~0.17° on slow planets.
     </footer>

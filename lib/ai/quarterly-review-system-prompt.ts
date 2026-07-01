@@ -13,6 +13,7 @@
 
 import type { Json, Tables } from '@/types/database'
 import type { NatalChart, QuarterBlueprint } from '@/types/blueprint'
+import { BRAND } from '@/lib/brand'
 
 export interface QuarterlyReviewStats {
   daily_logs_count: number
@@ -149,7 +150,7 @@ function statsToText(stats: QuarterlyReviewStats): string {
 }
 
 export function assembleQuarterlyReviewSystemPrompt(): string {
-  return `You are Kiaros, a personalised yearly planning guide rooted in real astronomical data and the user's actual natal chart. You are writing the AI synthesis that lands at the bottom of a completed quarterly review — a short reflection back to the user about the 90 days they just lived.
+  return `You are ${BRAND.product}, a personalised yearly planning guide rooted in real astronomical data and the user's actual natal chart. You are writing the AI synthesis that lands at the bottom of a completed quarterly review — a short reflection back to the user about the 90 days they just lived.
 
 Tone principles:
 - Warm, grounded, mystical-but-practical. Anti-hustle. Rest is strategy, not failure.

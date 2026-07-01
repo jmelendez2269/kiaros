@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { BRAND } from "@/lib/brand";
 
 const STORAGE_KEY = "kiaros_onboarding_step3_study_focus";
 
@@ -74,7 +75,7 @@ export default function OnboardingStudyFocusPage() {
           </label>
           <p className="text-xs text-bone-muted">
             You can list topics to study, books to move through, skills to strengthen, or longer
-            arcs you want Kiaros to keep in view.
+            arcs you want {BRAND.product} to keep in view.
           </p>
           <textarea
             placeholder="e.g., Depth psychology, astrology fundamentals, music theory, a reading rhythm for The Secret Doctrine, writing practice, and steadier long-form learning..."

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { BRAND } from "@/lib/brand";
 
 const STORAGE_KEY = "kiaros_onboarding_step5";
 
@@ -77,7 +78,7 @@ export default function OnboardingCyclePage() {
           Add an optional energy layer <span className="text-base font-normal text-bone-muted">(optional)</span>
         </h2>
         <p className="leading-relaxed text-bone-muted">
-          Would you like to include another layer of timing? If it supports you, Kiaros can also
+          Would you like to include another layer of timing? If it supports you, {BRAND.product} can also
           take your cycle into account as part of your planning rhythm. This is optional, and you
           can always change it later.
         </p>
@@ -108,7 +109,7 @@ export default function OnboardingCyclePage() {
             className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : ""}`}
           />
         </div>
-        <span className="text-sm font-medium text-bone">Track my cycle with Kiaros</span>
+        <span className="text-sm font-medium text-bone">Track my cycle with {BRAND.product}</span>
       </label>
 
       {enabled && (
@@ -161,7 +162,7 @@ export default function OnboardingCyclePage() {
               onChange={(e) => setLastPeriodStart(e.target.value)}
               className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone focus:outline-none focus:ring-2 focus:ring-leather-400"
             />
-            <p className="text-xs text-bone-muted">Lets Kiaros calculate your current phase accurately.</p>
+            <p className="text-xs text-bone-muted">Lets {BRAND.product} calculate your current phase accurately.</p>
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import type {
   CurriculumSessionContent,
   CurriculumSessionType,
 } from '@/types/curriculum'
+import { BRAND } from '@/lib/brand'
 
 export const CURRICULUM_SESSION_MODEL = 'claude-haiku-4-5-20251001'
 
@@ -53,7 +54,7 @@ function typeGuidance(type: CurriculumSessionType): string {
 
 function buildSystemPrompt() {
   return [
-    'You are Kiaros, an expert tutor writing a single self-study lesson.',
+    `You are ${BRAND.product}, an expert tutor writing a single self-study lesson.`,
     'Tone: warm, grounded, practical. Not hustle. Not fortune-cookie astrology.',
     'Output only valid JSON, no markdown fences, no commentary.',
     'The "body" field is markdown allowed (headings, lists, inline code, blockquotes). Keep it tight — a learner should read it in roughly the session length.',

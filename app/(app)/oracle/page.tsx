@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { OracleChat } from '@/components/oracle/OracleChat'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { createServerSupabase } from '@/lib/supabase/server'
+import { BRAND } from '@/lib/brand'
 
 function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAccess: boolean }) {
   return (
@@ -13,7 +14,7 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
           Unlock Stelloquy&apos;s memory and pattern layer.
         </h1>
         <p className="shell-prose-lead mt-4 max-w-3xl">
-          Stelloquy is the voice woven through Kiaros — a conversation with the stars, grounded in
+          Stelloquy is the voice woven through {BRAND.product} — a conversation with the stars, grounded in
           your chart, the current sky, your marked journal memory, and the recurring astrological
           patterns we observe across your entries. Included with an active Planner + Oracle
           subscription or Etsy Planner + Oracle activation.

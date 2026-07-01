@@ -13,6 +13,7 @@
 
 import type { Json, Tables } from '@/types/database'
 import type { MonthBlueprint, NatalChart, QuarterBlueprint } from '@/types/blueprint'
+import { BRAND } from '@/lib/brand'
 
 interface CurriculumSessionForBrief {
   title: string
@@ -193,7 +194,7 @@ function priorQuarterReviewToText(review: PriorQuarterReviewContext | null): str
 // ─── System prompt ──────────────────────────────────────────────────────
 
 export function assembleMonthBriefSystemPrompt(): string {
-  return `You are Kiaros, a personalised yearly planning guide rooted in real astronomical data and the user's actual natal chart. You are writing a short monthly brief — a letter to the user — for a single calendar month of their year.
+  return `You are ${BRAND.product}, a personalised yearly planning guide rooted in real astronomical data and the user's actual natal chart. You are writing a short monthly brief — a letter to the user — for a single calendar month of their year.
 
 Tone principles:
 - Warm, grounded, mystical-but-practical. Anti-hustle. Rest is strategy.

@@ -7,6 +7,7 @@ import { ThemePicker } from "@/components/shared/ThemePicker";
 import { THEMES, type ThemeId } from "@/lib/constants";
 import { startTour } from "@/lib/tour/config";
 import { TRADITION_HOUSE_DEFAULTS, type HouseSystem, type Tradition } from "@/types/blueprint";
+import { BRAND } from "@/lib/brand";
 
 const COOKIE_NAME = "kiaros-theme";
 
@@ -246,7 +247,7 @@ export default function SettingsPage() {
             <p className="shell-kicker mb-3">Settings</p>
             <h1 className="shell-section-title text-[2rem] md:text-[2.25rem]">Personalize your planner</h1>
             <p className="mt-3 text-sm leading-7 text-bone-muted">
-              Adjust the way Kiaros looks, what it centers, and the birth details it uses to generate your timing layer.
+              Adjust the way {BRAND.product} looks, what it centers, and the birth details it uses to generate your timing layer.
             </p>
           </div>
 
@@ -347,7 +348,7 @@ export default function SettingsPage() {
                 rows={3}
                 value={form.study_focus}
                 onChange={(event) => setField("study_focus", event.target.value)}
-                placeholder="Books, topics, skills, or tracks you want Kiaros to support"
+                placeholder={`Books, topics, skills, or tracks you want ${BRAND.product} to support`}
                 className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
               />
             </label>
@@ -367,7 +368,7 @@ export default function SettingsPage() {
         </div>
 
         <p className="mb-4 text-sm leading-7 text-bone-muted">
-          Your tradition shapes how Kiaros reads your chart — which techniques it emphasizes and which house system it uses as a default. You can override the house system below if you want to diverge from the tradition default.
+          Your tradition shapes how {BRAND.product} reads your chart — which techniques it emphasizes and which house system it uses as a default. You can override the house system below if you want to diverge from the tradition default.
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -436,7 +437,7 @@ export default function SettingsPage() {
                 type="text"
                 value={form.display_name}
                 onChange={(event) => setField("display_name", event.target.value)}
-                placeholder="What should Kiaros call you?"
+                placeholder={`What should ${BRAND.product} call you?`}
                 className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
               />
             </label>
@@ -510,7 +511,7 @@ export default function SettingsPage() {
           </label>
 
           <p className="mt-3 text-xs leading-6 text-bone-muted/75">
-            Need to fully change your birth location coordinates? Use onboarding again so Kiaros can geocode the place and rebuild the chart cleanly.
+            Need to fully change your birth location coordinates? Use onboarding again so {BRAND.product} can geocode the place and rebuild the chart cleanly.
           </p>
         </section>
       </div>

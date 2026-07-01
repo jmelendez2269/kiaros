@@ -1,3 +1,5 @@
+import { BRAND } from "@/lib/brand";
+
 export type CommerceTierKey = "planner" | "planner_oracle";
 export type AccessPlan = "monthly" | "yearly";
 
@@ -25,7 +27,7 @@ export const LOYALTY_REWARD_AMOUNT_OFF_CENTS = 1800;
 export const COMMERCE_TIERS: CommerceTier[] = [
   {
     key: "planner",
-    name: "Kiaros Planner",
+    name: `${BRAND.product} Planner`,
     shortName: "Planner",
     tagline: "The personalized planning system for people who want guidance without the full upfront leap.",
     description:
@@ -43,12 +45,12 @@ export const COMMERCE_TIERS: CommerceTier[] = [
       "Monthly access path for flexibility, annual path for best value",
       "Oracle memory and pattern intelligence are available in Planner + Oracle",
     ],
-    checkoutHeadline: "Start with the core Kiaros planner",
+    checkoutHeadline: `Start with the core ${BRAND.product} planner`,
     listingMatchers: ["planner", "core", "annual"],
   },
   {
     key: "planner_oracle",
-    name: "Kiaros Planner + Oracle",
+    name: `${BRAND.product} Planner + Oracle`,
     shortName: "Planner + Oracle",
     tagline: "The planner plus the premium reflective layer for deeper, ongoing conversation.",
     description:
@@ -60,13 +62,13 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     oracleEnabled: true,
     plannerYear: CURRENT_PLANNER_YEAR,
     features: [
-      "Everything in Kiaros Planner",
+      `Everything in ${BRAND.product} Planner`,
       "Oracle guidance grounded in your chart, goals, current transits, and selected journal entries",
       "Journal intelligence that tracks lunar phases, signs, retrogrades, and transit aspects per entry",
       "Pattern insights that can shape Oracle conversations and next year's calendar personalization",
       "Monthly access path for flexibility, annual path for best value",
     ],
-    checkoutHeadline: "Choose the full Kiaros planner with Oracle included",
+    checkoutHeadline: `Choose the full ${BRAND.product} planner with Oracle included`,
     listingMatchers: ["oracle", "bundle", "premium", "full access"],
   },
 ];

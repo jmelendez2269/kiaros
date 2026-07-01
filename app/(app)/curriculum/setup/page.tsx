@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { K } from "@/components/almanac/tokens";
+import { BRAND } from "@/lib/brand";
 
 const STEPS = [
   { key: 'analyzing', label: 'Analyzing your prompt' },
@@ -139,7 +140,7 @@ export default function CurriculumSetupPage() {
           </div>
           <p style={{ fontSize: 15, color: K.inkDim, lineHeight: 1.7 }}>
             Describe it in your own words — your goal, your deadline, your tools, where you&apos;re starting from.
-            Kiaros will figure out the structure, the pacing, and the depth.
+            {BRAND.product} will figure out the structure, the pacing, and the depth.
           </p>
         </div>
 

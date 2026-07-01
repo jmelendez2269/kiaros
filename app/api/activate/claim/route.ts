@@ -7,6 +7,7 @@ import {
   normalizeOrderNumber,
 } from "@/lib/commerce/activation";
 import { createServerSupabase } from "@/lib/supabase";
+import { BRAND } from "@/lib/brand";
 
 export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
 
   if (order.status === "activated" && order.claimed_user_id) {
     return NextResponse.json(
-      { success: false, error: "This Etsy purchase has already been activated on a Kiaros account." },
+      { success: false, error: `This Etsy purchase has already been activated on a ${BRAND.product} account.` },
       { status: 409 }
     );
   }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { BRAND } from "@/lib/brand";
 
 type ClaimResponse = {
   success: true;
@@ -118,7 +119,7 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
       }
 
       setPreview(payload.entitlement);
-      setCompletionMessage("Your Kiaros access is now live. You can move into onboarding whenever you're ready.");
+      setCompletionMessage(`Your ${BRAND.product} access is now live. You can move into onboarding whenever you're ready.`);
       router.replace("/onboarding");
     } catch {
       setError("Something went wrong while finishing activation. Please try again.");
@@ -131,9 +132,9 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
     <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <section className="shell-panel-hero p-8 md:p-10">
         <p className="shell-kicker mb-4">Etsy Activation</p>
-        <h1 className="shell-hero-title max-w-2xl">Unlock your Kiaros planner</h1>
+        <h1 className="shell-hero-title max-w-2xl">Unlock your {BRAND.product} planner</h1>
         <p className="shell-prose-lead mt-4">
-          Your Etsy purchase activates the Kiaros tier you bought. Verify your order below, then
+          Your Etsy purchase activates the {BRAND.product} tier you bought. Verify your order below, then
           create your account to begin with a planner experience that starts from where you are now.
         </p>
 
@@ -172,7 +173,7 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
               <p className="shell-eyebrow">Purchase verified</p>
               <h2 className="shell-subsection-title mt-2">Your Etsy purchase has been confirmed.</h2>
               <p className="mt-3 text-sm leading-7 text-bone-muted">
-                Next, create your Kiaros account to activate your planner and begin onboarding.
+                Next, create your {BRAND.product} account to activate your planner and begin onboarding.
               </p>
             </div>
 
@@ -229,7 +230,7 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
         <section className="shell-panel p-6">
           <p className="shell-eyebrow">What is included</p>
           <ul className="mt-4 space-y-3 text-sm leading-7 text-bone-muted">
-            <li>Your Etsy order unlocks its matching Kiaros tier after activation.</li>
+            <li>Your Etsy order unlocks its matching {BRAND.product} tier after activation.</li>
             <li>Your planner begins from your current season in the year.</li>
             <li>Your wider annual context remains available as you move through the rest of the year.</li>
             <li>
@@ -242,7 +243,7 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
         <section className="shell-panel p-6">
           <p className="shell-eyebrow">Loyalty reward</p>
           <p className="mt-4 text-sm leading-7 text-bone-muted">
-            After activation, we will link a loyalty reward for next year&apos;s planner to your Kiaros
+            After activation, we will link a loyalty reward for next year&apos;s planner to your {BRAND.product}
             account email. This will be delivered through checkout when that planner becomes available.
           </p>
         </section>

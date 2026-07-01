@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { BRAND } from '@/lib/brand'
 
 type RecentJournalEntry = {
   id: string
@@ -381,7 +382,7 @@ export function JournalComposer({
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-bone">
-                Patterns Kiaros has noticed
+                Patterns {BRAND.product} has noticed
               </p>
               <p className="mt-1 text-xs leading-6 text-bone-muted">
                 Recurring moons, signs, and transits across your entries — synthesised in your chosen voice.

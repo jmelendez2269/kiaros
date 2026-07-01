@@ -1,7 +1,8 @@
 import { CaptureGraph } from '@/components/insights/CaptureGraph'
+import { BRAND } from '@/lib/brand'
 
 export const metadata = {
-  title: 'Mind map — Kiaros',
+  title: `Mind map — ${BRAND.product}`,
   description: 'A living map of the topics, aspects, and Human Design threads you and Stelloquy keep returning to.',
 }
 

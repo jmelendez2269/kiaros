@@ -7,6 +7,7 @@ import {
   DEFAULT_VOICE_KEY,
   VOICE_PRESETS,
 } from '@/lib/ai/journal-insight-synthesis'
+import { BRAND } from '@/lib/brand'
 
 type PatternRow = Pick<
   Tables<'user_pattern_insights'>,
@@ -255,7 +256,7 @@ export default async function JournalInsightsPage() {
           <div className="max-w-3xl">
             <h1 className="shell-section-title">Patterns we have noticed in your journaling</h1>
             <p className="mt-4 text-base leading-7 text-bone-muted">
-              Every time you save an entry, Kiaros records the sky that day — moon phase, moon sign, active aspects to your
+              Every time you save an entry, {BRAND.product} records the sky that day — moon phase, moon sign, active aspects to your
               natal chart, and any retrogrades. Over time, the entries cluster. Below is a read of what is recurring, with the
               actual entries each pattern is built from. Treat these as observed personal evidence, not a fixed rule.
             </p>
@@ -287,7 +288,7 @@ export default async function JournalInsightsPage() {
           <h2 className="text-[1.6rem] font-semibold text-bone">Patterns surface as the journal grows</h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-bone-muted">
             You have {journalEntriesCount} {journalEntriesCount === 1 ? 'entry' : 'entries'} so far. Once a few more land —
-            ideally across different moon phases — Kiaros will start surfacing the rhythms it sees. Nothing here yet is
+            ideally across different moon phases — {BRAND.product} will start surfacing the rhythms it sees. Nothing here yet is
             wrong; there is just not enough lived evidence to call anything a pattern.
           </p>
           <Link

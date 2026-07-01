@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { BRAND } from '@/lib/brand'
 
 export type AreaGoalStatus = 'active' | 'paused' | 'completed' | 'archived'
 
@@ -238,7 +239,7 @@ export function AreaGoalsPanel({ slug, areaName, initialGoals, upcomingWindows }
       <div className="mt-6 space-y-3">
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 px-5 py-6 text-sm leading-7 text-bone-muted">
-            No goals yet for this area. Name one and Kiaros will surface it alongside the timing windows above.
+            No goals yet for this area. Name one and {BRAND.product} will surface it alongside the timing windows above.
           </div>
         ) : (
           visible.map((goal) => {

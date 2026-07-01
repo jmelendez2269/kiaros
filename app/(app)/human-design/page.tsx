@@ -10,6 +10,7 @@ import {
   type HumanDesignChart,
 } from '@/lib/human-design'
 import { HumanDesignView } from '@/components/human-design/HumanDesignView'
+import { BRAND } from '@/lib/brand'
 
 export default async function HumanDesignPage() {
   const { userId } = await auth()
@@ -101,7 +102,7 @@ function UnknownTimeState() {
       <h1 className="font-serif text-3xl text-bone">Birth time needed for Human Design</h1>
       <p className="max-w-sm text-sm leading-relaxed text-bone-muted">
         Human Design gates shift every ~16 minutes. Without a known birth time, the chart would
-        be a guess — so Kiaros doesn&apos;t show one. If you can find your time of birth (a
+        be a guess — so {BRAND.product} doesn&apos;t show one. If you can find your time of birth (a
         birth certificate, hospital record, or a parent&apos;s memory), add it in settings and
         the chart will appear.
       </p>

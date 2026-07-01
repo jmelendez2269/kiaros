@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { BRAND } from '@/lib/brand'
 
 // Mirrors VOICE_PRESETS keys in lib/ai/journal-insight-synthesis.ts.
 // Kept in sync by hand; if presets change there, update here.
@@ -11,7 +12,7 @@ const PRESET_META: Record<PresetKey, { label: string; description: string }> = {
   grounded: {
     label: 'Grounded observer',
     description:
-      'Plain, warm, never prescriptive. Like a friend who has noticed something. Closest to the Kiaros house voice.',
+      `Plain, warm, never prescriptive. Like a friend who has noticed something. Closest to the ${BRAND.product} house voice.`,
   },
   mystic: {
     label: 'Mystic-but-practical',
@@ -136,7 +137,7 @@ export function VoicePanel({
     <section className="shell-panel px-6 py-7 md:px-8">
       <header className="flex flex-col gap-2">
         <p className="shell-kicker">Voice &amp; tone</p>
-        <h2 className="text-[1.6rem] font-semibold text-bone">How should Kiaros write your patterns?</h2>
+        <h2 className="text-[1.6rem] font-semibold text-bone">How should {BRAND.product} write your patterns?</h2>
         <p className="max-w-2xl text-sm leading-7 text-bone-muted">
           Pick a voice once. We use it to write every pattern summary from your actual journal entries. Change it
           whenever — every card regenerates with the new voice in the background.

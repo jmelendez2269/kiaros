@@ -17,27 +17,27 @@ const TRADITION_SLIDES: Record<Tradition, { kicker: string; title: string; body:
   evolutionary: {
     kicker: "Your lens",
     title: "Built through an evolutionary lens",
-    body: "Kiaros is reading your chart the way evolutionary astrology does — Pluto's current position and what it's asking of your soul, the South Node story you're evolving beyond, and the North Node calling you forward. Every week in your blueprint reflects those themes.",
+    body: `${BRAND.product} is reading your chart the way evolutionary astrology does — Pluto's current position and what it's asking of your soul, the South Node story you're evolving beyond, and the North Node calling you forward. Every week in your blueprint reflects those themes.`,
   },
   karmic: {
     kicker: "Your lens",
     title: "Built through a karmic lens",
-    body: "Kiaros is reading your chart through karma and dharma — Saturn's current position and what it's consolidating, the nodal axis and the soul contracts encoded in it, and the past-life patterns that surface as present-life patterns.",
+    body: `${BRAND.product} is reading your chart through karma and dharma — Saturn's current position and what it's consolidating, the nodal axis and the soul contracts encoded in it, and the past-life patterns that surface as present-life patterns.`,
   },
   psychological: {
     kicker: "Your lens",
     title: "Built through a psychological lens",
-    body: "Kiaros is reading your chart through a Jungian lens — the archetypes at work in your life this year, the shadow material activated by current transits, and the inner figures that show up as outer events.",
+    body: `${BRAND.product} is reading your chart through a Jungian lens — the archetypes at work in your life this year, the shadow material activated by current transits, and the inner figures that show up as outer events.`,
   },
   traditional: {
     kicker: "Your lens",
     title: "Built through a Hellenistic lens",
-    body: "Kiaros is reading your chart the traditional way — sect light, essential dignities, and time lords. The ancient timing techniques determine which planets carry the most weight in your year.",
+    body: `${BRAND.product} is reading your chart the traditional way — sect light, essential dignities, and time lords. The ancient timing techniques determine which planets carry the most weight in your year.`,
   },
   synthesis: {
     kicker: "Your lens",
     title: "Woven from all four traditions",
-    body: "Kiaros is reading your chart through all four lenses — evolutionary, karmic, psychological, and traditional — letting each placement determine which framework fits best. The result holds more complexity than any single tradition can.",
+    body: `${BRAND.product} is reading your chart through all four lenses — evolutionary, karmic, psychological, and traditional — letting each placement determine which framework fits best. The result holds more complexity than any single tradition can.`,
   },
 };
 
@@ -90,12 +90,12 @@ const FEATURE_SLIDES = [
   {
     kicker: "Areas + Goals",
     title: "Your life, organized by what matters",
-    body: "Kiaros tracks the areas of your life you care about and ties specific goals to each one. Your quarterly reviews measure real movement in those areas, not abstract scores.",
+    body: `${BRAND.product} tracks the areas of your life you care about and ties specific goals to each one. Your quarterly reviews measure real movement in those areas, not abstract scores.`,
   },
   {
     kicker: "Curriculum",
     title: "A study path, week by week",
-    body: "If you're working toward something that requires learning, Kiaros can generate a week-by-week curriculum tied to your timeline. Study sessions feed into your blueprint context.",
+    body: `If you're working toward something that requires learning, ${BRAND.product} can generate a week-by-week curriculum tied to your timeline. Study sessions feed into your blueprint context.`,
   },
 ];
 
@@ -318,7 +318,7 @@ export default function OnboardingGeneratingPage() {
   async function handleBuildCurriculum() {
     const trimmed = topic.trim();
     if (!trimmed) {
-      setNudgeError("Please enter a topic so Kiaros knows what to plan.");
+      setNudgeError(`Please enter a topic so ${BRAND.product} knows what to plan.`);
       return;
     }
     setNudgeError("");
@@ -386,7 +386,7 @@ export default function OnboardingGeneratingPage() {
             <p className="shell-kicker">Your planner is ready</p>
             <h2 className="font-serif text-3xl text-bone">Build your first curriculum?</h2>
             <p className="text-sm leading-relaxed text-bone-muted">
-              You mentioned what you want to study. Kiaros can generate a week-by-week plan around it right now — tied to your blueprint timeline.
+              You mentioned what you want to study. {BRAND.product} can generate a week-by-week plan around it right now — tied to your blueprint timeline.
             </p>
           </div>
 

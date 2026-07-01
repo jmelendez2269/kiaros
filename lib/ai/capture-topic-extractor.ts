@@ -18,6 +18,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { recordUsage } from './usage'
+import { BRAND } from '@/lib/brand'
 
 const MODEL_ID = 'claude-haiku-4-5'
 const MAX_OUTPUT_TOKENS = 600
@@ -37,7 +38,7 @@ const extractionSchema = z.object({
 
 export type CaptureExtraction = z.infer<typeof extractionSchema>
 
-const SYSTEM_INSTRUCTIONS = `You extract structured tags from a saved Kiaros conversation moment so the user can see longitudinal patterns in their own data. Tag only what is explicitly named or strongly implied in the source text. Do not add astrology or Human Design content the conversation did not use.
+const SYSTEM_INSTRUCTIONS = `You extract structured tags from a saved ${BRAND.product} conversation moment so the user can see longitudinal patterns in their own data. Tag only what is explicitly named or strongly implied in the source text. Do not add astrology or Human Design content the conversation did not use.
 
 Five axes:
 

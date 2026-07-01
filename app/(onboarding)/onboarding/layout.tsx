@@ -1,4 +1,5 @@
 import { OnboardingProgressBar } from "./_components/progress-bar";
+import { BRAND } from "@/lib/brand";
 
 export default async function OnboardingLayout({
   children,
@@ -13,7 +14,7 @@ export default async function OnboardingLayout({
           <h1 className="font-serif text-4xl text-bone md:text-5xl">Build your timing system.</h1>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-bone-muted">
             This planner is meant to be personal. Not generic. Not one-size-fits-all. These next
-            steps help Kiaros understand your timing, your focus, and what this season of life is
+            steps help {BRAND.product} understand your timing, your focus, and what this season of life is
             actually asking of you.
           </p>
           <OnboardingProgressBar />

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { finalizeCheckoutSession } from "@/lib/commerce/stripe";
+import { BRAND } from "@/lib/brand";
 
 interface Props {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -46,7 +47,7 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
     const result = await finalizeCheckoutSession({ sessionId, clerkUserId: userId });
 
     const bodyText = result.accessPlan === "monthly"
-      ? `Checkout is complete, your monthly subscription is active, and your Kiaros access is linked to ${result.email}.`
+      ? `Checkout is complete, your monthly subscription is active, and your ${BRAND.product} access is linked to ${result.email}.`
       : `Checkout is complete, your annual entitlement is active, and your loyalty reward for next year has been reserved for ${result.email}.`;
 
     return (

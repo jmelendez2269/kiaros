@@ -25,6 +25,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { recordUsage } from './usage'
 import type { PatternRefreshTarget } from '@/lib/journal/intelligence'
+import { BRAND } from '@/lib/brand'
 
 const MODEL_ID = 'claude-haiku-4-5'
 const MAX_OUTPUT_TOKENS = 220
@@ -50,7 +51,7 @@ export const VOICE_PRESETS: Record<string, VoicePreset> = {
   mystic: {
     label: 'Mystic-but-practical',
     prompt:
-      'Write in the Kiaros house voice: warm, grounded, mystical-but-practical, anti-hustle. ' +
+      `Write in the ${BRAND.product} house voice: warm, grounded, mystical-but-practical, anti-hustle. ` +
       'A touch more poetic than plain prose, but always anchored to the entries themselves. ' +
       'Never fortune-cookie. Never prescriptive. Notice the rhythm; do not predict.',
   },

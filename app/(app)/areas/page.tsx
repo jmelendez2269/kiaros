@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { areaActivationWeeks, areaHouseDetails, getAreaDefinition, slugifyAreaName } from '@/lib/areas'
+import { BRAND } from '@/lib/brand'
 import type { NatalChart, WeekBlueprint } from '@/types/blueprint'
 
 function todayISO(): string {
@@ -44,7 +45,7 @@ export default async function AreasPage() {
             <h1 className="shell-section-title">Your life areas, interpreted through the chart</h1>
             <p className="mt-4 text-base leading-7 text-bone-muted">
               Each area becomes its own workspace with houses, natal placements, timing windows, and planner guidance. This is where
-              Kiaros starts feeling less like a tracker and more like a chart-specific planning system.
+              {' '}{BRAND.product} starts feeling less like a tracker and more like a chart-specific planning system.
             </p>
           </div>
           <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">

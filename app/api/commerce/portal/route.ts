@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getStripeClient } from "@/lib/commerce/stripe";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { BRAND } from "@/lib/brand";
 
 export const runtime = "nodejs";
 
@@ -24,7 +25,7 @@ export async function POST() {
     .single();
 
   if (!profile) {
-    return NextResponse.json({ error: "Your Kiaros profile is not ready yet." }, { status: 409 });
+    return NextResponse.json({ error: `Your ${BRAND.product} profile is not ready yet.` }, { status: 409 });
   }
 
   const { data: order } = await supabase
@@ -38,7 +39,7 @@ export async function POST() {
 
   if (!order?.stripe_customer_id) {
     return NextResponse.json(
-      { error: "No Stripe billing account is linked to this Kiaros account yet." },
+      { error: `No Stripe billing account is linked to this ${BRAND.product} account yet.` },
       { status: 404 }
     );
   }

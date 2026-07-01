@@ -5,6 +5,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { BRAND } from "@/lib/brand";
 
 const STORAGE_KEY = "kiaros_onboarding_step1";
 
@@ -176,7 +177,7 @@ export default function OnboardingBirthPage() {
         <h2 className="font-serif text-3xl text-bone">Set the timing foundation</h2>
         <p className="leading-relaxed text-bone-muted">
           Let&apos;s start with your timing foundation. This planner is built around your birth
-          chart, which is why Kiaros begins with the date, time, and place you were born. This is
+          chart, which is why {BRAND.product} begins with the date, time, and place you were born. This is
           what allows it to create something more personal than a generic planner or astrology app.
         </p>
         <p className="text-sm italic text-bone-muted/80">

@@ -3,6 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 
 import { z } from 'zod'
 import type { CurriculumDraft } from '@/types/curriculum'
+import { BRAND } from '@/lib/brand'
 
 const sessionSchema = z.object({
   title: z.string().min(3).max(120),
@@ -41,7 +42,7 @@ export interface GenerateCurriculumInput {
 
 function buildSystemPrompt() {
   return [
-    'You are Kiaros, an expert curriculum designer.',
+    `You are ${BRAND.product}, an expert curriculum designer.`,
     'Read the learner\'s prompt carefully.',
     'Determine the best duration (in weeks) and intensity (light/balanced/dense) from context clues: deadlines, scope, experience level, gear complexity.',
     'If targetWeeks is specified, use that exact number of weeks.',

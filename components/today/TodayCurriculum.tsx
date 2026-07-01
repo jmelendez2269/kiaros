@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Frame, K, Kicker } from '@/components/almanac'
 import type { TodayCurriculumResult, TodayCurriculumSession } from '@/lib/today/get-today-curriculum'
+import { BRAND } from '@/lib/brand'
 
 interface Props {
   result: TodayCurriculumResult
@@ -49,7 +50,7 @@ export function TodayCurriculum({ result }: Props) {
             lineHeight: 1.5,
           }}
         >
-          No curriculum sessions scheduled. Pick a topic and Kiaros will build a week-by-week
+          No curriculum sessions scheduled. Pick a topic and {BRAND.product} will build a week-by-week
           plan around your year.
         </p>
         <Link

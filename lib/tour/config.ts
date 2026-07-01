@@ -1,3 +1,5 @@
+import { BRAND } from '@/lib/brand'
+
 export interface TourStep {
   id: string
   tourTarget: string     // value of the data-tour attribute on the nav element
@@ -21,7 +23,7 @@ export const TOUR_STEPS: TourStep[] = [
     tourTarget: 'nav-year',
     requiredRoute: '/year',
     title: 'Year',
-    body: "Your full year mapped to astronomical timing — the 52-week blueprint Kiaros built for you, cosmic weather by season, and the arc you're moving through.",
+    body: `Your full year mapped to astronomical timing — the 52-week blueprint ${BRAND.product} built for you, cosmic weather by season, and the arc you're moving through.`,
     cta: 'See Year view',
   },
   {

@@ -1,6 +1,7 @@
 import type { AspectType, NatalChart, PlanetPosition, QuarterBlueprint, WeekBlueprint, YearEphemeris } from '@/types/blueprint'
 import type { Json, Tables } from '@/types/database'
 import { parseStoredHumanDesign } from '@/lib/human-design'
+import { BRAND } from '@/lib/brand'
 
 export interface AreaGoalForPrompt {
   title: string
@@ -180,7 +181,7 @@ function getSafeQuarterBlueprints(value: Json | null): QuarterBlueprint[] {
 }
 
 function buildLayer1(): string {
-  return `You are Stelloquy (steh-LOH-kwee — from stella + loqui, "a conversation with the stars"), the voice woven through Kiaros. You speak from the intersection of real astronomical data and the user's lived experience. You are warm, grounded, and gently clear. You never give generic astrology. You never use hustle language. Avoid rigid language like "exact" or "concrete" when speaking about a person's path. Rest is strategy; reflection is data. Assume everyone is moving through different cycles at different speeds. If the user asks who you are or what to call you, you are Stelloquy.
+  return `You are Stelloquy (steh-LOH-kwee — from stella + loqui, "a conversation with the stars"), the voice woven through ${BRAND.product}. You speak from the intersection of real astronomical data and the user's lived experience. You are warm, grounded, and gently clear. You never give generic astrology. You never use hustle language. Avoid rigid language like "exact" or "concrete" when speaking about a person's path. Rest is strategy; reflection is data. Assume everyone is moving through different cycles at different speeds. If the user asks who you are or what to call you, you are Stelloquy.
 
 ## Grounding requirement
 
@@ -647,7 +648,7 @@ function buildLayer5(ctx: OraclePromptContext): string {
 
 export function buildOracleSystemPrompt(ctx: OraclePromptContext): string {
   if (!ctx.profile) {
-    return `You are Stelloquy (steh-LOH-kwee), the warm, grounded voice of Kiaros. The user's profile data is not yet available. Encourage them to complete onboarding to unlock personalized guidance.`
+    return `You are Stelloquy (steh-LOH-kwee), the warm, grounded voice of ${BRAND.product}. The user's profile data is not yet available. Encourage them to complete onboarding to unlock personalized guidance.`
   }
 
   const hdLayer = buildHumanDesignLayer(ctx.profile)
@@ -676,7 +677,7 @@ export function buildOracleSystemPromptSegments(ctx: OraclePromptContext): {
   if (!ctx.profile) {
     return {
       cached: null,
-      dynamic: `You are Stelloquy (steh-LOH-kwee), the warm, grounded voice of Kiaros. The user's profile data is not yet available. Encourage them to complete onboarding to unlock personalized guidance.`,
+      dynamic: `You are Stelloquy (steh-LOH-kwee), the warm, grounded voice of ${BRAND.product}. The user's profile data is not yet available. Encourage them to complete onboarding to unlock personalized guidance.`,
     }
   }
 
