@@ -96,7 +96,7 @@ export async function PATCH(req: Request) {
       };
 
       try {
-        const houseSystem = (profile.house_system ?? "porphyry") as HouseSystem;
+        const houseSystem = (profile.house_system ?? "placidus") as HouseSystem;
         const natalChart = computeNatalChart(birthData, houseSystem);
         await admin
           .from("user_profiles")

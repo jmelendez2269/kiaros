@@ -30,7 +30,7 @@ import {
   assembleBlueprintSystemPrompt,
   assembleBlueprintUserPrompt,
 } from './blueprint-system-prompt'
-import type { NatalChart, YearEphemeris, BlueprintOutput } from '@/types/blueprint'
+import type { NatalChart, YearEphemeris, BlueprintOutput, HouseSystem } from '@/types/blueprint'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -169,7 +169,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
         lng: profile.birth_lng,
         timeUnknown: profile.birth_time_unknown ?? false,
       }
-      natalChart = computeNatalChart(birthData)
+      natalChart = computeNatalChart(birthData, (profile.house_system as HouseSystem | null) ?? 'placidus')
 
       // Persist the natal chart so we don't recompute it
       await admin
