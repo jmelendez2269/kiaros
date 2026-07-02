@@ -261,9 +261,12 @@ export function computeYearEphemeris(opts: ComputeYearEphemerisOptions): YearEph
       if (diff < -0.01) retrogrades.push(planet)
     }
 
-    // Transits: outer planets to all natal planets (most astrologically relevant)
+    // Transits: every transiting planet to all natal planets. Outer planets
+    // stay the basis for blueprint-level "significant"/summary transits
+    // (see OUTER_PLANETS filters below); the fast planets are what give
+    // /today its daily-weather variety in Active Transits / Sky Now.
     const dayTransits: Transit[] = []
-    for (const transitPlanet of OUTER_PLANETS) {
+    for (const transitPlanet of ALL_TRANSIT_PLANETS) {
       const tLon = getLon(lons, transitPlanet)
       const tLonPrev = getLon(prevLons, transitPlanet)
 
