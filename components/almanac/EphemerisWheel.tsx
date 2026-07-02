@@ -19,6 +19,11 @@ interface Props {
   showHouses?: boolean;
 }
 
+// DM Sans (K.fBody) doesn't cover the zodiac-sign Unicode block (U+2648–2653)
+// as completely as the planet glyphs just below it, so those ticks render as
+// fallback tofu boxes without a symbol font in the stack.
+const SYMBOL_FONT_STACK = `${K.fBody}, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif`;
+
 const SIGNS: GlyphKey[] = [
   "aries",
   "taurus",
@@ -93,7 +98,7 @@ export function EphemerisWheel({
               textAnchor="middle"
               fontSize={size * 0.04}
               fill={K.copperHi}
-              fontFamily={K.fBody}
+              fontFamily={SYMBOL_FONT_STACK}
             >
               {GLYPH[sign]}
             </text>
@@ -153,7 +158,7 @@ export function EphemerisWheel({
                   textAnchor="middle"
                   fontSize={size * 0.035}
                   fill={K.copperHi}
-                  fontFamily={K.fBody}
+                  fontFamily={SYMBOL_FONT_STACK}
                 >
                   {GLYPH[planet] ?? "·"}
                 </text>
@@ -182,7 +187,7 @@ export function EphemerisWheel({
                   textAnchor="middle"
                   fontSize={size * 0.032}
                   fill={K.starlight}
-                  fontFamily={K.fBody}
+                  fontFamily={SYMBOL_FONT_STACK}
                 >
                   {GLYPH[planet] ?? "·"}
                 </text>

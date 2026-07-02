@@ -1,10 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { PublicPricingPage } from "@/components/commerce/PublicPricingPage";
+import { KairosHome } from "@/components/marketing/KairosHome";
 
 export default async function HomePage() {
   const { userId } = await auth();
-  if (userId) redirect("/dashboard");
+  if (userId) redirect("/today");
 
-  return <PublicPricingPage isSignedIn={false} mode="home" />;
+  return <KairosHome isSignedIn={false} />;
 }
