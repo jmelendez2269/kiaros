@@ -59,7 +59,7 @@ const NAV: ReadonlyArray<{
     tone: K.brickHi,
     href: '/journal',
     subItems: [
-      { label: 'Insights', href: '/journal/insights', hint: 'patterns kiaros has noticed' },
+      { label: 'Insights', href: '/journal/insights', hint: `patterns ${BRAND.product} has noticed` },
       { label: 'Mind map', href: '/insights/map', hint: 'capture topics as a living graph' },
     ],
   },

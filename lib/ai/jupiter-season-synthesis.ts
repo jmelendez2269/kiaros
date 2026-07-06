@@ -19,7 +19,7 @@ import { recordUsage } from './usage'
 import type { JupiterAspect, JupiterSeasonHDContext } from '@/lib/today/get-jupiter-season'
 import type { ZodiacSign } from '@/types/blueprint'
 
-const MODEL_ID = 'claude-haiku-4.5'
+const MODEL_ID = 'claude-haiku-4-5'
 const MAX_OUTPUT_TOKENS = 280
 
 export interface JupiterSeasonSynthesisInput {
