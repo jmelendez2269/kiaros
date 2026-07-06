@@ -14,7 +14,7 @@ export default async function TrackerPage({
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
   const fromDate = ninetyDaysAgo.toISOString().slice(0, 10)
 
-  const [metricsRes, todayLogRes, recentLogsRes] = await Promise.all([
+  const [metricsRes, todayLogRes, recentLogsRes, categoriesRes] = await Promise.all([
     supabase
       .from('tracker_metrics')
       .select('*, goal_categories(id, name, color_key, icon_key)')
@@ -27,6 +27,7 @@ export default async function TrackerPage({
       .gte('log_date', fromDate)
       .lte('log_date', today)
       .order('log_date', { ascending: true }),
+    supabase.from('goal_categories').select('id, name').order('sort_order', { ascending: true }),
   ])
 
   return (
@@ -36,6 +37,7 @@ export default async function TrackerPage({
       recentLogs={recentLogsRes.data ?? []}
       today={today}
       filterCategoryId={category}
+      goalCategories={categoriesRes.data ?? []}
     />
   )
 }

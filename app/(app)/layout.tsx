@@ -32,10 +32,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[])
 
-  const { data: categories } = await admin
-    .from('goal_categories')
-    .select('id, name, icon_key, sort_order')
-    .order('sort_order', { ascending: true })
+  const { data: categories } = profile?.id
+    ? await admin
+        .from('goal_categories')
+        .select('id, name, icon_key, sort_order')
+        .eq('user_id', profile.id)
+        .order('sort_order', { ascending: true })
+    : { data: [] }
 
   // Supabase rows can carry prototypes React won't serialize into Client Components.
   const sidebarCategories = (categories ?? []).map((category) => ({

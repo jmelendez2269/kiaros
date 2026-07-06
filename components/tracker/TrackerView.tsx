@@ -5,6 +5,7 @@ import type { Tables } from '@/types/database'
 import { DailyLogForm } from './DailyLogForm'
 import { ConsistencyGrid } from './ConsistencyGrid'
 import { CategoryCard } from './CategoryCard'
+import { AddMetricForm } from './AddMetricForm'
 
 type MetricWithCategory = Tables<'tracker_metrics'> & {
   goal_categories: {
@@ -21,12 +22,14 @@ interface Props {
   recentLogs: Tables<'daily_logs'>[]
   today: string
   filterCategoryId?: string
+  goalCategories: { id: string; name: string }[]
 }
 
-export function TrackerView({ metrics, todayLog, recentLogs, today, filterCategoryId }: Props) {
+export function TrackerView({ metrics, todayLog, recentLogs, today, filterCategoryId, goalCategories }: Props) {
   const [savedLog, setSavedLog] = useState<Tables<'daily_logs'> | null>(todayLog)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showAddMetric, setShowAddMetric] = useState(false)
 
   const filteredMetrics = filterCategoryId
     ? metrics.filter((m) => m.category_id === filterCategoryId)
@@ -91,17 +94,47 @@ export function TrackerView({ metrics, todayLog, recentLogs, today, filterCatego
       </div>
 
       {metrics.length === 0 ? (
-        <div className="shell-panel p-8 text-center text-bone-muted">
-          <p>No metrics yet. Add some from your goal categories to start tracking.</p>
+        <div className="shell-panel space-y-5 p-8 text-center text-bone-muted">
+          <p>No metrics yet. Add one below to start tracking.</p>
+          <div className="mx-auto max-w-xl text-left">
+            <AddMetricForm categories={goalCategories} />
+          </div>
         </div>
       ) : (
-        <DailyLogForm
-          metrics={filteredMetrics.length > 0 ? filteredMetrics : metrics}
-          initialLog={savedLog}
-          isSaving={isSaving}
-          error={error}
-          onSave={handleSave}
-        />
+        <>
+          <DailyLogForm
+            metrics={filteredMetrics.length > 0 ? filteredMetrics : metrics}
+            initialLog={savedLog}
+            isSaving={isSaving}
+            error={error}
+            onSave={handleSave}
+          />
+          <div className="shell-panel px-6 py-5">
+            {showAddMetric ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="shell-kicker">Add another metric</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddMetric(false)}
+                    className="text-sm text-bone-muted transition-colors hover:text-bone"
+                  >
+                    Close
+                  </button>
+                </div>
+                <AddMetricForm categories={goalCategories} onDone={() => setShowAddMetric(false)} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAddMetric(true)}
+                className="text-sm font-medium text-bone-muted transition-colors hover:text-bone"
+              >
+                + Add another metric
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       <div className="shell-panel px-6 py-6">
