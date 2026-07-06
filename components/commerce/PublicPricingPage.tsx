@@ -204,7 +204,7 @@ export function PublicPricingPage({
           <div className="flex items-center gap-2 sm:gap-3">
             {isSignedIn ? (
               <Link
-                href="/dashboard"
+                href="/today"
                 className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90"
               >
                 Go to dashboard
@@ -1248,7 +1248,7 @@ export function PublicPricingPage({
             <div className="flex flex-col gap-2">
               <p className="shell-eyebrow mb-1">Account</p>
               {isSignedIn ? (
-                <Link href="/dashboard" className="text-bone-muted transition-colors hover:text-bone">Dashboard</Link>
+                <Link href="/today" className="text-bone-muted transition-colors hover:text-bone">Dashboard</Link>
               ) : (
                 <>
                   <Link href="/sign-in" className="text-bone-muted transition-colors hover:text-bone">Sign in</Link>

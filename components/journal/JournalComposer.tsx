@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { BRAND } from '@/lib/brand'
+import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 
 type RecentJournalEntry = {
   id: string
@@ -76,6 +77,7 @@ export function JournalComposer({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const { openDrawer } = useStelloquy()
 
   useEffect(() => {
     setEntryDate(todayISO())
@@ -185,12 +187,13 @@ export function JournalComposer({
             <p className="shell-kicker">Compose</p>
             <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">New entry</h2>
           </div>
-          <Link
-            href="/oracle"
+          <button
+            type="button"
+            onClick={openDrawer}
             className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/80 px-4 py-2 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
           >
             Open Stelloquy
-          </Link>
+          </button>
         </div>
 
         {contextSummary.length > 0 ? (
@@ -289,12 +292,13 @@ export function JournalComposer({
             >
               {isSaving ? 'Saving...' : 'Save entry'}
             </button>
-            <Link
-              href="/oracle"
+            <button
+              type="button"
+              onClick={openDrawer}
               className="text-sm text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone"
             >
               Ask Stelloquy after saving
-            </Link>
+            </button>
           </div>
         </form>
       </section>
@@ -321,12 +325,13 @@ export function JournalComposer({
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href="/oracle"
+              <button
+                type="button"
+                onClick={openDrawer}
                 className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-3 py-1.5 text-[0.78rem] font-medium text-bone-muted transition-colors hover:text-bone"
               >
                 Open Stelloquy
-              </Link>
+              </button>
               <Link
                 href="/journal?prompt=What%20feels%20worth%20keeping%20in%20memory%20right%20now%3F"
                 className="inline-flex items-center rounded-lg border border-plum-400/40 bg-plum-400/18 px-3 py-1.5 text-[0.78rem] font-medium text-bone transition-colors hover:bg-plum-400/26"

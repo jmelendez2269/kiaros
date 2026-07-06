@@ -60,7 +60,7 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
             <div className="mt-8 flex flex-wrap gap-3">
               {result.isRenewal ? (
                 <Link
-                  href="/dashboard"
+                  href="/today"
                   className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
                 >
                   Go to dashboard
@@ -74,7 +74,7 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
                     Begin onboarding
                   </Link>
                   <Link
-                    href="/dashboard"
+                    href="/today"
                     className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
                   >
                     Go to dashboard
