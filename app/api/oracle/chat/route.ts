@@ -17,7 +17,7 @@ import type { Tables } from '@/types/database'
 
 export const maxDuration = 60
 
-const ORACLE_MODEL_ID = 'claude-sonnet-4.6'
+const ORACLE_MODEL_ID = 'claude-sonnet-4-6'
 
 function getErrorMessage(error: unknown): string {
   if (error == null) return 'unknown error'

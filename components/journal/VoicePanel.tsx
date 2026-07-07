@@ -17,7 +17,7 @@ const PRESET_META: Record<PresetKey, { label: string; description: string }> = {
   mystic: {
     label: 'Mystic-but-practical',
     description:
-      'A touch more poetic but still anchored in your entries. Notices rhythm, never predicts. The PRODUCT_BIBLE house voice.',
+      `A touch more poetic but still anchored in your entries. Notices rhythm, never predicts. The ${BRAND.product} house voice.`,
   },
   clinical: {
     label: 'Clinical / data',

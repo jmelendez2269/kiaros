@@ -20,7 +20,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { recordUsage } from './usage'
 import type { LifeArcHeavyWindow, LifeArcHDContext } from '@/lib/today/get-life-arc'
 
-const MODEL_ID = 'claude-haiku-4.5'
+const MODEL_ID = 'claude-haiku-4-5'
 const MAX_OUTPUT_TOKENS = 320
 
 export interface LifeArcSynthesisInput {
