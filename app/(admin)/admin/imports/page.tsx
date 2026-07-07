@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 export default async function ImportsPage() {
   const result = await listImports();
   const imports = result.success ? result.data : [];
+  const loadError = result.success ? null : result.error;
 
   return (
     <div>
@@ -36,7 +37,13 @@ export default async function ImportsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {imports.length === 0 ? (
+            {loadError ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-sm text-red-400">
+                  Couldn&apos;t load imports: {loadError}
+                </td>
+              </tr>
+            ) : imports.length === 0 ? (
               <tr>
                 <td
                   colSpan={4}

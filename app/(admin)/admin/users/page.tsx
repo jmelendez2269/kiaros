@@ -29,15 +29,15 @@ export default async function UsersAdminPage() {
   const { data: blueprints } = userIds.length
     ? await admin
         .from("blueprints")
-        .select("user_id, status, version, updated_at")
+        .select("user_id, status, version, created_at")
         .in("user_id", userIds)
         .order("version", { ascending: false })
     : { data: [] };
 
-  const latestByUser = new Map<string, { status: string; version: number; updated_at: string }>();
+  const latestByUser = new Map<string, { status: string; version: number; created_at: string }>();
   for (const bp of blueprints ?? []) {
     if (!latestByUser.has(bp.user_id)) {
-      latestByUser.set(bp.user_id, { status: bp.status, version: bp.version, updated_at: bp.updated_at });
+      latestByUser.set(bp.user_id, { status: bp.status, version: bp.version, created_at: bp.created_at });
     }
   }
 
@@ -86,7 +86,7 @@ export default async function UsersAdminPage() {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-5 py-3 text-xs text-muted-foreground">
-                      {bp ? bp.updated_at.slice(0, 16).replace("T", " ") : "—"}
+                      {bp ? bp.created_at.slice(0, 16).replace("T", " ") : "—"}
                     </td>
                     <td className="px-5 py-3">
                       {profile.onboarding_completed_at ? (

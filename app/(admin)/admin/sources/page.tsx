@@ -3,6 +3,7 @@ import { listSources } from "@/lib/admin/sources";
 export default async function SourcesPage() {
   const result = await listSources();
   const sources = result.success ? result.data : [];
+  const loadError = result.success ? null : result.error;
 
   return (
     <div>
@@ -39,7 +40,13 @@ export default async function SourcesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {sources.length === 0 ? (
+            {loadError ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-red-400">
+                  Couldn&apos;t load sources: {loadError}
+                </td>
+              </tr>
+            ) : sources.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
