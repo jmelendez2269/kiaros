@@ -85,8 +85,13 @@ function NavBar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-8">
         <div className="flex items-center gap-2">
           <span className="text-lg text-almanac-copper-hi" aria-hidden>&#10022;</span>
-          <span className="font-almanac-display text-lg tracking-[0.08em] text-almanac-ink">
-            {BRAND.product.toUpperCase()}
+          <span className="flex items-baseline gap-1.5">
+            <span className="font-almanac-display text-lg tracking-[0.08em] text-almanac-ink">
+              {BRAND.product.toUpperCase()}
+            </span>
+            <span className="font-almanac-mono text-[0.62rem] uppercase tracking-[0.18em] text-almanac-ink-soft">
+              Planner
+            </span>
           </span>
         </div>
         <nav className="hidden items-center gap-7 font-almanac-mono text-[0.72rem] uppercase tracking-[0.16em] text-almanac-ink-dim md:flex">
@@ -132,8 +137,11 @@ function Hero() {
           <p className="font-almanac-mono text-[0.72rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
             An observatory for your own year
           </p>
-          <h1 className="mt-5 font-almanac-display text-[clamp(2.6rem,7vw,5rem)] leading-[0.98] tracking-[0.02em] text-almanac-ink">
-            {BRAND.product}
+          <h1 className="mt-5 flex flex-wrap items-baseline gap-3 font-almanac-display leading-[0.98] tracking-[0.02em] text-almanac-ink">
+            <span className="text-[clamp(2.6rem,7vw,5rem)]">{BRAND.product}</span>
+            <span className="font-almanac-mono text-[0.9rem] uppercase tracking-[0.24em] text-almanac-ink-soft">
+              Planner
+            </span>
           </h1>
           <p className="mt-4 max-w-md font-almanac-serif text-2xl italic leading-snug text-almanac-starlight md:text-[1.7rem]">
             {BRAND.productTagline}
