@@ -89,7 +89,7 @@ function NavBar() {
             <span className="font-almanac-display text-lg tracking-[0.08em] text-almanac-ink">
               {BRAND.product.toUpperCase()}
             </span>
-            <span className="font-almanac-mono text-[0.68rem] font-bold uppercase tracking-[0.12em] text-almanac-ink">
+            <span className="font-almanac-mono text-[0.68rem] font-bold uppercase tracking-[0.22em] text-almanac-ink">
               Planner
             </span>
           </span>
@@ -139,7 +139,7 @@ function Hero() {
           </p>
           <h1 className="mt-5 flex flex-wrap items-baseline gap-3 font-almanac-display leading-[0.98] tracking-[0.02em] text-almanac-ink">
             <span className="text-[clamp(2.6rem,7vw,5rem)]">{BRAND.product}</span>
-            <span className="font-almanac-mono text-[1rem] font-bold uppercase tracking-[0.16em] text-almanac-ink">
+            <span className="font-almanac-mono text-[1rem] font-bold uppercase tracking-[0.28em] text-almanac-ink">
               Planner
             </span>
           </h1>
