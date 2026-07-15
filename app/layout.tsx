@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import {
   Cinzel,
   Cormorant_Garamond,
@@ -96,6 +98,8 @@ export default async function RootLayout({
         </head>
         <body className="bg-stone-950 text-bone antialiased">
           {children}
+          <SpeedInsights />
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
