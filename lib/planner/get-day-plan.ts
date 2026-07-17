@@ -6,15 +6,9 @@ import type { NatalChart, YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import { getWeekGoalsForDate, type AreaGoalRow } from './get-week-goals'
+import { resolvePlannerLocation } from './resolve-planner-location'
 
 export type PlanItemRow = Tables<'plan_items'>
-
-// Fallback location/timezone when the user hasn't completed onboarding's
-// birth-location step yet — matches the app-wide default used for the
-// Today dashboard's ephemeris snapshot.
-const FALLBACK_LAT = 40.7128
-const FALLBACK_LNG = -74.006
-const FALLBACK_TZ = 'America/New_York'
 
 export interface DayPlan {
   date: string
@@ -54,9 +48,7 @@ export async function getDayPlan(userId: string, date: string): Promise<DayPlan>
     getWeekGoalsForDate(userId, date),
   ])
 
-  const lat = profileRes.data?.planner_lat ?? profileRes.data?.birth_lat ?? FALLBACK_LAT
-  const lng = profileRes.data?.planner_lng ?? profileRes.data?.birth_lng ?? FALLBACK_LNG
-  const timeZone = profileRes.data?.planner_tz ?? profileRes.data?.birth_tz ?? FALLBACK_TZ
+  const { lat, lng, timeZone } = resolvePlannerLocation(profileRes.data)
   const natalChart = (profileRes.data?.natal_chart as unknown as NatalChart | null) ?? null
 
   const ephemeris = (ephemerisRes.data?.data as unknown as YearEphemeris | null) ?? null

@@ -1807,6 +1807,9 @@ export type Database = {
           natal_chart: Json | null
           onboarding_completed_at: string | null
           plan_year: number | null
+          planner_lat: number | null
+          planner_lng: number | null
+          planner_tz: string | null
           study_focus: string | null
           theme: string
           tradition: string | null
@@ -1839,6 +1842,9 @@ export type Database = {
           natal_chart?: Json | null
           onboarding_completed_at?: string | null
           plan_year?: number | null
+          planner_lat?: number | null
+          planner_lng?: number | null
+          planner_tz?: string | null
           study_focus?: string | null
           theme?: string
           tradition?: string | null
@@ -1871,6 +1877,9 @@ export type Database = {
           natal_chart?: Json | null
           onboarding_completed_at?: string | null
           plan_year?: number | null
+          planner_lat?: number | null
+          planner_lng?: number | null
+          planner_tz?: string | null
           study_focus?: string | null
           theme?: string
           tradition?: string | null

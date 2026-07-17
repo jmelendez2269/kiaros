@@ -86,8 +86,8 @@ function buildInitialState(profile?: SettingsProfile | null): SettingsState {
     birth_time_unknown: profile?.birth_time_unknown ?? false,
     birth_city: profile?.birth_city ?? "",
     birth_tz: profile?.birth_tz ?? "",
-    planner_lat: profile?.planner_lat ? String(profile.planner_lat) : "",
-    planner_lng: profile?.planner_lng ? String(profile.planner_lng) : "",
+    planner_lat: profile?.planner_lat != null ? String(profile.planner_lat) : "",
+    planner_lng: profile?.planner_lng != null ? String(profile.planner_lng) : "",
     planner_tz: profile?.planner_tz ?? "",
     plan_year: profile?.plan_year ? String(profile.plan_year) : String(new Date().getFullYear()),
     year_vision: profile?.year_vision ?? "",
@@ -583,8 +583,7 @@ export default function SettingsPage() {
             />
           </label>
         </div>
-        </section>
-      </div>
+      </section>
 
       {oracleUsage ? (
         <section className="shell-panel px-6 py-6 md:px-8">

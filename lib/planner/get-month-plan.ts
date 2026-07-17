@@ -3,10 +3,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { computeTransitWindows } from '@/lib/planetary/transit-windows'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import type { NatalChart, Transit, YearEphemeris } from '@/types/blueprint'
-
-const FALLBACK_LAT = 40.7128
-const FALLBACK_LNG = -74.006
-const FALLBACK_TZ = 'America/New_York'
+import { resolvePlannerLocation } from './resolve-planner-location'
 
 export interface MonthDaySummary {
   date: string
@@ -40,14 +37,12 @@ export async function getMonthPlan(userId: string, year: number, month: number):
   const to = `${year}-${mm}-${String(lastDay).padStart(2, '0')}`
 
   const [profileRes, planItemsRes, ephemerisRes] = await Promise.all([
-    admin.from('user_profiles').select('birth_lat, birth_lng, birth_tz, natal_chart').eq('id', userId).maybeSingle(),
+    admin.from('user_profiles').select('birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz, natal_chart').eq('id', userId).maybeSingle(),
     admin.from('plan_items').select('item_date, completed_at').eq('user_id', userId).gte('item_date', from).lte('item_date', to),
     admin.from('ephemeris_cache').select('data').eq('user_id', userId).eq('year', year).maybeSingle(),
   ])
 
-  const lat = profileRes.data?.birth_lat ?? FALLBACK_LAT
-  const lng = profileRes.data?.birth_lng ?? FALLBACK_LNG
-  const timeZone = profileRes.data?.birth_tz ?? FALLBACK_TZ
+  const { lat, lng, timeZone } = resolvePlannerLocation(profileRes.data)
   const natalChart = (profileRes.data?.natal_chart as unknown as NatalChart | null) ?? null
 
   const ephemeris = (ephemerisRes.data?.data as unknown as YearEphemeris | null) ?? null

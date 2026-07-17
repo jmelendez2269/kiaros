@@ -519,6 +519,13 @@ function formatPlanItemTime(startMinute: number | null): string {
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
 }
 
+function formatDuration(durationMinutes: number | null): string {
+  if (!durationMinutes) return ''
+  if (durationMinutes < 60) return ` (${durationMinutes}min)`
+  const hours = durationMinutes / 60
+  return ` (${Number.isInteger(hours) ? hours : hours.toFixed(1)}h)`
+}
+
 function buildLayer5(ctx: OraclePromptContext): string {
   const lines = ['## Produced Context']
 
@@ -537,9 +544,9 @@ function buildLayer5(ctx: OraclePromptContext): string {
         lines.push(`\n${dateLabel}:`)
         items.forEach((item) => {
           const time = formatPlanItemTime(item.start_minute)
-          const duration = item.duration_minutes ? ` (${Math.round(item.duration_minutes / 60)}h)` : ''
+          const duration = formatDuration(item.duration_minutes)
           const status = item.completed_at ? ' ✓ completed' : ''
-          const source = item.source === 'ai-placed' ? ' [AI-placed]' : ''
+          const source = item.source === 'ai-placed' ? ' [AI-placed]' : item.source === 'goal' ? ' [goal-linked]' : ''
           lines.push(`- ${time}: ${item.title}${duration}${source}${status}`)
         })
       })

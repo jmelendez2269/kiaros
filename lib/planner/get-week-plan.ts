@@ -5,10 +5,7 @@ import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import type { NatalChart, Transit, YearEphemeris } from '@/types/blueprint'
 import type { PlanItemRow } from './get-day-plan'
 import { getWeekGoalsForRange, type AreaGoalRow } from './get-week-goals'
-
-const FALLBACK_LAT = 40.7128
-const FALLBACK_LNG = -74.006
-const FALLBACK_TZ = 'America/New_York'
+import { resolvePlannerLocation } from './resolve-planner-location'
 
 export interface DaySummary {
   date: string
@@ -32,7 +29,7 @@ export async function getWeekPlan(userId: string, weekDates: string[]): Promise<
   const years = [...new Set(weekDates.map((d) => Number.parseInt(d.slice(0, 4), 10)))]
 
   const [profileRes, planItemsRes, weekGoals, ...ephemerisResults] = await Promise.all([
-    admin.from('user_profiles').select('birth_lat, birth_lng, birth_tz, natal_chart').eq('id', userId).maybeSingle(),
+    admin.from('user_profiles').select('birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz, natal_chart').eq('id', userId).maybeSingle(),
     admin
       .from('plan_items')
       .select('id, user_id, item_date, title, sort_order, completed_at, created_at, updated_at, start_minute, duration_minutes, area_goal_id, source')
@@ -46,9 +43,7 @@ export async function getWeekPlan(userId: string, weekDates: string[]): Promise<
     ),
   ])
 
-  const lat = profileRes.data?.birth_lat ?? FALLBACK_LAT
-  const lng = profileRes.data?.birth_lng ?? FALLBACK_LNG
-  const timeZone = profileRes.data?.birth_tz ?? FALLBACK_TZ
+  const { lat, lng, timeZone } = resolvePlannerLocation(profileRes.data)
   const natalChart = (profileRes.data?.natal_chart as unknown as NatalChart | null) ?? null
 
   const transitsByDate = new Map<string, Transit[]>()
