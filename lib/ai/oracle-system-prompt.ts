@@ -107,10 +107,10 @@ export interface OraclePromptContext {
     Tables<'quarterly_reviews'>,
     'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots' | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
   >[]
-  planItems: Pick<
+  planItems: (Pick<
     Tables<'plan_items'>,
     'item_date' | 'title' | 'start_minute' | 'duration_minutes' | 'completed_at' | 'source'
-  >[]
+  > & { goal_title: string | null })[]
   today: string
   tradition?: string | null
 }
@@ -546,8 +546,12 @@ function buildLayer5(ctx: OraclePromptContext): string {
           const time = formatPlanItemTime(item.start_minute)
           const duration = formatDuration(item.duration_minutes)
           const status = item.completed_at ? ' ✓ completed' : ''
-          const source = item.source === 'ai-placed' ? ' [AI-placed]' : item.source === 'goal' ? ' [goal-linked]' : ''
-          lines.push(`- ${time}: ${item.title}${duration}${source}${status}`)
+          const tag = item.goal_title
+            ? ` [goal: ${item.goal_title}]`
+            : item.source === 'ai-placed'
+              ? ' [AI-placed]'
+              : ''
+          lines.push(`- ${time}: ${item.title}${duration}${tag}${status}`)
         })
       })
     lines.push('')

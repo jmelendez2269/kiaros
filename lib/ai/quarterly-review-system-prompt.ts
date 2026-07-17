@@ -21,6 +21,9 @@ export interface QuarterlyReviewStats {
   oracle_captures_count: number
   curriculum_sessions_completed: number
   curriculum_sessions_scheduled: number
+  area_goals_active: number
+  area_goals_completed_this_quarter: number
+  goal_linked_tasks_completed: number
 }
 
 export interface PriorQuarterContext {
@@ -145,6 +148,8 @@ function statsToText(stats: QuarterlyReviewStats): string {
     `  Journal entries written: ${stats.journal_entries_count}`,
     `  Oracle captures saved: ${stats.oracle_captures_count}`,
     `  Curriculum: ${stats.curriculum_sessions_completed} completed of ${stats.curriculum_sessions_scheduled} scheduled`,
+    `  Area goals: ${stats.area_goals_active} active, ${stats.area_goals_completed_this_quarter} completed this quarter`,
+    `  Goal-linked planner tasks completed this quarter: ${stats.goal_linked_tasks_completed}`,
   ]
   return lines.join('\n')
 }
