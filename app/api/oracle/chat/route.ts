@@ -17,7 +17,7 @@ import type { Tables } from '@/types/database'
 
 export const maxDuration = 60
 
-const ORACLE_MODEL_ID = 'claude-sonnet-4.6'
+const ORACLE_MODEL_ID = 'claude-sonnet-4-6'
 
 function getErrorMessage(error: unknown): string {
   if (error == null) return 'unknown error'
@@ -143,7 +143,7 @@ export async function POST(req: Request) {
         .limit(2),
       supabase
         .from('plan_items')
-        .select('item_date, title, start_minute, duration_minutes, completed_at, source')
+        .select('item_date, title, start_minute, duration_minutes, completed_at, source, area_goals(title)')
         .gte('item_date', today)
         .order('item_date', { ascending: true })
         .order('start_minute', { ascending: true })
@@ -222,10 +222,26 @@ export async function POST(req: Request) {
         | 'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots'
         | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
       >[],
-      planItems: (planItemsRes.data ?? []) as Pick<
-        Tables<'plan_items'>,
-        'item_date' | 'title' | 'start_minute' | 'duration_minutes' | 'completed_at' | 'source'
-      >[],
+      planItems: ((planItemsRes.data ?? []) as unknown as Array<{
+        item_date: string
+        title: string
+        start_minute: number | null
+        duration_minutes: number
+        completed_at: string | null
+        source: string
+        area_goals: { title: string } | { title: string }[] | null
+      }>).map((item) => {
+        const goal = Array.isArray(item.area_goals) ? item.area_goals[0] : item.area_goals
+        return {
+          item_date: item.item_date,
+          title: item.title,
+          start_minute: item.start_minute,
+          duration_minutes: item.duration_minutes,
+          completed_at: item.completed_at,
+          source: item.source,
+          goal_title: goal?.title ?? null,
+        }
+      }),
       today,
       tradition: requestTradition ?? profileRes.data?.tradition ?? null,
     })

@@ -92,6 +92,9 @@ export async function loadQuarterlyReviewPromptBundle(
     captureRes,
     sessionsRes,
     priorReviewRes,
+    areaGoalsActiveRes,
+    areaGoalsCompletedRes,
+    goalLinkedTasksRes,
   ] = await Promise.all([
     admin
       .from('user_profiles')
@@ -145,6 +148,26 @@ export async function loadQuarterlyReviewPromptBundle(
       .eq('quarter', prior.quarter)
       .not('completed_at', 'is', null)
       .maybeSingle(),
+    admin
+      .from('area_goals')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userProfileId)
+      .eq('status', 'active'),
+    admin
+      .from('area_goals')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userProfileId)
+      .eq('status', 'completed')
+      .gte('updated_at', `${start}T00:00:00Z`)
+      .lte('updated_at', `${end}T23:59:59Z`),
+    admin
+      .from('plan_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userProfileId)
+      .not('area_goal_id', 'is', null)
+      .not('completed_at', 'is', null)
+      .gte('item_date', start)
+      .lte('item_date', end),
   ])
 
   if (!profileRes.data) {
@@ -169,6 +192,9 @@ export async function loadQuarterlyReviewPromptBundle(
     oracle_captures_count: captureRes.count ?? 0,
     curriculum_sessions_completed: sessionsCompleted,
     curriculum_sessions_scheduled: sessionRows.length,
+    area_goals_active: areaGoalsActiveRes.count ?? 0,
+    area_goals_completed_this_quarter: areaGoalsCompletedRes.count ?? 0,
+    goal_linked_tasks_completed: goalLinkedTasksRes.count ?? 0,
   }
 
   const priorQuarter: PriorQuarterContext | null = priorReviewRes.data

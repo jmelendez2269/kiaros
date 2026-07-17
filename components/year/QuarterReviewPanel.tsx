@@ -40,6 +40,9 @@ const STATS_LABELS: Record<string, string> = {
   oracle_captures_count: 'Oracle captures',
   curriculum_sessions_completed: 'Sessions completed',
   curriculum_sessions_scheduled: 'Sessions scheduled',
+  area_goals_active: 'Active goals',
+  area_goals_completed_this_quarter: 'Goals completed',
+  goal_linked_tasks_completed: 'Goal-linked tasks done',
 }
 
 const MAX_BULLET_LENGTH = 400

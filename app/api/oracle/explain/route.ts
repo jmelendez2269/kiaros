@@ -17,7 +17,7 @@ import type { Tables } from '@/types/database'
 
 export const maxDuration = 30
 
-const EXPLAIN_MODEL_ID = 'claude-sonnet-4.6'
+const EXPLAIN_MODEL_ID = 'claude-sonnet-4-6'
 const MAX_PROMPT_CHARS = 1200
 const MAX_OUTPUT_TOKENS = 600
 
