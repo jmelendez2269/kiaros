@@ -7,6 +7,7 @@ import { getShapeOfToday } from '@/lib/today/shape-of-today'
 import { SkyBanner } from '@/components/today/SkyBanner'
 import { ShapeOfTodayCards } from '@/components/today/ShapeOfToday'
 import { WeekRibbon } from '@/components/today/WeekRibbon'
+import { RightNowCard } from '@/components/today/RightNowCard'
 import { SkyNow } from '@/components/today/SkyNow'
 import { LineForToday } from '@/components/today/LineForToday'
 import { ActiveTransits } from '@/components/today/ActiveTransits'
@@ -14,6 +15,10 @@ import { LifeArcRead } from '@/components/today/LifeArcRead'
 import { JupiterSeason } from '@/components/today/JupiterSeason'
 import { TodayIntention } from '@/components/today/TodayIntention'
 import { TodayCurriculum } from '@/components/today/TodayCurriculum'
+import { WeekArc } from '@/components/today/WeekArc'
+import { PlanChecklist } from '@/components/plan/PlanChecklist'
+import { PlanImportModal } from '@/components/plan/PlanImportModal'
+import type { CurriculumSessionRow } from '@/types/curriculum'
 import { getActiveTransits } from '@/lib/today/get-active-transits'
 import { getJournalStreak } from '@/lib/today/get-journal-streak'
 import { getTodayIntention } from '@/lib/today/get-today-intention'
@@ -21,6 +26,7 @@ import { getTodayCurriculum } from '@/lib/today/get-today-curriculum'
 import { getSkyNow } from '@/lib/today/get-sky-now'
 import { getLifeArc } from '@/lib/today/get-life-arc'
 import { getJupiterSeason } from '@/lib/today/get-jupiter-season'
+import { getNowEnergyWindows } from '@/lib/today/get-now-energy'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { YearEphemeris } from '@/types/blueprint'
@@ -46,16 +52,42 @@ export default async function TodayPage() {
     moonPhase: context.today.moonPhase,
     moonSign: context.today.moon.sign,
   })
-  const [activeTransits, journalStreak, intention, curriculum, skyNow, lifeArc, jupiterSeason] =
-    await Promise.all([
-      getActiveTransits(context.today.date, supabaseUserId),
-      getJournalStreak(context.today.date, supabaseUserId),
-      getTodayIntention(context.today.date, supabaseUserId),
-      getTodayCurriculum(context.today.date, supabaseUserId),
-      getSkyNow(context.today.date, supabaseUserId),
-      getLifeArc(context.today.date, supabaseUserId),
-      getJupiterSeason(context.today.date, supabaseUserId),
-    ])
+  const [
+    activeTransits,
+    journalStreak,
+    intention,
+    curriculum,
+    skyNow,
+    lifeArc,
+    jupiterSeason,
+    nowEnergyWindows,
+    todayPlanItemsRes,
+    todayCurriculumSessionsRes,
+  ] = await Promise.all([
+    getActiveTransits(context.today.date, supabaseUserId),
+    getJournalStreak(context.today.date, supabaseUserId),
+    getTodayIntention(context.today.date, supabaseUserId),
+    getTodayCurriculum(context.today.date, supabaseUserId),
+    getSkyNow(context.today.date, supabaseUserId),
+    getLifeArc(context.today.date, supabaseUserId),
+    getJupiterSeason(context.today.date, supabaseUserId),
+    getNowEnergyWindows(supabaseUserId, context.today.date),
+    admin
+      .from('plan_items')
+      .select('id, item_date, title, sort_order, completed_at, created_at, updated_at, user_id, start_minute, duration_minutes, area_goal_id, source')
+      .eq('user_id', supabaseUserId)
+      .eq('item_date', context.today.date)
+      .order('sort_order', { ascending: true }),
+    admin
+      .from('curriculum_sessions')
+      .select(
+        'id, curriculum_plan_id, curriculum_title, week_number, session_order, title, description, session_type, estimated_minutes, scheduled_for, status'
+      )
+      .eq('user_id', supabaseUserId)
+      .eq('scheduled_for', context.today.date),
+  ])
+  const todayPlanItems = todayPlanItemsRes.data ?? []
+  const todayCurriculumSessions = (todayCurriculumSessionsRes.data ?? []) as CurriculumSessionRow[]
 
   // Year-at-a-glance grid (same data the Year tab uses): the current
   // blueprint's weeks plus the cached year ephemeris.
@@ -88,12 +120,23 @@ export default async function TodayPage() {
     >
       <SkyBanner context={context} firstName={profile?.display_name ?? null} weekTheme={currentWeek?.theme ?? null} />
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         {/* Left column — stacks naturally, no row-height coupling to SkyNow */}
         <div className="flex flex-col gap-4 min-w-0">
           <TodayIntention result={intention} />
           <Frame tone="umber" padding={20}>
-            <WeekRibbon week={context.week} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Kicker color={K.copper}>Today&rsquo;s plan</Kicker>
+              <PlanImportModal />
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <PlanChecklist
+                date={context.today.date}
+                manualItems={todayPlanItems}
+                curriculumSessions={todayCurriculumSessions}
+                variant="full"
+              />
+            </div>
           </Frame>
           <Frame tone="umber" padding={22}>
             <ShapeOfTodayCards
@@ -102,7 +145,13 @@ export default async function TodayPage() {
               dayOfYear={context.meta.dayOfYear}
             />
           </Frame>
-          <ActiveTransits data={activeTransits} />
+          <LineForToday streak={journalStreak} />
+          <Frame tone="umber" padding={20}>
+            <WeekRibbon week={context.week} />
+          </Frame>
+          <Frame tone="umber" padding={18}>
+            <RightNowCard windows={nowEnergyWindows} />
+          </Frame>
         </div>
 
         {/* Right column */}
@@ -127,10 +176,15 @@ export default async function TodayPage() {
               </p>
             </Frame>
           )}
-          <LineForToday streak={journalStreak} />
+          <ActiveTransits data={activeTransits} />
         </div>
       </div>
 
+      {blueprintLoaded ? (
+        <Frame tone="umber" padding={20}>
+          <WeekArc weeks={blueprintLoaded.blueprint.weeks} currentWeekNumber={context.meta.isoWeek} />
+        </Frame>
+      ) : null}
       <TodayCurriculum result={curriculum} />
 
       {/* Jupiter season — changes ~yearly, sits between the daily and the era */}

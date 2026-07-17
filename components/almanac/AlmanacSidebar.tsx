@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
-import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react'
+import { UserButton, SignOutButton } from '@clerk/nextjs'
+import { ChevronLeft, ChevronRight, LogOut, Menu, Settings, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { slugifyAreaName } from '@/lib/areas'
 import { BRAND } from '@/lib/brand'
@@ -23,8 +23,9 @@ interface SidebarProps {
 }
 
 // Four doors. The fifth (Stelloquy) is the orb, not a tab.
-// Year/Self/Journal hrefs point at existing routes for now; Phases 2/3/4
-// flip these to /year, /self, /journal-new as those screens land.
+// Self now points at /self (the "One Reading" chapter page). Year/Journal
+// hrefs still point at existing routes for now; later phases flip these to
+// /year, /journal-new as those screens land.
 type SubNavItem = { label: string; href: string; hint: string }
 
 const NAV: ReadonlyArray<{
@@ -36,7 +37,17 @@ const NAV: ReadonlyArray<{
   href: string
   subItems?: ReadonlyArray<SubNavItem>
 }> = [
-  { key: 'today', label: 'Today', hint: 'sky now · daily focus', glyph: '☉', tone: K.copper, href: '/today' },
+  {
+    key: 'today',
+    label: 'Today',
+    hint: 'sky now · daily focus',
+    glyph: '☉',
+    tone: K.copper,
+    href: '/today',
+    subItems: [
+      { label: 'Planner', href: '/planner', hint: 'day · week · month, time-blocked' },
+    ],
+  },
   {
     key: 'year',
     label: 'Year',
@@ -45,12 +56,24 @@ const NAV: ReadonlyArray<{
     tone: K.ember,
     href: '/year',
     subItems: [
-      { label: 'Month',      href: '/year?view=month', hint: 'lunar month · intentions' },
-      { label: 'Week',       href: '/year?view=week',  hint: 'current week · curriculum' },
-      { label: 'Curriculum', href: '/curriculum',      hint: 'study plans · sessions' },
+      { label: 'Month',      href: '/year?view=month',  hint: 'lunar month · intentions' },
+      { label: 'Week',       href: '/year?view=week',   hint: 'current week · curriculum' },
+      { label: 'Review',     href: '/year?view=review', hint: 'quarterly wins · pivots' },
+      { label: 'Blueprint',  href: '/blueprint',        hint: 'the full 52-week read' },
+      { label: 'Curriculum', href: '/curriculum',       hint: 'study plans · sessions' },
     ],
   },
-  { key: 'self', label: 'Self', hint: 'natal · design · areas', glyph: '✺', tone: K.sage, href: '/human-design' },
+  {
+    key: 'self',
+    label: 'Self',
+    hint: 'natal · design · areas',
+    glyph: '✺',
+    tone: K.sage,
+    href: '/self',
+    subItems: [
+      { label: 'Areas', href: '/areas', hint: 'goals mapped to your chart' },
+    ],
+  },
   {
     key: 'journal',
     label: 'Journal',
@@ -59,8 +82,9 @@ const NAV: ReadonlyArray<{
     tone: K.brickHi,
     href: '/journal',
     subItems: [
+      { label: 'Tracker',  href: '/tracker',         hint: 'daily rhythm · consistency' },
       { label: 'Insights', href: '/journal/insights', hint: `patterns ${BRAND.product} has noticed` },
-      { label: 'Mind map', href: '/insights/map', hint: 'capture topics as a living graph' },
+      { label: 'Mind map', href: '/insights/map',     hint: 'capture topics as a living graph' },
     ],
   },
 ]
@@ -158,10 +182,10 @@ function NavRow({
             (pathname.startsWith('/journal') || pathname.startsWith('/tracker')))
 
         const subItems = n.subItems ?? []
-        // Sub-items used to hide until the parent was active. They now
-        // render whenever the sidebar is expanded, so jumps like Today →
-        // Month are one click instead of two.
-        const showSubItems = !collapsed && subItems.length > 0
+        // Sub-items only show for whichever section is currently active —
+        // no manual expand/collapse control (tried a chevron toggle; it
+        // worked but wasn't discoverable, so this stays automatic).
+        const showSubItems = !collapsed && subItems.length > 0 && isActive
 
         return (
           <div key={n.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -455,6 +479,43 @@ function SidebarBody({
               </div>
             </div>
           ) : null}
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            title="Settings"
+            aria-label="Settings"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 6px',
+              color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
+            }}
+          >
+            <Settings size={14} />
+          </Link>
+          <SignOutButton>
+            <button
+              type="button"
+              title="Sign out"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 6px',
+                fontFamily: K.fMono,
+                fontSize: 12,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: K.inkSoft,
+              }}
+            >
+              <LogOut size={14} />
+              {!collapsed ? 'Sign out' : null}
+            </button>
+          </SignOutButton>
         </div>
       </div>
     </div>

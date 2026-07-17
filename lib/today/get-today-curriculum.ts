@@ -29,12 +29,26 @@ function daysBetween(fromISO: string, toISO: string): number {
 export async function getTodayCurriculum(date: string, supabaseUserId: string): Promise<TodayCurriculumResult> {
   const admin = createAdminSupabase()
 
+  // Only courses the user hasn't paused or archived count toward Today.
+  const { data: activePlans } = await admin
+    .from('curriculum_plans')
+    .select('id')
+    .eq('user_id', supabaseUserId)
+    .eq('status', 'approved')
+
+  const activePlanIds = (activePlans ?? []).map((p) => p.id)
+  if (activePlanIds.length === 0) return { status: 'none' }
+
+  // Gate on completion, not the calendar: a session only surfaces once the
+  // ones before it are done, so falling behind never silently skips ahead.
   const { data: rows } = await admin
     .from('curriculum_sessions')
     .select('id, curriculum_plan_id, curriculum_title, title, description, session_type, estimated_minutes, week_number, scheduled_for, status')
     .eq('user_id', supabaseUserId)
-    .gte('scheduled_for', date)
+    .eq('status', 'scheduled')
+    .in('curriculum_plan_id', activePlanIds)
     .order('scheduled_for', { ascending: true })
+    .order('week_number', { ascending: true })
     .order('session_order', { ascending: true })
     .limit(3)
 

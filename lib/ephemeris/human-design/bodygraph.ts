@@ -39,7 +39,7 @@ export const CENTERS = [
 
 export type Center = (typeof CENTERS)[number]
 
-const GATE_TO_CENTER: Record<number, Center> = {
+export const GATE_TO_CENTER: Record<number, Center> = {
   // Head (3)
   64: 'head', 61: 'head', 63: 'head',
   // Ajna (6)

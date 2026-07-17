@@ -49,7 +49,7 @@ export interface WeekDay {
 }
 
 /** YYYY-MM-DD in APP_TIME_ZONE. */
-function todayISO(timeZone = APP_TIME_ZONE): string {
+export function todayISO(timeZone = APP_TIME_ZONE): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',

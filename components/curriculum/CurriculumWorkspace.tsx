@@ -25,7 +25,7 @@ interface CurriculumWorkspaceProps {
   goalNames: string[]
 }
 
-type StatusFilter = 'all' | 'draft' | 'approved' | 'archived'
+type StatusFilter = 'all' | 'draft' | 'approved' | 'paused' | 'archived'
 type DrawerPhase = 'compose' | 'detecting' | 'split' | 'generating'
 
 interface SplitCourse {
@@ -44,6 +44,7 @@ function normalizePlan(plan: any): CurriculumPlanRow {
 
 function statusTone(status: CurriculumPlanRow['status']) {
   if (status === 'approved') return 'border-moss-500/35 bg-moss-500/12 text-moss-200'
+  if (status === 'paused') return 'border-amber-500/35 bg-amber-500/12 text-amber-200'
   if (status === 'archived') return 'border-border/60 bg-stone-950/60 text-bone-muted'
   return 'border-leather-400/35 bg-leather-500/12 text-leather-200'
 }
@@ -87,7 +88,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
         acc[plan.status] += 1
         return acc
       },
-      { all: 0, draft: 0, approved: 0, archived: 0 }
+      { all: 0, draft: 0, approved: 0, paused: 0, archived: 0 }
     )
   }, [plans])
 
@@ -267,7 +268,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
           />
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {(['all', 'draft', 'approved', 'archived'] as StatusFilter[]).map((option) => (
+          {(['all', 'draft', 'approved', 'paused', 'archived'] as StatusFilter[]).map((option) => (
             <button
               key={option}
               type="button"

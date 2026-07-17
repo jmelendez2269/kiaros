@@ -19,28 +19,28 @@ const QUARTER_MONTH_TONES: Record<
   }
 > = {
   1: {
-    border: 'border-indigo-500/20 bg-indigo-950/14',
-    accent: 'text-indigo-200',
-    badge: 'border-indigo-500/30 bg-indigo-950/50 text-indigo-200',
-    dot: 'bg-indigo-300',
+    border: 'border-plum-400/20 bg-plum-400/6',
+    accent: 'text-plum-300',
+    badge: 'border-plum-400/30 bg-plum-400/16 text-plum-300',
+    dot: 'bg-plum-300',
   },
   2: {
-    border: 'border-teal-500/20 bg-teal-950/14',
-    accent: 'text-teal-200',
-    badge: 'border-teal-500/30 bg-teal-950/50 text-teal-200',
-    dot: 'bg-teal-300',
+    border: 'border-leather-400/20 bg-leather-500/6',
+    accent: 'text-leather-200',
+    badge: 'border-leather-400/30 bg-leather-500/16 text-leather-200',
+    dot: 'bg-leather-300',
   },
   3: {
-    border: 'border-amber-500/20 bg-amber-950/14',
-    accent: 'text-amber-200',
-    badge: 'border-amber-500/30 bg-amber-950/50 text-amber-200',
-    dot: 'bg-amber-300',
+    border: 'border-ember-400/20 bg-ember-400/6',
+    accent: 'text-ember-300',
+    badge: 'border-ember-400/30 bg-ember-400/16 text-ember-300',
+    dot: 'bg-ember-300',
   },
   4: {
-    border: 'border-emerald-500/20 bg-emerald-950/14',
-    accent: 'text-emerald-200',
-    badge: 'border-emerald-500/30 bg-emerald-950/50 text-emerald-200',
-    dot: 'bg-emerald-300',
+    border: 'border-moss-500/20 bg-moss-500/6',
+    accent: 'text-moss-200',
+    badge: 'border-moss-500/30 bg-moss-500/16 text-moss-200',
+    dot: 'bg-moss-300',
   },
 }
 
@@ -56,7 +56,7 @@ export function MonthSection({ month, quarter }: MonthSectionProps) {
     <article className={cn('rounded-3xl border p-4', tone.border)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h4 className="font-serif text-xl text-slate-50">{month.name}</h4>
+          <h4 className="font-display text-xl text-bone">{month.name}</h4>
           <p className={cn('mt-1 text-sm', tone.accent)}>{month.theme || 'Untitled month'}</p>
         </div>
         <span
@@ -69,15 +69,15 @@ export function MonthSection({ month, quarter }: MonthSectionProps) {
         </span>
       </div>
 
-      <div className="mt-4 space-y-4 text-sm leading-7 text-slate-300">
+      <div className="mt-4 space-y-4 text-sm leading-7 text-bone-muted">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Energy arc</p>
+          <p className="shell-eyebrow text-bone-muted/60">Energy arc</p>
           <p className="mt-2">{month.energyArc || 'No energy arc provided for this month.'}</p>
         </div>
 
         {month.intentions.length > 0 ? (
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Intentions</p>
+            <p className="shell-eyebrow text-bone-muted/60">Intentions</p>
             <ul className="mt-2 space-y-2">
               {month.intentions.slice(0, 3).map((intention, index) => (
                 <li key={index} className="flex gap-3">
@@ -91,16 +91,16 @@ export function MonthSection({ month, quarter }: MonthSectionProps) {
 
         {month.moonPhases.length > 0 ? (
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Moon phases</p>
+            <p className="shell-eyebrow text-bone-muted/60">Moon phases</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {month.moonPhases.slice(0, 2).map((phase, index) => (
                 <div
                   key={index}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/80 px-3 py-1 text-[0.72rem] text-slate-300"
+                  className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-stone-950/80 px-3 py-1 text-[0.72rem] text-bone-muted"
                   title={phase.significance}
                 >
                   <MoonPhaseIcon phase={MOON_PHASE_MAP[phase.phase] ?? (phase.phase as LunarPhase)} size={12} />
-                  <span className="text-slate-100">{phase.date}</span>
+                  <span className="text-bone">{phase.date}</span>
                 </div>
               ))}
             </div>
@@ -109,10 +109,10 @@ export function MonthSection({ month, quarter }: MonthSectionProps) {
 
         {month.keyTransits.length > 0 ? (
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Key transits</p>
+            <p className="shell-eyebrow text-bone-muted/60">Key transits</p>
             <div className="mt-2 space-y-2">
               {month.keyTransits.slice(0, 2).map((transit, index) => (
-                <div key={index} className="rounded-2xl border border-slate-800 bg-black/20 px-3 py-2 text-slate-300">
+                <div key={index} className="rounded-2xl border border-border/50 bg-black/20 px-3 py-2 text-bone-muted">
                   {transit}
                 </div>
               ))}

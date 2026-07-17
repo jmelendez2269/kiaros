@@ -61,6 +61,7 @@ export const GLYPH = {
   northNode: "☊",
   southNode: "☋",
   chiron: "⚷",
+  ascendant: "AC",
   aries: "♈",
   taurus: "♉",
   gemini: "♊",

@@ -36,13 +36,13 @@ import type {
 
 // ─── Aspect definitions ──────────────────────────────────────────────────
 
-interface AspectDef {
+export interface AspectDef {
   type: AspectType
   angle: number
   orb: number   // degrees
 }
 
-const ASPECTS: AspectDef[] = [
+export const ASPECTS: AspectDef[] = [
   { type: 'conjunction',  angle:   0, orb: 6.0 },
   { type: 'opposition',   angle: 180, orb: 6.0 },
   { type: 'square',       angle:  90, orb: 5.0 },
@@ -51,7 +51,7 @@ const ASPECTS: AspectDef[] = [
 ]
 
 /** Angular separation between two ecliptic longitudes [0, 180] */
-function angularSep(a: number, b: number): number {
+export function angularSep(a: number, b: number): number {
   const diff = Math.abs(normalizeDeg(a - b))
   return diff > 180 ? 360 - diff : diff
 }

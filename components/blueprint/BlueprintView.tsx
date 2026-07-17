@@ -80,7 +80,9 @@ export function BlueprintView({ blueprint, planYear }: BlueprintViewProps) {
               key={quarter.quarter}
               quarter={quarter}
               months={blueprint.months}
+              weeks={blueprint.weeks}
               isCurrentQuarter={quarter.quarter === currentQuarter}
+              isPast={quarter.quarter < currentQuarter}
             />
           ))}
         </div>

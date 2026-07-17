@@ -93,7 +93,7 @@ export function SkyNow({ data }: Props) {
 
     const resize = () => {
       const w = wrap.clientWidth
-      const sz = Math.min(w, 520)
+      const sz = Math.min(w, 580)
       dpr = Math.min(window.devicePixelRatio || 1, 2)
       S = sz
       canvas.style.width = S + 'px'

@@ -30,6 +30,7 @@ const STATUS_TONE: Record<TodayCurriculumSession['status'], string> = {
 function dayLabel(daysAway: number): string {
   if (daysAway === 0) return 'Today'
   if (daysAway === 1) return 'Tomorrow'
+  if (daysAway < 0) return "Whenever you're ready"
   if (daysAway < 7) return `In ${daysAway} days`
   if (daysAway < 14) return 'Next week'
   return `In ${Math.round(daysAway / 7)} weeks`

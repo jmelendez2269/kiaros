@@ -20,6 +20,7 @@ const schema = z.object({
   birth_lat: z.number(),
   birth_lng: z.number(),
   birth_tz: z.string().optional(),
+  marketing_consent: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -59,7 +60,7 @@ export default function OnboardingBirthPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { birth_time_unknown: false },
+    defaultValues: { birth_time_unknown: false, marketing_consent: false },
   });
 
   const birthTimeUnknown = watch("birth_time_unknown");
@@ -159,6 +160,8 @@ export default function OnboardingBirthPage() {
         birth_lat: values.birth_lat,
         birth_lng: values.birth_lng,
         birth_tz: values.birth_tz || null,
+        marketing_consent: values.marketing_consent,
+        marketing_consent_at: values.marketing_consent ? new Date().toISOString() : null,
       }),
     });
 
@@ -309,6 +312,18 @@ export default function OnboardingBirthPage() {
           )}
           {errors.birth_city && <p className="text-xs text-destructive">{errors.birth_city.message}</p>}
         </div>
+
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-bone-muted">
+          <input
+            type="checkbox"
+            {...register("marketing_consent")}
+            className="mt-0.5 rounded"
+          />
+          <span>
+            Send me marketing emails and product updates from Project Parallax, {BRAND.product}&apos;s
+            studio.
+          </span>
+        </label>
 
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <button

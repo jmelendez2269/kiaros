@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 type NarrativeTone = 'leather' | 'plum' | 'moss' | 'ember'
@@ -19,6 +20,15 @@ const PATTERNS = [
   /\b(?:rare\s+)?(?:Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\s+stellium(?:\s+\w+){0,4}\b/gi,
   /\b(?:Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto|transiting Pluto)(?:\s+\w+){0,6}\s+(?:conjunction|conjunct|conjoining|trine|trining|square|squaring|sextile|opposition|opposing)(?:\s+\w+){0,8}\b/gi,
 ]
+
+const PLANET_NAME_RE = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\b/
+
+function selfLinkFor(segmentText: string): string {
+  const planetMatch = segmentText.match(PLANET_NAME_RE)
+  if (planetMatch) return `/self#${planetMatch[1].toLowerCase()}`
+  if (/house/i.test(segmentText)) return '/self#houses'
+  return '/self#identity'
+}
 
 function collectMatches(text: string) {
   const matches: { start: number; end: number }[] = []
@@ -73,13 +83,16 @@ export function BlueprintNarrative({
       )
     }
 
+    const segmentText = text.slice(segment.start, segment.end)
+
     parts.push(
-      <span
+      <Link
         key={`highlight-${index}`}
+        href={selfLinkFor(segmentText)}
         className={cn('inline rounded-full px-2 py-0.5 font-medium', HIGHLIGHT_STYLES[tone])}
       >
-        {text.slice(segment.start, segment.end)}
-      </span>
+        {segmentText}
+      </Link>
     )
 
     cursor = segment.end
