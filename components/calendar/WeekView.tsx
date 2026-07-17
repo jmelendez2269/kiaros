@@ -1,9 +1,15 @@
 import { MoonPhaseIcon } from '@/components/shared/MoonPhaseIcon'
 import { TransitBadge } from '@/components/shared/TransitBadge'
+import { PlanChecklist } from '@/components/plan/PlanChecklist'
+import { GoalChip } from '@/components/calendar/GoalChip'
 import { cn } from '@/lib/utils'
 import type { AspectType, EphemerisDay, MoonPhaseEvent, Planet, WeekBlueprint, ZodiacSign } from '@/types/blueprint'
 import type { CurriculumSessionRow } from '@/types/curriculum'
+import type { Tables } from '@/types/database'
 import { SHORT_DAY_NAMES, getWeekDates } from './utils'
+
+type PlanItemRow = Tables<'plan_items'>
+type AreaGoalRow = Tables<'area_goals'>
 
 const PLANET_GLYPH: Record<Planet, string> = {
   Sun: '☉',
@@ -196,6 +202,8 @@ interface WeekViewProps {
   dayMap: Map<string, EphemerisDay>
   weeks: WeekBlueprint[]
   curriculumByDate: Map<string, CurriculumSessionRow[]>
+  planItemsByDate?: Map<string, PlanItemRow[]>
+  areaGoals?: AreaGoalRow[]
   today: string
 }
 
@@ -203,7 +211,15 @@ function findWeekBlueprint(weeks: WeekBlueprint[], date: string): WeekBlueprint 
   return weeks.find((w) => w.startDate <= date && date <= w.endDate) ?? null
 }
 
-export function WeekView({ selectedDate, dayMap, weeks, curriculumByDate, today }: WeekViewProps) {
+export function WeekView({
+  selectedDate,
+  dayMap,
+  weeks,
+  curriculumByDate,
+  planItemsByDate,
+  areaGoals = [],
+  today,
+}: WeekViewProps) {
   const weekDates = getWeekDates(selectedDate)
   const weekBlueprint = findWeekBlueprint(weeks, selectedDate)
   const planetEvents = collectPlanetEvents(weekDates, dayMap)
@@ -251,6 +267,19 @@ export function WeekView({ selectedDate, dayMap, weeks, curriculumByDate, today 
                   {area}
                 </span>
               ))}
+            </div>
+          )}
+
+          {areaGoals.length > 0 && (
+            <div className="border-t border-border/60 pt-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-bone-muted/60">
+                From your goals
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {areaGoals.map((goal) => (
+                  <GoalChip key={goal.id} goal={goal} date={selectedDate} />
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -326,9 +355,14 @@ export function WeekView({ selectedDate, dayMap, weeks, curriculumByDate, today 
                       </div>
                     )}
 
-                    {curriculumSessions.length > 0 && (
-                      <div className="mt-1 rounded-md border border-leather-400/30 bg-leather-500/15 px-1.5 py-1 text-center text-[10px] font-medium leading-tight text-leather-200">
-                        {curriculumSessions.length} study session{curriculumSessions.length === 1 ? '' : 's'}
+                    {(curriculumSessions.length > 0 || (planItemsByDate?.get(date) ?? []).length > 0) && (
+                      <div className="mt-1 border-t border-border/50 pt-1.5">
+                        <PlanChecklist
+                          date={date}
+                          manualItems={planItemsByDate?.get(date) ?? []}
+                          curriculumSessions={curriculumSessions}
+                          variant="compact"
+                        />
                       </div>
                     )}
                   </>

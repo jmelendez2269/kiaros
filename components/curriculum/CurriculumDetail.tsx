@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Check, CheckCircle2, ChevronDown, Loader2, PenSquare } from 'lucide-react'
+import { ArrowLeft, Check, CheckCircle2, ChevronDown, Loader2, Pause, PenSquare, Play } from 'lucide-react'
 import type {
   CurriculumPlanRow,
   CurriculumSessionProgressRow,
@@ -20,6 +20,7 @@ function progressKey(week: number, order: number) {
 
 function statusTone(status: CurriculumPlanRow['status']) {
   if (status === 'approved') return 'border-moss-500/35 bg-moss-500/12 text-moss-200'
+  if (status === 'paused') return 'border-amber-500/35 bg-amber-500/12 text-amber-200'
   if (status === 'archived') return 'border-border/60 bg-stone-950/60 text-bone-muted'
   return 'border-leather-400/35 bg-leather-500/12 text-leather-200'
 }
@@ -59,6 +60,7 @@ export function CurriculumDetail({ initialPlan, initialProgress = [] }: Curricul
   const [plan, setPlan] = useState(initialPlan)
   const [isApproving, startApproving] = useTransition()
   const [isResizing, startResizing] = useTransition()
+  const [isPausing, startPausing] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [openWeek, setOpenWeek] = useState<number | null>(plan.curriculum.weeks[0]?.weekNumber ?? null)
   const [completedAt, setCompletedAt] = useState<Record<string, string | null>>(() => {
@@ -163,6 +165,30 @@ export function CurriculumDetail({ initialPlan, initialProgress = [] }: Curricul
     })
   }
 
+  function handleTogglePause() {
+    setError(null)
+    const paused = plan.status !== 'paused'
+    startPausing(async () => {
+      const response = await fetch(`/api/curriculum/${plan.id}/pause`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paused }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        setError(payload.error || 'Unable to update this course right now.')
+        return
+      }
+      setPlan({
+        ...payload.plan,
+        objectives: Array.isArray(payload.plan.objectives) ? payload.plan.objectives : [],
+        outcomes: Array.isArray(payload.plan.outcomes) ? payload.plan.outcomes : [],
+        skills: Array.isArray(payload.plan.skills) ? payload.plan.skills : [],
+      })
+      router.refresh()
+    })
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -234,19 +260,47 @@ export function CurriculumDetail({ initialPlan, initialProgress = [] }: Curricul
                 >
                   {isResizing ? <Loader2 size={13} className="animate-spin" /> : '+4 wks'}
                 </button>
+                <button
+                  type="button"
+                  disabled={isApproving}
+                  onClick={handleApprove}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-moss-500/40 bg-moss-500/20 px-4 py-2 text-sm font-semibold text-bone disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isApproving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                  Approve & schedule
+                </button>
               </>
             ) : null}
-            <button
-              type="button"
-              disabled={isApproving || plan.status === 'approved'}
-              onClick={handleApprove}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-moss-500/40 bg-moss-500/20 px-4 py-2 text-sm font-semibold text-bone disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isApproving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              {plan.status === 'approved' ? 'Approved' : 'Approve & schedule'}
-            </button>
+            {plan.status === 'approved' || plan.status === 'paused' ? (
+              <button
+                type="button"
+                disabled={isPausing}
+                onClick={handleTogglePause}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-border/80 bg-stone-950/70 px-4 py-2 text-sm text-bone-muted hover:border-leather-400/45 hover:text-bone disabled:cursor-not-allowed disabled:opacity-60"
+                title={
+                  plan.status === 'paused'
+                    ? 'Resume — bring this course back to Today'
+                    : "Pause — step away without losing your place"
+                }
+              >
+                {isPausing ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : plan.status === 'paused' ? (
+                  <Play size={14} />
+                ) : (
+                  <Pause size={14} />
+                )}
+                {plan.status === 'paused' ? 'Resume course' : 'Pause course'}
+              </button>
+            ) : null}
           </div>
         </div>
+
+        {plan.status === 'paused' ? (
+          <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            Paused — this course won&apos;t appear on Today until you resume it. Your progress is right where you left it.
+          </div>
+        ) : null}
 
         {error ? (
           <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">

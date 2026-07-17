@@ -5,15 +5,23 @@ export const MONTH_NAMES = [
 
 export const SHORT_DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-/** Returns ISO date strings for the Mon–Sun week containing the given date. */
+/**
+ * Returns ISO date strings for the Mon–Sun week containing the given date.
+ * Anchored entirely in UTC — `new Date(date)` on a plain "YYYY-MM-DD" string
+ * parses as UTC midnight, so reading it back with local-timezone methods
+ * (`.getDay()`/`.setDate()`) silently rolls the date back a day in any
+ * negative-UTC-offset timezone (e.g. US timezones). Using the UTC methods
+ * throughout keeps parsing and reading in the same frame, regardless of the
+ * machine's local timezone.
+ */
 export function getWeekDates(date: string): string[] {
-  const d = new Date(date)
-  const dayOfWeek = (d.getDay() + 6) % 7 // Mon=0 … Sun=6
+  const d = new Date(`${date}T00:00:00Z`)
+  const dayOfWeek = (d.getUTCDay() + 6) % 7 // Mon=0 … Sun=6
   const monday = new Date(d)
-  monday.setDate(d.getDate() - dayOfWeek)
+  monday.setUTCDate(d.getUTCDate() - dayOfWeek)
   return Array.from({ length: 7 }, (_, i) => {
     const day = new Date(monday)
-    day.setDate(monday.getDate() + i)
+    day.setUTCDate(monday.getUTCDate() + i)
     return day.toISOString().slice(0, 10)
   })
 }

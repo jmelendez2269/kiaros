@@ -34,7 +34,7 @@ export interface CurriculumPlanRow {
   id: string
   topic: string
   title: string
-  status: 'draft' | 'approved' | 'archived'
+  status: 'draft' | 'approved' | 'paused' | 'archived'
   intensity: CurriculumIntensity
   duration_weeks: number
   weekly_hours: number

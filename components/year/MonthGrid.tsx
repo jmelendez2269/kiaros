@@ -17,6 +17,8 @@ interface Props {
   events?: DayEvent[]
   /** Day-of-month (1-indexed) values for cells that have a journal entry */
   journalDays?: Set<number>
+  /** Day-of-month (1-indexed) -> plan item total/done counts */
+  planCountByDay?: Map<number, { total: number; done: number }>
 }
 
 const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -25,7 +27,7 @@ function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
-export function MonthGrid({ year, month, today, events = [], journalDays }: Props) {
+export function MonthGrid({ year, month, today, events = [], journalDays, planCountByDay }: Props) {
   const offset = new Date(year, month, 1).getDay()
   const days = daysInMonth(year, month)
   const cellCount = Math.ceil((offset + days) / 7) * 7
@@ -59,6 +61,7 @@ export function MonthGrid({ year, month, today, events = [], journalDays }: Prop
           const event = valid ? eventByDay.get(d) : undefined
           const showMoon = valid && (d === 1 || d % 7 === 0)
           const hasJournal = valid && journalDays?.has(d) === true
+          const planCount = valid ? planCountByDay?.get(d) : undefined
 
           const cellStyle: React.CSSProperties = {
             minHeight: 78,
@@ -136,6 +139,24 @@ export function MonthGrid({ year, month, today, events = [], journalDays }: Prop
                   }}
                 >
                   ✎
+                </span>
+              ) : null}
+              {planCount && planCount.total > 0 ? (
+                <span
+                  title={`${planCount.done}/${planCount.total} planned`}
+                  aria-label={`${planCount.done} of ${planCount.total} plan items done`}
+                  style={{
+                    position: 'absolute',
+                    bottom: 6,
+                    left: 8,
+                    fontFamily: K.fMono,
+                    fontSize: 8.5,
+                    lineHeight: 1,
+                    letterSpacing: '0.02em',
+                    color: planCount.done === planCount.total ? K.sage : K.inkSoft,
+                  }}
+                >
+                  {planCount.done}/{planCount.total}
                 </span>
               ) : null}
             </Link>

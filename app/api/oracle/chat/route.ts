@@ -17,7 +17,7 @@ import type { Tables } from '@/types/database'
 
 export const maxDuration = 60
 
-const ORACLE_MODEL_ID = 'claude-sonnet-4-6'
+const ORACLE_MODEL_ID = 'claude-sonnet-4.6'
 
 function getErrorMessage(error: unknown): string {
   if (error == null) return 'unknown error'
@@ -79,6 +79,7 @@ export async function POST(req: Request) {
       oracleCapturesRes,
       patternInsightsRes,
       quarterlyReviewsRes,
+      planItemsRes,
       entitlementsRes,
     ] = await Promise.all([
       supabase.from('user_profiles').select('*').maybeSingle(),
@@ -140,6 +141,13 @@ export async function POST(req: Request) {
         .eq('plan_year', currentYear)
         .order('quarter', { ascending: false })
         .limit(2),
+      supabase
+        .from('plan_items')
+        .select('item_date, title, start_minute, duration_minutes, completed_at, source')
+        .gte('item_date', today)
+        .order('item_date', { ascending: true })
+        .order('start_minute', { ascending: true })
+        .limit(20),
       supabase
         .from('product_entitlements')
         .select('id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan')
@@ -213,6 +221,10 @@ export async function POST(req: Request) {
         Tables<'quarterly_reviews'>,
         | 'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots'
         | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
+      >[],
+      planItems: (planItemsRes.data ?? []) as Pick<
+        Tables<'plan_items'>,
+        'item_date' | 'title' | 'start_minute' | 'duration_minutes' | 'completed_at' | 'source'
       >[],
       today,
       tradition: requestTradition ?? profileRes.data?.tradition ?? null,

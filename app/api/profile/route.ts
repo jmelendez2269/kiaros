@@ -14,7 +14,7 @@ export async function GET() {
   const admin = createAdminSupabase();
   const { data: profile, error } = await admin
     .from("user_profiles")
-    .select("display_name, theme, birth_date, birth_time, birth_time_unknown, birth_city, birth_tz, natal_chart, plan_year, word_of_year, year_vision, what_to_release, study_focus, tradition, house_system")
+    .select("display_name, theme, birth_date, birth_time, birth_time_unknown, birth_city, birth_tz, planner_lat, planner_lng, planner_tz, natal_chart, plan_year, word_of_year, year_vision, what_to_release, study_focus, tradition, house_system")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 

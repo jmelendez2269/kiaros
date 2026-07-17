@@ -2,10 +2,13 @@
 
 import { useMemo, useState } from 'react'
 import type { Tables } from '@/types/database'
+import type { CurriculumSessionRow } from '@/types/curriculum'
 import { DailyLogForm } from './DailyLogForm'
 import { ConsistencyGrid } from './ConsistencyGrid'
 import { CategoryCard } from './CategoryCard'
 import { AddMetricForm } from './AddMetricForm'
+import { PlanChecklist } from '@/components/plan/PlanChecklist'
+import { PlanImportModal } from '@/components/plan/PlanImportModal'
 
 type MetricWithCategory = Tables<'tracker_metrics'> & {
   goal_categories: {
@@ -23,9 +26,20 @@ interface Props {
   today: string
   filterCategoryId?: string
   goalCategories: { id: string; name: string }[]
+  todayPlanItems?: Tables<'plan_items'>[]
+  todayCurriculumSessions?: CurriculumSessionRow[]
 }
 
-export function TrackerView({ metrics, todayLog, recentLogs, today, filterCategoryId, goalCategories }: Props) {
+export function TrackerView({
+  metrics,
+  todayLog,
+  recentLogs,
+  today,
+  filterCategoryId,
+  goalCategories,
+  todayPlanItems = [],
+  todayCurriculumSessions = [],
+}: Props) {
   const [savedLog, setSavedLog] = useState<Tables<'daily_logs'> | null>(todayLog)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -91,6 +105,19 @@ export function TrackerView({ metrics, todayLog, recentLogs, today, filterCatego
             {today}
           </div>
         </div>
+      </div>
+
+      <div className="shell-panel px-6 py-6">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="shell-kicker">Today&apos;s plan</p>
+          <PlanImportModal />
+        </div>
+        <PlanChecklist
+          date={today}
+          manualItems={todayPlanItems}
+          curriculumSessions={todayCurriculumSessions}
+          variant="full"
+        />
       </div>
 
       {metrics.length === 0 ? (

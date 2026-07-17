@@ -10,7 +10,6 @@ Stelloquy remains valuable concept language. "A conversation with the stars" can
 
 ## Product Thesis
 
-Truth emerges from pattern over time.
 
 Astrology becomes more useful when it is treated as a living research framework rather than a static interpretation library. Chronos is the platform for asking what has happened before, what is happening now, what patterns are repeating, and what the data suggests without claiming certainty or telling people what to believe.
 

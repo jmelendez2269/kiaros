@@ -247,7 +247,7 @@ const SIGN_PLAIN: Record<ZodiacSign, string> = {
   Pisces: 'dreamy and emotional',
 }
 
-const ASPECT_PLAIN: Record<AspectType, { tone: 'tense' | 'easy' | 'neutral'; plain: string }> = {
+export const ASPECT_PLAIN: Record<AspectType, { tone: 'tense' | 'easy' | 'neutral'; plain: string }> = {
   conjunction: { tone: 'neutral', plain: 'merging — energies intensify together' },
   square: { tone: 'tense', plain: 'friction — something needs working through' },
   opposition: { tone: 'tense', plain: 'polarity — two sides asking to be seen' },
@@ -300,7 +300,7 @@ const PLANET_MEANING: Record<Planet, { short: string; long: string }> = {
   },
 }
 
-const HOUSE_MEANING: Record<number, { short: string; long: string }> = {
+export const HOUSE_MEANING: Record<number, { short: string; long: string }> = {
   1:  { short: 'self, body, first impression',                long: 'How you show up — your body, your style, the way you enter a room.' },
   2:  { short: 'values, resources, self-worth',               long: 'What you value, your resources, your relationship to money and worth.' },
   3:  { short: 'daily mind, siblings, neighborhood',          long: 'Your everyday mind — siblings, short trips, how you communicate at ground level.' },

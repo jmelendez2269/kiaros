@@ -19,6 +19,9 @@ type SettingsProfile = {
   birth_time_unknown: boolean | null;
   birth_city: string | null;
   birth_tz: string | null;
+  planner_lat: number | null;
+  planner_lng: number | null;
+  planner_tz: string | null;
   plan_year: number | null;
   word_of_year: string | null;
   year_vision: string | null;
@@ -36,6 +39,9 @@ type SettingsState = {
   birth_time_unknown: boolean;
   birth_city: string;
   birth_tz: string;
+  planner_lat: string;
+  planner_lng: string;
+  planner_tz: string;
   plan_year: string;
   year_vision: string;
   what_to_release: string;
@@ -80,6 +86,9 @@ function buildInitialState(profile?: SettingsProfile | null): SettingsState {
     birth_time_unknown: profile?.birth_time_unknown ?? false,
     birth_city: profile?.birth_city ?? "",
     birth_tz: profile?.birth_tz ?? "",
+    planner_lat: profile?.planner_lat ? String(profile.planner_lat) : "",
+    planner_lng: profile?.planner_lng ? String(profile.planner_lng) : "",
+    planner_tz: profile?.planner_tz ?? "",
     plan_year: profile?.plan_year ? String(profile.plan_year) : String(new Date().getFullYear()),
     year_vision: profile?.year_vision ?? "",
     what_to_release: profile?.what_to_release ?? "",
@@ -190,6 +199,9 @@ export default function SettingsPage() {
         birth_time_unknown: form.birth_time_unknown,
         birth_city: form.birth_city.trim() || null,
         birth_tz: form.birth_tz.trim() || null,
+        planner_lat: form.planner_lat ? Number.parseFloat(form.planner_lat) : null,
+        planner_lng: form.planner_lng ? Number.parseFloat(form.planner_lng) : null,
+        planner_tz: form.planner_tz.trim() || null,
         plan_year: Number.parseInt(form.plan_year, 10) || new Date().getFullYear(),
         year_vision: form.year_vision.trim() || null,
         what_to_release: form.what_to_release.trim() || null,
@@ -513,6 +525,64 @@ export default function SettingsPage() {
           <p className="mt-3 text-xs leading-6 text-bone-muted/75">
             Need to fully change your birth location coordinates? Use onboarding again so {BRAND.product} can geocode the place and rebuild the chart cleanly.
           </p>
+        </section>
+      </div>
+
+      <section className="shell-panel px-6 py-6 md:px-8">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-moss-400/30 bg-moss-400/10 text-moss-200">
+            <CalendarDays size={18} />
+          </div>
+          <div>
+            <p className="shell-kicker">Planner location</p>
+            <h2 className="shell-subsection-title mt-1">Current location (optional)</h2>
+          </div>
+        </div>
+
+        <p className="mb-4 text-sm leading-7 text-bone-muted">
+          If you live or work in a different timezone than your birthplace, set your current location here. Your planner's energy windows will use this location's sunrise/sunset times instead of your birth location's. Leave blank to use your birth timezone.
+        </p>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-bone">Latitude</span>
+            <input
+              type="number"
+              step="0.0001"
+              min="-90"
+              max="90"
+              value={form.planner_lat}
+              onChange={(event) => setField("planner_lat", event.target.value)}
+              placeholder="e.g. 34.0522"
+              className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-bone">Longitude</span>
+            <input
+              type="number"
+              step="0.0001"
+              min="-180"
+              max="180"
+              value={form.planner_lng}
+              onChange={(event) => setField("planner_lng", event.target.value)}
+              placeholder="e.g. -118.2437"
+              className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            />
+          </label>
+
+          <label className="block space-y-2 md:col-span-2">
+            <span className="text-sm font-medium text-bone">Planner timezone</span>
+            <input
+              type="text"
+              value={form.planner_tz}
+              onChange={(event) => setField("planner_tz", event.target.value)}
+              placeholder="e.g. America/Los_Angeles"
+              className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            />
+          </label>
+        </div>
         </section>
       </div>
 

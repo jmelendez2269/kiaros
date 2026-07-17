@@ -8,6 +8,7 @@ import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import type { EphemerisDay, MonthBlueprint, MoonPhase, YearEphemeris } from '@/types/blueprint'
 import type { CurriculumSessionRow } from '@/types/curriculum'
+import type { Tables } from '@/types/database'
 import { Frame, Kicker, K } from '@/components/almanac'
 import { YearViewSwitcher } from '@/components/year/YearViewSwitcher'
 import { MonthGrid, type DayEvent } from '@/components/year/MonthGrid'
@@ -17,6 +18,7 @@ import { PushRestRibbon } from '@/components/year/PushRestRibbon'
 import { MONTH_NAMES as CAL_MONTH_NAMES } from '@/components/calendar/utils'
 import { getSabianForDegree } from '@/lib/ephemeris/sabian'
 import { derivePushRestArc } from '@/lib/year/push-rest-arc'
+import { todayISO } from '@/lib/today/get-today-context'
 
 type View = 'year' | 'month' | 'week' | 'review'
 
@@ -121,9 +123,21 @@ interface PageProps {
   searchParams: Promise<SearchParams>
 }
 
+type PlanItemRow = Tables<'plan_items'>
+type AreaGoalRow = Tables<'area_goals'>
+
+const EMPTY_YEAR_DATA = {
+  loaded: null,
+  yearEphemeris: null,
+  curriculumSessions: [] as CurriculumSessionRow[],
+  planItems: [] as PlanItemRow[],
+  areaGoals: [] as AreaGoalRow[],
+  supabaseUserId: null,
+}
+
 async function loadYearData() {
   const { userId } = await auth()
-  if (!userId) return { loaded: null, yearEphemeris: null, curriculumSessions: [] as CurriculumSessionRow[], supabaseUserId: null }
+  if (!userId) return EMPTY_YEAR_DATA
 
   const admin = createAdminSupabase()
   const { data: profileRow } = await admin
@@ -133,15 +147,15 @@ async function loadYearData() {
     .maybeSingle()
 
   const supabaseUserId = profileRow?.id ?? null
-  if (!supabaseUserId) return { loaded: null, yearEphemeris: null, curriculumSessions: [] as CurriculumSessionRow[], supabaseUserId: null }
+  if (!supabaseUserId) return EMPTY_YEAR_DATA
 
   const loaded = await loadCurrentBlueprint(supabaseUserId)
-  if (!loaded) return { loaded: null, yearEphemeris: null, curriculumSessions: [] as CurriculumSessionRow[], supabaseUserId }
+  if (!loaded) return { ...EMPTY_YEAR_DATA, supabaseUserId }
 
   const startDate = `${loaded.planYear}-01-01`
   const endDate = `${loaded.planYear}-12-31`
 
-  const [ephemerisRes, sessionsRes] = await Promise.all([
+  const [ephemerisRes, sessionsRes, planItemsRes, areaGoalsRes] = await Promise.all([
     admin.from('ephemeris_cache').select('data').eq('user_id', supabaseUserId).eq('year', loaded.planYear).maybeSingle(),
     admin
       .from('curriculum_sessions')
@@ -152,12 +166,27 @@ async function loadYearData() {
       .gte('scheduled_for', startDate)
       .lte('scheduled_for', endDate)
       .order('scheduled_for', { ascending: true }),
+    admin
+      .from('plan_items')
+      .select('id, item_date, title, sort_order, completed_at, created_at, updated_at, user_id')
+      .eq('user_id', supabaseUserId)
+      .gte('item_date', startDate)
+      .lte('item_date', endDate)
+      .order('item_date', { ascending: true })
+      .order('sort_order', { ascending: true }),
+    admin
+      .from('area_goals')
+      .select('id, category_id, title, description, status, target_label, linked_week_number, sort_order, created_at, updated_at, user_id')
+      .eq('user_id', supabaseUserId)
+      .not('linked_week_number', 'is', null),
   ])
 
   return {
     loaded,
     yearEphemeris: (ephemerisRes.data?.data as YearEphemeris | null) ?? null,
     curriculumSessions: (sessionsRes.data ?? []) as CurriculumSessionRow[],
+    planItems: (planItemsRes.data ?? []) as PlanItemRow[],
+    areaGoals: (areaGoalsRes.data ?? []) as AreaGoalRow[],
     supabaseUserId,
   }
 }
@@ -248,11 +277,10 @@ async function YearChartView() {
 }
 
 async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
-  const now = new Date()
-  const todayIso = now.toISOString().slice(0, 10)
+  const todayIso = todayISO()
   const selectedDate = parseDate(searchParams.date, todayIso)
 
-  const { loaded, yearEphemeris, curriculumSessions } = await loadYearData()
+  const { loaded, yearEphemeris, curriculumSessions, planItems, areaGoals } = await loadYearData()
 
   if (!loaded || !yearEphemeris) {
     return (
@@ -281,6 +309,18 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
     current.push(session)
     curriculumByDate.set(session.scheduled_for, current)
   }
+  const planItemsByDate = new Map<string, PlanItemRow[]>()
+  for (const item of planItems) {
+    const current = planItemsByDate.get(item.item_date) ?? []
+    current.push(item)
+    planItemsByDate.set(item.item_date, current)
+  }
+  const weekBlueprintForGoals = loaded.blueprint.weeks.find(
+    (w) => w.startDate <= selectedDate && selectedDate <= w.endDate
+  )
+  const weekAreaGoals = weekBlueprintForGoals
+    ? areaGoals.filter((g) => g.linked_week_number === weekBlueprintForGoals.weekNumber)
+    : []
 
   const monthIdx = Number(selectedDate.slice(5, 7)) - 1
   const monthName = CAL_MONTH_NAMES[monthIdx] ?? ''
@@ -307,6 +347,8 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
         dayMap={dayMap}
         weeks={loaded.blueprint.weeks}
         curriculumByDate={curriculumByDate}
+        planItemsByDate={planItemsByDate}
+        areaGoals={weekAreaGoals}
         today={todayIso}
       />
     </div>
@@ -315,10 +357,15 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
 
 async function MonthChartView({ searchParams }: { searchParams: SearchParams }) {
   const now = new Date()
-  const today = { year: now.getFullYear(), month: now.getMonth(), day: now.getDate() }
+  const todayIso = todayISO()
+  const today = {
+    year: Number(todayIso.slice(0, 4)),
+    month: Number(todayIso.slice(5, 7)) - 1,
+    day: Number(todayIso.slice(8, 10)),
+  }
   const selected = parseMonth(searchParams.month, { year: today.year, month: today.month })
 
-  const { loaded, yearEphemeris, curriculumSessions, supabaseUserId } = await loadYearData()
+  const { loaded, yearEphemeris, curriculumSessions, planItems, supabaseUserId } = await loadYearData()
 
   const weekStart = new Date(selected.year, selected.month, 1)
   const weekNumber = isoWeek(weekStart)
@@ -350,6 +397,16 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
   for (const row of journalRes.data ?? []) {
     const d = Number(row.entry_date?.slice(8, 10))
     if (Number.isFinite(d)) journalDays.add(d)
+  }
+  const monthPlanItems = planItems.filter((item) => item.item_date.startsWith(monthPrefix))
+  const planCountByDay = new Map<number, { total: number; done: number }>()
+  for (const item of monthPlanItems) {
+    const d = Number(item.item_date.slice(8, 10))
+    if (!Number.isFinite(d)) continue
+    const current = planCountByDay.get(d) ?? { total: 0, done: 0 }
+    current.total += 1
+    if (item.completed_at) current.done += 1
+    planCountByDay.set(d, current)
   }
   const existingBrief = briefRes.data ?? null
   const moonPhaseCount = monthBlueprint?.moonPhases.filter((mp) => mp.date.startsWith(monthPrefix)).length ?? 0
@@ -497,6 +554,7 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
               today={today}
               events={events}
               journalDays={journalDays}
+              planCountByDay={planCountByDay}
             />
           </Frame>
 

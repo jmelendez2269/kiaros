@@ -76,10 +76,11 @@ export async function PATCH(req: Request, context: RouteContext) {
     )
   }
 
-  // Sync to curriculum_sessions for approved plans so Today / scheduled
-  // surfaces reflect completion. Best-effort: if the scheduled row is
-  // missing we don't block the response — the progress row is the truth.
-  if (plan.status === 'approved') {
+  // Sync to curriculum_sessions for approved/paused plans (both still have
+  // scheduled rows) so Today reflects completion the moment a paused course
+  // resumes. Best-effort: if the scheduled row is missing we don't block the
+  // response — the progress row is the truth.
+  if (plan.status === 'approved' || plan.status === 'paused') {
     const nextStatus = parsed.completed ? 'done' : 'scheduled'
     const { error: scheduleError } = await admin
       .from('curriculum_sessions')

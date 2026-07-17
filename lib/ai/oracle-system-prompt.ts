@@ -107,6 +107,10 @@ export interface OraclePromptContext {
     Tables<'quarterly_reviews'>,
     'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots' | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
   >[]
+  planItems: Pick<
+    Tables<'plan_items'>,
+    'item_date' | 'title' | 'start_minute' | 'duration_minutes' | 'completed_at' | 'source'
+  >[]
   today: string
   tradition?: string | null
 }
@@ -508,8 +512,39 @@ function summarizeEvidence(value: Json): string | null {
   return entries.length > 0 ? entries.join('; ') : null
 }
 
+function formatPlanItemTime(startMinute: number | null): string {
+  if (startMinute === null) return 'unscheduled'
+  const hours = Math.floor(startMinute / 60)
+  const mins = startMinute % 60
+  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
+}
+
 function buildLayer5(ctx: OraclePromptContext): string {
   const lines = ['## Produced Context']
+
+  if (ctx.planItems.length > 0) {
+    const groupedByDate: Record<string, typeof ctx.planItems> = {}
+    ctx.planItems.forEach((item) => {
+      if (!groupedByDate[item.item_date]) groupedByDate[item.item_date] = []
+      groupedByDate[item.item_date].push(item)
+    })
+
+    lines.push('Scheduled plan items (accepted placements):')
+    Object.entries(groupedByDate)
+      .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+      .forEach(([date, items]) => {
+        const dateLabel = date === ctx.today ? 'today' : date
+        lines.push(`\n${dateLabel}:`)
+        items.forEach((item) => {
+          const time = formatPlanItemTime(item.start_minute)
+          const duration = item.duration_minutes ? ` (${Math.round(item.duration_minutes / 60)}h)` : ''
+          const status = item.completed_at ? ' ✓ completed' : ''
+          const source = item.source === 'ai-placed' ? ' [AI-placed]' : ''
+          lines.push(`- ${time}: ${item.title}${duration}${source}${status}`)
+        })
+      })
+    lines.push('')
+  }
 
   if (ctx.goalCategories.length > 0) {
     lines.push('Life areas:')
