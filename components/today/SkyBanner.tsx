@@ -1,17 +1,19 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
 import { MoonGlyph, StarField, K } from '@/components/almanac'
 import { AskOracleButton } from '@/components/oracle/AskOracleButton'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import { buildTransitPlacementExplanation } from '@/lib/human-design'
-import { buildPlacementPrompt } from '@/lib/oracle/preseed'
+import type { HumanDesignTransitWeather } from '@/lib/human-design-transit-model'
+import { buildHumanDesignWeatherPrompt, buildPlacementPrompt } from '@/lib/oracle/preseed'
 import type { TodayContext } from '@/lib/today/get-today-context'
 import type { Planet, ZodiacSign } from '@/types/blueprint'
 
 interface Props {
   context: TodayContext
-  firstName?: string | null
   weekTheme?: string | null
+  humanDesignWeather?: HumanDesignTransitWeather | null
 }
 
 function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: number): string {
@@ -28,7 +30,7 @@ function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: numb
 
 // The editorial moment of the page. Uses a sunset gradient by default;
 // later we can vary by time of day or season via window.__kairosTweaks.
-export function SkyBanner({ context, firstName, weekTheme }: Props) {
+export function SkyBanner({ context, weekTheme, humanDesignWeather }: Props) {
   const { today, sabian, meta } = context
   const { hasOracleAccess } = useStelloquy()
   const moonPos = `${Math.round(today.moon.degreeInSign)}° ${signGlyph(today.moon.sign)}`
@@ -36,6 +38,11 @@ export function SkyBanner({ context, firstName, weekTheme }: Props) {
   const illumPct = Math.round(today.moonIllumination * 100)
   const sunPrompt = placementPromptFor('Sun' as Planet, today.sun.sign as ZodiacSign, today.sun.degreeInSign)
   const moonPrompt = placementPromptFor('Moon' as Planet, today.moon.sign as ZodiacSign, today.moon.degreeInSign)
+  const humanDesignPrompt = humanDesignWeather
+    ? buildHumanDesignWeatherPrompt(humanDesignWeather, 'today')
+    : null
+  const holdingPrompt =
+    humanDesignWeather?.holding ? buildHumanDesignWeatherPrompt(humanDesignWeather, 'holding') : null
 
   return (
     <div
@@ -77,12 +84,10 @@ export function SkyBanner({ context, firstName, weekTheme }: Props) {
       </div>
 
       <div
+        className="flex flex-col items-start gap-5 sm:flex-row sm:justify-between"
         style={{
           position: 'relative',
-          display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'flex-start',
-          gap: 24,
         }}
       >
         <div style={{ maxWidth: 580 }}>
@@ -109,7 +114,7 @@ export function SkyBanner({ context, firstName, weekTheme }: Props) {
               textWrap: 'balance',
             }}
           >
-            {firstName ? `${firstName} — ` : ''}{weekTheme ?? 'the sky is editing. Trust the small revision.'}
+            {weekTheme ?? 'the sky is editing. Trust the small revision.'}
           </div>
           <div
             style={{
@@ -125,11 +130,11 @@ export function SkyBanner({ context, firstName, weekTheme }: Props) {
           </div>
         </div>
         <div
+          className="items-start sm:items-end"
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
-            alignItems: 'flex-end',
             fontFamily: K.fMono,
             fontSize: 11.5,
             color: K.inkDim,
@@ -156,6 +161,272 @@ export function SkyBanner({ context, firstName, weekTheme }: Props) {
           </AskOracleButton>
         </div>
       </div>
+
+      {humanDesignWeather && humanDesignPrompt ? (
+        <details className="group" style={{ position: 'relative', marginTop: 20, maxWidth: 860 }}>
+          <summary
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 [&::-webkit-details-marker]:hidden [&::marker]:hidden"
+            style={{
+              cursor: 'pointer',
+              fontFamily: K.fMono,
+              fontSize: 13,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: K.kairosHi,
+              lineHeight: 1.5,
+              borderRadius: 10,
+              border: `1px solid ${K.kairosHi}40`,
+              background: `${K.midnight}b3`,
+              padding: '10px 14px',
+            }}
+          >
+            <span>Live Human Design</span>
+            <span style={{ color: K.inkDim, letterSpacing: '0.08em' }}>
+              {humanDesignWeather.body ? `${humanDesignWeather.body.type} design` : 'Shared weather'}
+            </span>
+            <span
+              className="truncate"
+              style={{
+                marginLeft: 'auto',
+                minWidth: 0,
+                maxWidth: 280,
+                color: K.inkSoft,
+                fontSize: 11.5,
+                letterSpacing: '0.04em',
+                textTransform: 'none',
+              }}
+            >
+              {humanDesignWeather.today.headline}
+            </span>
+            <ChevronDown
+              size={15}
+              className="shrink-0 transition-transform duration-200 group-open:rotate-180"
+              style={{ color: K.kairosHi }}
+            />
+          </summary>
+
+          <div
+            className="flex flex-wrap items-center gap-x-3 gap-y-1"
+            style={{ marginTop: 10 }}
+          >
+            <details>
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  fontFamily: K.fMono,
+                  fontSize: 11.5,
+                  letterSpacing: '0.06em',
+                  color: K.inkSoft,
+                }}
+              >
+                What is this?
+              </summary>
+              <p
+                style={{
+                  marginTop: 6,
+                  maxWidth: 480,
+                  fontFamily: K.fBody,
+                  fontSize: 13.5,
+                  color: K.inkDim,
+                  lineHeight: 1.55,
+                }}
+              >
+                <strong style={{ color: K.ink, fontWeight: 600 }}>Today</strong> is what the sky is
+                activating right now. <strong style={{ color: K.ink, fontWeight: 600 }}>Holding</strong>{' '}
+                is a slower transit that's been building for weeks, checked against the pattern in
+                your natal Human Design chart.
+              </p>
+            </details>
+          </div>
+
+          {/* AskOracleButton wraps its children in a real <button>, so the
+              collapsible technical-details block below lives outside it —
+              nesting <details> inside a <button> is invalid HTML and would
+              make expanding it also fire the Oracle overlay. */}
+          <div
+            className="group mt-3 rounded-xl p-5 text-left sm:p-6"
+            style={{
+              border: `1px solid ${K.kairosHi}55`,
+              background: `linear-gradient(110deg, ${K.midnight}e8, ${K.kairos}2e)`,
+              boxShadow: `inset 0 1px 0 ${K.starlight}12`,
+            }}
+          >
+            <AskOracleButton
+              prompt={humanDesignPrompt}
+              hasOracleAccess={hasOracleAccess}
+              label="today's Human Design weather"
+              triggerClassName="block w-full text-left"
+            >
+              <div className="min-w-0">
+                <h3
+                  style={{
+                    fontFamily: K.fSerif,
+                    fontSize: 'clamp(23px, 3.2vw, 28px)',
+                    color: K.ink,
+                    lineHeight: 1.25,
+                    textWrap: 'balance',
+                  }}
+                >
+                  {humanDesignWeather.today.headline}
+                </h3>
+                <p
+                  style={{
+                    marginTop: 8,
+                    maxWidth: 760,
+                    fontFamily: K.fBody,
+                    fontSize: 16.5,
+                    color: K.starlight,
+                    lineHeight: 1.65,
+                  }}
+                >
+                  {humanDesignWeather.today.detail}
+                </p>
+                <p
+                  style={{
+                    marginTop: 10,
+                    maxWidth: 720,
+                    fontFamily: K.fBody,
+                    fontStyle: 'italic',
+                    fontSize: 14.5,
+                    color: K.inkDim,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {humanDesignWeather.guidance}
+                </p>
+
+                <div className="mt-3 flex justify-end">
+                  <span
+                    className="whitespace-nowrap transition-colors group-hover:text-white"
+                    style={{
+                      fontFamily: K.fMono,
+                      fontSize: 13,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: K.kairosHi,
+                    }}
+                  >
+                    Unpack this with Stelloquy →
+                  </span>
+                </div>
+              </div>
+            </AskOracleButton>
+
+            <details className="mt-4 border-t pt-3" style={{ borderColor: K.lineHi }}>
+              <summary
+                style={{
+                  cursor: 'pointer',
+                  fontFamily: K.fMono,
+                  fontSize: 12.5,
+                  letterSpacing: '0.11em',
+                  textTransform: 'uppercase',
+                  color: K.inkDim,
+                }}
+              >
+                Technical details
+              </summary>
+              <div
+                style={{
+                  marginTop: 6,
+                  fontFamily: K.fBody,
+                  fontSize: 14.5,
+                  color: K.inkDim,
+                  lineHeight: 1.55,
+                  overflowWrap: 'anywhere',
+                }}
+              >
+                {humanDesignWeather.today.technicalDetail}
+                {humanDesignWeather.today.boundaryNote
+                  ? ` ${humanDesignWeather.today.boundaryNote}`
+                  : ''}
+              </div>
+            </details>
+          </div>
+
+          {humanDesignWeather.holding && holdingPrompt ? (
+            <div
+              className="group mt-3 rounded-lg p-4 text-left"
+              style={{
+                border: `1px solid ${K.lineHi}`,
+                background: `${K.midnight}b0`,
+              }}
+            >
+              <AskOracleButton
+                prompt={holdingPrompt}
+                hasOracleAccess={hasOracleAccess}
+                label="the slower Human Design pattern holding right now"
+                triggerClassName="block w-full text-left"
+              >
+                <div
+                  style={{
+                    fontFamily: K.fMono,
+                    fontSize: 11.5,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: K.inkSoft,
+                  }}
+                >
+                  Holding
+                </div>
+                <h4
+                  style={{
+                    marginTop: 6,
+                    fontFamily: K.fSerif,
+                    fontSize: 18,
+                    color: K.ink,
+                    lineHeight: 1.3,
+                    textWrap: 'balance',
+                  }}
+                >
+                  {humanDesignWeather.holding.headline}
+                </h4>
+                <p
+                  style={{
+                    marginTop: 6,
+                    maxWidth: 720,
+                    fontFamily: K.fBody,
+                    fontSize: 14.5,
+                    color: K.inkDim,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {humanDesignWeather.holding.detail}
+                </p>
+              </AskOracleButton>
+
+              <details className="mt-3">
+                <summary
+                  style={{
+                    cursor: 'pointer',
+                    fontFamily: K.fMono,
+                    fontSize: 11.5,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: K.inkSoft,
+                  }}
+                >
+                  Technical details
+                </summary>
+                <div
+                  style={{
+                    marginTop: 6,
+                    fontFamily: K.fBody,
+                    fontSize: 13.5,
+                    color: K.inkDim,
+                    lineHeight: 1.5,
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  {humanDesignWeather.holding.technicalDetail}
+                  {humanDesignWeather.holding.boundaryNote
+                    ? ` ${humanDesignWeather.holding.boundaryNote}`
+                    : ''}
+                </div>
+              </details>
+            </div>
+          ) : null}
+        </details>
+      ) : null}
     </div>
   )
 }

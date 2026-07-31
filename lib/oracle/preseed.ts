@@ -18,6 +18,7 @@
  */
 
 import type { PlacementExplanation, DailySignal, SkyTimelineEntry } from '@/lib/human-design'
+import type { HumanDesignTransitWeather } from '@/lib/human-design-transit-model'
 import type { ActiveTransitRow } from '@/lib/today/get-active-transits'
 
 const SESSION_STORAGE_KEY = 'kiaros.oracle.preseed'
@@ -92,6 +93,36 @@ export function buildSignalPrompt(signal: DailySignal): string {
 export function buildActiveTransitPrompt(row: ActiveTransitRow): string {
   const motion = row.applying ? 'applying' : 'separating'
   return `Tell me about ${row.technical} — currently ${motion} at orb ${row.orb.toFixed(1)}°. Context: ${row.rarityLabel.toLowerCase()}. ${row.plain} What does it mean for me right now given my chart and what I'm working on?`
+}
+
+export function buildHumanDesignWeatherPrompt(
+  weather: HumanDesignTransitWeather,
+  which: 'today' | 'holding' = 'today',
+): string {
+  const card = which === 'holding' && weather.holding ? weather.holding : weather.today
+  const { activation } = card.focus
+  const astrology = `${activation.planetLabel} at ${activation.degreeInSign.toFixed(1)}° ${activation.zodiacSign}`
+  const gate = `Human Design Gate ${activation.gate}.${activation.line} (${activation.theme})`
+
+  let connection: string
+  if (card.focus.kind === 'channel-completion' && card.focus.channel) {
+    connection = `It meets my natal Gate ${card.focus.natalGate} and temporarily completes Channel ${card.focus.channel.gates[0]}–${card.focus.channel.gates[1]}, ${card.focus.channel.name}.`
+  } else if (card.focus.kind === 'natal-resonance') {
+    connection = `Gate ${activation.gate} is also active in my natal design.`
+  } else {
+    connection = 'Treat this as shared transit weather rather than a natal identity statement.'
+  }
+
+  const authority = weather.body
+    ? `My natal Type is ${weather.body.type} and my Authority is ${weather.body.authority}.`
+    : ''
+
+  const framing =
+    which === 'holding'
+      ? "This is a slower-moving pattern that's been building for weeks, not something that changes day to day."
+      : "This is today's fast-moving signal."
+
+  return `Synthesize today's astrology and Human Design weather for me: ${astrology} maps to ${gate}. ${connection} ${authority} ${framing} Explain what I might notice without making deterministic claims or implying that a transit changes my natal design. End with one practical way to observe this weather and one question for reflection.`
 }
 
 export function buildLifeArcPrompt(input: {
