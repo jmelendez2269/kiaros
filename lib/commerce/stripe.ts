@@ -247,7 +247,7 @@ async function fulfillOneTimeCheckout(params: {
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profiles")
-    .select("id, email, onboarding_completed_at")
+    .select("id, email, onboarding_completed_at, profile_setup_completed_at")
     .eq("clerk_user_id", clerkUserId)
     .single();
 
@@ -313,6 +313,11 @@ async function fulfillOneTimeCheckout(params: {
     throw new Error("We couldn't activate your planner access yet.");
   }
 
+  await supabase
+    .from("preview_access")
+    .update({ status: "converted", converted_at: new Date().toISOString() })
+    .eq("user_id", profile.id);
+
   const { data: reward } = await supabase
     .from("loyalty_rewards")
     .upsert(
@@ -353,6 +358,7 @@ async function fulfillOneTimeCheckout(params: {
     email: profile.email,
     accessPlan: "yearly" as const,
     isRenewal: !!profile.onboarding_completed_at,
+    profileSetupComplete: !!profile.profile_setup_completed_at,
   };
 }
 
@@ -402,7 +408,7 @@ async function fulfillSubscriptionCheckout(params: {
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profiles")
-    .select("id, email, onboarding_completed_at")
+    .select("id, email, onboarding_completed_at, profile_setup_completed_at")
     .eq("clerk_user_id", clerkUserId)
     .single();
 
@@ -476,6 +482,11 @@ async function fulfillSubscriptionCheckout(params: {
     throw new Error("We couldn't activate your planner access yet.");
   }
 
+  await supabase
+    .from("preview_access")
+    .update({ status: "converted", converted_at: new Date().toISOString() })
+    .eq("user_id", profile.id);
+
   await redeemLoyaltyRewardFromSession(session);
 
   await supabase
@@ -488,6 +499,7 @@ async function fulfillSubscriptionCheckout(params: {
     email: profile.email,
     accessPlan: "monthly" as const,
     isRenewal: !!profile.onboarding_completed_at,
+    profileSetupComplete: !!profile.profile_setup_completed_at,
   };
 }
 

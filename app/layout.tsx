@@ -85,7 +85,12 @@ export default async function RootLayout({
   const theme = cookieStore.get("kiaros-theme")?.value ?? "obsidian";
 
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/today"
+      signUpFallbackRedirectUrl="/onboarding"
+    >
       <html
         lang="en"
         data-theme={theme}

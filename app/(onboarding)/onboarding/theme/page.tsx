@@ -53,7 +53,15 @@ export default function OnboardingThemePage() {
       return;
     }
 
-    router.push("/onboarding/generating");
+    const completeRes = await fetch("/api/onboarding/complete", { method: "POST" });
+    if (!completeRes.ok) {
+      setSaveError("Your setup was saved, but we couldn't open the next step. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const { destination } = (await completeRes.json()) as { destination: string };
+    router.push(destination);
   };
 
   const selectedTheme = THEMES.find((t) => t.id === selected)!;
@@ -85,7 +93,7 @@ export default function OnboardingThemePage() {
         disabled={isSubmitting}
         className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
       >
-        {isSubmitting ? "Saving..." : "Begin my planner"}
+        {isSubmitting ? "Saving..." : "See what comes next"}
       </button>
     </div>
   );

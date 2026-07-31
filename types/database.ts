@@ -1603,6 +1603,57 @@ export type Database = {
           },
         ]
       }
+      preview_access: {
+        Row: {
+          converted_at: string | null
+          converted_entitlement_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          converted_at?: string | null
+          converted_entitlement_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          converted_at?: string | null
+          converted_entitlement_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preview_access_converted_entitlement_id_fkey"
+            columns: ["converted_entitlement_id"]
+            isOneToOne: false
+            referencedRelation: "product_entitlements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preview_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quarterly_reviews: {
         Row: {
           ai_summary: string | null
@@ -1806,6 +1857,7 @@ export type Database = {
           marketing_consent_at: string | null
           natal_chart: Json | null
           onboarding_completed_at: string | null
+          profile_setup_completed_at: string | null
           plan_year: number | null
           planner_lat: number | null
           planner_lng: number | null
@@ -1841,6 +1893,7 @@ export type Database = {
           marketing_consent_at?: string | null
           natal_chart?: Json | null
           onboarding_completed_at?: string | null
+          profile_setup_completed_at?: string | null
           plan_year?: number | null
           planner_lat?: number | null
           planner_lng?: number | null
@@ -1876,6 +1929,7 @@ export type Database = {
           marketing_consent_at?: string | null
           natal_chart?: Json | null
           onboarding_completed_at?: string | null
+          profile_setup_completed_at?: string | null
           plan_year?: number | null
           planner_lat?: number | null
           planner_lng?: number | null
@@ -1889,6 +1943,62 @@ export type Database = {
           year_vision?: string | null
         }
         Relationships: []
+      }
+      week_previews: {
+        Row: {
+          content: Json | null
+          created_at: string
+          end_date: string
+          error_message: string | null
+          generated_at: string | null
+          id: string
+          input_tokens: number
+          model_used: string | null
+          output_tokens: number
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          end_date: string
+          error_message?: string | null
+          generated_at?: string | null
+          id?: string
+          input_tokens?: number
+          model_used?: string | null
+          output_tokens?: number
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          end_date?: string
+          error_message?: string | null
+          generated_at?: string | null
+          id?: string
+          input_tokens?: number
+          model_used?: string | null
+          output_tokens?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "week_previews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {

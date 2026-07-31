@@ -8,6 +8,14 @@ import type { PlanEntry } from '@/types/plan'
 
 type PlanItemRow = Tables<'plan_items'>
 
+function formatTime(minute: number): string {
+  const hours = Math.floor(minute / 60)
+  const minutes = minute % 60
+  const hour = hours % 12 || 12
+  const suffix = hours < 12 ? 'a' : 'p'
+  return minutes === 0 ? `${hour}${suffix}` : `${hour}:${String(minutes).padStart(2, '0')}${suffix}`
+}
+
 interface Props {
   date: string
   manualItems: PlanItemRow[]
@@ -22,6 +30,7 @@ function toEntries(manualItems: PlanItemRow[], curriculumSessions: CurriculumSes
     kind: 'manual',
     title: item.title,
     done: item.completed_at !== null,
+    meta: item.start_minute === null ? undefined : formatTime(item.start_minute),
   }))
   const curriculum: PlanEntry[] = curriculumSessions.map((session) => ({
     id: session.id,
@@ -43,6 +52,7 @@ export function PlanChecklist({ date, manualItems, curriculumSessions, variant, 
   const [newTitle, setNewTitle] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [adding, setAdding] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function toggleEntry(entry: PlanEntry) {
@@ -96,6 +106,7 @@ export function PlanChecklist({ date, manualItems, curriculumSessions, variant, 
       const { item } = (await res.json()) as { item: PlanItemRow }
       setEntries((prev) => [...prev, { id: item.id, kind: 'manual', title: item.title, done: false }])
       setNewTitle('')
+      setAdding(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add task')
     } finally {
@@ -120,13 +131,15 @@ export function PlanChecklist({ date, manualItems, curriculumSessions, variant, 
             type="checkbox"
             checked={entry.done}
             onChange={() => toggleEntry(entry)}
-            className="mt-0.5 h-3 w-3 shrink-0 rounded-sm border-bone-muted/40 bg-transparent accent-leather-300"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-bone-muted/40 bg-transparent accent-leather-300"
           />
           <span className={cn('flex-1', entry.done && 'text-bone-muted/50 line-through')}>
             {entry.title}
-            {variant === 'full' && entry.meta && (
-              <span className="ml-2 text-xs text-bone-muted/60">{entry.meta}</span>
-            )}
+            {entry.meta ? (
+              <span className={cn('text-bone-muted/60', variant === 'full' ? 'ml-2 text-xs' : 'ml-1 text-[9px]')}>
+                {entry.meta}
+              </span>
+            ) : null}
           </span>
         </label>
       ))}
@@ -141,7 +154,17 @@ export function PlanChecklist({ date, manualItems, curriculumSessions, variant, 
         </button>
       )}
 
-      {variant === 'full' && (
+      {variant === 'compact' && !adding && (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="inline-flex min-h-9 items-center text-left text-[10px] text-bone-muted/60 hover:text-bone-muted"
+        >
+          + Add
+        </button>
+      )}
+
+      {(variant === 'full' || adding) && (
         <div className="mt-2 flex items-center gap-2">
           <input
             type="text"
@@ -150,15 +173,22 @@ export function PlanChecklist({ date, manualItems, curriculumSessions, variant, 
             onKeyDown={(e) => {
               if (e.key === 'Enter') addItem()
             }}
-            placeholder="Add a task for today..."
+            placeholder={variant === 'compact' ? 'Add a task...' : 'Add a task for today...'}
+            aria-label={`Add a task for ${date}`}
             maxLength={200}
-            className="flex-1 rounded-md border border-bone-muted/20 bg-transparent px-3 py-1.5 text-sm text-bone placeholder:text-bone-muted/40 focus:border-leather-300 focus:outline-none"
+            className={cn(
+              'min-w-0 flex-1 rounded-md border border-bone-muted/20 bg-transparent text-bone placeholder:text-bone-muted/40 focus:border-leather-300 focus:outline-none',
+              variant === 'compact' ? 'px-1.5 py-1 text-[10px]' : 'px-3 py-1.5 text-sm'
+            )}
           />
           <button
             type="button"
             onClick={addItem}
             disabled={isSubmitting || !newTitle.trim()}
-            className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted transition-colors hover:text-bone disabled:opacity-40"
+            className={cn(
+              'rounded-md border border-bone-muted/20 text-bone-muted transition-colors hover:text-bone disabled:opacity-40',
+              variant === 'compact' ? 'px-1.5 py-1 text-[9px]' : 'px-3 py-1.5 text-sm'
+            )}
           >
             Add
           </button>

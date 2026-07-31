@@ -37,7 +37,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'self',
     tourTarget: 'nav-self',
-    requiredRoute: '/human-design',
+    requiredRoute: '/self',
     title: 'Self',
     body: "Your natal chart, Human Design bodygraph, and life areas. The foundation everything else is built on — your timing layer, your type, your territory.",
     cta: 'Explore Self',

@@ -1,4 +1,5 @@
 import { createAdminSupabase } from '@/lib/supabase/admin'
+import { cache } from 'react'
 import type { BlueprintOutput, MoonPhase } from '@/types/blueprint'
 import type { ArcPeriod } from '@/components/year/PushRestRibbon'
 import { sanitizePushRestArc } from '@/lib/year/push-rest-arc'
@@ -79,7 +80,7 @@ export interface LoadedBlueprint {
   pushRestArc: ArcPeriod[] | null
 }
 
-export async function loadCurrentBlueprint(supabaseUserId: string): Promise<LoadedBlueprint | null> {
+export const loadCurrentBlueprint = cache(async (supabaseUserId: string): Promise<LoadedBlueprint | null> => {
   const admin = createAdminSupabase()
   const currentYear = new Date().getFullYear()
 
@@ -110,4 +111,4 @@ export async function loadCurrentBlueprint(supabaseUserId: string): Promise<Load
     planYear: row.plan_year,
     pushRestArc: sanitizePushRestArc(row.push_rest_arc),
   }
-}
+})

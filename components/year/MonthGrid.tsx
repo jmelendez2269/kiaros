@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { K } from '@/components/almanac/tokens'
 import { MoonGlyph } from '@/components/almanac/MoonGlyph'
+import { PlanChecklist } from '@/components/plan/PlanChecklist'
+import type { Tables } from '@/types/database'
+import type { CurriculumSessionRow } from '@/types/curriculum'
+import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 
 export interface DayEvent {
   /** Day-of-month, 1-indexed */
@@ -17,18 +21,34 @@ interface Props {
   events?: DayEvent[]
   /** Day-of-month (1-indexed) values for cells that have a journal entry */
   journalDays?: Set<number>
-  /** Day-of-month (1-indexed) -> plan item total/done counts */
-  planCountByDay?: Map<number, { total: number; done: number }>
+  planItemsByDay?: Map<number, Tables<'plan_items'>[]>
+  curriculumByDay?: Map<number, CurriculumSessionRow[]>
+  energyByDay?: Map<number, EnergyWindow>
 }
 
-const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const ENERGY_TONE: Record<string, string> = {
+  push: K.copper,
+  initiate: K.ember,
+  reflect: K.plum,
+  rest: K.sage,
+}
 
 function daysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
-export function MonthGrid({ year, month, today, events = [], journalDays, planCountByDay }: Props) {
-  const offset = new Date(year, month, 1).getDay()
+export function MonthGrid({
+  year,
+  month,
+  today,
+  events = [],
+  journalDays,
+  planItemsByDay,
+  curriculumByDay,
+  energyByDay,
+}: Props) {
+  const offset = (new Date(year, month, 1).getDay() + 6) % 7
   const days = daysInMonth(year, month)
   const cellCount = Math.ceil((offset + days) / 7) * 7
   const eventByDay = new Map(events.map((e) => [e.day, e]))
@@ -61,10 +81,15 @@ export function MonthGrid({ year, month, today, events = [], journalDays, planCo
           const event = valid ? eventByDay.get(d) : undefined
           const showMoon = valid && (d === 1 || d % 7 === 0)
           const hasJournal = valid && journalDays?.has(d) === true
-          const planCount = valid ? planCountByDay?.get(d) : undefined
+          const planItems = valid ? planItemsByDay?.get(d) ?? [] : []
+          const curriculumSessions = valid ? curriculumByDay?.get(d) ?? [] : []
+          const character = valid ? energyByDay?.get(d) : undefined
+          const totalCount = planItems.length + curriculumSessions.length
+          const doneCount =
+            planItems.filter((item) => item.completed_at).length +
+            curriculumSessions.filter((session) => session.status === 'done').length
 
           const cellStyle: React.CSSProperties = {
-            minHeight: 78,
             background: !valid
               ? K.bg
               : isToday
@@ -76,37 +101,61 @@ export function MonthGrid({ year, month, today, events = [], journalDays, planCo
             borderRadius: isToday ? 4 : 0,
           }
 
-          if (!valid) return <div key={i} style={cellStyle} />
+          if (!valid) return <div key={i} style={{ ...cellStyle, minHeight: 96 }} />
 
           const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-
           return (
-            <Link
+            <div
               key={i}
-              href={`/year?view=week&date=${iso}`}
-              prefetch={false}
-              aria-label={`Open week containing ${iso}`}
+              className="flex min-h-[96px] flex-col lg:min-h-[170px]"
               style={{
                 ...cellStyle,
-                display: 'block',
                 color: 'inherit',
-                textDecoration: 'none',
-                cursor: 'pointer',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <span
+                <Link
+                  href={`/year?view=week&date=${iso}`}
+                  prefetch={false}
+                  aria-label={`Open the week containing ${iso}`}
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-leather-500/15"
                   style={{
                     fontFamily: K.fSerif,
                     fontStyle: 'italic',
                     fontSize: 16,
                     color: isToday ? K.ink : K.inkDim,
                     lineHeight: 1,
+                    textDecoration: 'none',
                   }}
                 >
                   {d}
-                </span>
-                {showMoon ? <MoonGlyph phase={phase} size={11} color={K.copperHi} /> : null}
+                </Link>
+                <div className="flex items-center gap-1.5">
+                  {character ? (
+                    <span
+                      title={`${character.label}${character.reason ? ` · ${character.reason}` : ''}`}
+                      aria-label={`${character.label} energy`}
+                      className="inline-flex items-center gap-1"
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: 999,
+                          background: ENERGY_TONE[character.energyType] ?? K.inkSoft,
+                        }}
+                      />
+                      <span
+                        className="hidden xl:inline"
+                        style={{ fontFamily: K.fMono, fontSize: 8, color: K.inkSoft }}
+                      >
+                        {character.label}
+                      </span>
+                    </span>
+                  ) : null}
+                  {showMoon ? <MoonGlyph phase={phase} size={11} color={K.copperHi} /> : null}
+                </div>
               </div>
               {event ? (
                 <div
@@ -141,25 +190,31 @@ export function MonthGrid({ year, month, today, events = [], journalDays, planCo
                   ✎
                 </span>
               ) : null}
-              {planCount && planCount.total > 0 ? (
+              <div className="mt-auto hidden border-t border-border/40 pt-2 lg:block">
+                <PlanChecklist
+                  key={`${iso}-${planItems.map((item) => item.id).join(',')}-${curriculumSessions
+                    .map((session) => session.id)
+                    .join(',')}`}
+                  date={iso}
+                  manualItems={planItems}
+                  curriculumSessions={curriculumSessions}
+                  variant="compact"
+                />
+              </div>
+              {totalCount > 0 ? (
                 <span
-                  title={`${planCount.done}/${planCount.total} planned`}
-                  aria-label={`${planCount.done} of ${planCount.total} plan items done`}
+                  className="mt-auto lg:hidden"
+                  aria-label={`${doneCount} of ${totalCount} planned items complete`}
                   style={{
-                    position: 'absolute',
-                    bottom: 6,
-                    left: 8,
                     fontFamily: K.fMono,
                     fontSize: 8.5,
-                    lineHeight: 1,
-                    letterSpacing: '0.02em',
-                    color: planCount.done === planCount.total ? K.sage : K.inkSoft,
+                    color: doneCount === totalCount ? K.sage : K.inkSoft,
                   }}
                 >
-                  {planCount.done}/{planCount.total}
+                  {doneCount}/{totalCount} planned
                 </span>
               ) : null}
-            </Link>
+            </div>
           )
         })}
       </div>
