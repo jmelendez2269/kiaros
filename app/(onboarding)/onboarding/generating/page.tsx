@@ -213,7 +213,7 @@ export default function OnboardingGeneratingPage() {
   function finishAndRedirect() {
     localStorage.removeItem(STUDY_FOCUS_KEY);
     localStorage.setItem(TOUR_PENDING_KEY, "1");
-    router.replace("/dashboard");
+    router.replace("/today");
   }
 
   function onBlueprintReady() {

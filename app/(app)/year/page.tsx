@@ -6,7 +6,7 @@ import { WeekView } from '@/components/calendar/WeekView'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { createAdminSupabase } from '@/lib/supabase/admin'
-import type { EphemerisDay, MonthBlueprint, MoonPhase, YearEphemeris } from '@/types/blueprint'
+import type { EphemerisDay, MonthBlueprint, MoonPhase, NatalChart, YearEphemeris } from '@/types/blueprint'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import type { Tables } from '@/types/database'
 import { Frame, Kicker, K } from '@/components/almanac'
@@ -15,10 +15,14 @@ import { MonthGrid, type DayEvent } from '@/components/year/MonthGrid'
 import { MonthBriefPanel } from '@/components/year/MonthBriefPanel'
 import { QuarterReviewPanel } from '@/components/year/QuarterReviewPanel'
 import { PushRestRibbon } from '@/components/year/PushRestRibbon'
-import { MONTH_NAMES as CAL_MONTH_NAMES } from '@/components/calendar/utils'
+import { getWeekDates } from '@/components/calendar/utils'
 import { getSabianForDegree } from '@/lib/ephemeris/sabian'
 import { derivePushRestArc } from '@/lib/year/push-rest-arc'
 import { todayISO } from '@/lib/today/get-today-context'
+import { getAppProfile } from '@/lib/app/get-app-profile'
+import { computeTransitWindows } from '@/lib/planetary/transit-windows'
+import type { EnergyWindow } from '@/lib/planetary/energy-windows'
+import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
 
 type View = 'year' | 'month' | 'week' | 'review'
 
@@ -45,7 +49,7 @@ interface SearchParams {
 }
 
 function parseView(raw: string | undefined): View {
-  if (raw === 'month') return 'month'
+  if (raw === 'month' || raw === 'calendar') return 'month'
   if (raw === 'week') return 'week'
   if (raw === 'review') return 'review'
   return 'year'
@@ -125,60 +129,141 @@ interface PageProps {
 
 type PlanItemRow = Tables<'plan_items'>
 type AreaGoalRow = Tables<'area_goals'>
+type PlannerContextRow = Pick<
+  Tables<'user_profiles'>,
+  'birth_lat' | 'birth_lng' | 'birth_tz' | 'planner_lat' | 'planner_lng' | 'planner_tz' | 'natal_chart'
+>
 
-const EMPTY_YEAR_DATA = {
-  loaded: null,
-  yearEphemeris: null,
-  curriculumSessions: [] as CurriculumSessionRow[],
-  planItems: [] as PlanItemRow[],
-  areaGoals: [] as AreaGoalRow[],
-  supabaseUserId: null,
+async function loadSupabaseUserId() {
+  const { userId } = await auth()
+  if (!userId) return null
+
+  const profile = await getAppProfile(userId)
+  return profile?.id ?? null
 }
 
-async function loadYearData() {
-  const { userId } = await auth()
-  if (!userId) return EMPTY_YEAR_DATA
-
-  const admin = createAdminSupabase()
-  const { data: profileRow } = await admin
-    .from('user_profiles')
-    .select('id')
-    .eq('clerk_user_id', userId)
-    .maybeSingle()
-
-  const supabaseUserId = profileRow?.id ?? null
-  if (!supabaseUserId) return EMPTY_YEAR_DATA
-
+async function loadYearBase() {
+  const supabaseUserId = await loadSupabaseUserId()
+  if (!supabaseUserId) return { loaded: null, supabaseUserId: null }
   const loaded = await loadCurrentBlueprint(supabaseUserId)
-  if (!loaded) return { ...EMPTY_YEAR_DATA, supabaseUserId }
+  return { loaded, supabaseUserId }
+}
 
-  const startDate = `${loaded.planYear}-01-01`
-  const endDate = `${loaded.planYear}-12-31`
+function shiftMonth(year: number, month: number, offset: number) {
+  const date = new Date(Date.UTC(year, month + offset, 1))
+  const nextYear = date.getUTCFullYear()
+  const nextMonth = date.getUTCMonth() + 1
+  return `${nextYear}-${String(nextMonth).padStart(2, '0')}`
+}
 
-  const [ephemerisRes, sessionsRes, planItemsRes, areaGoalsRes] = await Promise.all([
-    admin.from('ephemeris_cache').select('data').eq('user_id', supabaseUserId).eq('year', loaded.planYear).maybeSingle(),
+function shiftDate(dateIso: string, days: number) {
+  const date = new Date(`${dateIso}T12:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
+function clampMonthToPlanYear(
+  selected: { year: number; month: number },
+  planYear: number
+): { year: number; month: number } {
+  if (selected.year < planYear) return { year: planYear, month: 0 }
+  if (selected.year > planYear) return { year: planYear, month: 11 }
+  return selected
+}
+
+function weekOverlapsPlanYear(dateIso: string, planYear: number): boolean {
+  const dates = getWeekDates(dateIso)
+  return dates[6] >= `${planYear}-01-01` && dates[0] <= `${planYear}-12-31`
+}
+
+function clampWeekToPlanYear(dateIso: string, planYear: number): string {
+  const dates = getWeekDates(dateIso)
+  if (dates[6] < `${planYear}-01-01`) return `${planYear}-01-01`
+  if (dates[0] > `${planYear}-12-31`) return `${planYear}-12-31`
+  return dateIso
+}
+
+async function loadYearOverview() {
+  const supabaseUserId = await loadSupabaseUserId()
+  if (!supabaseUserId) return { loaded: null, yearEphemeris: null }
+
+  const planYear = new Date().getFullYear()
+  const admin = createAdminSupabase()
+  const [loaded, ephemerisRes] = await Promise.all([
+    loadCurrentBlueprint(supabaseUserId),
+    admin
+      .from('ephemeris_cache')
+      .select('data')
+      .eq('user_id', supabaseUserId)
+      .eq('year', planYear)
+      .maybeSingle(),
+  ])
+
+  return {
+    loaded,
+    yearEphemeris: (ephemerisRes.data?.data as YearEphemeris | null) ?? null,
+  }
+}
+
+async function loadMonthData(year: number, month: number) {
+  const supabaseUserId = await loadSupabaseUserId()
+  if (!supabaseUserId) {
+    return {
+      loaded: null,
+      yearEphemeris: null,
+      curriculumSessions: [] as CurriculumSessionRow[],
+      planItems: [] as PlanItemRow[],
+      journalEntries: [] as { entry_date: string }[],
+      monthBrief: null,
+      plannerContext: null,
+      supabaseUserId: null,
+    }
+  }
+
+  const monthNumber = month + 1
+  const monthPrefix = `${year}-${String(monthNumber).padStart(2, '0')}-`
+  const monthStart = `${monthPrefix}01`
+  const monthEnd = `${monthPrefix}${String(new Date(year, monthNumber, 0).getDate()).padStart(2, '0')}`
+  const admin = createAdminSupabase()
+  const [loaded, ephemerisRes, sessionsRes, planItemsRes, journalRes, briefRes, plannerContextRes] = await Promise.all([
+    loadCurrentBlueprint(supabaseUserId),
+    admin.from('ephemeris_cache').select('data').eq('user_id', supabaseUserId).eq('year', year).maybeSingle(),
     admin
       .from('curriculum_sessions')
       .select(
         'id, curriculum_plan_id, curriculum_title, week_number, session_order, title, description, session_type, estimated_minutes, scheduled_for, status'
       )
       .eq('user_id', supabaseUserId)
-      .gte('scheduled_for', startDate)
-      .lte('scheduled_for', endDate)
-      .order('scheduled_for', { ascending: true }),
+      .gte('scheduled_for', monthStart)
+      .lte('scheduled_for', monthEnd)
+      .order('scheduled_for', { ascending: true })
+      .order('session_order', { ascending: true }),
     admin
       .from('plan_items')
-      .select('id, item_date, title, sort_order, completed_at, created_at, updated_at, user_id')
+      .select('id, user_id, item_date, title, sort_order, completed_at, created_at, updated_at, start_minute, duration_minutes, area_goal_id, source')
       .eq('user_id', supabaseUserId)
-      .gte('item_date', startDate)
-      .lte('item_date', endDate)
+      .gte('item_date', monthStart)
+      .lte('item_date', monthEnd)
       .order('item_date', { ascending: true })
       .order('sort_order', { ascending: true }),
     admin
-      .from('area_goals')
-      .select('id, category_id, title, description, status, target_label, linked_week_number, sort_order, created_at, updated_at, user_id')
+      .from('journal_entries')
+      .select('entry_date')
       .eq('user_id', supabaseUserId)
-      .not('linked_week_number', 'is', null),
+      .gte('entry_date', monthStart)
+      .lte('entry_date', monthEnd),
+    admin
+      .from('month_briefs')
+      .select('brief_text, generated_at, edited_at, pinned')
+      .eq('user_id', supabaseUserId)
+      .eq('plan_year', year)
+      .eq('month', monthNumber)
+      .maybeSingle(),
+    admin
+      .from('user_profiles')
+      .select('birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz, natal_chart')
+      .eq('id', supabaseUserId)
+      .maybeSingle(),
   ])
 
   return {
@@ -186,9 +271,126 @@ async function loadYearData() {
     yearEphemeris: (ephemerisRes.data?.data as YearEphemeris | null) ?? null,
     curriculumSessions: (sessionsRes.data ?? []) as CurriculumSessionRow[],
     planItems: (planItemsRes.data ?? []) as PlanItemRow[],
-    areaGoals: (areaGoalsRes.data ?? []) as AreaGoalRow[],
+    journalEntries: journalRes.data ?? [],
+    monthBrief: briefRes.data ?? null,
+    plannerContext: plannerContextRes.data as PlannerContextRow | null,
     supabaseUserId,
   }
+}
+
+async function loadWeekData(selectedDate: string) {
+  const supabaseUserId = await loadSupabaseUserId()
+  if (!supabaseUserId) {
+    return {
+      loaded: null,
+      yearEphemeris: null,
+      curriculumSessions: [] as CurriculumSessionRow[],
+      planItems: [] as PlanItemRow[],
+      areaGoals: [] as AreaGoalRow[],
+      plannerContext: null,
+      supabaseUserId: null,
+    }
+  }
+
+  const weekDates = getWeekDates(selectedDate)
+  const weekStart = weekDates[0]
+  const weekEnd = weekDates[6]
+  const years = [...new Set(weekDates.map((date) => Number(date.slice(0, 4))))]
+  const admin = createAdminSupabase()
+  const blueprintPromise = loadCurrentBlueprint(supabaseUserId)
+  const areaGoalsPromise = blueprintPromise.then(async (loaded) => {
+    if (!loaded) return [] as AreaGoalRow[]
+    const overlappingWeekNumbers = loaded.blueprint.weeks
+      .filter((week) => week.startDate <= weekEnd && week.endDate >= weekStart)
+      .map((week) => week.weekNumber)
+    if (overlappingWeekNumbers.length === 0) return [] as AreaGoalRow[]
+
+    const { data } = await admin
+      .from('area_goals')
+      .select('id, category_id, title, description, status, target_label, linked_week_number, sort_order, created_at, updated_at, user_id')
+      .eq('user_id', supabaseUserId)
+      .in('linked_week_number', overlappingWeekNumbers)
+      .order('sort_order', { ascending: true })
+    return (data ?? []) as AreaGoalRow[]
+  })
+
+  const [loaded, ephemerisResults, sessionsRes, planItemsRes, areaGoals, plannerContextRes] = await Promise.all([
+    blueprintPromise,
+    Promise.all(
+      years.map((year) =>
+        admin.from('ephemeris_cache').select('data').eq('user_id', supabaseUserId).eq('year', year).maybeSingle()
+      )
+    ),
+    admin
+      .from('curriculum_sessions')
+      .select(
+        'id, curriculum_plan_id, curriculum_title, week_number, session_order, title, description, session_type, estimated_minutes, scheduled_for, status'
+      )
+      .eq('user_id', supabaseUserId)
+      .gte('scheduled_for', weekStart)
+      .lte('scheduled_for', weekEnd)
+      .order('scheduled_for', { ascending: true })
+      .order('session_order', { ascending: true }),
+    admin
+      .from('plan_items')
+      .select('id, user_id, item_date, title, sort_order, completed_at, created_at, updated_at, start_minute, duration_minutes, area_goal_id, source')
+      .eq('user_id', supabaseUserId)
+      .gte('item_date', weekStart)
+      .lte('item_date', weekEnd)
+      .order('item_date', { ascending: true })
+      .order('sort_order', { ascending: true }),
+    areaGoalsPromise,
+    admin
+      .from('user_profiles')
+      .select('birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz, natal_chart')
+      .eq('id', supabaseUserId)
+      .maybeSingle(),
+  ])
+
+  const ephemerides = ephemerisResults
+    .map((result) => (result.data?.data as YearEphemeris | null) ?? null)
+    .filter((ephemeris): ephemeris is YearEphemeris => ephemeris !== null)
+  const primaryEphemeris = ephemerides[0] ?? null
+
+  return {
+    loaded,
+    yearEphemeris: primaryEphemeris
+      ? { ...primaryEphemeris, days: ephemerides.flatMap((ephemeris) => ephemeris.days) }
+      : null,
+    curriculumSessions: (sessionsRes.data ?? []) as CurriculumSessionRow[],
+    planItems: (planItemsRes.data ?? []) as PlanItemRow[],
+    areaGoals,
+    plannerContext: plannerContextRes.data as PlannerContextRow | null,
+    supabaseUserId,
+  }
+}
+
+function buildDayCharacters(
+  dates: string[],
+  ephemeris: YearEphemeris | null,
+  plannerContext: PlannerContextRow | null
+): Map<string, EnergyWindow> {
+  const characters = new Map<string, EnergyWindow>()
+  if (!ephemeris) return characters
+
+  const { lat, lng, timeZone } = resolvePlannerLocation(plannerContext)
+  const natalChart = (plannerContext?.natal_chart as unknown as NatalChart | null) ?? null
+  const ephemerisByDate = new Map(ephemeris.days.map((day) => [day.date, day]))
+
+  for (const date of dates) {
+    const windows = computeTransitWindows({
+      date,
+      lat,
+      lng,
+      timeZone,
+      natalChart,
+      dayTransits: ephemerisByDate.get(date)?.transits ?? [],
+    })
+    const character = windows.find((window) => window.label === 'Peak' || window.label === 'Steady')
+    if (character) characters.set(date, character)
+  }
+
+  return characters
 }
 
 export default async function YearPage({ searchParams }: PageProps) {
@@ -248,7 +450,7 @@ function PageHeader({ current }: { current: View }) {
 }
 
 async function YearChartView() {
-  const { loaded, yearEphemeris } = await loadYearData()
+  const { loaded, yearEphemeris } = await loadYearOverview()
 
   return (
     <div className="space-y-6">
@@ -278,9 +480,10 @@ async function YearChartView() {
 
 async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
   const todayIso = todayISO()
-  const selectedDate = parseDate(searchParams.date, todayIso)
-
-  const { loaded, yearEphemeris, curriculumSessions, planItems, areaGoals } = await loadYearData()
+  const planYear = new Date().getFullYear()
+  const selectedDate = clampWeekToPlanYear(parseDate(searchParams.date, todayIso), planYear)
+  const { loaded, yearEphemeris, curriculumSessions, planItems, areaGoals, plannerContext } =
+    await loadWeekData(selectedDate)
 
   if (!loaded || !yearEphemeris) {
     return (
@@ -288,10 +491,10 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
         <PageHeader current="week" />
         {loaded ? (
           <div className="shell-panel px-6 py-8">
-            <p className="shell-kicker mb-3">Cosmic Calendar</p>
+            <p className="shell-kicker mb-3">Weekly planner</p>
             <h2 className="shell-section-title">Week data is still forming</h2>
             <p className="mt-3 max-w-xl text-sm leading-7 text-bone-muted">
-              Your {loaded.planYear} sky map will appear here once the ephemeris cache is available.
+              Your sky map will appear here once this year&apos;s ephemeris is available.
             </p>
           </div>
         ) : (
@@ -305,50 +508,89 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
   for (const day of yearEphemeris.days) dayMap.set(day.date, day)
   const curriculumByDate = new Map<string, CurriculumSessionRow[]>()
   for (const session of curriculumSessions) {
-    const current = curriculumByDate.get(session.scheduled_for) ?? []
-    current.push(session)
-    curriculumByDate.set(session.scheduled_for, current)
+    const sessions = curriculumByDate.get(session.scheduled_for)
+    if (sessions) sessions.push(session)
+    else curriculumByDate.set(session.scheduled_for, [session])
   }
   const planItemsByDate = new Map<string, PlanItemRow[]>()
   for (const item of planItems) {
-    const current = planItemsByDate.get(item.item_date) ?? []
-    current.push(item)
-    planItemsByDate.set(item.item_date, current)
+    const items = planItemsByDate.get(item.item_date)
+    if (items) items.push(item)
+    else planItemsByDate.set(item.item_date, [item])
   }
-  const weekBlueprintForGoals = loaded.blueprint.weeks.find(
-    (w) => w.startDate <= selectedDate && selectedDate <= w.endDate
-  )
-  const weekAreaGoals = weekBlueprintForGoals
-    ? areaGoals.filter((g) => g.linked_week_number === weekBlueprintForGoals.weekNumber)
-    : []
 
-  const monthIdx = Number(selectedDate.slice(5, 7)) - 1
-  const monthName = CAL_MONTH_NAMES[monthIdx] ?? ''
+  const weekDates = getWeekDates(selectedDate)
+  const energyByDate = buildDayCharacters(weekDates, yearEphemeris, plannerContext)
+  const first = new Date(`${weekDates[0]}T12:00:00`)
+  const last = new Date(`${weekDates[6]}T12:00:00`)
+  const rangeLabel = `${first.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} – ${last.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })}`
+  const previousDate = shiftDate(selectedDate, -7)
+  const nextDate = shiftDate(selectedDate, 7)
+  const canGoPrevious = weekOverlapsPlanYear(previousDate, loaded.planYear)
+  const canGoNext = weekOverlapsPlanYear(nextDate, loaded.planYear)
 
   return (
     <div className="space-y-6">
       <PageHeader current="week" />
-      <nav className="flex items-center gap-1.5 text-sm">
-        <Link href="/year" className="text-bone-muted transition-colors hover:text-bone">
-          {yearEphemeris.year}
-        </Link>
-        <span className="text-bone-muted/40">/</span>
-        <Link
-          href={`/year?view=month&month=${selectedDate.slice(0, 7)}`}
-          className="text-bone-muted transition-colors hover:text-bone"
-        >
-          {monthName}
-        </Link>
-        <span className="text-bone-muted/40">/</span>
-        <span className="text-bone">Week</span>
-      </nav>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="shell-kicker mb-2">Weekly planner</p>
+          <h2 className="font-serif text-3xl text-bone">{rangeLabel}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-bone-muted">
+            Your week&apos;s cosmic context, goals, study sessions, and practical tasks in one place.
+          </p>
+        </div>
+        <nav className="flex flex-wrap items-center gap-2" aria-label="Week navigation">
+          {canGoPrevious ? (
+            <Link
+              href={`/year?view=week&date=${previousDate}`}
+              className="inline-flex min-h-11 items-center rounded-full border border-border/70 px-4 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+            >
+              Previous
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="inline-flex min-h-11 items-center rounded-full border border-border/40 px-4 text-sm text-bone-muted/35"
+            >
+              Previous
+            </span>
+          )}
+          <Link
+            href={`/year?view=week&date=${todayIso}`}
+            className="inline-flex min-h-11 items-center rounded-full border border-border/70 px-4 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+          >
+            This week
+          </Link>
+          {canGoNext ? (
+            <Link
+              href={`/year?view=week&date=${nextDate}`}
+              className="inline-flex min-h-11 items-center rounded-full border border-border/70 px-4 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+            >
+              Next
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="inline-flex min-h-11 items-center rounded-full border border-border/40 px-4 text-sm text-bone-muted/35"
+            >
+              Next
+            </span>
+          )}
+        </nav>
+      </div>
       <WeekView
         selectedDate={selectedDate}
         dayMap={dayMap}
         weeks={loaded.blueprint.weeks}
         curriculumByDate={curriculumByDate}
         planItemsByDate={planItemsByDate}
-        areaGoals={weekAreaGoals}
+        areaGoals={areaGoals}
+        energyByDate={energyByDate}
         today={todayIso}
       />
     </div>
@@ -363,9 +605,22 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
     month: Number(todayIso.slice(5, 7)) - 1,
     day: Number(todayIso.slice(8, 10)),
   }
-  const selected = parseMonth(searchParams.month, { year: today.year, month: today.month })
-
-  const { loaded, yearEphemeris, curriculumSessions, planItems, supabaseUserId } = await loadYearData()
+  const requestedDate = parseDate(searchParams.date, todayIso)
+  const dateMonth = {
+    year: Number(requestedDate.slice(0, 4)),
+    month: Number(requestedDate.slice(5, 7)) - 1,
+  }
+  const planYear = new Date().getFullYear()
+  const selected = clampMonthToPlanYear(parseMonth(searchParams.month, dateMonth), planYear)
+  const {
+    loaded,
+    yearEphemeris,
+    curriculumSessions,
+    planItems,
+    journalEntries,
+    monthBrief,
+    plannerContext,
+  } = await loadMonthData(selected.year, selected.month)
 
   const weekStart = new Date(selected.year, selected.month, 1)
   const weekNumber = isoWeek(weekStart)
@@ -380,35 +635,39 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
   const events = eventsForMonth(monthBlueprint, selected.year, selected.month)
   const monthPrefix = `${selected.year}-${String(selected.month + 1).padStart(2, '0')}-`
   const monthSessions = curriculumSessions.filter((s) => s.scheduled_for.startsWith(monthPrefix))
+  const monthDates = Array.from(
+    { length: new Date(selected.year, selected.month + 1, 0).getDate() },
+    (_, index) => `${monthPrefix}${String(index + 1).padStart(2, '0')}`
+  )
+  const charactersByDate = buildDayCharacters(monthDates, yearEphemeris, plannerContext)
+  const energyByDay = new Map<number, EnergyWindow>()
+  for (const [date, character] of charactersByDate) {
+    energyByDay.set(Number(date.slice(8, 10)), character)
+  }
 
-  const lastDay = new Date(selected.year, selected.month + 1, 0).getDate()
-  const monthStart = `${monthPrefix}01`
-  const monthEnd = `${monthPrefix}${String(lastDay).padStart(2, '0')}`
-  const admin = createAdminSupabase()
-  const [journalRes, briefRes] = await Promise.all([
-    supabaseUserId
-      ? admin.from('journal_entries').select('entry_date').eq('user_id', supabaseUserId).gte('entry_date', monthStart).lte('entry_date', monthEnd)
-      : Promise.resolve({ data: [] }),
-    supabaseUserId
-      ? admin.from('month_briefs').select('brief_text, generated_at, edited_at, pinned').eq('user_id', supabaseUserId).eq('plan_year', selected.year).eq('month', selected.month + 1).maybeSingle()
-      : Promise.resolve({ data: null }),
-  ])
   const journalDays = new Set<number>()
-  for (const row of journalRes.data ?? []) {
+  for (const row of journalEntries ?? []) {
     const d = Number(row.entry_date?.slice(8, 10))
     if (Number.isFinite(d)) journalDays.add(d)
   }
   const monthPlanItems = planItems.filter((item) => item.item_date.startsWith(monthPrefix))
-  const planCountByDay = new Map<number, { total: number; done: number }>()
+  const planItemsByDay = new Map<number, PlanItemRow[]>()
+  const curriculumByDay = new Map<number, CurriculumSessionRow[]>()
   for (const item of monthPlanItems) {
     const d = Number(item.item_date.slice(8, 10))
     if (!Number.isFinite(d)) continue
-    const current = planCountByDay.get(d) ?? { total: 0, done: 0 }
-    current.total += 1
-    if (item.completed_at) current.done += 1
-    planCountByDay.set(d, current)
+    const items = planItemsByDay.get(d)
+    if (items) items.push(item)
+    else planItemsByDay.set(d, [item])
   }
-  const existingBrief = briefRes.data ?? null
+  for (const session of monthSessions) {
+    const d = Number(session.scheduled_for.slice(8, 10))
+    if (!Number.isFinite(d)) continue
+    const sessions = curriculumByDay.get(d)
+    if (sessions) sessions.push(session)
+    else curriculumByDay.set(d, [session])
+  }
+  const existingBrief = monthBrief ?? null
   const moonPhaseCount = monthBlueprint?.moonPhases.filter((mp) => mp.date.startsWith(monthPrefix)).length ?? 0
   const intentionsCount = monthBlueprint?.intentions.length ?? 0
   const keyTransitsCount = monthBlueprint?.keyTransits.length ?? 0
@@ -439,7 +698,7 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
           gap: 16,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <Kicker>{MONTH_NAMES[selected.month]} · {selected.year}</Kicker>
             <div
@@ -469,6 +728,44 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
               </div>
             ) : null}
           </div>
+          <nav className="flex items-center gap-2" aria-label="Month navigation">
+            {selected.month > 0 ? (
+              <Link
+                href={`/year?view=month&month=${shiftMonth(selected.year, selected.month, -1)}`}
+                className="inline-flex min-h-11 items-center rounded-full border border-border/70 px-4 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+              >
+                Previous
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-11 items-center rounded-full border border-border/40 px-4 text-sm text-bone-muted/35"
+              >
+                Previous
+              </span>
+            )}
+            <Link
+              href={`/year?view=month&month=${todayIso.slice(0, 7)}`}
+              className="inline-flex min-h-11 items-center rounded-full border border-border/70 px-4 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+            >
+              This month
+            </Link>
+            {selected.month < 11 ? (
+              <Link
+                href={`/year?view=month&month=${shiftMonth(selected.year, selected.month, 1)}`}
+                className="inline-flex min-h-11 items-center rounded-full border border-border/70 px-4 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+              >
+                Next
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-11 items-center rounded-full border border-border/40 px-4 text-sm text-bone-muted/35"
+              >
+                Next
+              </span>
+            )}
+          </nav>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
@@ -554,7 +851,9 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
               today={today}
               events={events}
               journalDays={journalDays}
-              planCountByDay={planCountByDay}
+              planItemsByDay={planItemsByDay}
+              curriculumByDay={curriculumByDay}
+              energyByDay={energyByDay}
             />
           </Frame>
 
@@ -864,7 +1163,7 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
   const currentQ = currentQuarter(now.getMonth())
   const selectedQuarter = parseQuarter(searchParams.quarter, currentQ)
 
-  const { loaded, supabaseUserId } = await loadYearData()
+  const { loaded, supabaseUserId } = await loadYearBase()
 
   if (!loaded) {
     return (

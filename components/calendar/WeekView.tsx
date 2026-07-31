@@ -1,4 +1,5 @@
 import { MoonPhaseIcon } from '@/components/shared/MoonPhaseIcon'
+import Link from 'next/link'
 import { TransitBadge } from '@/components/shared/TransitBadge'
 import { PlanChecklist } from '@/components/plan/PlanChecklist'
 import { GoalChip } from '@/components/calendar/GoalChip'
@@ -6,6 +7,7 @@ import { cn } from '@/lib/utils'
 import type { AspectType, EphemerisDay, MoonPhaseEvent, Planet, WeekBlueprint, ZodiacSign } from '@/types/blueprint'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import type { Tables } from '@/types/database'
+import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import { SHORT_DAY_NAMES, getWeekDates } from './utils'
 
 type PlanItemRow = Tables<'plan_items'>
@@ -190,6 +192,13 @@ const ENERGY_LABELS: Record<string, string> = {
   initiate: 'Initiate',
 }
 
+const ENERGY_DOT: Record<string, string> = {
+  push: 'bg-leather-400',
+  initiate: 'bg-ember-400',
+  reflect: 'bg-plum-400',
+  rest: 'bg-moss-400',
+}
+
 const PHASE_LABELS: Record<string, string> = {
   new: 'New Moon',
   full: 'Full Moon',
@@ -204,11 +213,14 @@ interface WeekViewProps {
   curriculumByDate: Map<string, CurriculumSessionRow[]>
   planItemsByDate?: Map<string, PlanItemRow[]>
   areaGoals?: AreaGoalRow[]
+  energyByDate?: Map<string, EnergyWindow>
   today: string
 }
 
-function findWeekBlueprint(weeks: WeekBlueprint[], date: string): WeekBlueprint | null {
-  return weeks.find((w) => w.startDate <= date && date <= w.endDate) ?? null
+function findWeekBlueprint(weeks: WeekBlueprint[], weekDates: string[]): WeekBlueprint | null {
+  const weekStart = weekDates[0]
+  const weekEnd = weekDates[6]
+  return weeks.find((week) => week.startDate <= weekEnd && week.endDate >= weekStart) ?? null
 }
 
 export function WeekView({
@@ -218,10 +230,11 @@ export function WeekView({
   curriculumByDate,
   planItemsByDate,
   areaGoals = [],
+  energyByDate,
   today,
 }: WeekViewProps) {
   const weekDates = getWeekDates(selectedDate)
-  const weekBlueprint = findWeekBlueprint(weeks, selectedDate)
+  const weekBlueprint = findWeekBlueprint(weeks, weekDates)
   const planetEvents = collectPlanetEvents(weekDates, dayMap)
   const weekSessions = weekDates.flatMap((date) =>
     (curriculumByDate.get(date) ?? []).map((session) => ({ ...session, scheduled_for: date }))
@@ -276,9 +289,20 @@ export function WeekView({
                 From your goals
               </p>
               <div className="flex flex-wrap gap-2">
-                {areaGoals.map((goal) => (
-                  <GoalChip key={goal.id} goal={goal} date={selectedDate} />
-                ))}
+                {areaGoals.map((goal) => {
+                  const alreadyAdded = weekDates.some((date) =>
+                    (planItemsByDate?.get(date) ?? []).some((item) => item.area_goal_id === goal.id)
+                  )
+                  return (
+                    <GoalChip
+                      key={`${goal.id}-${weekDates[0]}`}
+                      goal={goal}
+                      weekDates={weekDates}
+                      defaultDate={selectedDate}
+                      alreadyAdded={alreadyAdded}
+                    />
+                  )
+                })}
               </div>
             </div>
           )}
@@ -301,6 +325,7 @@ export function WeekView({
           {weekDates.map((date, i) => {
             const day = dayMap.get(date)
             const curriculumSessions = curriculumByDate.get(date) ?? []
+            const character = energyByDate?.get(date)
             const isToday = date === today
             const dayNum = Number.parseInt(date.slice(8), 10)
             const showMonth = i === 0 || dayNum === 1
@@ -309,11 +334,15 @@ export function WeekView({
               <div
                 key={date}
                 className={cn(
-                  'flex min-h-[280px] flex-col gap-2 bg-stone-900/90 px-2 py-4',
+                  'flex min-h-[320px] flex-col gap-2 bg-stone-900/90 px-2 py-4',
                   isToday && 'bg-leather-500/15'
                 )}
               >
-                <div className="mb-1 text-center">
+                <Link
+                  href={`/planner?date=${date}`}
+                  aria-label={`Open day planner for ${date}`}
+                  className="mb-1 block rounded-lg py-1 text-center transition-colors hover:bg-leather-500/10"
+                >
                   <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-bone-muted/65">
                     {SHORT_DAY_NAMES[i]}
                   </div>
@@ -321,10 +350,11 @@ export function WeekView({
                     {dayNum}
                   </div>
                   {showMonth && <div className="text-[11px] text-bone-muted/60">{date.slice(5, 7)}/{date.slice(8)}</div>}
-                </div>
+                  <span className="mt-1 block text-[9px] uppercase tracking-[0.14em] text-bone-muted/45">Day plan</span>
+                </Link>
 
                 {day ? (
-                  <>
+                  <div className="flex flex-1 flex-col gap-2">
                     <div className="flex flex-col items-center gap-1">
                       <MoonPhaseIcon phase={day.moon.lunarPhase} size={28} />
                       <span className="text-center text-[11px] leading-tight text-bone-muted">
@@ -335,6 +365,21 @@ export function WeekView({
                     <div className="text-center text-[11px] leading-tight text-bone-muted/75">
                       Sun {day.sun.degree.toFixed(0)}° <span className="text-bone-muted/90">{day.sun.sign.slice(0, 3)}</span>
                     </div>
+
+                    {character ? (
+                      <div
+                        title={character.reason}
+                        className="flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider text-bone-muted/70"
+                      >
+                        <span
+                          className={cn(
+                            'h-1.5 w-1.5 shrink-0 rounded-full',
+                            ENERGY_DOT[character.energyType] ?? 'bg-bone-muted'
+                          )}
+                        />
+                        <span>{character.label}</span>
+                      </div>
+                    ) : null}
 
                     {day.retrogrades.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-1">
@@ -355,22 +400,23 @@ export function WeekView({
                       </div>
                     )}
 
-                    {(curriculumSessions.length > 0 || (planItemsByDate?.get(date) ?? []).length > 0) && (
-                      <div className="mt-1 border-t border-border/50 pt-1.5">
-                        <PlanChecklist
-                          date={date}
-                          manualItems={planItemsByDate?.get(date) ?? []}
-                          curriculumSessions={curriculumSessions}
-                          variant="compact"
-                        />
-                      </div>
-                    )}
-                  </>
+                  </div>
                 ) : (
                   <div className="flex flex-1 items-center justify-center">
-                    <span className="text-xs text-bone-muted/30">-</span>
+                    <span className="text-center text-xs text-bone-muted/30">Sky data pending</span>
                   </div>
                 )}
+                <div className="mt-1 border-t border-border/50 pt-2">
+                  <PlanChecklist
+                    key={`${date}-${(planItemsByDate?.get(date) ?? []).map((item) => item.id).join(',')}-${curriculumSessions
+                      .map((session) => session.id)
+                      .join(',')}`}
+                    date={date}
+                    manualItems={planItemsByDate?.get(date) ?? []}
+                    curriculumSessions={curriculumSessions}
+                    variant="compact"
+                  />
+                </div>
               </div>
             )
           })}

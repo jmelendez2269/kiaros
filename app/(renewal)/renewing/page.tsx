@@ -87,7 +87,7 @@ export default function RenewingPage() {
             setFailed(true);
             return;
           }
-          router.replace("/dashboard");
+          router.replace("/today");
         }
       } catch {
         clearInterval(poll);

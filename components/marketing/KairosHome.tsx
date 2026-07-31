@@ -2,7 +2,6 @@ import Link from "next/link";
 import { StarField } from "@/components/almanac/StarField";
 import { EphemerisWheel } from "@/components/almanac/EphemerisWheel";
 import { Divider } from "@/components/almanac/Divider";
-import { CheckoutButton } from "@/components/commerce/CheckoutButton";
 import { COMMERCE_TIERS, formatUsd, CURRENT_PLANNER_YEAR } from "@/lib/commerce/config";
 import { BRAND } from "@/lib/brand";
 
@@ -41,6 +40,7 @@ const HERO_ASPECTS = [
 const TICKER_ITEMS = [
   "☉ 10°42′ CANCER",
   "☽ WANING GIBBOUS · 62%",
+  "LIVE HUMAN DESIGN · WEATHER × BODY",
   "♄ STATIONARY RETROGRADE",
   "NEXT FULL MOON · 6 DAYS",
   "♃ 12° CAPRICORN · APPLYING TRINE",
@@ -50,16 +50,22 @@ const INSTRUMENTS: Array<{
   glyph: string;
   name: string;
   body: string;
+  badge?: string;
 }> = [
   { glyph: "☉", name: "Blueprint", body: "Your full year, generated once from your chart — 52 weeks, 12 months, 4 quarters." },
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
   { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you told it last time." },
   { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. Patterns surface on their own, over time." },
-  { glyph: "▦", name: "Daily Tracker", body: "A 90-day rhythm for whatever you're actually building — no guilt, just a record." },
+  { glyph: "▦", name: "Daily Tracker", body: "A 90-day rhythm for whatever you're building, with a clear record of how it unfolds." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
-  { glyph: "⬡", name: "Human Design", body: "Type, Strategy, Authority, Profile — one more honest input. Never a verdict." },
+  {
+    glyph: "⬡",
+    name: "Human Design",
+    body: "Your natal design read alongside the live gates moving through the sky — including resonance and temporary channel connections.",
+    badge: "Now live",
+  },
   { glyph: "◈", name: "Quarterly Review", body: "Your own words about the last 90 days, reflected back with real timing." },
-  { glyph: "☾", name: "Month Briefs", body: "A short letter for the month ahead, written fresh — not a template filled in." },
+  { glyph: "☾", name: "Month Briefs", body: "A short letter for the month ahead, shaped by your chart and the timing of that month." },
   { glyph: "✳", name: "Insights Map", body: "The shape of what you keep circling back to, drawn from everything you've saved." },
 ];
 
@@ -134,8 +140,12 @@ function Hero() {
 
       <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1.05fr_0.95fr] md:items-center md:px-8 md:py-24">
         <div className="min-w-0 kairos-rise" style={{ animationDelay: "0.05s" }}>
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(169,138,239,0.5)] bg-[rgba(112,75,210,0.18)] px-3 py-1.5 font-almanac-mono text-[0.66rem] uppercase tracking-[0.16em] text-almanac-starlight">
+            <span className="h-1.5 w-1.5 rounded-full bg-almanac-kairos-hi shadow-[0_0_10px_rgba(169,138,239,0.9)]" />
+            Now with Human Design included
+          </div>
           <p className="font-almanac-mono text-[0.72rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
-            An observatory for your own year
+            Your life has its own timing
           </p>
           <h1 className="mt-5 flex flex-wrap items-baseline gap-3 font-almanac-display leading-[0.98] tracking-[0.02em] text-almanac-ink">
             <span className="text-[clamp(2.6rem,7vw,5rem)]">{BRAND.product}</span>
@@ -147,9 +157,9 @@ function Hero() {
             {BRAND.productTagline}
           </p>
           <p className="mt-6 max-w-md text-[0.98rem] leading-7 text-almanac-ink-dim">
-            Real planetary positions at the moment you were born. Real transits for the months ahead.
-            One system that turns both into a year you can actually use — not a horoscope, not a
-            template.
+            You were born under one sky. The sky keeps moving. Kairos brings your astrology,
+            Human Design, the transits ahead, and the life you're actually building into one
+            living plan for your quarters, months, and weeks.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -157,13 +167,13 @@ function Hero() {
               href="#pricing"
               className="rounded-full bg-almanac-kairos-hi px-6 py-3 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02]"
             >
-              Get your {CURRENT_PLANNER_YEAR} blueprint
+              Plan the next 12 months
             </Link>
             <Link
               href="#oracle"
               className="rounded-full border border-almanac-line-hi px-6 py-3 text-sm font-medium text-almanac-ink transition-colors hover:border-[rgba(169,138,239,0.6)] hover:text-almanac-copper-hi"
             >
-              See the Oracle in conversation &rarr;
+              See how Kairos works &rarr;
             </Link>
           </div>
         </div>
@@ -195,15 +205,14 @@ function InstrumentPanel() {
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <div className="max-w-2xl">
           <p className="font-almanac-mono text-[0.72rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
-            Nine instruments. One chart.
+            Ten instruments. One living system.
           </p>
           <h2 className="mt-4 font-almanac-serif text-4xl italic text-almanac-ink md:text-5xl">
             Everything reads from the same sky.
           </h2>
           <p className="mt-4 text-[0.98rem] leading-7 text-almanac-ink-dim">
-            Most planners ask for your goals and ignore your timing. Most astrology apps read your
-            chart and ignore your goals. Every surface below shares one natal chart, one plan year,
-            and one running memory of you.
+            Your goals, natal chart, and current timing belong in the same planning system. Every
+            surface below shares one chart, one plan year, and one running memory of you.
           </p>
         </div>
 
@@ -219,9 +228,16 @@ function InstrumentPanel() {
               <span className="font-almanac-serif text-3xl text-almanac-copper transition-colors group-hover:text-almanac-copper-hi" aria-hidden>
                 {item.glyph}
               </span>
-              <h3 className="mt-4 font-almanac-mono text-[0.78rem] uppercase tracking-[0.12em] text-almanac-ink">
-                {item.name}
-              </h3>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <h3 className="font-almanac-mono text-[0.78rem] uppercase tracking-[0.12em] text-almanac-ink">
+                  {item.name}
+                </h3>
+                {item.badge ? (
+                  <span className="rounded-full border border-almanac-kairos/45 bg-almanac-kairos/15 px-2 py-0.5 font-almanac-mono text-[0.56rem] uppercase tracking-[0.12em] text-almanac-starlight">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-2 text-[0.85rem] leading-6 text-almanac-ink-soft">{item.body}</p>
             </div>
           ))}
@@ -255,7 +271,7 @@ function BlueprintDeepDive() {
             The blueprint
           </p>
           <h2 className="mt-4 font-almanac-serif text-4xl italic text-almanac-ink md:text-5xl">
-            52 weeks, shaped around you — not a template.
+            52 weeks, shaped around you.
           </h2>
           <p className="mt-5 text-[0.98rem] leading-7 text-almanac-ink-dim">
             Your birth date, time, and place produce a real natal chart: ten planetary positions,
@@ -310,15 +326,15 @@ function OracleDeepDive() {
             Stelloquy &middot; the Oracle
           </p>
           <h2 className="mt-4 font-almanac-serif text-4xl italic text-almanac-ink md:text-5xl">
-            Not a chatbot. A conversation with context.
+            A conversation with your context.
           </h2>
           <p className="mt-5 text-[0.98rem] leading-7 text-almanac-ink-dim">
             Stelloquy opens already knowing your chart, this week's transits, the goals you named,
-            and whatever you've chosen to let it remember from your journal. You don't re-explain
-            your situation. You just ask.
+            and whatever you've chosen to let it remember from your journal. Your conversation
+            begins with that context already in place.
           </p>
           <ul className="mt-6 space-y-3 text-[0.9rem] leading-6 text-almanac-ink-soft">
-            <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Grounded in an actual transit or placement, never a generic sun-sign line.</li>
+            <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Grounded in your actual transits and chart placements.</li>
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Five interpretive lenses — evolutionary, karmic, psychological, traditional, synthesis.</li>
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Save anything that matters; it feeds your Insights map and future guidance.</li>
           </ul>
@@ -371,8 +387,8 @@ function Manifesto() {
           Anti-hustle, on principle
         </p>
         <p className="mt-8 font-almanac-serif text-3xl italic leading-[1.35] text-almanac-ink md:text-4xl">
-          Rest is strategy, not a failure of discipline. Timing is data, not a feeling you talk
-          yourself out of. {BRAND.product} exists so your year doesn't have to guess which is which.
+          Rest belongs in the plan. Timing is data you can work with. {BRAND.product} helps you
+          understand the season you're in and plan your year from there.
         </p>
       </div>
     </section>
@@ -385,21 +401,64 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <div className="max-w-2xl">
           <p className="font-almanac-mono text-[0.72rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
-            Choose your rhythm
+            Begin where you are
           </p>
           <h2 className="mt-4 font-almanac-serif text-4xl italic text-almanac-ink md:text-5xl">
-            Monthly for accessibility. Annual for the best value.
+            See the whole year today—or begin with one week.
           </h2>
+          <p className="mt-5 text-[0.98rem] leading-7 text-almanac-ink-dim">
+            The free week offers a real glimpse with no card and no automatic charge. Unlocking
+            today opens the complete year, every planning and reflection surface, and the option
+            to bring Stelloquy into the conversation.
+          </p>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          <div className="flex flex-col rounded-2xl border border-almanac-line-hi bg-almanac-bg2/45 p-7 md:p-8">
+            <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-copper-hi">
+              Free personal week
+            </p>
+            <h3 className="mt-2 font-almanac-serif text-2xl text-almanac-ink">Begin with seven days</h3>
+            <p className="mt-3 flex-1 text-[0.9rem] leading-6 text-almanac-ink-dim">
+              One personal week, the current sky, daily invitations, and a reflection to carry.
+              No card and no automatic charge.
+            </p>
+            <div className="mt-6 flex items-baseline gap-2">
+              <span className="font-almanac-display text-4xl text-almanac-ink">$0</span>
+              <span className="text-sm text-almanac-ink-soft">for seven days</span>
+            </div>
+            <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-soft">
+              {["One generated personal week", "Seven daily timing notes", "Upgrade whenever you feel ready"].map((feature) => (
+                <li key={feature} className="flex gap-2">
+                  <span className="mt-1 text-almanac-copper">&middot;</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/sign-up?redirect_url=/onboarding"
+              className="mt-7 inline-flex min-h-11 items-center justify-center rounded-full border border-almanac-line-hi px-5 text-sm font-semibold text-almanac-ink transition-colors hover:border-almanac-copper/60"
+            >
+              Begin with one free week
+            </Link>
+          </div>
+
           {COMMERCE_TIERS.map((tier) => (
             <div
               key={tier.key}
-              className="flex flex-col rounded-2xl border border-almanac-line-hi bg-almanac-bg2/60 p-7 md:p-8"
+              className={`relative flex flex-col rounded-2xl border p-7 md:p-8 ${
+                tier.oracleEnabled
+                  ? "border-almanac-copper/55 bg-[rgba(112,75,210,0.14)] shadow-[0_20px_60px_rgba(54,33,112,0.2)]"
+                  : "border-almanac-line-hi bg-almanac-bg2/60"
+              }`}
             >
+              {tier.oracleEnabled ? (
+                <span className="absolute right-5 top-5 rounded-full bg-almanac-kairos-hi px-3 py-1 font-almanac-mono text-[0.55rem] font-bold uppercase tracking-[0.12em] text-almanac-midnight">
+                  Complete experience
+                </span>
+              ) : null}
               <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-copper-hi">
-                {tier.shortName}
+                {tier.oracleEnabled ? "The year + Stelloquy" : "The complete year"}
               </p>
               <h3 className="mt-2 font-almanac-serif text-2xl text-almanac-ink">{tier.name}</h3>
               <p className="mt-3 flex-1 text-[0.9rem] leading-6 text-almanac-ink-dim">{tier.tagline}</p>
@@ -412,7 +471,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
               </div>
 
               <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-soft">
-                {tier.features.slice(0, 3).map((f) => (
+                {tier.features.slice(0, 4).map((f) => (
                   <li key={f} className="flex gap-2">
                     <span className="mt-1 text-almanac-copper">&middot;</span>
                     <span>{f}</span>
@@ -429,12 +488,12 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
                     Manage plan
                   </Link>
                 ) : (
-                  <CheckoutButton
-                    tierKey={tier.key}
-                    accessPlan="yearly"
-                    label={`Get ${tier.shortName}`}
-                    className="rounded-full bg-almanac-kairos-hi px-5 py-2.5 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02]"
-                  />
+                  <Link
+                    href="/sign-up?redirect_url=/pricing"
+                    className="inline-flex min-h-11 items-center rounded-full bg-almanac-kairos-hi px-5 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02]"
+                  >
+                    {tier.oracleEnabled ? "Unlock my year + Stelloquy" : "Unlock my full year"}
+                  </Link>
                 )}
                 <Link
                   href="/pricing"

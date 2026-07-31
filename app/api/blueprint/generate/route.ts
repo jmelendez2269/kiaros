@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse, after } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
+import { requireActivePlannerAccess } from "@/lib/commerce/access";
 
 // Blueprint generation calls Claude with a large prompt — 5+ minutes is normal.
 // after() runs within this window, so it must be large enough for the full AI call.
@@ -10,6 +11,8 @@ export const maxDuration = 300;
 export async function POST() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const accessError = await requireActivePlannerAccess(userId);
+  if (accessError) return accessError;
 
   try {
     // Use admin client for all DB access in this route — avoids RLS/token
@@ -29,6 +32,23 @@ export async function POST() {
     }
 
     const plan_year = profile.plan_year ?? new Date().getFullYear();
+
+    const { data: existing } = await admin
+      .from("blueprints")
+      .select("id, status")
+      .eq("user_id", profile.id)
+      .eq("plan_year", plan_year)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.status === "generating" || existing?.status === "ready") {
+      return NextResponse.json({
+        blueprintId: existing.id,
+        status: existing.status,
+        alreadyExists: true,
+      });
+    }
 
     // Compute next version number
     const { data: latest } = await admin

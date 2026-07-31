@@ -31,6 +31,9 @@ export default clerkMiddleware(async (auth, req) => {
   // Admin route guard is handled in app/(admin)/layout.tsx via currentUser(),
   // not here — sessionClaims does not include publicMetadata by default in
   // Clerk v7 without a custom JWT template, so middleware checks are unreliable.
+}, {
+  signInUrl: "/sign-in",
+  signUpUrl: "/sign-up",
 });
 
 export const config = {

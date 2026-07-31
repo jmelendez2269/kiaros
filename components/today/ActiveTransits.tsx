@@ -56,7 +56,7 @@ export function ActiveTransits({ data }: Props) {
 
   if (data.status === 'no-chart') {
     return (
-      <Frame tone="umber" padding={22}>
+      <Frame tone="umber" padding={20}>
         <Kicker color={K.copper}>Active transits</Kicker>
         <p
           style={{
@@ -80,7 +80,7 @@ export function ActiveTransits({ data }: Props) {
 
   if (!hasAny) {
     return (
-      <Frame tone="umber" padding={22}>
+      <Frame tone="umber" padding={20}>
         <Kicker color={K.copper}>Active transits</Kicker>
         <p
           style={{
@@ -100,12 +100,12 @@ export function ActiveTransits({ data }: Props) {
   }
 
   return (
-    <Frame tone="umber" padding={22}>
+    <Frame tone="umber" padding={20}>
       <Kicker color={K.copper}>Active transits</Kicker>
 
       {/* Current / short-wave transits */}
       {current.length > 0 ? (
-        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column' }}>
           {current.map((row, i) => (
             <AskOracleButton
               key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
@@ -135,7 +135,7 @@ export function ActiveTransits({ data }: Props) {
 
       {/* Lifetime / outer-planet transits — collapsible */}
       {lifetime.length > 0 && (
-        <div style={{ marginTop: 14, borderTop: `1px solid ${K.line}`, paddingTop: 12 }}>
+        <div style={{ marginTop: 10, borderTop: `1px solid ${K.line}`, paddingTop: 10 }}>
           <button
             type="button"
             onClick={() => setLifetimeOpen((o) => !o)}
@@ -212,7 +212,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         gridTemplateColumns: '92px minmax(0, 1fr) auto auto',
         alignItems: 'center',
         gap: 12,
-        padding: '8px 0',
+        padding: '6px 0',
         borderTop: first ? 'none' : `1px solid ${K.line}`,
       }}
     >

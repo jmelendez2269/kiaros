@@ -27,6 +27,7 @@ import { getSkyNow } from '@/lib/today/get-sky-now'
 import { getLifeArc } from '@/lib/today/get-life-arc'
 import { getJupiterSeason } from '@/lib/today/get-jupiter-season'
 import { getNowEnergyWindows } from '@/lib/today/get-now-energy'
+import { getHumanDesignWeather } from '@/lib/today/get-human-design-weather'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { YearEphemeris } from '@/types/blueprint'
@@ -38,7 +39,7 @@ export default async function TodayPage() {
   const admin = createAdminSupabase()
   const { data: profile } = await admin
     .from('user_profiles')
-    .select('id, display_name')
+    .select('id')
     .eq('clerk_user_id', userId)
     .maybeSingle()
 
@@ -61,6 +62,7 @@ export default async function TodayPage() {
     lifeArc,
     jupiterSeason,
     nowEnergyWindows,
+    humanDesignWeather,
     todayPlanItemsRes,
     todayCurriculumSessionsRes,
   ] = await Promise.all([
@@ -72,6 +74,7 @@ export default async function TodayPage() {
     getLifeArc(context.today.date, supabaseUserId),
     getJupiterSeason(context.today.date, supabaseUserId),
     getNowEnergyWindows(supabaseUserId, context.today.date),
+    getHumanDesignWeather(supabaseUserId),
     admin
       .from('plan_items')
       .select('id, item_date, title, sort_order, completed_at, created_at, updated_at, user_id, start_minute, duration_minutes, area_goal_id, source')
@@ -118,7 +121,15 @@ export default async function TodayPage() {
         minHeight: '100%',
       }}
     >
-      <SkyBanner context={context} firstName={profile?.display_name ?? null} weekTheme={currentWeek?.theme ?? null} />
+      <SkyBanner
+        context={context}
+        weekTheme={currentWeek?.theme ?? null}
+        humanDesignWeather={humanDesignWeather}
+      />
+
+      <Frame tone="umber" padding={18}>
+        <RightNowCard windows={nowEnergyWindows} />
+      </Frame>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         {/* Left column — stacks naturally, no row-height coupling to SkyNow */}
@@ -148,9 +159,6 @@ export default async function TodayPage() {
           <LineForToday streak={journalStreak} />
           <Frame tone="umber" padding={20}>
             <WeekRibbon week={context.week} />
-          </Frame>
-          <Frame tone="umber" padding={18}>
-            <RightNowCard windows={nowEnergyWindows} />
           </Frame>
         </div>
 

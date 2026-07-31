@@ -8,6 +8,7 @@
     "dev:fresh": "npm run clean:next && next dev --port 3699",
     "stripe:sync-catalog": "node scripts/sync-stripe-catalog.mjs",
     "build": "next build",
+    "test:hd-transits": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-human-design-transits.mts",
     "start": "next start --port 3699",
     "start:fresh": "npm run clean:next && next build && next start --port 3699",
     "lint": "next lint"

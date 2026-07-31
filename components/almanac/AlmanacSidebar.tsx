@@ -1,40 +1,27 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { UserButton, SignOutButton } from '@clerk/nextjs'
-import { ChevronLeft, ChevronRight, LogOut, Menu, Settings, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { slugifyAreaName } from '@/lib/areas'
+import { ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Settings, X } from 'lucide-react'
+import { useEffect, useId, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 import { cn } from '@/lib/utils'
 import { K } from './tokens'
 import { StarField } from './StarField'
 
-type CategorySummary = {
-  id: string
-  name: string
-  icon_key: string | null
-}
-
-interface SidebarProps {
-  categories: CategorySummary[]
-  hasOracleAccess?: boolean
-}
-
-// Four doors. The fifth (Stelloquy) is the orb, not a tab.
-// Self now points at /self (the "One Reading" chapter page). Year/Journal
-// hrefs still point at existing routes for now; later phases flip these to
-// /year, /journal-new as those screens land.
+type NavKey = 'today' | 'year' | 'self' | 'journal'
+type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal'>
 type SubNavItem = { label: string; href: string; hint: string }
 
 const NAV: ReadonlyArray<{
-  key: 'today' | 'year' | 'self' | 'journal'
+  key: NavKey
   label: string
   hint: string
   glyph: string
   tone: string
   href: string
+  collapsible?: boolean
   subItems?: ReadonlyArray<SubNavItem>
 }> = [
   {
@@ -45,7 +32,7 @@ const NAV: ReadonlyArray<{
     tone: K.copper,
     href: '/today',
     subItems: [
-      { label: 'Planner', href: '/planner', hint: 'day · week · month, time-blocked' },
+      { label: 'Day planner', href: '/planner', hint: 'time-blocked daily planning' },
     ],
   },
   {
@@ -56,11 +43,7 @@ const NAV: ReadonlyArray<{
     tone: K.ember,
     href: '/year',
     subItems: [
-      { label: 'Month',      href: '/year?view=month',  hint: 'lunar month · intentions' },
-      { label: 'Week',       href: '/year?view=week',   hint: 'current week · curriculum' },
-      { label: 'Review',     href: '/year?view=review', hint: 'quarterly wins · pivots' },
       { label: 'Blueprint',  href: '/blueprint',        hint: 'the full 52-week read' },
-      { label: 'Curriculum', href: '/curriculum',       hint: 'study plans · sessions' },
     ],
   },
   {
@@ -70,8 +53,11 @@ const NAV: ReadonlyArray<{
     glyph: '✺',
     tone: K.sage,
     href: '/self',
+    collapsible: true,
     subItems: [
-      { label: 'Areas', href: '/areas', hint: 'goals mapped to your chart' },
+      { label: 'Human Design', href: '/self#design', hint: 'type · strategy · authority' },
+      { label: 'Life areas', href: '/areas', hint: 'goals mapped to your chart' },
+      { label: 'Curriculum', href: '/curriculum', hint: 'study plans · sessions' },
     ],
   },
   {
@@ -81,6 +67,7 @@ const NAV: ReadonlyArray<{
     glyph: '✎',
     tone: K.brickHi,
     href: '/journal',
+    collapsible: true,
     subItems: [
       { label: 'Tracker',  href: '/tracker',         hint: 'daily rhythm · consistency' },
       { label: 'Insights', href: '/journal/insights', hint: `patterns ${BRAND.product} has noticed` },
@@ -89,13 +76,36 @@ const NAV: ReadonlyArray<{
   },
 ]
 
-// Sub-items can carry a `?view=…` query (Month and Week share the /year
-// route). Map each sub-href to its plain pathname and the optional `view`
-// it expects, so the active check can match both halves.
-function splitSubHref(href: string): { pathname: string; view: string | null } {
-  const [pathname, query = ''] = href.split('?')
-  const params = new URLSearchParams(query)
-  return { pathname, view: params.get('view') }
+function splitSubHref(href: string): { pathname: string; hash: string } {
+  const [pathAndQuery, hash = ''] = href.split('#')
+  const [pathname] = pathAndQuery.split('?')
+  return { pathname, hash: hash ? `#${hash}` : '' }
+}
+
+function isSectionActive(key: NavKey, pathname: string): boolean {
+  if (key === 'today') {
+    return pathname.startsWith('/today') || pathname.startsWith('/planner')
+  }
+  if (key === 'year') {
+    return (
+      pathname.startsWith('/calendar') ||
+      pathname.startsWith('/blueprint') ||
+      pathname.startsWith('/year')
+    )
+  }
+  if (key === 'self') {
+    return (
+      pathname.startsWith('/human-design') ||
+      pathname.startsWith('/areas') ||
+      pathname.startsWith('/curriculum') ||
+      pathname.startsWith('/self')
+    )
+  }
+  return (
+    pathname.startsWith('/journal') ||
+    pathname.startsWith('/tracker') ||
+    pathname.startsWith('/insights')
+  )
 }
 
 const SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
@@ -158,47 +168,70 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
 
 function NavRow({
   pathname,
-  currentView,
   collapsed,
   onNavigate,
 }: {
   pathname: string
-  currentView: string | null
   collapsed: boolean
   onNavigate?: () => void
 }) {
+  const navId = useId()
+  const [currentHash, setCurrentHash] = useState('')
+  const [openSections, setOpenSections] = useState<Record<CollapsibleNavKey, boolean>>({
+    self: isSectionActive('self', pathname),
+    journal: isSectionActive('journal', pathname),
+  })
+
+  useEffect(() => {
+    const syncHash = () => setCurrentHash(window.location.hash)
+    syncHash()
+    window.addEventListener('hashchange', syncHash)
+    return () => window.removeEventListener('hashchange', syncHash)
+  }, [pathname])
+
+  useEffect(() => {
+    const activeKey = (['self', 'journal'] as const).find((key) =>
+      isSectionActive(key, pathname),
+    )
+    if (!activeKey) return
+
+    setOpenSections((current) =>
+      current[activeKey] ? current : { ...current, [activeKey]: true },
+    )
+  }, [pathname])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {NAV.map((n) => {
-        const isActive =
-          pathname === n.href ||
-          // /today nav highlights for /today only; the other three highlight when
-          // either the legacy or new (future) route is active.
-          (n.key === 'year' &&
-            (pathname.startsWith('/calendar') || pathname.startsWith('/blueprint') || pathname.startsWith('/curriculum') || pathname.startsWith('/year'))) ||
-          (n.key === 'self' &&
-            (pathname.startsWith('/human-design') || pathname.startsWith('/areas') || pathname.startsWith('/self'))) ||
-          (n.key === 'journal' &&
-            (pathname.startsWith('/journal') || pathname.startsWith('/tracker')))
-
+        const isActive = isSectionActive(n.key, pathname)
         const subItems = n.subItems ?? []
-        // Sub-items only show for whichever section is currently active —
-        // no manual expand/collapse control (tried a chevron toggle; it
-        // worked but wasn't discoverable, so this stays automatic).
-        const showSubItems = !collapsed && subItems.length > 0 && isActive
+        const collapsibleKey: CollapsibleNavKey | null =
+          n.collapsible && (n.key === 'self' || n.key === 'journal') ? n.key : null
+        const isExpanded = collapsibleKey ? openSections[collapsibleKey] : isActive
+        const renderSubItems =
+          !collapsed && subItems.length > 0 && (collapsibleKey !== null || isExpanded)
+        const submenuId = `${navId}-${n.key}-submenu`
 
         return (
-          <div key={n.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div
+            key={n.key}
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 4 }}
+          >
           <Link
             href={n.href}
             onClick={onNavigate}
             title={collapsed ? n.label : undefined}
+            aria-current={pathname === n.href ? 'page' : undefined}
             data-tour={`nav-${n.key}`}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: collapsed ? 0 : 12,
-              padding: collapsed ? '10px 6px' : '10px 12px',
+              padding: collapsed
+                ? '10px 6px'
+                : collapsibleKey
+                  ? '10px 56px 10px 12px'
+                  : '10px 12px',
               borderRadius: 10,
               border: `1px solid ${isActive ? `${n.tone}66` : 'transparent'}`,
               background: isActive ? `linear-gradient(to right, ${n.tone}1a, transparent)` : 'transparent',
@@ -251,10 +284,45 @@ function NavRow({
               </div>
             ) : null}
           </Link>
-          {showSubItems ? (
-            <div
+          {collapsibleKey && !collapsed ? (
+            <button
+              type="button"
+              onClick={() =>
+                setOpenSections((current) => ({
+                  ...current,
+                  [collapsibleKey]: !current[collapsibleKey],
+                }))
+              }
+              aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${n.label}`}
+              aria-expanded={isExpanded}
+              aria-controls={submenuId}
+              title={`${isExpanded ? 'Collapse' : 'Expand'} ${n.label}`}
               style={{
+                position: 'absolute',
+                right: 3,
+                top: 3,
+                width: 44,
+                height: 44,
+                border: 'none',
+                borderRadius: 8,
+                background: 'transparent',
+                color: isActive ? n.tone : K.inkSoft,
                 display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background 200ms ease, color 200ms ease',
+              }}
+            >
+              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            </button>
+          ) : null}
+          {renderSubItems ? (
+            <div
+              id={submenuId}
+              hidden={!isExpanded}
+              style={{
+                display: isExpanded ? 'flex' : 'none',
                 flexDirection: 'column',
                 gap: 2,
                 paddingLeft: 22,
@@ -267,18 +335,16 @@ function NavRow({
                 const pathMatches =
                   pathname === subParts.pathname ||
                   pathname.startsWith(`${subParts.pathname}/`)
-                // When the sub-item targets a ?view= variant we require the
-                // current view to match too; otherwise Year's children would
-                // all light up whenever Year is active.
-                const viewMatches = subParts.view
-                  ? currentView === subParts.view
-                  : currentView === null || subParts.pathname !== pathname
-                const subActive = pathMatches && viewMatches
+                const subActive =
+                  pathMatches && (!subParts.hash || currentHash === subParts.hash)
                 return (
                   <Link
                     key={sub.href}
                     href={sub.href}
                     onClick={onNavigate}
+                    aria-current={
+                      subActive ? (subParts.hash ? 'location' : 'page') : undefined
+                    }
                     data-tour={sub.href === '/curriculum' ? 'nav-curriculum' : undefined}
                     style={{
                       display: 'flex',
@@ -323,67 +389,13 @@ function NavRow({
   )
 }
 
-function PinnedAreas({
-  categories,
-  onNavigate,
-}: {
-  categories: CategorySummary[]
-  onNavigate?: () => void
-}) {
-  if (categories.length === 0) return null
-  return (
-    <div>
-      <div
-        style={{
-          fontFamily: K.fMono,
-          fontSize: 13,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          color: K.inkSoft,
-          marginBottom: 8,
-          paddingLeft: 8,
-        }}
-      >
-        Pinned areas
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {categories.slice(0, 4).map((c) => (
-          <Link
-            key={c.id}
-            href={`/areas/${slugifyAreaName(c.name)}`}
-            onClick={onNavigate}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '6px 8px',
-              borderRadius: 8,
-              textDecoration: 'none',
-              color: K.inkDim,
-            }}
-          >
-            <span style={{ color: K.copper, fontSize: 14, width: 16, textAlign: 'center' }}>
-              {c.icon_key ?? '·'}
-            </span>
-            <span style={{ fontFamily: K.fBody, fontSize: 15.5 }}>{c.name}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function SidebarBody({
   pathname,
-  currentView,
-  categories,
   collapsed,
   onToggleDesktop,
   onNavigate,
 }: {
   pathname: string
-  currentView: string | null
-  categories: CategorySummary[]
   collapsed: boolean
   onToggleDesktop?: () => void
   onNavigate?: () => void
@@ -422,7 +434,7 @@ function SidebarBody({
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: collapsed ? 'center' : 'space-between',
-              height: 32,
+              height: 44,
               width: '100%',
               padding: collapsed ? 0 : '0 10px',
               borderRadius: 8,
@@ -443,16 +455,13 @@ function SidebarBody({
 
         <div style={{ height: 1, background: K.line }} />
 
-        <NavRow
-          pathname={pathname}
-          currentView={currentView}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
-
-        <div style={{ flex: 1 }} />
-
-        {!collapsed ? <PinnedAreas categories={categories} onNavigate={onNavigate} /> : null}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: collapsed ? 0 : 2 }}>
+          <NavRow
+            pathname={pathname}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
+        </div>
 
         <div style={{ height: 1, background: K.line }} />
 
@@ -487,7 +496,9 @@ function SidebarBody({
             style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '4px 6px',
+              justifyContent: 'center',
+              width: 44,
+              height: 44,
               color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
             }}
           >
@@ -504,7 +515,10 @@ function SidebarBody({
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                padding: '4px 6px',
+                minWidth: 44,
+                height: 44,
+                padding: collapsed ? 0 : '0 8px',
+                justifyContent: 'center',
                 fontFamily: K.fMono,
                 fontSize: 12,
                 letterSpacing: '0.1em',
@@ -522,10 +536,8 @@ function SidebarBody({
   )
 }
 
-export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess = false }: SidebarProps) {
+export function AlmanacSidebar() {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const currentView = searchParams.get('view')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
@@ -567,8 +579,6 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
       >
         <SidebarBody
           pathname={pathname}
-          currentView={currentView}
-          categories={categories}
           collapsed={collapsed}
           onToggleDesktop={() => setCollapsed((c) => !c)}
         />
@@ -593,8 +603,8 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
             aria-expanded={mobileOpen}
             aria-controls="almanac-mobile-nav"
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               borderRadius: 12,
               border: `1px solid ${K.line}`,
               background: K.bg,
@@ -633,8 +643,6 @@ export function AlmanacSidebar({ categories, hasOracleAccess: _hasOracleAccess =
           >
             <SidebarBody
               pathname={pathname}
-              currentView={currentView}
-              categories={categories}
               collapsed={false}
               onNavigate={() => setMobileOpen(false)}
             />

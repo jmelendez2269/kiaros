@@ -26,8 +26,38 @@ export function YearViewSwitcher({ current }: Props) {
   const setView = (next: View) => {
     if (next === current) return
     const sp = new URLSearchParams(params.toString())
-    if (next === 'year') sp.delete('view')
-    else sp.set('view', next)
+    const currentDate = sp.get('date')
+    const currentMonth = sp.get('month')
+
+    if (next === 'year') {
+      sp.delete('view')
+      sp.delete('date')
+      sp.delete('month')
+      sp.delete('quarter')
+    } else if (next === 'month') {
+      const month = currentMonth ?? currentDate?.slice(0, 7)
+      sp.set('view', 'month')
+      sp.delete('date')
+      sp.delete('quarter')
+      if (month) sp.set('month', month)
+      else sp.delete('month')
+    } else if (next === 'week') {
+      const date =
+        currentDate && (!currentMonth || currentDate.startsWith(currentMonth))
+          ? currentDate
+          : currentMonth
+            ? `${currentMonth}-01`
+            : null
+      sp.set('view', 'week')
+      sp.delete('month')
+      sp.delete('quarter')
+      if (date) sp.set('date', date)
+      else sp.delete('date')
+    } else {
+      sp.set('view', 'review')
+      sp.delete('date')
+      sp.delete('month')
+    }
     const qs = sp.toString()
     startTransition(() => {
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
