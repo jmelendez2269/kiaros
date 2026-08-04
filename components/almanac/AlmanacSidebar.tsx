@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { UserButton, SignOutButton } from '@clerk/nextjs'
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Settings, X } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { K } from './tokens'
 import { StarField } from './StarField'
 
-type NavKey = 'today' | 'year' | 'self' | 'journal'
+type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal'
 type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal'>
 type SubNavItem = { label: string; href: string; hint: string }
 
@@ -34,6 +34,22 @@ const NAV: ReadonlyArray<{
     subItems: [
       { label: 'Day planner', href: '/planner', hint: 'time-blocked daily planning' },
     ],
+  },
+  {
+    key: 'week',
+    label: 'Week',
+    hint: 'this week, day by day',
+    glyph: '◑',
+    tone: K.starlight,
+    href: '/year?view=week',
+  },
+  {
+    key: 'month',
+    label: 'Month',
+    hint: 'calendar grid · this month',
+    glyph: '▦',
+    tone: K.plum,
+    href: '/year?view=month',
   },
   {
     key: 'year',
@@ -63,15 +79,13 @@ const NAV: ReadonlyArray<{
   {
     key: 'journal',
     label: 'Journal',
-    hint: 'entries · tracker · memory',
+    hint: 'entries · memory · patterns',
     glyph: '✎',
     tone: K.brickHi,
     href: '/journal',
     collapsible: true,
     subItems: [
-      { label: 'Tracker',  href: '/tracker',         hint: 'daily rhythm · consistency' },
-      { label: 'Insights', href: '/journal/insights', hint: `patterns ${BRAND.product} has noticed` },
-      { label: 'Mind map', href: '/insights/map',     hint: 'capture topics as a living graph' },
+      { label: 'Patterns', href: '/insights/map', hint: 'entries · captures · mind map' },
     ],
   },
 ]
@@ -82,15 +96,21 @@ function splitSubHref(href: string): { pathname: string; hash: string } {
   return { pathname, hash: hash ? `#${hash}` : '' }
 }
 
-function isSectionActive(key: NavKey, pathname: string): boolean {
+function isSectionActive(key: NavKey, pathname: string, view: string | null = null): boolean {
   if (key === 'today') {
     return pathname.startsWith('/today') || pathname.startsWith('/planner')
+  }
+  if (key === 'week') {
+    return pathname.startsWith('/year') && view === 'week'
+  }
+  if (key === 'month') {
+    return pathname.startsWith('/year') && view === 'month'
   }
   if (key === 'year') {
     return (
       pathname.startsWith('/calendar') ||
       pathname.startsWith('/blueprint') ||
-      pathname.startsWith('/year')
+      (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
     )
   }
   if (key === 'self') {
@@ -103,7 +123,6 @@ function isSectionActive(key: NavKey, pathname: string): boolean {
   }
   return (
     pathname.startsWith('/journal') ||
-    pathname.startsWith('/tracker') ||
     pathname.startsWith('/insights')
   )
 }
@@ -176,6 +195,8 @@ function NavRow({
   onNavigate?: () => void
 }) {
   const navId = useId()
+  const searchParams = useSearchParams()
+  const view = searchParams.get('view')
   const [currentHash, setCurrentHash] = useState('')
   const [openSections, setOpenSections] = useState<Record<CollapsibleNavKey, boolean>>({
     self: isSectionActive('self', pathname),
@@ -203,7 +224,7 @@ function NavRow({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {NAV.map((n) => {
-        const isActive = isSectionActive(n.key, pathname)
+        const isActive = isSectionActive(n.key, pathname, view)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =
           n.collapsible && (n.key === 'self' || n.key === 'journal') ? n.key : null

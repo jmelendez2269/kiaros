@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Brain, Check, Loader2, Plus, Search, Sparkles, X } from 'lucide-react'
-import type { CurriculumPlanRow } from '@/types/curriculum'
+import { ArrowLeft, Brain, Check, ChevronDown, Loader2, Plus, Search, Sparkles, X } from 'lucide-react'
+import type { CurriculumPlanRow, CurriculumPlanProgress } from '@/types/curriculum'
 
 type GenerateStep = 'analyzing' | 'generating' | 'saving'
 
@@ -21,12 +21,17 @@ function gStepIndex(key: GenerateStep | null) {
 
 interface CurriculumWorkspaceProps {
   initialPlans: CurriculumPlanRow[]
+  progressByPlan: Record<string, CurriculumPlanProgress>
   studyFocus: string | null
   goalNames: string[]
 }
 
-type StatusFilter = 'all' | 'draft' | 'approved' | 'paused' | 'archived'
 type DrawerPhase = 'compose' | 'detecting' | 'split' | 'generating'
+
+/** Past this many running courses the list stops being scannable, so search returns. */
+const SEARCH_THRESHOLD = 8
+
+const RUNNING_STATUSES: CurriculumPlanRow['status'][] = ['draft', 'approved']
 
 interface SplitCourse {
   label: string
@@ -44,9 +49,81 @@ function normalizePlan(plan: any): CurriculumPlanRow {
 
 function statusTone(status: CurriculumPlanRow['status']) {
   if (status === 'approved') return 'border-moss-500/35 bg-moss-500/12 text-moss-200'
-  if (status === 'paused') return 'border-amber-500/35 bg-amber-500/12 text-amber-200'
+  if (status === 'paused') return 'border-ember-400/35 bg-ember-400/12 text-ember-300'
   if (status === 'archived') return 'border-border/60 bg-stone-950/60 text-bone-muted'
   return 'border-leather-400/35 bg-leather-500/12 text-leather-200'
+}
+
+/**
+ * The plan is Kiaros's synthesis, so the card frame is leather. Progress is
+ * the user's own doing, so the meter reads moss. See the channel semantics
+ * block in globals.css.
+ */
+function CourseCard({
+  plan,
+  progress,
+}: {
+  plan: CurriculumPlanRow
+  progress: CurriculumPlanProgress | undefined
+}) {
+  const total = progress?.totalSessions ?? 0
+  const done = progress?.completedSessions ?? 0
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0
+  const currentWeek = progress?.currentWeek ?? 1
+
+  return (
+    <Link
+      href={`/curriculum/${plan.id}`}
+      className="channel-ai channel-card group flex flex-col gap-4 px-5 py-5"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-display text-[1.12rem] leading-snug text-bone">{plan.title}</h3>
+        <span
+          className={`shrink-0 rounded-full border px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.16em] ${statusTone(plan.status)}`}
+        >
+          {plan.status}
+        </span>
+      </div>
+
+      {plan.summary ? (
+        <p className="line-clamp-2 text-sm leading-6 text-bone-muted">{plan.summary}</p>
+      ) : null}
+
+      <div className="channel-mine mt-auto space-y-2">
+        <div className="channel-meter" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+          <div className="channel-meter-fill" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-bone-muted">
+          <span>
+            {total > 0 ? (
+              <>
+                <span className="text-bone">{done}</span> of {total} sessions
+              </>
+            ) : (
+              'Not scheduled yet'
+            )}
+          </span>
+          <span className="text-bone-muted/70">
+            week {currentWeek} of {plan.duration_weeks} · {plan.weekly_hours}h/wk
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function ShelfRow({ plan }: { plan: CurriculumPlanRow }) {
+  return (
+    <Link
+      href={`/curriculum/${plan.id}`}
+      className="flex items-center gap-3 rounded-[0.85rem] px-3 py-2.5 transition-colors hover:bg-stone-950/60"
+    >
+      <span className="channel-sky channel-dot" aria-hidden="true" />
+      <span className="min-w-0 flex-1 truncate text-sm text-bone-muted">{plan.title}</span>
+      <span className="shrink-0 text-xs uppercase tracking-[0.14em] text-bone-muted/55">{plan.status}</span>
+      <span className="shrink-0 text-xs text-bone-muted/55">{relativeTime(plan.created_at)}</span>
+    </Link>
+  )
 }
 
 function relativeTime(iso: string | null) {
@@ -61,11 +138,16 @@ function relativeTime(iso: string | null) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: CurriculumWorkspaceProps) {
+export function CurriculumWorkspace({
+  initialPlans,
+  progressByPlan,
+  studyFocus,
+  goalNames,
+}: CurriculumWorkspaceProps) {
   const router = useRouter()
   const [plans, setPlans] = useState(() => initialPlans.map(normalizePlan))
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [shelfOpen, setShelfOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [phase, setPhase] = useState<DrawerPhase>('compose')
@@ -81,26 +163,24 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
     return () => clearInterval(interval)
   }, [phase])
 
-  const counts = useMemo(() => {
-    return plans.reduce(
-      (acc, plan) => {
-        acc.all += 1
-        acc[plan.status] += 1
-        return acc
-      },
-      { all: 0, draft: 0, approved: 0, paused: 0, archived: 0 }
-    )
-  }, [plans])
+  const running = useMemo(
+    () => plans.filter((plan) => RUNNING_STATUSES.includes(plan.status)),
+    [plans]
+  )
+  const shelved = useMemo(
+    () => plans.filter((plan) => !RUNNING_STATUSES.includes(plan.status)),
+    [plans]
+  )
 
-  const filtered = useMemo(() => {
+  const showSearch = running.length > SEARCH_THRESHOLD
+
+  const visibleRunning = useMemo(() => {
     const query = search.trim().toLowerCase()
-    return plans.filter((plan) => {
-      if (statusFilter !== 'all' && plan.status !== statusFilter) return false
-      if (!query) return true
-      const haystack = [plan.title, plan.topic, plan.summary ?? '', ...plan.skills].join(' ').toLowerCase()
-      return haystack.includes(query)
-    })
-  }, [plans, search, statusFilter])
+    if (!showSearch || !query) return running
+    return running.filter((plan) =>
+      [plan.title, plan.topic, plan.summary ?? '', ...plan.skills].join(' ').toLowerCase().includes(query)
+    )
+  }, [running, search, showSearch])
 
   useEffect(() => {
     if (!createOpen) return
@@ -257,7 +337,7 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
         </button>
       </header>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      {showSearch ? (
         <div className="relative w-full md:max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-bone-muted/70" />
           <input
@@ -267,73 +347,77 @@ export function CurriculumWorkspace({ initialPlans, studyFocus, goalNames }: Cur
             className="w-full rounded-full border border-border/70 bg-stone-950/70 py-2 pl-9 pr-3 text-sm text-bone placeholder:text-bone-muted/50 outline-none focus:border-leather-400/50"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {(['all', 'draft', 'approved', 'paused', 'archived'] as StatusFilter[]).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setStatusFilter(option)}
-              className={`rounded-full border px-3 py-1.5 font-medium uppercase tracking-[0.14em] transition-colors ${
-                statusFilter === option
-                  ? 'border-leather-400/45 bg-leather-500/20 text-bone'
-                  : 'border-border/70 bg-stone-950/60 text-bone-muted hover:text-bone'
-              }`}
-            >
-              {option}
-              <span className="ml-1.5 text-bone-muted/70">{counts[option]}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      ) : null}
 
-      {filtered.length === 0 ? (
+      {plans.length === 0 ? (
         <div className="shell-panel flex flex-col items-center px-6 py-12 text-center">
           <Brain className="mb-3 text-bone-muted" size={22} />
-          <p className="text-bone-muted">
-            {plans.length === 0
-              ? 'No courses yet. Start one to build your study layer.'
-              : 'No courses match this filter.'}
-          </p>
-          {plans.length === 0 ? (
-            <button
-              type="button"
-              onClick={() => setCreateOpen(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone"
-            >
-              <Sparkles size={14} />
-              Generate first course
-            </button>
-          ) : null}
+          <p className="text-bone-muted">No courses yet. Start one to build your study layer.</p>
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone"
+          >
+            <Sparkles size={14} />
+            Generate first course
+          </button>
         </div>
       ) : (
-        <ul className="shell-panel divide-y divide-border/60 overflow-hidden p-0">
-          {filtered.map((plan) => (
-            <li key={plan.id}>
-              <Link
-                href={`/curriculum/${plan.id}`}
-                className="group flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-stone-950/60 sm:flex-row sm:items-center sm:gap-5"
+        <>
+          {running.length > 0 ? (
+            <section className="space-y-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="shell-eyebrow">Running</p>
+                <span className="text-xs text-bone-muted/60">
+                  {running.length} {running.length === 1 ? 'course' : 'courses'}
+                </span>
+              </div>
+              {visibleRunning.length === 0 ? (
+                <p className="px-1 text-sm text-bone-muted">No courses match that search.</p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {visibleRunning.map((plan) => (
+                    <CourseCard key={plan.id} plan={plan} progress={progressByPlan[plan.id]} />
+                  ))}
+                </div>
+              )}
+            </section>
+          ) : (
+            <div className="shell-panel px-6 py-10 text-center">
+              <p className="text-bone-muted">
+                Nothing running right now. Everything you&apos;ve built is on the shelf below.
+              </p>
+            </div>
+          )}
+
+          {shelved.length > 0 ? (
+            <section className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setShelfOpen((open) => !open)}
+                aria-expanded={shelfOpen}
+                className="flex w-full items-center gap-2 rounded-[0.85rem] px-1 py-1.5 text-left transition-colors hover:text-bone"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full border px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-[0.16em] ${statusTone(plan.status)}`}>
-                      {plan.status}
-                    </span>
-                    <h3 className="truncate text-[0.98rem] font-semibold text-bone group-hover:text-bone">{plan.title}</h3>
-                  </div>
-                  {plan.summary ? (
-                    <p className="mt-1 line-clamp-1 text-sm text-bone-muted">{plan.summary}</p>
-                  ) : null}
+                <ChevronDown
+                  size={14}
+                  className={`text-bone-muted/60 transition-transform ${shelfOpen ? 'rotate-0' : '-rotate-90'}`}
+                />
+                <span className="shell-eyebrow">Shelf</span>
+                <span className="text-xs text-bone-muted/60">
+                  {shelved.filter((p) => p.status === 'paused').length} paused ·{' '}
+                  {shelved.filter((p) => p.status === 'archived').length} archived
+                </span>
+              </button>
+              {shelfOpen ? (
+                <div className="shell-panel-inline divide-y divide-border/40 px-2 py-1">
+                  {shelved.map((plan) => (
+                    <ShelfRow key={plan.id} plan={plan} />
+                  ))}
                 </div>
-                <div className="flex flex-shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-bone-muted">
-                  <span>{plan.duration_weeks}w</span>
-                  <span>{plan.weekly_hours}h/wk</span>
-                  <span className="capitalize">{plan.intensity}</span>
-                  <span className="text-bone-muted/70">{relativeTime(plan.created_at)}</span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+              ) : null}
+            </section>
+          ) : null}
+        </>
       )}
 
       {createOpen ? (

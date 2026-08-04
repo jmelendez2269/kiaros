@@ -56,7 +56,6 @@ const INSTRUMENTS: Array<{
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
   { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you told it last time." },
   { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. Patterns surface on their own, over time." },
-  { glyph: "▦", name: "Daily Tracker", body: "A 90-day rhythm for whatever you're building, with a clear record of how it unfolds." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
   {
     glyph: "⬡",
@@ -88,14 +87,14 @@ function TickerRow() {
 function NavBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-almanac-line-hi bg-[rgba(10,12,20,0.85)] backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 md:px-8">
         <div className="flex items-center gap-2">
           <span className="text-lg text-almanac-copper-hi" aria-hidden>&#10022;</span>
           <span className="flex items-baseline gap-1.5">
             <span className="font-almanac-display text-lg tracking-[0.08em] text-almanac-ink">
               {BRAND.product.toUpperCase()}
             </span>
-            <span className="font-almanac-mono text-[0.68rem] font-bold uppercase tracking-[0.4em] text-almanac-ink">
+            <span className="hidden font-almanac-mono text-[0.68rem] font-bold uppercase tracking-[0.4em] text-almanac-ink sm:inline">
               Planner
             </span>
           </span>
@@ -108,13 +107,13 @@ function NavBar() {
         <div className="flex items-center gap-3">
           <Link
             href="/sign-in"
-            className="hidden font-almanac-mono text-[0.72rem] uppercase tracking-[0.16em] text-almanac-ink-dim transition-colors hover:text-almanac-ink sm:inline"
+            className="inline-flex min-h-11 items-center whitespace-nowrap font-almanac-mono text-[0.72rem] uppercase tracking-[0.16em] text-almanac-ink-dim transition-colors hover:text-almanac-ink"
           >
             Sign in
           </Link>
           <Link
             href="#pricing"
-            className="rounded-full border border-[rgba(169,138,239,0.5)] bg-[rgba(112,75,210,0.2)] px-4 py-2 font-almanac-mono text-[0.7rem] uppercase tracking-[0.14em] text-almanac-starlight transition-colors hover:bg-[rgba(112,75,210,0.35)]"
+            className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full border border-[rgba(169,138,239,0.5)] bg-[rgba(112,75,210,0.2)] px-3 font-almanac-mono text-[0.7rem] uppercase tracking-[0.14em] text-almanac-starlight transition-colors hover:bg-[rgba(112,75,210,0.35)] sm:px-4"
           >
             Get your year
           </Link>

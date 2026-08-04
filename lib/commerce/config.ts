@@ -39,7 +39,7 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     oracleEnabled: false,
     plannerYear: CURRENT_PLANNER_YEAR,
     features: [
-      "Personalized blueprint, calendar, journal, tracker, and curriculum workspace",
+      "Personalized blueprint, calendar, journal, and curriculum workspace",
       "Guidance that adapts to where you are now in the year",
       "Private journal entries with lunar and timing context saved to your planner",
       "Monthly access path for flexibility, annual path for best value",

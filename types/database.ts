@@ -1453,6 +1453,8 @@ export type Database = {
           source_excerpt: string | null
           source_message_id: string | null
           source_role: string
+          thread_messages: Json | null
+          tradition: string | null
           updated_at: string
           user_id: string
         }
@@ -1465,6 +1467,8 @@ export type Database = {
           source_excerpt?: string | null
           source_message_id?: string | null
           source_role?: string
+          thread_messages?: Json | null
+          tradition?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1477,6 +1481,8 @@ export type Database = {
           source_excerpt?: string | null
           source_message_id?: string | null
           source_role?: string
+          thread_messages?: Json | null
+          tradition?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1833,6 +1839,35 @@ export type Database = {
           },
         ]
       }
+      retention_email_log: {
+        Row: {
+          id: string
+          user_id: string
+          email_type: string
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          email_type: string
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          email_type?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retention_email_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           avg_cycle_length: number | null
@@ -1853,6 +1888,7 @@ export type Database = {
           human_design: Json | null
           id: string
           last_period_start: string | null
+          last_seen_at: string | null
           marketing_consent: boolean
           marketing_consent_at: string | null
           natal_chart: Json | null
@@ -1889,6 +1925,7 @@ export type Database = {
           human_design?: Json | null
           id?: string
           last_period_start?: string | null
+          last_seen_at?: string | null
           marketing_consent?: boolean
           marketing_consent_at?: string | null
           natal_chart?: Json | null
@@ -1925,6 +1962,7 @@ export type Database = {
           human_design?: Json | null
           id?: string
           last_period_start?: string | null
+          last_seen_at?: string | null
           marketing_consent?: boolean
           marketing_consent_at?: string | null
           natal_chart?: Json | null

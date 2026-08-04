@@ -5,6 +5,12 @@ import { z } from 'zod'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { tagCaptureInBackground } from '@/lib/ai/capture-topic-extractor'
 
+const uiMessageSchema = z.object({
+  id: z.string(),
+  role: z.string(),
+  parts: z.array(z.record(z.string(), z.unknown())).optional(),
+}).passthrough()
+
 const createCaptureSchema = z.object({
   captured_text: z.string().trim().min(1).max(20000),
   source_message_id: z.string().trim().max(160).optional().nullable(),
@@ -12,6 +18,8 @@ const createCaptureSchema = z.object({
   source_excerpt: z.string().trim().max(800).optional().nullable(),
   include_in_insights: z.boolean().optional(),
   include_in_planner: z.boolean().optional(),
+  thread_messages: z.array(uiMessageSchema).max(500).optional().nullable(),
+  tradition: z.string().trim().max(40).optional().nullable(),
 })
 
 export async function POST(req: Request) {
@@ -48,9 +56,11 @@ export async function POST(req: Request) {
         source_excerpt: body.source_excerpt || null,
         include_in_insights: body.include_in_insights ?? false,
         include_in_planner: body.include_in_planner ?? false,
+        thread_messages: body.thread_messages ?? null,
+        tradition: body.tradition || null,
       })
       .select(
-        'id, captured_text, source_message_id, source_role, source_excerpt, include_in_insights, include_in_planner, created_at'
+        'id, captured_text, source_message_id, source_role, source_excerpt, include_in_insights, include_in_planner, thread_messages, tradition, created_at'
       )
       .single()
 

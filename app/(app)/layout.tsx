@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import Link from 'next/link'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { AlmanacSidebar } from '@/components/almanac/AlmanacSidebar'
@@ -33,6 +34,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!profile?.onboarding_completed_at) {
     redirect('/onboarding')
   }
+
+  // Drives the "quiet sky" win-back email — fire-and-forget so it never
+  // slows down the page render.
+  after(async () => {
+    await admin.from('user_profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', profile.id)
+  })
 
   // If the calendar year has advanced past the user's plan_year and they still
   // have an active entitlement (monthly sub still billing), send them to the

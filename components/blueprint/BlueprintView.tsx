@@ -11,6 +11,9 @@ import { cn } from '@/lib/utils'
 interface BlueprintViewProps {
   blueprint: BlueprintOutput
   planYear: number
+  /** ISO date the user's purchased window runs through; null when never entitled. */
+  accessEndsAt?: string | null
+  accessState?: 'active' | 'read_only' | 'expired' | 'revoked' | null
 }
 
 type Mode = 'layered' | 'list'
@@ -22,7 +25,22 @@ function shortDate(date: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsed)
 }
 
-export function BlueprintView({ blueprint, planYear }: BlueprintViewProps) {
+function longDate(date: string) {
+  const parsed = new Date(`${date}T12:00:00`)
+  if (Number.isNaN(parsed.getTime())) return date
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(parsed)
+}
+
+export function BlueprintView({
+  blueprint,
+  planYear,
+  accessEndsAt = null,
+  accessState = null,
+}: BlueprintViewProps) {
   const currentMonth = new Date().getMonth() + 1
   const currentQuarter = Math.ceil(currentMonth / 3)
 
@@ -49,6 +67,21 @@ export function BlueprintView({ blueprint, planYear }: BlueprintViewProps) {
           <p className="mt-1.5 text-sm text-bone-muted">
             Everything for the year — quarters, months, and weeks — on one page.
           </p>
+          {accessEndsAt ? (
+            <p className="mt-2 text-sm text-bone-muted/80">
+              {accessState === 'active' ? (
+                <>
+                  Your planner year runs through{' '}
+                  <span className="text-bone">{longDate(accessEndsAt)}</span>.
+                </>
+              ) : (
+                <>
+                  Your planner year ran through{' '}
+                  <span className="text-bone">{longDate(accessEndsAt)}</span>.
+                </>
+              )}
+            </p>
+          ) : null}
         </div>
 
         <div

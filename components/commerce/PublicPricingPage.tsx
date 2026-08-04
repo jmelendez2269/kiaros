@@ -905,11 +905,6 @@ export function PublicPricingPage({
           <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                eyebrow: "A 90-day rhythm, not a guilt trip",
-                title: "Daily Tracker",
-                body: "Check in on what actually matters to you — energy, focus, whatever you're building — and watch a quiet consistency grid fill in over 90 days. Every entry is silently stamped with that day's moon phase, so patterns surface on their own.",
-              },
-              {
                 eyebrow: "Whatever you're studying this year, structured into it",
                 title: "Curriculum",
                 body: "Tell Kairos what you want to learn or work through, and it builds a multi-week plan with real sessions — content generated the first time you open each one, not a static PDF.",

@@ -52,8 +52,10 @@
     --ember-300: 42 72% 72%;
 
     /* Quaternary — deep plum */
+    --plum-500: 272 46% 52%;
     --plum-400: 270 52% 66%;
     --plum-300: 268 58% 80%;
+    --plum-200: 266 64% 89%;
 
     /* ─── Almanac tokens (Obsidian-aligned) ────────────────────────────────
        Originally a parallel cocoa/copper system. Retuned to mirror the
@@ -204,6 +206,114 @@
   .shell-grid-card:hover {
     @apply border-leather-500/45 bg-stone-850/90;
   }
+
+  /* ─── Channel semantics ─────────────────────────────────────────────────
+     Colour encodes provenance, not decoration. A reader should be able to
+     tell at a glance whether a line was written by Kiaros or by them:
+
+       .channel-ai     leather — synthesised by Kiaros
+       .channel-mine   moss    — the user's own words (entries, logs)
+       .channel-memory plum    — Stelloquy memory and captures
+       .channel-sky    neutral — deterministic ephemeris data
+
+     Set one of these on a wrapper; descendants using .channel-* helpers
+     inherit the right hue through --channel. Live on /journal,
+     /insights/map and /curriculum. */
+  .channel-ai {
+    --channel: var(--leather-400);
+    --channel-deep: var(--leather-500);
+  }
+
+  .channel-mine {
+    --channel: var(--moss-400);
+    --channel-deep: var(--moss-500);
+  }
+
+  .channel-memory {
+    --channel: var(--plum-400);
+    --channel-deep: var(--plum-500);
+  }
+
+  .channel-sky {
+    --channel: var(--bone-muted);
+    --channel-deep: var(--bone-muted);
+  }
+
+  .channel-kicker {
+    @apply text-[0.66rem] font-semibold uppercase tracking-[0.24em];
+    color: hsl(var(--channel) / 0.85);
+  }
+
+  .channel-panel {
+    @apply rounded-[1.25rem] shadow-panel backdrop-blur-sm;
+    border: 1px solid hsl(var(--channel) / 0.24);
+    background:
+      linear-gradient(to bottom, hsl(var(--channel) / 0.055), transparent 46%),
+      hsl(var(--card) / 0.95);
+  }
+
+  .channel-card {
+    @apply rounded-[1.05rem] transition duration-200;
+    border: 1px solid hsl(var(--channel) / 0.2);
+    background:
+      linear-gradient(to bottom, hsl(var(--channel) / 0.05), transparent 58%),
+      hsl(var(--stone-950) / 0.6);
+  }
+
+  .channel-card:hover {
+    border-color: hsl(var(--channel) / 0.42);
+  }
+
+  .channel-pill {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em];
+    border: 1px solid hsl(var(--channel) / 0.3);
+    background: hsl(var(--channel) / 0.1);
+    color: hsl(var(--channel) / 0.95);
+  }
+
+  .channel-rule {
+    border-left: 2px solid hsl(var(--channel) / 0.45);
+  }
+
+  .channel-dot {
+    @apply inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full;
+    background: hsl(var(--channel) / 0.9);
+  }
+
+  .channel-meter {
+    @apply h-1.5 w-full overflow-hidden rounded-full;
+    background: hsl(var(--channel) / 0.14);
+  }
+
+  .channel-meter-fill {
+    @apply h-full rounded-full;
+    background: hsl(var(--channel) / 0.85);
+  }
+
+  /* A section that carries content without another bordered box around it.
+     Used for tab panels so we stop nesting panels inside panels. */
+  .shell-section-quiet {
+    @apply border-t border-border/50 pt-7;
+  }
+
+  /* ─── Tabs ─────────────────────────────────────────────────────────────── */
+  .shell-tablist {
+    @apply flex flex-wrap items-center gap-1 rounded-full border border-border/60 bg-stone-950/60 p-1;
+  }
+
+  .shell-tab {
+    @apply rounded-full px-4 py-2 text-[0.8rem] font-medium text-bone-muted transition-colors;
+  }
+
+  .shell-tab:hover {
+    @apply text-bone;
+  }
+
+  .shell-tab[aria-selected="true"] {
+    color: hsl(var(--channel, var(--bone)) / 1);
+    background: hsl(var(--channel, var(--stone-800)) / 0.16);
+    box-shadow: inset 0 0 0 1px hsl(var(--channel, var(--border)) / 0.3);
+  }
 }
 
 /* ─── Celestial — Star Chart ─────────────────────────────────────────────── */
@@ -254,8 +364,10 @@ html[data-theme="celestial"] {
   --ember-300: 22 72% 73%;
 
   /* Quaternary — indigo */
+  --plum-500: 254 54% 56%;
   --plum-400: 252 62% 70%;
   --plum-300: 249 70% 83%;
+  --plum-200: 247 76% 90%;
 }
 
 html[data-theme="celestial"] body {
@@ -324,8 +436,10 @@ html[data-theme="dawn"] {
   --ember-300: 26 84% 72%;
 
   /* Quaternary — mauve */
+  --plum-500: 288 30% 50%;
   --plum-400: 286 34% 64%;
   --plum-300: 284 42% 79%;
+  --plum-200: 282 48% 88%;
 }
 
 html[data-theme="dawn"] body {

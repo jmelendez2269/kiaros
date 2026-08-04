@@ -68,8 +68,8 @@ export function InsightsPollingShell({ initialInFlight, children }: Props) {
     }
   }, [status, router])
 
-  // If the parent says new rows are in-flight (e.g. after Save in
-  // VoicePanel triggered a refresh), kick polling back on.
+  // If the parent says new rows are in-flight (e.g. the user saved a new
+  // voice in Settings and navigated back here), kick polling back on.
   useEffect(() => {
     if (initialInFlight > 0 && (!status || status.inFlight === 0)) {
       startedAtRef.current = Date.now()

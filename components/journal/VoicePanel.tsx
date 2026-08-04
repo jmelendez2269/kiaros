@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { PenLine } from 'lucide-react'
 import { BRAND } from '@/lib/brand'
 
 // Mirrors VOICE_PRESETS keys in lib/ai/journal-insight-synthesis.ts.
@@ -32,17 +33,6 @@ interface PreviewResult {
   sampleSize: number
 }
 
-interface VoicePanelProps {
-  initialVoiceLabel: string | null
-  initialVoicePromptIsCustom: boolean
-  initialCustomPrompt: string
-  hasAnyPatterns: boolean
-}
-
-function isPresetKey(value: string | null): value is PresetKey {
-  return value === 'grounded' || value === 'mystic' || value === 'clinical'
-}
-
 function deriveInitialSelection(label: string | null, isCustom: boolean): PresetKey | 'custom' {
   if (isCustom) return 'custom'
   if (!label) return 'grounded'
@@ -51,23 +41,61 @@ function deriveInitialSelection(label: string | null, isCustom: boolean): Preset
   return match ?? 'grounded'
 }
 
-export function VoicePanel({
-  initialVoiceLabel,
-  initialVoicePromptIsCustom,
-  initialCustomPrompt,
-  hasAnyPatterns,
-}: VoicePanelProps) {
-  const router = useRouter()
-  const [, startTransition] = useTransition()
-
-  const [selection, setSelection] = useState<PresetKey | 'custom'>(
-    deriveInitialSelection(initialVoiceLabel, initialVoicePromptIsCustom),
-  )
-  const [customPrompt, setCustomPrompt] = useState(initialCustomPrompt)
+/**
+ * Lives on /settings. Self-loading — it reads the saved voice and the current
+ * pattern count on mount so it can be dropped into the client settings page
+ * without threading server props through it.
+ */
+export function VoicePanel() {
+  const [selection, setSelection] = useState<PresetKey | 'custom'>('grounded')
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [hasAnyPatterns, setHasAnyPatterns] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [savedLabel, setSavedLabel] = useState<string | null>(null)
   const [preview, setPreview] = useState<PreviewResult | null>(null)
   const [previewing, setPreviewing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [queued, setQueued] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        const [settingsRes, statusRes] = await Promise.all([
+          fetch('/api/journal/insights/settings', { cache: 'no-store' }),
+          fetch('/api/journal/insights/status', { cache: 'no-store' }),
+        ])
+
+        if (settingsRes.ok) {
+          const json = (await settingsRes.json()) as { voicePrompt: string | null; voiceLabel: string | null }
+          if (!cancelled) {
+            const isCustom =
+              Boolean(json.voicePrompt) &&
+              !PRESET_ORDER.some((key) => PRESET_META[key].label === json.voiceLabel)
+            setSelection(deriveInitialSelection(json.voiceLabel, isCustom))
+            setSavedLabel(json.voiceLabel)
+            if (isCustom && json.voicePrompt) setCustomPrompt(json.voicePrompt)
+          }
+        }
+
+        if (statusRes.ok) {
+          const json = (await statusRes.json()) as { total: number }
+          if (!cancelled) setHasAnyPatterns((json.total ?? 0) > 0)
+        }
+      } catch {
+        // Non-fatal: the panel still works, it just starts on the default voice.
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   function buildPayload(): { voiceKey?: PresetKey; voicePrompt?: string; voiceLabel?: string } {
     if (selection === 'custom') {
@@ -101,6 +129,7 @@ export function VoicePanel({
 
   async function saveAndApply() {
     setError(null)
+    setQueued(false)
     setSaving(true)
     try {
       const payload = buildPayload()
@@ -118,10 +147,10 @@ export function VoicePanel({
         const j = (await regenRes.json().catch(() => ({}))) as { error?: string }
         throw new Error(j.error ?? 'Queue failed')
       }
-      // Trigger a Server Component refetch so the page picks up the
-      // ai_synthesizing_at flags immediately; the polling wrapper takes
-      // over from there.
-      startTransition(() => router.refresh())
+      // Regeneration runs in the background; /insights/map polls for it and
+      // swaps cards in as they land.
+      setSavedLabel(payload.voiceLabel ?? PRESET_META[selection as PresetKey]?.label ?? null)
+      setQueued(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -130,21 +159,28 @@ export function VoicePanel({
   }
 
   const activeMeta = selection === 'custom' ? null : PRESET_META[selection]
-  const previewDisabled = !hasAnyPatterns || previewing || saving
-  const saveDisabled = !hasAnyPatterns || saving
+  const previewDisabled = !hasAnyPatterns || previewing || saving || loading
+  const saveDisabled = !hasAnyPatterns || saving || loading
 
   return (
-    <section className="shell-panel px-6 py-7 md:px-8">
-      <header className="flex flex-col gap-2">
-        <p className="shell-kicker">Voice &amp; tone</p>
-        <h2 className="text-[1.6rem] font-semibold text-bone">How should {BRAND.product} write your patterns?</h2>
-        <p className="max-w-2xl text-sm leading-7 text-bone-muted">
-          Pick a voice once. We use it to write every pattern summary from your actual journal entries. Change it
-          whenever — every card regenerates with the new voice in the background.
-        </p>
-      </header>
+    <section className="channel-ai shell-panel px-6 py-6 md:px-8" id="insight-voice">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-leather-400/30 bg-leather-500/12 text-leather-200">
+          <PenLine size={18} />
+        </div>
+        <div>
+          <p className="channel-kicker">Voice &amp; tone</p>
+          <h2 className="shell-subsection-title mt-1">How {BRAND.product} writes your patterns</h2>
+        </div>
+      </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <p className="max-w-2xl text-sm leading-7 text-bone-muted">
+        Pick a voice once. We use it to write every pattern summary from your actual journal entries. Change it
+        whenever — every card regenerates with the new voice in the background.
+        {savedLabel ? <span className="text-bone"> Currently {savedLabel}.</span> : null}
+      </p>
+
+      <div className="mt-6 grid gap-3 md:grid-cols-2">
         {PRESET_ORDER.map((key) => {
           const meta = PRESET_META[key]
           const active = selection === key
@@ -159,7 +195,7 @@ export function VoicePanel({
                   : 'border-border/60 bg-stone-950/55 hover:border-leather-400/35'
               }`}
             >
-              <span className="shell-kicker">{active ? 'Selected' : 'Voice'}</span>
+              <span className="channel-kicker">{active ? 'Selected' : 'Voice'}</span>
               <span className="text-[1.05rem] font-semibold text-bone">{meta.label}</span>
               <span className="text-xs leading-6 text-bone-muted">{meta.description}</span>
             </button>
@@ -174,7 +210,7 @@ export function VoicePanel({
               : 'border-border/60 bg-stone-950/55 hover:border-leather-400/35'
           }`}
         >
-          <span className="shell-kicker">{selection === 'custom' ? 'Selected' : 'Voice'}</span>
+          <span className="channel-kicker">{selection === 'custom' ? 'Selected' : 'Voice'}</span>
           <span className="text-[1.05rem] font-semibold text-bone">Custom</span>
           <span className="text-xs leading-6 text-bone-muted">
             Write your own instruction. Anything from tone notes to a full style guide.
@@ -221,7 +257,7 @@ export function VoicePanel({
         >
           {saving ? 'Saving…' : 'Save & apply to all'}
         </button>
-        {!hasAnyPatterns ? (
+        {!hasAnyPatterns && !loading ? (
           <span className="text-xs text-bone-muted/70">
             No patterns yet — write a few journal entries and the preview will activate.
           </span>
@@ -231,6 +267,16 @@ export function VoicePanel({
       {error ? (
         <p className="mt-3 rounded-[0.75rem] border border-red-500/30 bg-red-500/8 px-4 py-2 text-sm text-red-200">
           {error}
+        </p>
+      ) : null}
+
+      {queued ? (
+        <p className="mt-3 rounded-[0.75rem] border border-moss-500/35 bg-moss-500/10 px-4 py-2 text-sm text-moss-200">
+          Saved. Your pattern cards are regenerating —{' '}
+          <Link href="/insights/map" className="underline decoration-moss-400/50 underline-offset-4">
+            watch them land on Patterns
+          </Link>
+          .
         </p>
       ) : null}
 

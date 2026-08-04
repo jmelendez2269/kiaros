@@ -6,6 +6,7 @@ import { computeNatalChart } from "@/lib/ephemeris";
 import type { BirthData } from "@/lib/ephemeris";
 import type { HouseSystem, NatalChart } from "@/types/blueprint";
 import { computeHumanDesign } from "@/lib/human-design";
+import { getAccessWindow } from "@/lib/commerce/get-access-window";
 
 export async function GET() {
   const { userId } = await auth();
@@ -14,7 +15,7 @@ export async function GET() {
   const admin = createAdminSupabase();
   const { data: profile, error } = await admin
     .from("user_profiles")
-    .select("display_name, theme, birth_date, birth_time, birth_time_unknown, birth_city, birth_tz, planner_lat, planner_lng, planner_tz, natal_chart, plan_year, word_of_year, year_vision, what_to_release, study_focus, tradition, house_system")
+    .select("id, display_name, theme, birth_date, birth_time, birth_time_unknown, birth_city, birth_tz, planner_lat, planner_lng, planner_tz, natal_chart, plan_year, word_of_year, year_vision, what_to_release, study_focus, tradition, house_system")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
@@ -26,9 +27,12 @@ export async function GET() {
     planYear: profile?.plan_year ?? new Date().getFullYear(),
   });
 
+  const accessWindow = profile?.id ? await getAccessWindow(profile.id) : null;
+
   return NextResponse.json({
     profile,
     astrological_word_of_year: astrologicalWord,
+    access_window: accessWindow,
   });
 }
 

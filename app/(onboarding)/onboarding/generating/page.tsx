@@ -63,11 +63,6 @@ const FEATURE_SLIDES = [
     body: "The Cosmic Calendar shows you the full arc of the year: planetary transits, moon phases, and timing windows — so you can see what's coming and plan with intention.",
   },
   {
-    kicker: "Daily Tracker",
-    title: "Log your days in context",
-    body: "Every log entry is automatically stamped with where the moon is, what sign it's in, and where you are in the lunar cycle. Patterns surface over time — not just numbers.",
-  },
-  {
     kicker: "Journal",
     title: "Reflection that knows your sky",
     body: "Each journal entry captures the transits active when you wrote it. The Insights surface uses those patterns to show you what's actually been moving through your life.",

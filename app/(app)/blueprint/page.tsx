@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { BlueprintView } from '@/components/blueprint/BlueprintView'
+import { getAppProfile } from '@/lib/app/get-app-profile'
+import { getAccessWindow } from '@/lib/commerce/get-access-window'
 import type { BlueprintOutput, MoonPhase, Tradition } from '@/types/blueprint'
 
 const TRADITION_LABELS: Record<Tradition, string> = {
@@ -84,6 +87,10 @@ export default async function BlueprintPage() {
   const supabase = await createServerSupabase()
   const currentYear = new Date().getFullYear()
 
+  const { userId } = await auth()
+  const appProfile = userId ? await getAppProfile(userId) : null
+  const accessWindow = appProfile?.id ? await getAccessWindow(appProfile.id) : null
+
   const [{ data: row }, { data: profile }] = await Promise.all([
     supabase
       .from('blueprints')
@@ -166,7 +173,12 @@ export default async function BlueprintPage() {
           </div>
         </div>
       )}
-      <BlueprintView blueprint={blueprint} planYear={row.plan_year} />
+      <BlueprintView
+        blueprint={blueprint}
+        planYear={row.plan_year}
+        accessEndsAt={accessWindow?.endsAt ?? null}
+        accessState={accessWindow?.state ?? null}
+      />
     </>
   )
 }

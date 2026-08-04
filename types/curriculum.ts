@@ -49,6 +49,13 @@ export interface CurriculumPlanRow {
   created_at: string | null
 }
 
+/** Derived on the server from curriculum_session_progress; never persisted. */
+export interface CurriculumPlanProgress {
+  completedSessions: number
+  totalSessions: number
+  currentWeek: number
+}
+
 export interface CurriculumSessionExercise {
   prompt: string
   detail?: string | null

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { CalendarDays, MessageCircle, Palette, Sparkles, UserRound } from "lucide-react";
 import { ThemePicker } from "@/components/shared/ThemePicker";
+import { VoicePanel } from "@/components/journal/VoicePanel";
 import { THEMES, type ThemeId } from "@/lib/constants";
 import { startTour } from "@/lib/tour/config";
 import { TRADITION_HOUSE_DEFAULTS, type HouseSystem, type Tradition } from "@/types/blueprint";
@@ -72,6 +73,23 @@ const HOUSE_SYSTEM_LABELS: Record<HouseSystem, string> = {
   placidus: "Placidus",
 };
 
+type AccessWindow = {
+  endsAt: string;
+  accessPlan: "monthly" | "yearly";
+  state: "active" | "read_only" | "expired" | "revoked";
+  daysRemaining: number;
+};
+
+function formatLongDate(date: string) {
+  const parsed = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(parsed);
+}
+
 function applyTheme(theme: ThemeId) {
   document.documentElement.dataset.theme = theme;
   document.cookie = `${COOKIE_NAME}=${theme}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
@@ -118,6 +136,7 @@ export default function SettingsPage() {
     remaining: number;
     cacheHitRate: number;
   } | null>(null);
+  const [accessWindow, setAccessWindow] = useState<AccessWindow | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,6 +152,7 @@ export default function SettingsPage() {
 
         const nextProfile = (data.profile ?? null) as SettingsProfile | null;
         setProfile(nextProfile);
+        setAccessWindow((data.access_window ?? null) as AccessWindow | null);
         setForm(buildInitialState(nextProfile ?? ({ theme: fallbackTheme } as SettingsProfile)));
         if (nextProfile?.theme) applyTheme(nextProfile.theme);
       } catch (error) {
@@ -430,6 +450,8 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      <VoicePanel />
+
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <section className="shell-panel px-6 py-6 md:px-8">
           <div className="mb-5 flex items-center gap-3">
@@ -634,6 +656,21 @@ export default function SettingsPage() {
             <p className="text-sm leading-7 text-bone-muted">
               Save your preferences here, or jump to the deeper planner surfaces when you want to work directly in them.
             </p>
+            {accessWindow ? (
+              <p className="mt-2 text-sm leading-7 text-bone-muted/85">
+                {accessWindow.state === "active" ? (
+                  <>
+                    Your {accessWindow.accessPlan === "monthly" ? "access" : "planner year"} runs through{" "}
+                    <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>.
+                  </>
+                ) : (
+                  <>
+                    Your {accessWindow.accessPlan === "monthly" ? "access" : "planner year"} ran through{" "}
+                    <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>.
+                  </>
+                )}
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

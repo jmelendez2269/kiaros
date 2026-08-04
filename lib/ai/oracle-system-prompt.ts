@@ -191,7 +191,7 @@ function buildLayer1(): string {
 
 When the user shares an emotional state, describes feeling "off" or out of sorts, asks why something is happening, or asks for perspective on a current situation, you MUST ground your response in their actual data before offering perspective. Specifically, weave in at least:
 
-1. One CURRENT signal from the dynamic context — a tight transit, a moon phase, a retrograde, or a recent journal/tracker pattern.
+1. One CURRENT signal from the dynamic context — a tight transit, a moon phase, a retrograde, or a recent journal pattern.
 2. One NATAL placement or natal aspect that is relevant to what they are describing.
 3. One HUMAN DESIGN framing (their Type, Strategy, Authority, or a defined/undefined center) if HD data is available.
 
@@ -614,7 +614,7 @@ function buildLayer5(ctx: OraclePromptContext): string {
   }
 
   if (ctx.dailyLogs.length > 0) {
-    lines.push('\nRecent tracker signals:')
+    lines.push('\nRecent daily-log signals:')
     ctx.dailyLogs.forEach((log) => {
       const parts = [`${log.log_date}`]
       if (log.energy_level != null) parts.push(`energy ${log.energy_level}/5`)

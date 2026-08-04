@@ -18,17 +18,18 @@ import { TodayCurriculum } from '@/components/today/TodayCurriculum'
 import { WeekArc } from '@/components/today/WeekArc'
 import { PlanChecklist } from '@/components/plan/PlanChecklist'
 import { PlanImportModal } from '@/components/plan/PlanImportModal'
-import type { CurriculumSessionRow } from '@/types/curriculum'
 import { getActiveTransits } from '@/lib/today/get-active-transits'
 import { getJournalStreak } from '@/lib/today/get-journal-streak'
 import { getTodayIntention } from '@/lib/today/get-today-intention'
 import { getTodayCurriculum } from '@/lib/today/get-today-curriculum'
+import { getDueCurriculumSessions } from '@/lib/today/get-due-curriculum-sessions'
 import { getSkyNow } from '@/lib/today/get-sky-now'
 import { getLifeArc } from '@/lib/today/get-life-arc'
 import { getJupiterSeason } from '@/lib/today/get-jupiter-season'
 import { getNowEnergyWindows } from '@/lib/today/get-now-energy'
 import { getHumanDesignWeather } from '@/lib/today/get-human-design-weather'
 import { YearChartShell } from '@/components/year/YearChartShell'
+import { DeeperToday } from '@/components/today/DeeperToday'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { YearEphemeris } from '@/types/blueprint'
 
@@ -39,7 +40,7 @@ export default async function TodayPage() {
   const admin = createAdminSupabase()
   const { data: profile } = await admin
     .from('user_profiles')
-    .select('id')
+    .select('id, onboarding_completed_at')
     .eq('clerk_user_id', userId)
     .maybeSingle()
 
@@ -47,6 +48,11 @@ export default async function TodayPage() {
   // /onboarding, so this is a safety net only — don't loop back to /sign-in.
   if (!profile?.id) redirect('/onboarding')
   const supabaseUserId = profile.id
+
+  const accountAgeDays = profile.onboarding_completed_at
+    ? (Date.now() - new Date(profile.onboarding_completed_at).getTime()) / 86_400_000
+    : 0
+  const deeperOpenByDefault = accountAgeDays >= 7
 
   const context = getTodayContext()
   const shape = getShapeOfToday({
@@ -64,7 +70,7 @@ export default async function TodayPage() {
     nowEnergyWindows,
     humanDesignWeather,
     todayPlanItemsRes,
-    todayCurriculumSessionsRes,
+    todayCurriculumSessions,
   ] = await Promise.all([
     getActiveTransits(context.today.date, supabaseUserId),
     getJournalStreak(context.today.date, supabaseUserId),
@@ -81,16 +87,9 @@ export default async function TodayPage() {
       .eq('user_id', supabaseUserId)
       .eq('item_date', context.today.date)
       .order('sort_order', { ascending: true }),
-    admin
-      .from('curriculum_sessions')
-      .select(
-        'id, curriculum_plan_id, curriculum_title, week_number, session_order, title, description, session_type, estimated_minutes, scheduled_for, status'
-      )
-      .eq('user_id', supabaseUserId)
-      .eq('scheduled_for', context.today.date),
+    getDueCurriculumSessions(supabaseUserId, context.today.date),
   ])
   const todayPlanItems = todayPlanItemsRes.data ?? []
-  const todayCurriculumSessions = (todayCurriculumSessionsRes.data ?? []) as CurriculumSessionRow[]
 
   // Year-at-a-glance grid (same data the Year tab uses): the current
   // blueprint's weeks plus the cached year ephemeris.
@@ -188,27 +187,32 @@ export default async function TodayPage() {
         </div>
       </div>
 
-      {blueprintLoaded ? (
-        <Frame tone="umber" padding={20}>
-          <WeekArc weeks={blueprintLoaded.blueprint.weeks} currentWeekNumber={context.meta.isoWeek} />
-        </Frame>
-      ) : null}
       <TodayCurriculum result={curriculum} />
 
-      {/* Jupiter season — changes ~yearly, sits between the daily and the era */}
-      {jupiterSeason.status === 'ok' ? <JupiterSeason data={jupiterSeason} /> : null}
+      <DeeperToday defaultOpen={deeperOpenByDefault}>
+        <div className="grid gap-5">
+          {blueprintLoaded ? (
+            <Frame tone="umber" padding={20}>
+              <WeekArc weeks={blueprintLoaded.blueprint.weeks} currentWeekNumber={context.meta.isoWeek} />
+            </Frame>
+          ) : null}
 
-      {blueprintLoaded && yearEphemeris ? (
-        <Frame tone="umber" padding={20}>
-          <Kicker color={K.copper}>The year at a glance</Kicker>
-          <div style={{ marginTop: 12 }}>
-            <YearChartShell yearEphemeris={yearEphemeris} weeks={blueprintLoaded.blueprint.weeks} />
-          </div>
-        </Frame>
-      ) : null}
+          {/* Jupiter season — changes ~yearly, sits between the daily and the era */}
+          {jupiterSeason.status === 'ok' ? <JupiterSeason data={jupiterSeason} /> : null}
 
-      {/* Life arc — Saturn/Uranus/Neptune/Pluto; years-long eras */}
-      {lifeArc.status === 'ok' ? <LifeArcRead data={lifeArc} /> : null}
+          {blueprintLoaded && yearEphemeris ? (
+            <Frame tone="umber" padding={20}>
+              <Kicker color={K.copper}>The year at a glance</Kicker>
+              <div style={{ marginTop: 12 }}>
+                <YearChartShell yearEphemeris={yearEphemeris} weeks={blueprintLoaded.blueprint.weeks} />
+              </div>
+            </Frame>
+          ) : null}
+
+          {/* Life arc — Saturn/Uranus/Neptune/Pluto; years-long eras */}
+          {lifeArc.status === 'ok' ? <LifeArcRead data={lifeArc} /> : null}
+        </div>
+      </DeeperToday>
     </div>
   )
 }

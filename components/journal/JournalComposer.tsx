@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
@@ -18,15 +18,6 @@ type RecentJournalEntry = {
   created_at: string | null
 }
 
-type OracleCapture = {
-  id: string
-  captured_text: string
-  source_role: string
-  include_in_insights: boolean
-  include_in_planner: boolean
-  created_at: string
-}
-
 interface JournalComposerProps {
   initialPrompt: string
   initialArea: string
@@ -38,8 +29,6 @@ interface JournalComposerProps {
   journalEntriesCount: number
   oracleMemoryCount: number
   blueprintYear: number | null
-  recentEntries: RecentJournalEntry[]
-  oracleCaptures: OracleCapture[]
 }
 
 function todayISO() {
@@ -63,10 +52,7 @@ export function JournalComposer({
   journalEntriesCount,
   oracleMemoryCount,
   blueprintYear,
-  recentEntries,
-  oracleCaptures,
 }: JournalComposerProps) {
-  const [entries, setEntries] = useState(recentEntries)
   const [entryCount, setEntryCount] = useState(journalEntriesCount)
   const [memoryCount, setMemoryCount] = useState(oracleMemoryCount)
   const [title, setTitle] = useState(initialPrompt ? truncate(initialPrompt, 120) : '')
@@ -93,16 +79,6 @@ export function JournalComposer({
 
     return parts
   }, [initialArea, initialTheme, initialWeek, initialStart, initialEnd])
-
-  function getSkyLabel(entry: RecentJournalEntry) {
-    if (entry.lunar_phase && entry.lunar_sign) {
-      return `${entry.lunar_phase} Moon in ${entry.lunar_sign}`
-    }
-
-    if (entry.lunar_phase) return `${entry.lunar_phase} Moon`
-    if (entry.lunar_sign) return `Moon in ${entry.lunar_sign}`
-    return null
-  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -141,7 +117,6 @@ export function JournalComposer({
         throw new Error(payload.error || 'Failed to save journal entry')
       }
 
-      setEntries((current) => [payload, ...current].slice(0, 12))
       setEntryCount((current) => current + 1)
       if (payload.oracle_memory) {
         setMemoryCount((current) => current + 1)
@@ -164,44 +139,50 @@ export function JournalComposer({
   }
 
   return (
-    <div className="space-y-8">
-      <section className="shell-panel px-6 py-7 md:px-8">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-3xl">
-            <p className="shell-kicker mb-3">Journal</p>
-            <h1 className="shell-section-title">Capture the prompt while the window is open</h1>
-            <p className="mt-4 text-base leading-7 text-bone-muted">
-              Save a reflection from a timing window, ritual, or live question. This is also where you decide what
-              Stelloquy should carry forward as memory.
-            </p>
-          </div>
-          <div className="shell-panel-soft px-4 py-3 text-sm text-bone-muted">
-            {initialPrompt ? 'Prompt-loaded entry' : 'Open reflection'}
-          </div>
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="max-w-2xl">
+          <p className="channel-mine channel-kicker mb-2.5">Journal</p>
+          <h1 className="shell-hero-title">Capture the prompt while the window is open</h1>
+          <p className="mt-4 shell-prose">
+            Save a reflection from a timing window, ritual, or live question. This is also where you decide what
+            Stelloquy should carry forward as memory.
+          </p>
         </div>
-      </section>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="channel-mine channel-pill">
+            {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
+          </span>
+          <span className="channel-memory channel-pill">{memoryCount} in memory</span>
+          {blueprintYear ? (
+            <Link href="/blueprint" className="channel-sky channel-pill transition-colors hover:text-bone">
+              {blueprintYear} blueprint
+            </Link>
+          ) : null}
+        </div>
+      </header>
 
-      <section className="shell-panel px-6 py-6">
+      <section className="channel-mine channel-panel px-6 py-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="shell-kicker">Compose</p>
-            <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">New entry</h2>
+            <p className="channel-kicker">Compose</p>
+            <h2 className="mt-1.5 font-display text-[1.4rem] text-bone">New entry</h2>
           </div>
           <button
             type="button"
             onClick={openDrawer}
-            className="inline-flex items-center rounded-xl border border-border/80 bg-stone-950/80 px-4 py-2 text-sm text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
+            className="inline-flex items-center rounded-xl border border-plum-400/30 bg-plum-400/10 px-4 py-2 text-sm text-plum-200 transition-colors hover:bg-plum-400/18"
           >
             Open Stelloquy
           </button>
         </div>
 
         {contextSummary.length > 0 ? (
-          <div className="mt-5 rounded-[1.1rem] border border-leather-400/20 bg-leather-500/6 p-5">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-bone-muted/60">Window context</p>
+          <div className="channel-sky mt-5 rounded-[1.1rem] border border-border/60 bg-stone-950/50 p-5">
+            <p className="channel-kicker">Window context</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {contextSummary.map((item) => (
-                <span key={item} className="shell-pill">
+                <span key={item} className="channel-pill">
                   {item}
                 </span>
               ))}
@@ -221,7 +202,7 @@ export function JournalComposer({
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="Optional title"
                 maxLength={160}
-                className="w-full rounded-xl border border-border/80 bg-stone-950/80 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/40 focus:outline-none focus:ring-1 focus:ring-leather-400"
+                className="w-full rounded-xl border border-border/80 bg-stone-950/80 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/40 focus:outline-none focus:ring-1 focus:ring-moss-400"
               />
             </label>
 
@@ -233,7 +214,7 @@ export function JournalComposer({
                 type="date"
                 value={entryDate}
                 onChange={(event) => setEntryDate(event.target.value)}
-                className="w-full rounded-xl border border-border/80 bg-stone-950/80 px-4 py-3 text-sm text-bone focus:outline-none focus:ring-1 focus:ring-leather-400"
+                className="w-full rounded-xl border border-border/80 bg-stone-950/80 px-4 py-3 text-sm text-bone focus:outline-none focus:ring-1 focus:ring-moss-400"
               />
             </label>
           </div>
@@ -248,29 +229,45 @@ export function JournalComposer({
               placeholder="Write what feels true, what the prompt stirs, or what this window is asking of you."
               rows={12}
               maxLength={12000}
-              className="w-full resize-y rounded-[1.1rem] border border-border/80 bg-stone-950/80 px-4 py-4 text-sm leading-7 text-bone placeholder:text-bone-muted/40 focus:outline-none focus:ring-1 focus:ring-leather-400"
+              className="w-full resize-y rounded-[1.1rem] border border-border/80 bg-stone-950/80 px-4 py-4 text-sm leading-7 text-bone placeholder:text-bone-muted/40 focus:outline-none focus:ring-1 focus:ring-moss-400"
             />
           </label>
 
-          <label className="flex items-center gap-3 rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-3 text-sm text-bone-muted">
-            <input
-              type="checkbox"
-              checked={isRitual}
-              onChange={(event) => setIsRitual(event.target.checked)}
-              className="h-4 w-4 rounded border-border/80 bg-stone-950/80 text-leather-300 focus:ring-leather-400"
-            />
-            Mark this as a ritual or intentional grounding entry
-          </label>
+          <div className="flex flex-wrap gap-2">
+            <label
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8rem] transition-colors ${
+                isRitual
+                  ? 'border-moss-400/45 bg-moss-500/12 text-moss-200'
+                  : 'border-border/70 bg-stone-950/60 text-bone-muted hover:text-bone'
+              }`}
+              title="Ritual or intentional grounding entry"
+            >
+              <input
+                type="checkbox"
+                checked={isRitual}
+                onChange={(event) => setIsRitual(event.target.checked)}
+                className="h-3.5 w-3.5 rounded border-border/80 bg-stone-950/80 text-moss-300 focus:ring-moss-400"
+              />
+              Ritual entry
+            </label>
 
-          <label className="flex items-center gap-3 rounded-[1rem] border border-plum-400/25 bg-plum-400/8 px-4 py-3 text-sm text-bone-muted">
-            <input
-              type="checkbox"
-              checked={addToOracleMemory}
-              onChange={(event) => setAddToOracleMemory(event.target.checked)}
-              className="h-4 w-4 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
-            />
-            Add this entry to Stelloquy memory so future conversations can draw from it
-          </label>
+            <label
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8rem] transition-colors ${
+                addToOracleMemory
+                  ? 'border-plum-400/50 bg-plum-400/14 text-plum-200'
+                  : 'border-border/70 bg-stone-950/60 text-bone-muted hover:text-bone'
+              }`}
+              title="Future Stelloquy conversations can draw from this entry"
+            >
+              <input
+                type="checkbox"
+                checked={addToOracleMemory}
+                onChange={(event) => setAddToOracleMemory(event.target.checked)}
+                className="h-3.5 w-3.5 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
+              />
+              Add to Stelloquy memory
+            </label>
+          </div>
 
           {error ? (
             <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -279,7 +276,7 @@ export function JournalComposer({
           ) : null}
 
           {savedMessage ? (
-            <div className="rounded-xl border border-moss-500/35 bg-moss-500/10 px-4 py-3 text-sm text-moss-100">
+            <div className="rounded-xl border border-moss-500/35 bg-moss-500/10 px-4 py-3 text-sm text-moss-200">
               {savedMessage}
             </div>
           ) : null}
@@ -288,7 +285,7 @@ export function JournalComposer({
             <button
               type="submit"
               disabled={isSaving || body.trim().length === 0}
-              className="rounded-xl border border-leather-400/50 bg-leather-500/35 px-5 py-3 text-sm font-medium text-bone shadow-glow transition-colors hover:bg-leather-500/45 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl border border-moss-400/50 bg-moss-500/30 px-5 py-3 text-sm font-medium text-bone transition-colors hover:bg-moss-500/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? 'Saving...' : 'Save entry'}
             </button>
@@ -303,173 +300,42 @@ export function JournalComposer({
         </form>
       </section>
 
-      <section className="flex flex-col gap-5">
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-[1rem] border border-leather-400/30 bg-leather-500/10 px-4 py-4">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-leather-200/85">Journal</p>
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-bone">Saved entries</p>
-              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-leather-300/25 bg-black/20 px-2 text-[0.68rem] font-semibold text-leather-100">
-                {entryCount}
-              </span>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-bone-muted">Everything you've captured lives here, with your latest reflections below.</p>
-          </div>
-
-          <div className="rounded-[1rem] border border-plum-400/30 bg-plum-400/8 px-4 py-4">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-plum-300/85">Stelloquy</p>
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-bone">Memory saved</p>
-              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-plum-300/20 bg-black/20 px-2 text-[0.68rem] font-semibold text-plum-200">
-                {memoryCount}
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={openDrawer}
-                className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-3 py-1.5 text-[0.78rem] font-medium text-bone-muted transition-colors hover:text-bone"
-              >
-                Open Stelloquy
-              </button>
-              <Link
-                href="/journal?prompt=What%20feels%20worth%20keeping%20in%20memory%20right%20now%3F"
-                className="inline-flex items-center rounded-lg border border-plum-400/40 bg-plum-400/18 px-3 py-1.5 text-[0.78rem] font-medium text-bone transition-colors hover:bg-plum-400/26"
-              >
-                Memory prompt
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-[1rem] border border-border/80 bg-stone-900/80 px-4 py-4">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/75">Architecture</p>
-            <p className="mt-2 text-sm font-medium text-bone-muted">
-              {blueprintYear ? `${blueprintYear} blueprint ready` : 'Annual blueprint'}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href="/blueprint"
-                className="inline-flex items-center rounded-lg border border-border/80 bg-stone-950/75 px-3 py-1.5 text-[0.78rem] font-medium text-bone-muted transition-colors hover:text-bone"
-              >
-                Open blueprint
-              </Link>
-              <Link
-                href="/journal?prompt=What%20part%20of%20the%20annual%20blueprint%20am%20I%20living%20right%20now%3F"
-                className="inline-flex items-center rounded-lg border border-leather-400/35 bg-leather-500/16 px-3 py-1.5 text-[0.78rem] font-medium text-bone transition-colors hover:bg-leather-500/24"
-              >
-                Blueprint prompt
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <article className="shell-panel px-6 py-6">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="shell-kicker">Journal history</p>
-              <h2 className="mt-2 text-[1.8rem] font-semibold text-bone">Your saved reflections</h2>
-              <p className="mt-3 text-sm leading-7 text-bone-muted">
-                Revisit past entries, rituals, and timing-window notes in one place.
-              </p>
-            </div>
-            <span className="shell-pill">{entries.length} loaded</span>
-          </div>
-
+      <section className="space-y-2">
+        <p className="shell-eyebrow px-1">Prompts to start from</p>
+        <div className="flex flex-wrap gap-2">
           <Link
-            href="/journal/insights"
-            className="group mt-5 flex items-start gap-4 rounded-2xl border border-leather-400/40 bg-leather-500/10 px-5 py-4 transition-colors hover:border-leather-300/60 hover:bg-leather-500/20"
+            href="/journal?prompt=What%20feels%20worth%20keeping%20in%20memory%20right%20now%3F"
+            className="channel-memory channel-pill transition-colors hover:text-bone"
           >
-            <span
-              aria-hidden="true"
-              className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-leather-400/50 bg-leather-500/20 font-serif text-base text-leather-100"
-            >
-              ✦
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-bone">
-                Patterns {BRAND.product} has noticed
-              </p>
-              <p className="mt-1 text-xs leading-6 text-bone-muted">
-                Recurring moons, signs, and transits across your entries — synthesised in your chosen voice.
-              </p>
-            </div>
-            <span
-              aria-hidden="true"
-              className="self-center text-base text-leather-200 transition-transform group-hover:translate-x-0.5"
-            >
-              →
-            </span>
+            Worth keeping in memory
           </Link>
-
-          <div className="mt-5 space-y-3">
-            {entries.length > 0 ? (
-              entries.map((entry) => (
-                <div key={entry.id} className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-bone">{entry.title || 'Untitled entry'}</p>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      {getSkyLabel(entry) ? <span className="shell-pill">{getSkyLabel(entry)}</span> : null}
-                      {entry.oracle_memory ? <span className="shell-pill">In Stelloquy memory</span> : null}
-                      {entry.is_ritual ? <span className="shell-pill">Ritual</span> : null}
-                    </div>
-                  </div>
-                  <p className="mt-2 text-xs uppercase tracking-[0.16em] text-bone-muted/55">{entry.entry_date}</p>
-                  <p className="mt-3 text-sm leading-7 text-bone-muted">{truncate(entry.body, 180)}</p>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm leading-7 text-bone-muted">
-                No journal entries yet. The timing-window prompts from your area pages can now open straight into this
-                composer.
-              </div>
-            )}
-          </div>
-
-          <div className="mt-8 border-t border-border/70 pt-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="shell-kicker">Stelloquy captures</p>
-                <h3 className="mt-2 text-[1.25rem] font-semibold text-bone">Conversation fragments</h3>
-                <p className="mt-2 text-sm leading-7 text-bone-muted">
-                  Highlighted Stelloquy moments stay separate from journal entries, and anything marked for insights is
-                  included in future Stelloquy context.
-                </p>
-              </div>
-              <span className="shell-pill">{oracleCaptures.length} loaded</span>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {oracleCaptures.length > 0 ? (
-                oracleCaptures.map((capture) => (
-                  <div key={capture.id} className="rounded-[1rem] border border-plum-400/25 bg-plum-400/8 px-4 py-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs uppercase tracking-[0.16em] text-bone-muted/55">
-                        {new Date(capture.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {capture.include_in_insights ? <span className="shell-pill">Insights</span> : null}
-                        {capture.include_in_planner ? <span className="shell-pill">Planner</span> : null}
-                        {!capture.include_in_insights && !capture.include_in_planner ? (
-                          <span className="shell-pill">Saved</span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <p className="mt-3 text-sm leading-7 text-bone-muted">{truncate(capture.captured_text, 220)}</p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm leading-7 text-bone-muted">
-                  No Stelloquy captures yet. In a conversation, highlight the text you want to keep and use Capture.
-                </div>
-              )}
-            </div>
-          </div>
-        </article>
+          <Link
+            href="/journal?prompt=What%20part%20of%20the%20annual%20blueprint%20am%20I%20living%20right%20now%3F"
+            className="channel-sky channel-pill transition-colors hover:text-bone"
+          >
+            Living the blueprint
+          </Link>
+        </div>
       </section>
+
+      <Link
+        href="/insights/map"
+        className="channel-ai channel-card group flex items-center gap-4 px-5 py-4"
+      >
+        <span aria-hidden="true" className="channel-dot" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-bone">Patterns {BRAND.product} has noticed</p>
+          <p className="mt-0.5 text-xs leading-6 text-bone-muted">
+            Recurring moons and transits, saved conversations, and the living mind map.
+          </p>
+        </div>
+        <span
+          aria-hidden="true"
+          className="text-base text-leather-200 transition-transform group-hover:translate-x-0.5"
+        >
+          →
+        </span>
+      </Link>
     </div>
   )
 }

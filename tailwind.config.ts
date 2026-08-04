@@ -70,8 +70,10 @@ const config: Config = {
           300: "hsl(var(--ember-300))",
         },
         plum: {
+          500: "hsl(var(--plum-500))",
           400: "hsl(var(--plum-400))",
           300: "hsl(var(--plum-300))",
+          200: "hsl(var(--plum-200))",
         },
         // Warm Almanac (Kairos redesign) — parallel namespace.
         // Hex tokens, not HSL. See globals.css :root for the source.

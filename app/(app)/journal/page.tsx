@@ -10,20 +10,9 @@ export default async function JournalPage({
   const supabase = await createServerSupabase()
   const currentYear = new Date().getFullYear()
 
-  const [entriesRes, oracleMemoryRes, journalEntriesRes, oracleCapturesRes, blueprintRes] = await Promise.all([
-    supabase
-      .from('journal_entries')
-      .select('id, title, body, entry_date, is_ritual, created_at, oracle_memory, lunar_phase, lunar_sign, transit_context')
-      .order('entry_date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(12),
+  const [oracleMemoryRes, journalEntriesRes, blueprintRes] = await Promise.all([
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('oracle_memory', true),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
-    supabase
-      .from('oracle_captures')
-      .select('id, captured_text, source_role, include_in_insights, include_in_planner, created_at')
-      .order('created_at', { ascending: false })
-      .limit(12),
     supabase
       .from('blueprints')
       .select('plan_year')
@@ -59,8 +48,6 @@ export default async function JournalPage({
       journalEntriesCount={journalEntriesRes.error ? 0 : (journalEntriesRes.count ?? 0)}
       oracleMemoryCount={oracleMemoryRes.error ? 0 : (oracleMemoryRes.count ?? 0)}
       blueprintYear={blueprintRes.data?.plan_year ?? null}
-      recentEntries={entriesRes.data ?? []}
-      oracleCaptures={oracleCapturesRes.data ?? []}
     />
   )
 }

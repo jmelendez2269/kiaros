@@ -171,6 +171,8 @@ export function OracleConversation({
           source_excerpt: summary,
           include_in_insights: option.insights,
           include_in_planner: option.planner,
+          thread_messages: messages,
+          tradition: tradition ?? null,
         }),
       })
       const payload = (await response.json()) as { error?: string }

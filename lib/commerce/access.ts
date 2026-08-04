@@ -12,7 +12,7 @@ import { resolveUserAccess, type ProductEntitlementRecord } from "./entitlements
  * null if they're allowed to proceed.
  *
  * Read routes (GET) do not need this — expired annual users keep read access to
- * their blueprint, journal history, and tracker logs.
+ * their blueprint and journal history.
  */
 export async function requireActivePlannerAccess(clerkUserId: string): Promise<NextResponse | null> {
   const clerkUser = await currentUser()

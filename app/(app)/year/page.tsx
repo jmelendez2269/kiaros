@@ -822,41 +822,6 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
             </div>
           </div>
 
-          <Frame tone="umber" padding={20}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                marginBottom: 14,
-              }}
-            >
-              <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 28, color: K.ink }}>
-                {MONTH_NAMES[selected.month]}
-              </div>
-              <div
-                style={{
-                  fontFamily: K.fMono,
-                  fontSize: 11,
-                  color: K.inkSoft,
-                  letterSpacing: '0.14em',
-                }}
-              >
-                WK {weekNumber} — WK {weekNumber + 4}
-              </div>
-            </div>
-            <MonthGrid
-              year={selected.year}
-              month={selected.month}
-              today={today}
-              events={events}
-              journalDays={journalDays}
-              planItemsByDay={planItemsByDay}
-              curriculumByDay={curriculumByDay}
-              energyByDay={energyByDay}
-            />
-          </Frame>
-
           {monthBlueprint ? (
             <MonthBriefPanel
               year={selected.year}
@@ -1081,6 +1046,41 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
               </Link>
             </Frame>
           </div>
+
+          <Frame tone="umber" padding={20}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                marginBottom: 14,
+              }}
+            >
+              <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 28, color: K.ink }}>
+                {MONTH_NAMES[selected.month]}
+              </div>
+              <div
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 11,
+                  color: K.inkSoft,
+                  letterSpacing: '0.14em',
+                }}
+              >
+                WK {weekNumber} — WK {weekNumber + 4}
+              </div>
+            </div>
+            <MonthGrid
+              year={selected.year}
+              month={selected.month}
+              today={today}
+              events={events}
+              journalDays={journalDays}
+              planItemsByDay={planItemsByDay}
+              curriculumByDay={curriculumByDay}
+              energyByDay={energyByDay}
+            />
+          </Frame>
         </div>
 
         <div>

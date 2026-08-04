@@ -5,7 +5,7 @@
  * quarterly review. The summary is a short 2–3 paragraph synthesis —
  * not a recap, not a forecast — that reflects the quarter back to the
  * user given their own wins/challenges/pivots, this quarter's
- * blueprint, and the activity in their journal / tracker / curriculum.
+ * blueprint, and the activity in their journal / curriculum.
  *
  * Separation of concerns: this file only assembles text. Parsing and
  * DB writes happen in quarterly-review-generator.ts.

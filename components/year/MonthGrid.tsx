@@ -115,9 +115,9 @@ export function MonthGrid({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Link
-                  href={`/year?view=week&date=${iso}`}
+                  href={`/planner?date=${iso}`}
                   prefetch={false}
-                  aria-label={`Open the week containing ${iso}`}
+                  aria-label={`Open the day planner for ${iso}`}
                   className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors hover:bg-leather-500/15"
                   style={{
                     fontFamily: K.fSerif,
