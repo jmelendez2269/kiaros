@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "plugins": []
+  },
+  "include": [
+    "../lib/journal/consent.ts",
+    "../lib/journal/entry-service.ts",
+    "../app/api/journal/route.ts",
+    "../app/(app)/today/actions.ts",
+    "./check-journal-consent.mts",
+    "./check-journal-consent-wiring.mts",
+    "../next-env.d.ts"
+  ]
+}

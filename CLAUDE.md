@@ -8,6 +8,10 @@
 
 Anything in `docs/kiaros-*-v1.md` or the `phase2/phase3` handoffs is **archived**. Those describe a watered-down beta that we no longer build. Do not treat them as authoritative.
 
+## Active initiative
+
+- **[`docs/planning/access-memory-commerce-roadmap.md`](./docs/planning/access-memory-commerce-roadmap.md)** — canonical plan and status tracker for journal consent/memory, Blueprint access packaging, the paid Stelloquy sampler, honest preview positioning, funnel analytics, and Etsy artifact fulfillment. Read its **Next three actions**, active dispatch board, exclusive file locks, and tracker before working in any of those areas.
+
 ## What Kiaros is
 
 Kiaros (formerly "Cosmic Life Planner") is a personalised yearly planning system built on a user's real natal chart, their goals, and the actual astronomical weather of their year. Real ephemeris calculations feed a Claude-generated blueprint structured across 52 weeks / 12 months / 4 quarters, surfaced through a cosmic calendar, a daily tracker, a moon-phase-aware journal, quarterly reviews, and the Oracle chat.

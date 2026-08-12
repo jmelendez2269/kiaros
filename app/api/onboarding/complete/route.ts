@@ -7,16 +7,20 @@ import {
   type ProductEntitlementRecord,
 } from "@/lib/commerce/entitlements";
 
-export async function POST() {
+type CompleteOnboardingBody = {
+  stage?: "chart_foundation";
+};
+
+export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const body = (await req.json().catch(() => ({}))) as CompleteOnboardingBody;
   const admin = createAdminSupabase();
   const { data: profile, error } = await admin
     .from("user_profiles")
-    .update({ profile_setup_completed_at: new Date().toISOString() })
-    .eq("clerk_user_id", userId)
     .select("id")
+    .eq("clerk_user_id", userId)
     .single();
 
   if (error || !profile) {
@@ -32,6 +36,22 @@ export async function POST() {
     .neq("status", "revoked");
 
   const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[]);
+
+  // Paid customers continue into the intent/customization layers. Preview
+  // accounts stop after birth data so their sample is genuinely chart-only.
+  if (body.stage === "chart_foundation" && access.hasPlannerAccess) {
+    return NextResponse.json({ destination: "/onboarding/tradition" });
+  }
+
+  const { error: completionError } = await admin
+    .from("user_profiles")
+    .update({ profile_setup_completed_at: new Date().toISOString() })
+    .eq("id", profile.id);
+
+  if (completionError) {
+    return NextResponse.json({ error: "Profile setup could not be completed." }, { status: 500 });
+  }
+
   return NextResponse.json({
     destination: access.hasPlannerAccess
       ? "/onboarding/generating"

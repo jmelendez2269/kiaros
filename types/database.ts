@@ -996,6 +996,93 @@ export type Database = {
           },
         ]
       }
+      first_party_funnel_events: {
+        Row: {
+          access_plan: string | null
+          anonymous_id: string | null
+          campaign: string | null
+          converted_entitlement_id: string | null
+          entry_path: string | null
+          event_id: string
+          event_name: string
+          experiment_key: string | null
+          experiment_variant: string | null
+          id: string
+          medium: string | null
+          metadata: Json
+          occurred_at: string
+          product_tier: string | null
+          received_at: string
+          referrer_host: string | null
+          session_id: string | null
+          source: string | null
+          stripe_checkout_session_id: string | null
+          stripe_order_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_plan?: string | null
+          anonymous_id?: string | null
+          campaign?: string | null
+          converted_entitlement_id?: string | null
+          entry_path?: string | null
+          event_id: string
+          event_name: string
+          experiment_key?: string | null
+          experiment_variant?: string | null
+          id?: string
+          medium?: string | null
+          metadata?: Json
+          occurred_at: string
+          product_tier?: string | null
+          received_at?: string
+          referrer_host?: string | null
+          session_id?: string | null
+          source?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_order_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_plan?: string | null
+          anonymous_id?: string | null
+          campaign?: string | null
+          converted_entitlement_id?: string | null
+          entry_path?: string | null
+          event_id?: string
+          event_name?: string
+          experiment_key?: string | null
+          experiment_variant?: string | null
+          id?: string
+          medium?: string | null
+          metadata?: Json
+          occurred_at?: string
+          product_tier?: string | null
+          received_at?: string
+          referrer_host?: string | null
+          session_id?: string | null
+          source?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_order_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "first_party_funnel_events_converted_entitlement_id_fkey"
+            columns: ["converted_entitlement_id"]
+            isOneToOne: false
+            referencedRelation: "product_entitlements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "first_party_funnel_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_categories: {
         Row: {
           color_key: string | null
@@ -1048,9 +1135,13 @@ export type Database = {
           entry_date: string
           goal_tags: string[] | null
           id: string
+          include_in_insights: boolean
+          include_in_stelloquy: boolean
           is_ritual: boolean | null
           lunar_phase: string | null
           lunar_sign: string | null
+          memory_importance: number | null
+          memory_pinned: boolean
           mood_tag: string | null
           oracle_memory: boolean
           title: string | null
@@ -1065,9 +1156,13 @@ export type Database = {
           entry_date: string
           goal_tags?: string[] | null
           id?: string
+          include_in_insights?: boolean
+          include_in_stelloquy?: boolean
           is_ritual?: boolean | null
           lunar_phase?: string | null
           lunar_sign?: string | null
+          memory_importance?: number | null
+          memory_pinned?: boolean
           mood_tag?: string | null
           oracle_memory?: boolean
           title?: string | null
@@ -1082,9 +1177,13 @@ export type Database = {
           entry_date?: string
           goal_tags?: string[] | null
           id?: string
+          include_in_insights?: boolean
+          include_in_stelloquy?: boolean
           is_ritual?: boolean | null
           lunar_phase?: string | null
           lunar_sign?: string | null
+          memory_importance?: number | null
+          memory_pinned?: boolean
           mood_tag?: string | null
           oracle_memory?: boolean
           title?: string | null
@@ -1095,6 +1194,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "journal_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entry_consent_audit: {
+        Row: {
+          change_source: string
+          created_at: string
+          current_include_in_insights: boolean
+          current_include_in_stelloquy: boolean
+          current_memory_importance: number | null
+          current_memory_pinned: boolean
+          event_type: string
+          id: string
+          journal_entry_id: string
+          previous_include_in_insights: boolean | null
+          previous_include_in_stelloquy: boolean | null
+          previous_memory_importance: number | null
+          previous_memory_pinned: boolean | null
+          user_id: string
+        }
+        Insert: {
+          change_source: string
+          created_at?: string
+          current_include_in_insights: boolean
+          current_include_in_stelloquy: boolean
+          current_memory_importance?: number | null
+          current_memory_pinned: boolean
+          event_type: string
+          id?: string
+          journal_entry_id: string
+          previous_include_in_insights?: boolean | null
+          previous_include_in_stelloquy?: boolean | null
+          previous_memory_importance?: number | null
+          previous_memory_pinned?: boolean | null
+          user_id: string
+        }
+        Update: {
+          change_source?: string
+          created_at?: string
+          current_include_in_insights?: boolean
+          current_include_in_stelloquy?: boolean
+          current_memory_importance?: number | null
+          current_memory_pinned?: boolean
+          event_type?: string
+          id?: string
+          journal_entry_id?: string
+          previous_include_in_insights?: boolean | null
+          previous_include_in_stelloquy?: boolean | null
+          previous_memory_importance?: number | null
+          previous_memory_pinned?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entry_consent_audit_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entry_consent_audit_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
@@ -2097,6 +2262,10 @@ export type Database = {
     }
     Functions: {
       app_current_clerk_user_id: { Args: never; Returns: string }
+      link_first_party_funnel_identity: {
+        Args: { p_anonymous_id: string; p_user_id: string }
+        Returns: number
+      }
       increment_ai_usage: {
         Args: {
           p_cache_creation_tokens: number

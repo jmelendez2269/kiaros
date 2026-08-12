@@ -1,5 +1,7 @@
 # Kairos Etsy Listing Prep
 
+> **Superseded for new listings.** This document describes selling Kairos website access through Etsy and must not be used to publish new offers. As of 2026-08-06, new Etsy items must be complete standalone artifacts delivered through Etsy. Existing software-access orders remain a legacy support case. See [`docs/planning/access-memory-commerce-roadmap.md`](./planning/access-memory-commerce-roadmap.md), especially `DEC-06` and M7.
+
 This doc turns the current Kairos commerce and pricing decisions into Etsy-ready listing material.
 
 It is grounded in:

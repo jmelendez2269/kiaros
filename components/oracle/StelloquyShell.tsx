@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
 import { BRAND } from '@/lib/brand'
@@ -26,7 +26,8 @@ interface Props {
  */
 export function StelloquyShell({ today }: Props) {
   const pathname = usePathname()
-  const { open, closeDrawer: close, toggleDrawer: toggle } = useStelloquy()
+  const router = useRouter()
+  const { open, closeDrawer: close, toggleDrawer: toggle, hasOracleAccess } = useStelloquy()
 
   // ⌘K / Ctrl+K from anywhere. Skip when an input is focused so we don't
   // hijack the journal composer.
@@ -42,11 +43,15 @@ export function StelloquyShell({ today }: Props) {
         (target?.isContentEditable ?? false)
       if (editable) return
       e.preventDefault()
-      toggle()
+      if (hasOracleAccess) {
+        toggle()
+      } else {
+        router.push('/oracle')
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [toggle])
+  }, [hasOracleAccess, router, toggle])
 
   // Esc closes the drawer.
   useEffect(() => {
@@ -77,10 +82,10 @@ export function StelloquyShell({ today }: Props) {
       {showDock ? (
         <button
           type="button"
-          onClick={toggle}
-          aria-label={`Open ${BRAND.oracle}`}
-          aria-expanded={open}
-          aria-controls="stelloquy-drawer"
+          onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
+          aria-label={hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`}
+          aria-expanded={hasOracleAccess ? open : undefined}
+          aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
           style={{
             position: 'fixed',
             bottom: 22,
@@ -129,7 +134,7 @@ export function StelloquyShell({ today }: Props) {
         </button>
       ) : null}
 
-      {open ? (
+      {open && hasOracleAccess ? (
         <>
           <div
             onClick={close}

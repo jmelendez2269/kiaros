@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
@@ -63,7 +64,27 @@ export function JournalComposer({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
-  const { openDrawer } = useStelloquy()
+  const [lastSavedEntry, setLastSavedEntry] = useState<{ title: string | null; body: string } | null>(null)
+  const router = useRouter()
+  const { openDrawer, openWith, hasOracleAccess } = useStelloquy()
+
+  function handleOpenStelloquy() {
+    if (hasOracleAccess) {
+      openDrawer()
+    } else {
+      router.push('/oracle')
+    }
+  }
+
+  function handleAskAfterSaving() {
+    if (!lastSavedEntry) return
+    if (!hasOracleAccess) {
+      router.push('/oracle')
+      return
+    }
+    const heading = lastSavedEntry.title ? `"${lastSavedEntry.title}"` : 'this journal entry'
+    openWith(`I just saved ${heading} in my journal:\n\n${lastSavedEntry.body}\n\nWhat do you make of it?`)
+  }
 
   useEffect(() => {
     setEntryDate(todayISO())
@@ -127,6 +148,7 @@ export function JournalComposer({
           ? 'Saved. This entry is now part of Stelloquy memory.'
           : 'Saved. This entry can stay in your journal without being added to Stelloquy memory.'
       )
+      setLastSavedEntry({ title: title.trim() || null, body })
       setBody(initialPrompt ? `${initialPrompt}\n\n` : '')
       setTitle(initialPrompt ? truncate(initialPrompt, 120) : '')
       setIsRitual(Boolean(initialPrompt))
@@ -170,7 +192,7 @@ export function JournalComposer({
           </div>
           <button
             type="button"
-            onClick={openDrawer}
+            onClick={handleOpenStelloquy}
             className="inline-flex items-center rounded-xl border border-plum-400/30 bg-plum-400/10 px-4 py-2 text-sm text-plum-200 transition-colors hover:bg-plum-400/18"
           >
             Open Stelloquy
@@ -291,8 +313,10 @@ export function JournalComposer({
             </button>
             <button
               type="button"
-              onClick={openDrawer}
-              className="text-sm text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone"
+              onClick={handleAskAfterSaving}
+              disabled={!lastSavedEntry}
+              title={lastSavedEntry ? undefined : 'Save an entry first'}
+              className="text-sm text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
             >
               Ask Stelloquy after saving
             </button>

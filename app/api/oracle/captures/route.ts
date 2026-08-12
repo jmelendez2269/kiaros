@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { createServerSupabase } from '@/lib/supabase/server'
 import { tagCaptureInBackground } from '@/lib/ai/capture-topic-extractor'
+import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 const uiMessageSchema = z.object({
   id: z.string(),
@@ -44,6 +45,30 @@ export async function POST(req: Request) {
 
     if (!profile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
+
+    const { data: entitlements, error: entitlementsError } = await supabase
+      .from('product_entitlements')
+      .select(
+        'id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan'
+      )
+      .eq('user_id', profile.id)
+      .neq('status', 'revoked')
+
+    if (entitlementsError) {
+      return NextResponse.json({ error: entitlementsError.message }, { status: 500 })
+    }
+
+    const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[])
+    if (!access.hasOracleAccess) {
+      return NextResponse.json(
+        {
+          error: 'oracle_upgrade_required',
+          message: 'Stelloquy captures require an active Planner + Oracle plan.',
+          upgradeAvailable: true,
+        },
+        { status: 403 }
+      )
     }
 
     const { data, error } = await supabase

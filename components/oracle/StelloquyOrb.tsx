@@ -48,7 +48,7 @@ export function StelloquyOrb({
       role={ariaLabel ? 'img' : undefined}
       aria-label={ariaLabel}
       aria-hidden={ariaLabel ? undefined : true}
-      className={className}
+      className={['stelloquy-orb', className].filter(Boolean).join(' ')}
       style={{
         display: 'inline-block',
         width: size,

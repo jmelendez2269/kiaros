@@ -167,7 +167,7 @@ export function PublicPricingPage({
   const navLinks: { href: string; label: string }[] = [
     { href: "#how-it-works", label: "How it works" },
     { href: "#demo", label: "Demo" },
-    { href: "#oracle", label: "Oracle" },
+    { href: "/stelloquy", label: "Stelloquy" },
     { href: "#tiers", label: "Pricing" },
   ];
 
@@ -799,7 +799,7 @@ export function PublicPricingPage({
                   {[
                     {
                       label: "Your natal chart + current transits",
-                      detail: "Every active planetary aspect, retrograde period, and timing window for today — drawn from real ephemeris data calculated for your birth placement.",
+                      detail: "The most relevant active aspects, retrogrades, and timing signals for today — drawn from real ephemeris data calculated against your natal chart.",
                     },
                     {
                       label: "Your goals and year vision",
@@ -807,15 +807,15 @@ export function PublicPricingPage({
                     },
                     {
                       label: "Journal entries you've added to memory",
-                      detail: "You control what the Oracle knows from your journal. Mark an entry and it becomes available context. The Oracle won't reference it without your permission.",
+                      detail: "You control which journal entries become direct memory. Mark an entry and its text becomes available context; leave it unmarked and its text is not carried into Stelloquy.",
                     },
                     {
                       label: "Your personal sky patterns",
                       detail: "Planner + Oracle tracks the lunar phase, moon sign, retrogrades, and transit-to-natal aspects around each journal entry, then turns repeated themes into compact pattern insights.",
                     },
                     {
-                      label: "A smarter next-year calendar",
-                      detail: "The more you journal, the more evidence Kairos has about what certain skies tend to bring up for you, so the next calendar can be shaped by your actual lived history.",
+                      label: "Context that can inform future planning",
+                      detail: "Recognized journal patterns and captures you deliberately route to the Planner can inform newly generated blueprint and calendar guidance.",
                     },
                   ].map(({ label, detail }) => (
                     <li key={label} className="flex gap-3">
@@ -831,6 +831,12 @@ export function PublicPricingPage({
                   The result is a conversation that doesn&apos;t need you to explain your
                   situation from scratch. It already knows. You just ask.
                 </p>
+                <Link
+                  href="/stelloquy"
+                  className="inline-flex min-h-11 items-center rounded-full border border-leather-400/45 px-5 text-sm font-semibold text-bone transition-colors hover:border-leather-300/70 hover:text-leather-200"
+                >
+                  Explore Stelloquy →
+                </Link>
               </div>
             </div>
 
@@ -958,16 +964,14 @@ export function PublicPricingPage({
               </h2>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
                 Kairos is built to guide you throughout the year, so the pricing can be flexible
-                too: monthly for accessibility, annual for the best value, and Etsy annual access
-                for people who prefer a marketplace checkout. Oracle intelligence is tied to the
-                Planner + Oracle tier no matter which checkout path you use.
+                too: monthly for accessibility and annual for the best value. Stelloquy access is
+                tied to the Planner + Oracle tier whichever direct billing cadence you choose.
               </p>
             </div>
             <div className="rounded-[1.1rem] border border-leather-500/25 bg-leather-500/10 px-5 py-4">
               <p className="text-sm font-semibold text-bone">Current checkout status</p>
               <p className="mt-2 text-sm leading-7 text-bone-muted">
-                Direct monthly subscriptions and annual checkout are live now. Etsy annual access
-                still activates through the marketplace claim flow.
+                Direct monthly subscriptions and annual checkout are available now.
               </p>
             </div>
           </div>
@@ -977,7 +981,6 @@ export function PublicPricingPage({
         <section id="tiers" className="mt-8 scroll-mt-24 grid gap-5 lg:grid-cols-2">
           {COMMERCE_TIERS.map((tier) => {
             const annualSavings = tier.monthlyPriceCents * 12 - tier.annualPriceCents;
-            const etsyDelta = tier.etsyPriceCents - tier.annualPriceCents;
             const isPremium = tier.oracleEnabled;
 
             return (
@@ -1003,7 +1006,7 @@ export function PublicPricingPage({
                   ) : null}
                 </div>
 
-                <div className="mt-6 grid gap-3 sm:grid-cols-3 sm:items-stretch">
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 sm:items-stretch">
                   <div className="py-3">
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/70">
                       Monthly
@@ -1027,14 +1030,6 @@ export function PublicPricingPage({
                     </p>
                     <p className="text-sm font-medium text-leather-200">
                       Save {formatUsd(annualSavings)} per year
-                    </p>
-                  </div>
-                  <div className="py-3 text-sm leading-6 text-bone-muted">
-                    <p className="font-medium text-bone-muted">
-                      Etsy annual: {formatUsd(tier.etsyPriceCents)}
-                    </p>
-                    <p className="text-bone-muted/70">
-                      Marketplace convenience adds {formatUsd(etsyDelta)}
                     </p>
                   </div>
                 </div>
@@ -1075,12 +1070,6 @@ export function PublicPricingPage({
                       Create account to choose checkout
                     </Link>
                   )}
-                  <Link
-                    href="/activate"
-                    className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
-                  >
-                    Activate Etsy purchase
-                  </Link>
                 </div>
               </article>
             );
@@ -1160,40 +1149,20 @@ export function PublicPricingPage({
             </article>
 
             <article className="shell-panel p-6 md:p-7">
-              <p className="shell-kicker mb-3">Direct vs Etsy</p>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="shell-panel-inline px-5 py-4">
-                  <p className="text-sm font-semibold text-bone">Buy direct if you want</p>
-                  <ul className="mt-3 space-y-2 text-sm leading-7 text-bone-muted">
-                    {[
-                      "The best annual value",
-                      "A future monthly access path",
-                      "Immediate Stripe checkout and activation",
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <CheckIcon />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="shell-panel-inline px-5 py-4">
-                  <p className="text-sm font-semibold text-bone">Choose Etsy if you want</p>
-                  <ul className="mt-3 space-y-2 text-sm leading-7 text-bone-muted">
-                    {[
-                      "Marketplace familiarity and gifting convenience",
-                      "A one-time annual purchase only",
-                      "The same purchased tier once imported and activated",
-                      "Oracle intelligence when the Etsy purchase is Planner + Oracle",
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <CheckIcon />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              <p className="shell-kicker mb-3">A clear direct purchase</p>
+              <h2 className="shell-section-title">Choose the cadence that fits your year.</h2>
+              <ul className="mt-5 space-y-2 text-sm leading-7 text-bone-muted">
+                {[
+                  "Monthly access for a smaller initial commitment",
+                  "Annual access for the complete year and best value",
+                  "Immediate, secure checkout through Kairos",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <CheckIcon />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </article>
           </section>
         ) : (
@@ -1237,7 +1206,7 @@ export function PublicPricingPage({
               <p className="shell-eyebrow mb-1">Product</p>
               <Link href="#how-it-works" className="text-bone-muted transition-colors hover:text-bone">How it works</Link>
               <Link href="#demo" className="text-bone-muted transition-colors hover:text-bone">Demo</Link>
-              <Link href="#oracle" className="text-bone-muted transition-colors hover:text-bone">Oracle</Link>
+              <Link href="/stelloquy" className="text-bone-muted transition-colors hover:text-bone">Stelloquy</Link>
               <Link href="#tiers" className="text-bone-muted transition-colors hover:text-bone">Pricing</Link>
             </div>
             <div className="flex flex-col gap-2">
@@ -1250,7 +1219,6 @@ export function PublicPricingPage({
                   <Link href="/sign-up" className="text-bone-muted transition-colors hover:text-bone">Create account</Link>
                 </>
               )}
-              <Link href="/activate" className="text-bone-muted transition-colors hover:text-bone">Activate Etsy purchase</Link>
             </div>
             <div className="flex flex-col gap-2">
               <p className="shell-eyebrow mb-1">Legal</p>

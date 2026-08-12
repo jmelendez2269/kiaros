@@ -54,7 +54,7 @@ const INSTRUMENTS: Array<{
 }> = [
   { glyph: "☉", name: "Blueprint", body: "Your full year, generated once from your chart — 52 weeks, 12 months, 4 quarters." },
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
-  { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you told it last time." },
+  { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
   { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. Patterns surface on their own, over time." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
   {
@@ -101,10 +101,10 @@ function NavBar() {
         </div>
         <nav className="hidden items-center gap-7 font-almanac-mono text-[0.72rem] uppercase tracking-[0.16em] text-almanac-ink-dim md:flex">
           <Link href="#instruments" className="transition-colors hover:text-almanac-ink">Instruments</Link>
-          <Link href="#oracle" className="transition-colors hover:text-almanac-ink">Oracle</Link>
+          <Link href="/stelloquy" className="transition-colors hover:text-almanac-ink">Stelloquy</Link>
           <Link href="#pricing" className="transition-colors hover:text-almanac-ink">Pricing</Link>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/sign-in"
             className="inline-flex min-h-11 items-center whitespace-nowrap font-almanac-mono text-[0.72rem] uppercase tracking-[0.16em] text-almanac-ink-dim transition-colors hover:text-almanac-ink"
@@ -169,10 +169,10 @@ function Hero() {
               Plan the next 12 months
             </Link>
             <Link
-              href="#oracle"
+              href="/stelloquy"
               className="rounded-full border border-almanac-line-hi px-6 py-3 text-sm font-medium text-almanac-ink transition-colors hover:border-[rgba(169,138,239,0.6)] hover:text-almanac-copper-hi"
             >
-              See how Kairos works &rarr;
+              Meet Stelloquy &rarr;
             </Link>
           </div>
         </div>
@@ -335,8 +335,14 @@ function OracleDeepDive() {
           <ul className="mt-6 space-y-3 text-[0.9rem] leading-6 text-almanac-ink-soft">
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Grounded in your actual transits and chart placements.</li>
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Five interpretive lenses — evolutionary, karmic, psychological, traditional, synthesis.</li>
-            <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Save anything that matters; it feeds your Insights map and future guidance.</li>
+            <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Capture a line or full exchange; you choose whether it feeds Insights, planning, or both.</li>
           </ul>
+          <Link
+            href="/stelloquy"
+            className="mt-7 inline-flex min-h-11 items-center rounded-full border border-[rgba(169,138,239,0.5)] px-5 text-sm font-medium text-almanac-ink transition-colors hover:bg-[rgba(112,75,210,0.16)] hover:text-almanac-copper-hi"
+          >
+            Explore Stelloquy &rarr;
+          </Link>
         </div>
 
         <div className="rounded-2xl border border-almanac-line-hi bg-[rgba(10,12,20,0.8)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] md:p-7">
@@ -498,7 +504,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
                   href="/pricing"
                   className="text-sm text-almanac-ink-soft underline decoration-almanac-line-hi underline-offset-4 transition-colors hover:text-almanac-ink"
                 >
-                  Full comparison + Etsy access
+                  Full plan comparison
                 </Link>
               </div>
             </div>
@@ -520,10 +526,10 @@ function MarketingFooter() {
           </span>
         </div>
         <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.7rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+          <Link href="/stelloquy" className="transition-colors hover:text-almanac-ink">Stelloquy</Link>
           <Link href="/contact" className="transition-colors hover:text-almanac-ink">Contact</Link>
           <Link href="/privacy" className="transition-colors hover:text-almanac-ink">Privacy</Link>
           <Link href="/terms" className="transition-colors hover:text-almanac-ink">Terms</Link>
-          <Link href="/activate" className="transition-colors hover:text-almanac-ink">Activate Etsy purchase</Link>
         </nav>
         <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.12em] text-[rgba(110,109,124,0.7)]">
           &copy; {CURRENT_PLANNER_YEAR} {BRAND.product}

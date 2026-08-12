@@ -10,7 +10,7 @@ interface Props {
   hasOracleAccess: boolean
   // Visual label inside the button, e.g. "this placement" → renders
   // "Ask Oracle about this placement". Keep it short. Also used as the
-  // overlay header for the free-tier one-shot reading.
+  // overlay header for a future paid sampler reading.
   label: string
   // Visual size — tight chip on signal cards, regular button elsewhere.
   size?: 'chip' | 'default'
@@ -57,7 +57,7 @@ export function AskOracleButton({ prompt, hasOracleAccess, label, size = 'defaul
       openWith(prompt)
       return
     }
-    void streamExplain()
+    window.location.assign('/oracle')
   }
 
   async function streamExplain() {

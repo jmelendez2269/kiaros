@@ -65,8 +65,9 @@ export default function GeneratingWeekPage() {
           <p className="shell-kicker">Your personal week</p>
           <h2 className="mt-3 font-serif text-3xl text-bone">Looking at the seven days ahead</h2>
           <p className="mx-auto mt-4 max-w-md leading-7 text-bone-muted">
-            Kairos is bringing together the intentions you named, your personal timing, and the
-            changing sky of this week. This usually takes less than a minute.
+            Kairos is bringing together your natal chart and the changing sky of this week. Your
+            Blueprint, Life Areas, and Goals remain part of the paid Planner. This usually takes
+            less than a minute.
           </p>
         </div>
         <div className="mx-auto h-1.5 max-w-xs overflow-hidden rounded-full bg-stone-900">

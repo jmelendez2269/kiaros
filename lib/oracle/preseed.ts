@@ -4,13 +4,10 @@
  * Shared helpers for "Ask Oracle about this …" deep-links on the dashboard
  * and Sky Portrait.
  *
- * Two transports depending on entitlement:
- *  - Planner + Oracle users: we write the pre-seed prompt to sessionStorage
- *    and navigate to /oracle. The chat page consumes it on mount and
- *    dispatches it as the first user message.
- *  - Planner-only users: the same prompt is POSTed to /api/oracle/explain
- *    inline (no chat back-and-forth) so non-Oracle subscribers still get
- *    synthesis for the surface they clicked. See ORACLE_EXPLAIN_MONTHLY_LIMIT.
+ * Planner + Oracle users write the pre-seed prompt to sessionStorage. The
+ * conversation drawer consumes it and dispatches it as the first user
+ * message. Other users are sent to the paid upgrade state; a future sampler
+ * must be backed by a separate purchased-credit entitlement.
  *
  * The system prompt already carries the full chart + transits, so these
  * builders only need to identify *which* placement / transit / signal the

@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { Mail } from "lucide-react";
 
 const CONTACT_EMAILS = [
   {
     label: "Support",
     email: "support@kairosplanner.xyz",
-    body: "Account, checkout, activation, and planner access help.",
+    body: "Account, checkout, planner access, and legacy marketplace-order help.",
   },
   {
     label: "Privacy",
@@ -21,7 +20,7 @@ const CONTACT_EMAILS = [
 
 export const metadata = {
   title: "Contact | Kairos",
-  description: "Reach Kairos support for account, planner, checkout, or Etsy activation help.",
+  description: "Reach Kairos support for account, planner, checkout, or legacy marketplace-order help.",
 };
 
 export default function ContactPage() {
@@ -32,8 +31,8 @@ export default function ContactPage() {
           <p className="shell-kicker mb-4">Contact</p>
           <h1 className="shell-hero-title max-w-3xl">Need help with Kairos?</h1>
           <p className="shell-prose-lead mt-4 max-w-3xl">
-            For account questions, checkout issues, Etsy activation help, or anything that feels
-            stuck, send a note and we&apos;ll help you get settled.
+            For account questions, checkout issues, legacy marketplace-order help, or anything
+            that feels stuck, send a note and we&apos;ll help you get settled.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -51,15 +50,6 @@ export default function ContactPage() {
                 <span className="mt-2 block text-sm leading-6 text-bone-muted">{item.body}</span>
               </a>
             ))}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/activate"
-              className="inline-flex w-fit items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone transition-colors hover:border-leather-300/60"
-            >
-              Activate Etsy purchase
-            </Link>
           </div>
         </section>
       </div>

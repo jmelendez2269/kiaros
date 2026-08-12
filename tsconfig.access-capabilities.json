@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "lib/commerce/capabilities.ts",
+    "lib/commerce/entitlements.ts",
+    "lib/commerce/access.ts",
+    "lib/commerce/get-access-window.ts",
+    "scripts/check-access-capabilities.mts"
+  ]
+}

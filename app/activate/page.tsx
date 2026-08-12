@@ -1,6 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
+import type { Metadata } from "next";
 
 import { ActivationClaimForm } from "@/components/commerce/ActivationClaimForm";
+
+export const metadata: Metadata = {
+  title: "Legacy Etsy order support | Kairos",
+  robots: { index: false, follow: false },
+};
 
 interface Props {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

@@ -67,10 +67,10 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
                 </Link>
               ) : result.profileSetupComplete ? (
                 <Link
-                  href="/onboarding/generating"
+                  href="/onboarding/tradition"
                   className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
                 >
-                  Create my full blueprint
+                  Add my Life Areas and Goals
                 </Link>
               ) : (
                 <>

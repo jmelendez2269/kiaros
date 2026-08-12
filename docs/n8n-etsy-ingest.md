@@ -1,5 +1,7 @@
 # n8n Etsy Ingest
 
+> **Legacy activation ingest — do not connect new artifact listings to software entitlements.** This workflow may remain available for already-paid legacy orders, but it must be refactored before use with standalone Etsy artifacts. See [`docs/planning/access-memory-commerce-roadmap.md`](./planning/access-memory-commerce-roadmap.md), especially `DEC-06`, `SAFE-01`, and M7.
+
 This workflow is the near-real-time fallback for Etsy order activation without requiring a direct Etsy app integration inside Kiaros.
 
 ## Goal

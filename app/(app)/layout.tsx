@@ -88,15 +88,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-amber-500/40 bg-amber-500/10 px-5 py-3.5">
                     <p className="text-sm text-bone">
                       Your planner access isn&apos;t active yet.{' '}
-                      <span className="text-bone-muted">Purchase a plan to get started, or finish activating an Etsy order.</span>
+                      <span className="text-bone-muted">Purchase a plan to get started.</span>
                     </p>
                     <div className="flex flex-wrap gap-2 shrink-0">
-                      <Link
-                        href="/activate"
-                        className="inline-flex items-center rounded-full border border-amber-400/50 px-4 py-2 text-xs font-semibold text-bone shrink-0"
-                      >
-                        Activate Etsy order →
-                      </Link>
                       <Link
                         href="/pricing"
                         className="inline-flex items-center rounded-full bg-leather-300 px-4 py-2 text-xs font-semibold text-stone-950 shrink-0"

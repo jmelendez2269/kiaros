@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { K } from './tokens'
 import { StarField } from './StarField'
 
-type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal'
+type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal' | 'stelloquy'
 type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal'>
 type SubNavItem = { label: string; href: string; hint: string }
 
@@ -88,6 +88,14 @@ const NAV: ReadonlyArray<{
       { label: 'Patterns', href: '/insights/map', hint: 'entries · captures · mind map' },
     ],
   },
+  {
+    key: 'stelloquy',
+    label: BRAND.oracle,
+    hint: 'ongoing conversation',
+    glyph: '✦',
+    tone: K.kairosHi,
+    href: '/oracle',
+  },
 ]
 
 function splitSubHref(href: string): { pathname: string; hash: string } {
@@ -120,6 +128,9 @@ function isSectionActive(key: NavKey, pathname: string, view: string | null = nu
       pathname.startsWith('/curriculum') ||
       pathname.startsWith('/self')
     )
+  }
+  if (key === 'stelloquy') {
+    return pathname.startsWith('/oracle')
   }
   return (
     pathname.startsWith('/journal') ||

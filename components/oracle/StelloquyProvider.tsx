@@ -21,7 +21,7 @@ interface StelloquyContextValue {
    *  already mounted (no remount → useEffect with empty deps won't fire). */
   preseedNonce: number
   /** Entitlement — true for Planner+Oracle subscribers. Components use this
-   *  to decide between drawer (subscriber) and one-shot inline reading (free). */
+   *  to decide between the conversation drawer and the paid upgrade state. */
   hasOracleAccess: boolean
 }
 

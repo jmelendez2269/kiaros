@@ -131,11 +131,12 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <section className="shell-panel-hero p-8 md:p-10">
-        <p className="shell-kicker mb-4">Etsy Activation</p>
-        <h1 className="shell-hero-title max-w-2xl">Unlock your {BRAND.product} planner</h1>
+        <p className="shell-kicker mb-4">Legacy Etsy order support</p>
+        <h1 className="shell-hero-title max-w-2xl">Activate a prior {BRAND.product} purchase</h1>
         <p className="shell-prose-lead mt-4">
-          Your Etsy purchase activates the {BRAND.product} tier you bought. Verify your order below, then
-          create your account to begin with a planner experience that starts from where you are now.
+          This support path is only for customers who previously bought Kairos software access on
+          Etsy. Verify that earlier order below, then create or sign in to the account that should
+          receive the purchased access.
         </p>
 
         {!claimReady ? (

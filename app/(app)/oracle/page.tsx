@@ -11,13 +11,13 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
       <section className="shell-panel-hero w-full p-8 md:p-10">
         <p className="shell-kicker mb-4">Stelloquy · steh-LOH-kwee</p>
         <h1 className="shell-hero-title max-w-3xl">
-          Unlock Stelloquy&apos;s memory and pattern layer.
+          Turn a Stelloquy reading into a conversation.
         </h1>
         <p className="shell-prose-lead mt-4 max-w-3xl">
-          Stelloquy is the voice woven through {BRAND.product} — a conversation with the stars, grounded in
-          your chart, the current sky, your marked journal memory, and the recurring astrological
-          patterns we observe across your entries. Included with an active Planner + Oracle
-          subscription or Etsy Planner + Oracle activation.
+          Stelloquy is the voice woven through {BRAND.product} — an ongoing conversation grounded
+          in your chart, the current sky, your goals and blueprint, and the memory you choose to
+          carry forward. Follow up, refine the question, and capture what matters with active
+          Planner + Oracle access.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -47,10 +47,10 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
             See Planner + Oracle
           </Link>
           <Link
-            href="/journal"
+            href="/stelloquy"
             className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
           >
-            Go to journal
+            See what makes Stelloquy different
           </Link>
         </div>
       </section>

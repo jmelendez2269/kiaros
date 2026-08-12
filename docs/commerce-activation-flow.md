@@ -1,5 +1,7 @@
 # Kiaros Commerce Activation Flow
 
+> **Legacy software-access flow — do not use for new Etsy listings.** As of 2026-08-06, the active direction is to sell complete standalone artifacts on Etsy, not Kairos software access. Preserve this flow only for already-paid legacy orders. See [`docs/planning/access-memory-commerce-roadmap.md`](./planning/access-memory-commerce-roadmap.md), especially `DEC-06` and M7.
+
 This doc captures the first launch-ready version of the Etsy-to-Kiaros redemption experience, along with the customer-facing copy for the three core artifacts.
 
 ## Positioning Principles

@@ -2,6 +2,11 @@ import "server-only";
 
 import type { AccessPlan } from "@/lib/commerce/config";
 import type { Tables } from "@/types/database";
+import {
+  resolveAccessCapabilities,
+  resolveCapabilityEntitlementState,
+  type AccessCapabilities,
+} from "./capabilities";
 
 export type ProductEntitlementRow = Tables<"product_entitlements">;
 export type ProductEntitlementRecord = ProductEntitlementRow & { access_plan?: string | null };
@@ -28,6 +33,7 @@ export interface ResolvedEntitlement extends ProductEntitlementRow {
 export interface UserAccessSnapshot {
   entitlements: ResolvedEntitlement[];
   activeEntitlements: ResolvedEntitlement[];
+  capabilities: AccessCapabilities;
   hasPlannerAccess: boolean;
   hasReadOnlyPlannerAccess: boolean;
   hasOracleAccess: boolean;
@@ -69,54 +75,69 @@ export function resolveEntitlementAccessState(
   },
   asOf: Date | string = new Date()
 ): EntitlementAccessState {
-  if (entitlement.status === "revoked") {
-    return "revoked";
-  }
-
-  const today = toISODate(asOf);
   const accessPlan = getAccessPlan(entitlement.access_plan);
-
-  if (today >= entitlement.starts_at && today <= entitlement.ends_at) {
-    return "active";
-  }
-
-  if (today > entitlement.ends_at) {
-    return accessPlan === "yearly" ? "read_only" : "expired";
-  }
-
-  return "expired";
+  return resolveCapabilityEntitlementState(
+    {
+      accessPlan,
+      endsAt: entitlement.ends_at,
+      startsAt: entitlement.starts_at,
+      status: entitlement.status,
+    },
+    asOf,
+  );
 }
 
-export function resolveEntitlement(entitlement: ProductEntitlementRecord): ResolvedEntitlement {
+export function resolveEntitlement(
+  entitlement: ProductEntitlementRecord,
+  asOf: Date | string = new Date(),
+): ResolvedEntitlement {
   const accessPlan = getAccessPlan(entitlement.access_plan);
 
   return {
     ...entitlement,
     accessPlan,
-    accessState: resolveEntitlementAccessState({
-      status: entitlement.status,
-      starts_at: entitlement.starts_at,
-      ends_at: entitlement.ends_at,
-      access_plan: accessPlan,
-    }),
+    accessState: resolveEntitlementAccessState(
+      {
+        status: entitlement.status,
+        starts_at: entitlement.starts_at,
+        ends_at: entitlement.ends_at,
+        access_plan: accessPlan,
+      },
+      asOf,
+    ),
   };
 }
 
-export function resolveUserAccess(entitlements: ProductEntitlementRecord[]): UserAccessSnapshot {
+export function resolveUserAccess(
+  entitlements: ProductEntitlementRecord[],
+  asOf: Date | string = new Date(),
+): UserAccessSnapshot {
   const resolved = entitlements
-    .map(resolveEntitlement)
+    .map((entitlement) => resolveEntitlement(entitlement, asOf))
     .sort((left, right) => right.ends_at.localeCompare(left.ends_at));
 
   const activeEntitlements = resolved.filter((entitlement) => entitlement.accessState === "active");
+  const capabilities = resolveAccessCapabilities({
+    asOf,
+    authenticated: true,
+    entitlements: entitlements.map((entitlement) => ({
+      accessPlan: getAccessPlan(entitlement.access_plan),
+      endsAt: entitlement.ends_at,
+      oracleEnabled: entitlement.oracle_enabled,
+      plannerYear: entitlement.planner_year,
+      source: entitlement.source,
+      startsAt: entitlement.starts_at,
+      status: entitlement.status,
+    })),
+  });
 
   return {
     entitlements: resolved,
     activeEntitlements,
-    hasPlannerAccess: activeEntitlements.length > 0,
-    hasReadOnlyPlannerAccess:
-      activeEntitlements.length === 0 &&
-      resolved.some((entitlement) => entitlement.accessState === "read_only"),
-    hasOracleAccess: activeEntitlements.some((entitlement) => entitlement.oracle_enabled),
+    capabilities,
+    hasPlannerAccess: capabilities.canUsePlanner,
+    hasReadOnlyPlannerAccess: capabilities.accessState === "read_only_annual",
+    hasOracleAccess: capabilities.canUseStelloquySubscription,
   };
 }
 

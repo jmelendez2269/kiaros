@@ -3,15 +3,8 @@ import { createAdminSupabase } from "@/lib/supabase/admin"
 
 export const ORACLE_MONTHLY_MESSAGE_LIMIT = 200
 
-// One-shot inline syntheses for Planner-only users (no Oracle chat
-// entitlement). Hit from "Ask Oracle about this" deep-links on the
-// dashboard / Sky Portrait — single Claude call, no back-and-forth.
-// Tune from `ai_usage` after a few weeks of real traffic.
-export const ORACLE_EXPLAIN_MONTHLY_LIMIT = 20
-
 export type AIFeature =
   | "oracle"
-  | "oracle_explain"
   | "blueprint"
   | "curriculum"
   | "curriculum_session"

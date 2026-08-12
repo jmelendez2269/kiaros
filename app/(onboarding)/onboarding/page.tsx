@@ -170,7 +170,19 @@ export default function OnboardingBirthPage() {
       return;
     }
 
-    router.push("/onboarding/tradition");
+    const nextRes = await fetch("/api/onboarding/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "chart_foundation" }),
+    });
+
+    if (!nextRes.ok) {
+      setSaveError("Your chart was saved, but we couldn't open the next step. Please try again.");
+      return;
+    }
+
+    const { destination } = (await nextRes.json()) as { destination: string };
+    router.push(destination);
   };
 
   return (
@@ -184,11 +196,12 @@ export default function OnboardingBirthPage() {
           what allows it to create something more personal than a generic planner or astrology app.
         </p>
         <p className="text-sm italic text-bone-muted/80">
-          Your answers are private and used only to generate your personal blueprint.
+          Your birth details calculate your chart and personal preview. If you upgrade, that same
+          foundation carries into your Blueprint and Planner.
         </p>
         <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
           <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
-          Builds Stelloquy&apos;s permanent chart foundation
+          Builds your permanent chart foundation
         </div>
       </div>
 

@@ -136,9 +136,10 @@ export default async function PreviewPage() {
               The full year reveals the larger pattern.
             </h2>
             <p className="mt-5 text-base leading-7 text-almanac-ink-dim">
-              Unlock today to see all 52 weeks, twelve monthly arcs, four quarterly chapters,
-              timing windows, the complete planner, and—if you choose Oracle—Stelloquy in conversation
-              with the whole system.
+              Your Blueprint is not included in this preview. Upgrading unlocks all 52 weeks,
+              twelve monthly arcs, four quarterly chapters, timing windows, and the complete
+              planner—where your Life Areas and Goals let you further customize the year. If you
+              choose Planner + Oracle, Stelloquy can work in conversation with the whole system.
             </p>
           </div>
 

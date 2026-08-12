@@ -63,20 +63,11 @@ export async function runWeekPreviewGeneration(input: {
   const { startDate, endDate, year } = getUtcWeek();
 
   try {
-    const [{ data: profile, error: profileError }, { data: goals }] = await Promise.all([
-      admin
-        .from("user_profiles")
-        .select(
-          "display_name, natal_chart, year_vision, word_of_year, what_to_release, tradition"
-        )
-        .eq("id", input.userId)
-        .single(),
-      admin
-        .from("goal_categories")
-        .select("name, description, success, sort_order")
-        .eq("user_id", input.userId)
-        .order("sort_order", { ascending: true }),
-    ]);
+    const { data: profile, error: profileError } = await admin
+      .from("user_profiles")
+      .select("display_name, natal_chart, tradition")
+      .eq("id", input.userId)
+      .single();
 
     if (profileError || !profile?.natal_chart) {
       throw new Error("Complete birth details are required before generating a personal week.");
@@ -107,14 +98,11 @@ export async function runWeekPreviewGeneration(input: {
 
     const prompt = `Create a spacious, grounded personal preview for ${profile.display_name ?? "this person"} covering ${startDate} through ${endDate}.
 
+This is a birth-chart-and-live-sky preview only, not a Blueprint. Do not infer or invent the person's goals, priority Life Areas, year purpose, quarterly arc, or full-year plan.
+
 This is an invitation, not an instruction. Avoid certainty, commands, identity claims, productivity language, and promises. Prefer "may," "might," "you could notice," and "an invitation to." Keep the astrology specific but readable.
 
 Interpretive lens: ${profile.tradition ?? "synthesis"}
-Year vision: ${profile.year_vision ?? "not provided"}
-Word of the year: ${profile.word_of_year ?? "not chosen"}
-What they are releasing: ${profile.what_to_release ?? "not provided"}
-Focus areas:
-${(goals ?? []).map((goal) => `- ${goal.name}: ${goal.description ?? ""}`).join("\n") || "- not provided"}
 
 Natal foundation:
 ${compactNatal(natalChart)}

@@ -7,7 +7,7 @@ import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce
 import { createServerSupabase } from '@/lib/supabase/server'
 import { buildOracleSystemPromptSegments } from '@/lib/ai/oracle-system-prompt'
 import {
-  ORACLE_EXPLAIN_MONTHLY_LIMIT,
+  ORACLE_MONTHLY_MESSAGE_LIMIT,
   getMonthlyUsage,
   getUserProfileId,
   recordUsage,
@@ -21,10 +21,10 @@ const EXPLAIN_MODEL_ID = 'claude-sonnet-4-6'
 const MAX_PROMPT_CHARS = 1200
 const MAX_OUTPUT_TOKENS = 600
 
-// One-shot inline synthesis for Planner-only users — the fallback when
-// they click "Ask Oracle about this …" on the dashboard. Returns a plain
-// text stream (no chat back-and-forth). Planner+Oracle users go to the
-// real chat at /oracle instead and never hit this endpoint.
+// One-shot inline synthesis for active Planner + Oracle customers when
+// they ask about a supported planner surface. This shares the subscriber
+// allowance with the full conversation route; signed-in status alone is
+// never sufficient.
 
 function getErrorMessage(error: unknown): string {
   if (error == null) return 'unknown error'
@@ -99,21 +99,31 @@ export async function POST(req: Request) {
         .neq('status', 'revoked'),
     ])
 
-    // Inline syntheses are open to any signed-in user — the upgrade ask
-    // sits at the *end* of the response ("Continue in Oracle →") and on
-    // the 429 path, not the entry point. Entitlement is only consulted
-    // here to decide whether the 429 upgrade CTA should fire.
+    // Inline syntheses are restricted to active Planner + Oracle customers.
+    // A future paid sampler must use its own explicit credit entitlement;
+    // being signed in (or owning the core Planner) is not sufficient.
     const access = resolveUserAccess((entitlementsRes.data ?? []) as ProductEntitlementRecord[])
 
-    const usage = await getMonthlyUsage(profileId, 'oracle_explain')
-    if (usage.messageCount >= ORACLE_EXPLAIN_MONTHLY_LIMIT) {
+    if (!access.hasOracleAccess) {
+      return NextResponse.json(
+        {
+          error: 'oracle_upgrade_required',
+          message: 'Stelloquy is available with an active Planner + Oracle plan.',
+          upgradeAvailable: true,
+        },
+        { status: 403 }
+      )
+    }
+
+    const usage = await getMonthlyUsage(profileId, 'oracle')
+    if (usage.messageCount >= ORACLE_MONTHLY_MESSAGE_LIMIT) {
       return NextResponse.json(
         {
           error: 'monthly_limit_reached',
-          message: `You've used this month's ${ORACLE_EXPLAIN_MONTHLY_LIMIT} inline Stelloquy questions. Upgrade to Planner + Oracle for unlimited conversation, or wait until the first of next month.`,
-          limit: ORACLE_EXPLAIN_MONTHLY_LIMIT,
+          message: `You've used this month's ${ORACLE_MONTHLY_MESSAGE_LIMIT} Stelloquy messages. Your allowance resets on the first of next month.`,
+          limit: ORACLE_MONTHLY_MESSAGE_LIMIT,
           used: usage.messageCount,
-          upgradeAvailable: !access.hasOracleAccess,
+          upgradeAvailable: false,
         },
         { status: 429 }
       )
@@ -187,7 +197,7 @@ export async function POST(req: Request) {
 
         await recordUsage({
           userId: profileId,
-          feature: 'oracle_explain',
+          feature: 'oracle',
           model: EXPLAIN_MODEL_ID,
           messages: 1,
           inputTokens: finalUsage.inputTokens ?? 0,
