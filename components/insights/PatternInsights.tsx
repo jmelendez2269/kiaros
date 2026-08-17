@@ -1,4 +1,8 @@
 import Link from 'next/link'
+import {
+  ESTABLISHED_PATTERN_MIN_SAMPLE,
+  formatPatternLabel,
+} from '@/lib/journal/pattern-discoveries'
 import type { Json, Tables } from '@/types/database'
 
 export type PatternRow = Pick<
@@ -39,17 +43,8 @@ const TYPE_LABEL: Record<PatternType, string> = {
  * behind it. Everything thinner collapses into a one-line row so a handful of
  * two-entry coincidences can't crowd out a real signal.
  */
-const FEATURE_MIN_SAMPLE = 4
 const FEATURE_MIN_CONFIDENCE = 0.5
 const MAX_FEATURED = 2
-
-function patternLabel(type: string, key: string): string {
-  if (type === 'aspect') return key.split(':').join(' ')
-  if (type === 'lunar_phase') return `${key} Moon`
-  if (type === 'lunar_sign') return `Moon in ${key}`
-  if (type === 'retrograde') return `${key} retrograde`
-  return key
-}
 
 export function parseEvidence(value: Json): EvidenceEntry[] {
   if (!Array.isArray(value)) return []
@@ -164,7 +159,7 @@ function FeaturedPattern({
         <div>
           <p className="channel-kicker">{TYPE_LABEL[pattern.pattern_type as PatternType] ?? 'Pattern'}</p>
           <h3 className="mt-1.5 font-display text-[1.45rem] leading-tight text-bone">
-            {patternLabel(pattern.pattern_type, pattern.pattern_key)}
+            {formatPatternLabel(pattern.pattern_type, pattern.pattern_key)}
           </h3>
           <p className="mt-1 text-xs uppercase tracking-[0.16em] text-bone-muted/55">
             {formatRange(pattern.first_seen, pattern.last_seen)}
@@ -217,7 +212,7 @@ function CompactPattern({
       <summary className="flex cursor-pointer list-none items-center gap-3 py-3 text-sm transition-colors hover:text-bone">
         <span className="channel-dot" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate text-bone">
-          {patternLabel(pattern.pattern_type, pattern.pattern_key)}
+          {formatPatternLabel(pattern.pattern_type, pattern.pattern_key)}
         </span>
         <span className="shrink-0 text-xs text-bone-muted/70">
           {pattern.sample_size} · {confidence}%
@@ -255,7 +250,11 @@ export function PatternInsights({
   // Rows arrive sorted by sample_size then recency, so the featured slice is
   // simply the strongest few that clear the evidence bar.
   const featured = patterns
-    .filter((p) => p.sample_size >= FEATURE_MIN_SAMPLE && p.confidence >= FEATURE_MIN_CONFIDENCE)
+    .filter(
+      (p) =>
+        p.sample_size >= ESTABLISHED_PATTERN_MIN_SAMPLE &&
+        p.confidence >= FEATURE_MIN_CONFIDENCE,
+    )
     .slice(0, MAX_FEATURED)
 
   const featuredIds = new Set(featured.map((p) => p.id))

@@ -8,8 +8,10 @@ import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
 import { TourOverlay } from '@/components/tour/TourOverlay'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
+import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { getAppProfile } from '@/lib/app/get-app-profile'
+import { ESTABLISHED_PATTERN_MIN_SAMPLE } from '@/lib/journal/pattern-discoveries'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
@@ -20,14 +22,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const admin = createAdminSupabase()
 
-  const entitlementsResult = profile?.id
-    ? await admin
-        .from('product_entitlements')
-        .select('id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan')
-        .eq('user_id', profile.id)
-        .neq('status', 'revoked')
-    : { data: [] }
+  const [entitlementsResult, establishedPatternsResult] = profile?.id
+    ? await Promise.all([
+        admin
+          .from('product_entitlements')
+          .select('id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan')
+          .eq('user_id', profile.id)
+          .neq('status', 'revoked'),
+        admin
+          .from('user_pattern_insights')
+          .select('id')
+          .eq('user_id', profile.id)
+          .gte('sample_size', ESTABLISHED_PATTERN_MIN_SAMPLE)
+          .limit(250),
+      ])
+    : [{ data: [] }, { data: [] }]
   const entitlements = entitlementsResult.data
+  const initialPatternIds = (establishedPatternsResult.data ?? []).map((pattern) => pattern.id)
 
   const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[])
 
@@ -155,6 +166,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           })}
         />
         <TourOverlay />
+        <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
         <FeedbackButton />
       </div>
     </StelloquyProvider>

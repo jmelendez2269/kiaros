@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRef, useState, useTransition } from 'react'
 import { K, Kicker } from '@/components/almanac'
 import { saveLineForToday } from '@/app/(app)/today/actions'
+import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries'
 
 interface Props {
   /** Optional starting streak. Bumps by 1 on a successful save when the user
@@ -38,6 +39,7 @@ export function LineForToday({ streak = 0 }: Props) {
         setError(result.error)
         return
       }
+      window.dispatchEvent(new Event(PATTERN_DISCOVERY_CHECK_EVENT))
       setDraft('')
       setTags([])
       setStreakNow((s) => s + 1)

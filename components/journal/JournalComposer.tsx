@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
+import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries'
 
 type RecentJournalEntry = {
   id: string
@@ -137,6 +138,8 @@ export function JournalComposer({
       if (!response.ok) {
         throw new Error(payload.error || 'Failed to save journal entry')
       }
+
+      window.dispatchEvent(new Event(PATTERN_DISCOVERY_CHECK_EVENT))
 
       setEntryCount((current) => current + 1)
       if (payload.oracle_memory) {
