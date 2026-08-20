@@ -152,6 +152,47 @@ function getObliquity(jde: number): number {
   return meanObl + dEps
 }
 
+// ─── Lunar nodes ──────────────────────────────────────────────────────────
+
+/**
+ * True longitude of the Moon's ascending (north) node, in tropical degrees of
+ * date. Meeus, Astronomical Algorithms, ch. 47: the mean node polynomial plus
+ * the five periodic terms that carry it to the true node.
+ *
+ * Mean and true node can sit up to about 1.7° apart, which is wider than the
+ * orbs this app works with, so the choice matters. True node is what modern
+ * chart software reports and what a buyer comparing against their own chart
+ * will be holding.
+ */
+export function getTrueNodeLongitude(jde: number): number {
+  const T = jdeToT(jde)
+  const T2 = T * T
+  const T3 = T2 * T
+  const T4 = T3 * T
+
+  // Mean elongation of the Moon from the Sun
+  const D = 297.8501921 + 445267.1114034 * T - 0.0018819 * T2 + T3 / 545868 - T4 / 113065000
+  // Sun's mean anomaly
+  const M = 357.5291092 + 35999.0502909 * T - 0.0001536 * T2 + T3 / 24490000
+  // Moon's mean anomaly
+  const Mp = 134.9633964 + 477198.8675055 * T + 0.0087414 * T2 + T3 / 69699 - T4 / 14712000
+  // Moon's argument of latitude
+  const F = 93.2720950 + 483202.0175233 * T - 0.0036539 * T2 - T3 / 3526000 + T4 / 863310000
+
+  const meanNode =
+    125.0445479 - 1934.1362891 * T + 0.0020754 * T2 + T3 / 467441 - T4 / 60616000
+
+  const trueNode =
+    meanNode -
+    1.4979 * Math.sin(2 * (D - F) * RAD) -
+    0.1500 * Math.sin(M * RAD) -
+    0.1226 * Math.sin(2 * D * RAD) +
+    0.1176 * Math.sin(2 * F * RAD) -
+    0.0801 * Math.sin(2 * (Mp - F) * RAD)
+
+  return normalizeDeg(trueNode)
+}
+
 // ─── Sun longitude ────────────────────────────────────────────────────────
 
 export function getSunLongitude(jde: number): number {
@@ -433,9 +474,14 @@ export function computeNatalChart(birth: BirthData, houseSystem: HouseSystem = '
   const neptuneLon = planetGeocentricLon(neptunePlanet, birthJDE)
   const plutoLon = getPlutoLongitude(birthJDE)
 
+  // Lunar nodes. These need no birth time - the node moves about 3 arcminutes
+  // a day - so they are computed even when the time is unknown.
+  const nodeLon = getTrueNodeLongitude(birthJDE)
+
   // Ascendant + house cusps
   let rising: ZodiacSign
   let ascendantLongitude: number | undefined
+  let midheavenLongitude: number | undefined
   let houseCusps: number[] | undefined
   let activeHouseSystem = houseSystem
 
@@ -456,10 +502,15 @@ export function computeNatalChart(birth: BirthData, houseSystem: HouseSystem = '
     rising = lonToSign(ascDeg)
     ascendantLongitude = ascDeg
 
+    // The Midheaven is computed for every house system, not just the quadrant
+    // ones. It is an angle in its own right and readers of fixed stars treat it
+    // as equal in weight to the Ascendant.
+    const mcLon = normalizeDeg(
+      Math.atan2(Math.sin(lastRad), Math.cos(lastRad) * Math.cos(eps)) * DEG
+    )
+    midheavenLongitude = mcLon
+
     if (houseSystem !== 'whole_sign') {
-      const mcLon = normalizeDeg(
-        Math.atan2(Math.sin(lastRad), Math.cos(lastRad) * Math.cos(eps)) * DEG
-      )
       houseCusps = houseSystem === 'porphyry'
         ? computePorphyryCusps(ascDeg, mcLon)
         : computePlacidusCusps(lastRad, eps, birth.lat)
@@ -502,6 +553,9 @@ export function computeNatalChart(birth: BirthData, houseSystem: HouseSystem = '
     birthTimeUnknown: birth.timeUnknown,
     houseSystem: activeHouseSystem,
     ascendantLongitude,
+    midheavenLongitude,
+    northNodeLongitude: nodeLon,
+    southNodeLongitude: normalizeDeg(nodeLon + 180),
     houseCusps,
   }
 }

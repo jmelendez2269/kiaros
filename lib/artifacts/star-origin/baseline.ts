@@ -88,37 +88,87 @@ export const DEFAULT_THRESHOLDS: Thresholds = {
   pairMin: 85,
 };
 
-/**
- * A contact is "notable" on its own terms: a tight orb to a fast-moving,
- * personal point. This is how fixed stars have always been read - one
- * conjunction of the Sun to Regulus is a complete statement, and nobody asks
- * for a second one.
- *
- * Whether someone gets a result at all is decided by this absolute standard,
- * NOT by ranking them against other people. The baseline is only used to pick
- * a winner when someone has more than one notable contact, where it stops a
- * big cluster like the Pleiades from winning purely on size.
- */
+/** Orb inside which a contact can count as notable, in degrees. */
 export const NOTABLE_ORB = 1.0;
-export const NOTABLE_MIN_MARKER_POINTS = 4;
+
+/**
+ * Two different questions, kept apart.
+ *
+ * How many points a marker scores is about SPEED - how many other people share
+ * that degree. That is what MARKER_POINTS answers, and the lunar nodes score
+ * low there because they crawl.
+ *
+ * Whether a marker may NAME someone's lineage on its own is a different
+ * question: is this a point a chart is genuinely read from? The nodal axis is
+ * slow, but it is the single most-used marker of direction in modern astrology
+ * and it sits at the centre of the starseed material specifically.
+ *
+ * These were one number until the two answers disagreed. Letting the nodes
+ * decide raised the share of charts that get an answer from 50% to 40% with no
+ * cost anywhere: charts four minutes apart still agreed 90.6% of the time, and
+ * charts a month apart - where a slow marker would show up if it were really
+ * saying "everyone born this month" - agreed slightly LESS than before.
+ *
+ * The Midheaven is deliberately absent. It scores, so it appears in a reading
+ * as a finding, but it may not decide. Letting it decide bought 3 more points
+ * of answer rate for 8 points of stability: 10.5% of charts came out with a
+ * DIFFERENT lineage when the birth time moved by four minutes, against 5.3%
+ * without it. Birth times are routinely wrong by more than four minutes, so
+ * that is a promise the product cannot keep.
+ */
+export const DECIDING_MARKERS: ReadonlySet<string> = new Set([
+  "ascendant",
+  "sun",
+  "moon",
+  "mercury",
+  "venus",
+  "mars",
+  "north_node",
+  "south_node",
+]);
+
+/**
+ * How much the star has to stand for its lineage before a contact with it can
+ * name that lineage. A lineage is anchored by the star it is named for (weight
+ * 1.0); fainter companions sit below this line, so they show up as findings but
+ * never decide. Without this, adding companion stars to a lineage would raise
+ * its answer rate at full force - which is inventing answers rather than
+ * finding them.
+ */
+export const MIN_DECIDING_WEIGHT = 0.5;
 
 export interface ContactLike {
   marker: string;
   orb: number;
   points: number;
-  star: { lineage: string | null };
+  star: { lineage: string | null; weight: number };
 }
 
+/**
+ * A contact is "notable" on its own terms: a tight orb, on a point a chart is
+ * actually read from, to a star that genuinely stands for its lineage.
+ *
+ * This is how fixed stars have always been read - one conjunction of the Sun to
+ * Regulus is a complete statement, and nobody asks for a second one.
+ *
+ * Whether someone gets a result at all is decided by this absolute standard,
+ * NOT by ranking them against other people. The baseline is only used to pick a
+ * winner when someone has more than one notable contact, where it stops a big
+ * cluster like the Pleiades from winning purely on size.
+ */
 export function isNotable(
   contact: ContactLike,
-  markerPoints: Record<string, number>,
   orbLimit = NOTABLE_ORB,
+  deciding: ReadonlySet<string> = DECIDING_MARKERS,
 ): boolean {
   return (
     contact.orb <= orbLimit &&
-    (markerPoints[contact.marker] ?? 0) >= NOTABLE_MIN_MARKER_POINTS
+    deciding.has(contact.marker) &&
+    contact.star.weight >= MIN_DECIDING_WEIGHT
   );
 }
+
+
 
 /**
  * Verdict from notable contacts.

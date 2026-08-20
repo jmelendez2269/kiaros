@@ -81,6 +81,9 @@ export interface NatalChart {
   birthTimeUnknown: boolean
   houseSystem: HouseSystem
   ascendantLongitude?: number   // ecliptic degrees; undefined when birth time unknown
+  midheavenLongitude?: number   // ecliptic degrees; undefined when birth time unknown
+  northNodeLongitude?: number   // true lunar node; always defined (noon is used when birth time unknown)
+  southNodeLongitude?: number   // always northNodeLongitude + 180
   houseCusps?: number[]         // 12 cusp longitudes; defined when birth time known and houseSystem !== 'whole_sign'
 }
 

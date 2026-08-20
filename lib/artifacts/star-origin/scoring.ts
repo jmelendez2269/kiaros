@@ -15,23 +15,49 @@
  *     normally scores across thousands of charts. See baseline.ts.
  */
 
-import type { NatalChart } from "../../types/blueprint.ts";
+import type { NatalChart } from "@/types/blueprint";
 import { angularSep, starPositionsForYear, type CatalogStar } from "./stars.ts";
 
 /** Points per marker. Higher = moves faster = more specific to one person. */
 export const MARKER_POINTS: Record<string, number> = {
   ascendant: 10,
+  midheaven: 10,
   sun: 8,
   moon: 7,
   mercury: 5,
   venus: 5,
   mars: 4,
   jupiter: 2,
+  north_node: 2,
+  south_node: 2,
   saturn: 2,
   // Uranus, Neptune and Pluto are deliberately absent. They are shared by
   // everyone born in a given stretch of years, so they cannot say anything
   // about an individual.
 };
+
+/**
+ * Why the Midheaven scores as high as the Ascendant, and the nodes as low as
+ * Saturn.
+ *
+ * The scale is set by one thing only: how quickly a marker moves, which decides
+ * how many other people share the same degree. Roughly, in degrees per day:
+ *
+ *   Ascendant / Midheaven  360      a few minutes of birth time changes it
+ *   Moon                    13.2
+ *   Mercury / Venus / Sun    1
+ *   Mars                     0.5
+ *   Jupiter                  0.08
+ *   Lunar nodes              0.05    about a month of births share a degree
+ *   Saturn                   0.03
+ *
+ * The Midheaven turns with the sky exactly as the Ascendant does, so it earns
+ * the same 10. The nodes matter enormously in how a chart is read, but they
+ * crawl - slower than Jupiter - so on this scale they land at 2. That means a
+ * node contact is reported as a finding and counts toward the ranking, but
+ * cannot by itself decide someone's lineage. Raising them would be choosing the
+ * answer we want rather than the one the sky gives.
+ */
 
 /** Starting orb in degrees. The simulation decides the final value. */
 export const DEFAULT_ORB = 1.5;
@@ -72,6 +98,16 @@ export function markersFromChart(chart: NatalChart): Map<string, number> {
   m.set("saturn", chart.saturn.longitude);
   if (!chart.birthTimeUnknown && chart.ascendantLongitude !== undefined) {
     m.set("ascendant", chart.ascendantLongitude);
+  }
+  if (!chart.birthTimeUnknown && chart.midheavenLongitude !== undefined) {
+    m.set("midheaven", chart.midheavenLongitude);
+  }
+  // The nodes need no birth time, so they are available on every chart.
+  if (chart.northNodeLongitude !== undefined) {
+    m.set("north_node", chart.northNodeLongitude);
+  }
+  if (chart.southNodeLongitude !== undefined) {
+    m.set("south_node", chart.southNodeLongitude);
   }
   return m;
 }

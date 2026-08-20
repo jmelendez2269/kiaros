@@ -25,6 +25,7 @@ import {
   classify,
   classifyByNotable,
   isNotable,
+  DECIDING_MARKERS,
   NOTABLE_ORB,
   DEFAULT_THRESHOLDS,
   type Baseline,
@@ -221,7 +222,28 @@ const RANKED_LINEAGES = GROUPED
   ? Array.from(new Set(LINEAGES.filter((l) => !NOT_RANKED.has(l)).map((l) => GROUP_INTO[l] ?? l))).sort()
   : LINEAGES;
 
+/**
+ * MARKERS_OFF=midheaven,north_node lets a run drop markers, so the cost or
+ * benefit of adding one can be measured on its own rather than in a bundle.
+ */
+for (const name of (process.env.MARKERS_OFF ?? "").split(",").map((x) => x.trim()).filter(Boolean)) {
+  delete MARKER_POINTS[name];
+}
+
+/** MARKER_SET=north_node=4,south_node=4 reweights markers for a single run. */
+for (const pair of (process.env.MARKER_SET ?? "").split(",").map((x) => x.trim()).filter(Boolean)) {
+  const [name, value] = pair.split("=");
+  MARKER_POINTS[name] = Number(value);
+}
+
 const NOTABLE = Number(process.env.NOTABLE_ORB ?? NOTABLE_ORB);
+
+/** DECIDING=+midheaven / DECIDING=-north_node adjusts who may name a lineage. */
+const DECIDING = new Set(DECIDING_MARKERS);
+for (const t of (process.env.DECIDING ?? "").split(",").map((x) => x.trim()).filter(Boolean)) {
+  if (t.startsWith("-")) DECIDING.delete(t.slice(1));
+  else DECIDING.add(t.replace(/^\+/, ""));
+}
 /** MODE=percentile falls back to the old rank-against-everyone classifier. */
 const USE_NOTABLE = process.env.MODE !== "percentile";
 
@@ -244,7 +266,7 @@ function scoreAll(samples: Sample[], positionsFor: (y: number) => Positions): Sc
     const notable = new Set<string>();
     for (const c of result.contacts) {
       if (!c.star.lineage) continue;
-      if (!isNotable(c, MARKER_POINTS, NOTABLE)) continue;
+      if (!isNotable(c, NOTABLE, DECIDING)) continue;
       const key = rankedKey(c.star.lineage);
       if (key) notable.add(key);
     }
@@ -258,9 +280,15 @@ const THRESHOLDS = {
   pairMin: Number(process.env.PAIR_MIN ?? DEFAULT_THRESHOLDS.pairMin),
 };
 
+/**
+ * How far clear of second place the top lineage must stand before it is named
+ * on its own. Inside this margin the two are held together instead.
+ */
+const PAIR_GAP = Number(process.env.PAIR_GAP ?? 10);
+
 function verdictOf(baseline: Baseline, s: Scored) {
   return USE_NOTABLE
-    ? classifyByNotable(baseline, s.byLineage, s.notable)
+    ? classifyByNotable(baseline, s.byLineage, s.notable, PAIR_GAP)
     : classify(baseline, s.byLineage, RANKED_LINEAGES, THRESHOLDS);
 }
 
@@ -283,7 +311,10 @@ function topLineageDistribution(
 }
 
 console.log(`\nStar Origin - Layer 1 gate`);
-console.log(`sample ${SAMPLE_SIZE}   orb ${ORB}deg   lineages ${RANKED_LINEAGES.length}   stars ${STARS.length}\n`);
+console.log(`sample ${SAMPLE_SIZE}   orb ${ORB}deg   notable ${NOTABLE}deg   lineages ${RANKED_LINEAGES.length}   stars ${STARS.length}`);
+console.log(`markers: ${Object.keys(MARKER_POINTS).join(", ")}`);
+console.log(`may name a lineage: ${[...DECIDING].join(", ")}
+`);
 
 const t0 = Date.now();
 const samples: Sample[] = Array.from({ length: SAMPLE_SIZE }, randomSample);
@@ -334,10 +365,17 @@ console.log(`  top lineage ${topShare.toFixed(1)}%  (must be <=30%)  ${check1 ? 
 const PAIRS = Math.min(1000, SAMPLE_SIZE);
 const pairBase = samples.slice(0, PAIRS);
 
-function agreementRate(days: number, minutes: number): number {
+/**
+ * How often two charts give the same verdict, and when they differ, whether
+ * the difference is "an answer appeared or vanished" or the worse
+ * "a different lineage came out".
+ */
+function agreementRate(days: number, minutes: number) {
   const others = pairBase.map((s) => shifted(s, days, minutes));
   const scoredOthers = scoreAll(others, realPositions);
   let agree = 0;
+  let flipped = 0; // one side had an answer, the other did not
+  let swapped = 0; // both had an answer, but a different lineage
   for (let i = 0; i < PAIRS; i++) {
     const a = verdictOf(baseline, scored[i]);
     const b = verdictOf(baseline, scoredOthers[i]);
@@ -345,18 +383,47 @@ function agreementRate(days: number, minutes: number): number {
       a.kind === b.kind &&
       (a.kind !== "single" || a.primary === (b as typeof a).primary) &&
       (a.kind !== "paired" || a.primary === (b as typeof a).primary);
-    if (same) agree++;
+    if (same) { agree++; continue; }
+    if ((a.kind === "spread") !== (b.kind === "spread")) flipped++;
+    else swapped++;
   }
-  return (agree / PAIRS) * 100;
+  return {
+    agree: (agree / PAIRS) * 100,
+    flipped: (flipped / PAIRS) * 100,
+    swapped: (swapped / PAIRS) * 100,
+  };
 }
 
+/**
+ * SWEEP=1 prints how fast the answer comes apart as the birth time moves,
+ * instead of testing a single offset. Lets the tolerance be chosen from the
+ * curve rather than asserted.
+ */
+if (process.env.SWEEP) {
+  console.log("HOW MUCH BIRTH-TIME ERROR THE ANSWER SURVIVES");
+  console.log("  minutes off   same answer   different lineage");
+  for (const mins of [1, 2, 4, 8, 15, 30, 60]) {
+    const r = agreementRate(0, mins);
+    console.log(
+      `  ${String(mins).padStart(9)}   ${r.agree.toFixed(1).padStart(10)}%   ${r.swapped.toFixed(1).padStart(16)}%`,
+    );
+  }
+  console.log("");
+  process.exit(0);
+}
+
+const monthApart = agreementRate(30, 0);
 const dayApart = agreementRate(1, 0);
 const minutesApart = agreementRate(0, 4);
 
 console.log("CHECK 2 - about the person, or the year?");
-console.log(`  charts 24 hours apart agree:  ${dayApart.toFixed(1)}%  (want clearly under 100 - the day matters)`);
-console.log(`  charts 4 minutes apart agree: ${minutesApart.toFixed(1)}%  (want high - not jumpy)`);
-const check2 = dayApart < 90 && minutesApart > 90;
+console.log(`  charts 30 days apart agree:   ${monthApart.agree.toFixed(1)}%  (want low - a slow marker like the lunar node barely moves in a month, so if this is high the answer is really "everyone born this month")`);
+console.log(`  charts 24 hours apart agree:  ${dayApart.agree.toFixed(1)}%  (want clearly under 100 - the day matters)`);
+console.log(`  charts 4 minutes apart agree: ${minutesApart.agree.toFixed(1)}%  (want high - not jumpy)`);
+console.log(`    of the 4-minute disagreements:`);
+console.log(`      answer appeared or vanished: ${minutesApart.flipped.toFixed(1)}% of all charts`);
+console.log(`      a different lineage came out: ${minutesApart.swapped.toFixed(1)}% of all charts`);
+const check2 = monthApart.agree < 70 && dayApart.agree < 90 && minutesApart.agree > 90;
 if (!check2) failures++;
 console.log(`  ${check2 ? "PASS" : "FAIL"}\n`);
 
