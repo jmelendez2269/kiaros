@@ -88,8 +88,24 @@ export const DEFAULT_THRESHOLDS: Thresholds = {
   pairMin: 85,
 };
 
-/** Orb inside which a contact can count as notable, in degrees. */
-export const NOTABLE_ORB = 1.0;
+/**
+ * Orb inside which a contact can count as notable, in degrees.
+ *
+ * 1 degree 30 minutes. This is the settled value from spec 2.4 and it is the
+ * value every gate run that has ever passed was measured at.
+ *
+ * It used to be 1.0 here, while the harness overrode it to 1.5 through an
+ * environment variable - so the number the engine shipped with was not the
+ * number anything had been validated at. Nothing caught it because the gate
+ * always set the override, and the generator, which does not, quietly ran at
+ * an untested setting: 51.7% of charts came out with no line against the 39.6%
+ * that was measured and signed off.
+ *
+ * A default that differs from the tested configuration is not a default, it is
+ * a trap. If this value changes, the baseline is void and Checks 1-4 have to be
+ * re-run - see spec 2.5.
+ */
+export const NOTABLE_ORB = 1.5;
 
 /**
  * Two different questions, kept apart.
