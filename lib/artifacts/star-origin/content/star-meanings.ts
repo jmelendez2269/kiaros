@@ -513,6 +513,39 @@ export const STAR_MEANINGS: Readonly<Record<string, StarMeaning>> = {
     cost: "A close comparison can run a whole lifetime without ever resolving.",
     lore: "from the object",
   },
+  praesepe: {
+    id: "praesepe",
+    constellation: "Cancer, the Manger",
+    image: "the manger, between the two donkeys",
+    history:
+      "Ptolemy listed it as a nebulous mass and nobody knew what it was until Galileo turned his telescope on it and it came apart into forty stars — one of the first things the instrument ever resolved. It is the Manger, flanked by two stars called the Aselli, the donkeys that carried Dionysus. And it was a weather gauge for two thousand years: if the sky was clear and you still could not see the Manger, rain was coming. That works, and for a real reason — it is faint enough that haze takes it first.",
+    marks: "the threshold, and what you feed when it arrives at your door",
+    gift: "a nose for weather before it breaks, and a table that has always had room at it",
+    cost: "The manger feeds whoever turns up, and not everyone who turns up is hungry.",
+    lore: "traditional",
+  },
+  porrima: {
+    id: "porrima",
+    constellation: "Virgo",
+    image: "the goddess of what is coming",
+    history:
+      "Porrima is named for one of the two Roman goddesses of prophecy — the sister who sang of what lay ahead, while Postverta sang of what was behind. The star turns out to be two: a close pair of near-identical suns that take a hundred and sixty-nine years to circle each other. In 2005 they drew so tight that most telescopes on earth saw a single point of light. They are drawing apart again now. Two voices, briefly one.",
+    marks: "knowing how a thing will go, early, without being able to say how",
+    gift: "foresight of the unglamorous kind — you have called it, quietly and correctly, more times than anyone has credited",
+    cost: "A prophecy nobody acts on is just a thing you have to stand and watch happen.",
+    lore: "traditional",
+  },
+  alphard: {
+    id: "alphard",
+    constellation: "Hydra",
+    image: "the solitary one",
+    history:
+      "Al-fard al-shuja: the solitary one of the serpent. It was named for its loneliness — a single orange star in a wide stretch of sky with nothing bright anywhere near it, so isolated that it is the only thing to look at. Tycho Brahe called it Cor Hydrae, the heart of the water-snake. Hydra is the longest constellation in the sky, and the beast is the one Heracles fought, where every head he cut off grew back as two.",
+    marks: "the self-sufficiency you built early because you had to",
+    gift: "the ability to be entirely alone and entirely functional, which most people cannot do for a weekend",
+    cost: "You learned to need nobody and it worked. That is the problem, not the solution.",
+    lore: "traditional",
+  },
   hyades: {
     id: "hyades",
     constellation: "Taurus, the Bull's face",

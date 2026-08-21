@@ -50,6 +50,13 @@
     { "id": "zeta_ret_a", "name": "Zeta1 Reticuli", "simbad": "* zet01 Ret", "lineage": "reticulum", "weight": 1.0, "ra": 49.442347728954, "dec": -62.575320126846, "pmra": 1337.53,   "pmdec": 649.84 },
     { "id": "zeta_ret_b", "name": "Zeta2 Reticuli", "simbad": "* zet02 Ret", "lineage": "reticulum", "weight": 0.6, "ra": 49.553412010049, "dec": -62.506362419731, "pmra": 1331.027,  "pmdec": 647.725 },
 
+    { "id": "praesepe",   "name": "Praesepe",    "simbad": "M 44",        "lineage": null,            "weight": 1.0, "ra": 130.100000000000, "dec": 19.666666666667,  "pmra": -35.81,    "pmdec": -12.85,
+      "note": "Not a lineage - reported as a finding only, so the scorer skips it and no origin result can change. The Beehive, the Manger; Ptolemy's nebulous cluster between the two Aselli. Sits on the ecliptic." },
+    { "id": "porrima",    "name": "Porrima",     "simbad": "* gam Vir",   "lineage": null,            "weight": 1.0, "ra": 190.415179166667, "dec": -1.449375000000,  "pmra": -616.66,   "pmdec": 60.66,
+      "note": "Not a lineage - finding only. Roman goddess of prophecy; a close visual binary with high proper motion, so the drift correction matters more here than for most." },
+    { "id": "alphard",    "name": "Alphard",     "simbad": "* alf Hya",   "lineage": null,            "weight": 1.0, "ra": 141.896847500000, "dec": -8.658602777778,  "pmra": -14.49,    "pmdec": 33.25,
+      "note": "Not a lineage - finding only. The solitary one, the heart of the water-snake." },
+
     { "id": "hyades",     "name": "Hyades",      "simbad": "Cl Melotte 25", "lineage": "hyades",     "weight": 1.0, "ra": 67.447083333333,  "dec": 16.948055555556,  "pmra": 104.92,    "pmdec": -28.0 },
     { "id": "andromeda",  "name": "Andromeda Galaxy", "simbad": "M 31",  "lineage": "andromeda",     "weight": 1.0, "ra": 10.684708333333,  "dec": 41.268750000000,  "pmra": 0,         "pmdec": 0 },
     { "id": "galactic_center", "name": "Galactic Centre", "simbad": "NAME Galactic Center", "lineage": "galactic_centre", "weight": 1.0, "ra": 266.415008890000, "dec": -29.006111110000, "pmra": 0, "pmdec": 0 },
