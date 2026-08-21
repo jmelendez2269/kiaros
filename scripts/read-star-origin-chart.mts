@@ -161,7 +161,7 @@ function leadFor(lineageId: string) {
     .filter((c) => c.star.lineage && (GROUP_INTO[c.star.lineage] ?? c.star.lineage) === lineageId)
     .filter((c) => isNotable(c, NOTABLE, DECIDING_MARKERS))
     .sort((a, b) => b.points - a.points)[0];
-  return best ? { starName: best.star.name, marker: best.marker } : undefined;
+  return best ? { starName: best.star.name, marker: best.marker, orb: best.orb } : undefined;
 }
 
 const rule = "=".repeat(78);
@@ -212,12 +212,21 @@ if (verdict.kind !== "spread") {
   }
 }
 
+// The star that already got a full write-up in the lineage section, so the
+// findings section does not print its history a second time.
+const lineageStarId = verdict.kind === "spread"
+  ? undefined
+  : me.contacts
+      .filter((c) => c.star.lineage && (GROUP_INTO[c.star.lineage] ?? c.star.lineage) === verdict.primary)
+      .filter((c) => isNotable(c, NOTABLE, DECIDING_MARKERS))
+      .sort((a, b) => b.points - a.points)[0]?.star.id;
+
 const orb = findingsOrbFor(me.chart);
 const findings = selectFindings(me.chart, year, { orb, starPositions: posFor(year) });
 console.log(`${rule}`);
 console.log(`YOUR STRONGEST MARKERS   ${findings.length} findings at ${orb} deg`);
 console.log(rule + "\n");
-for (const f of writtenUp(findings)) {
+for (const f of writtenUp(findings, undefined, lineageStarId)) {
   const block = composeFinding(f);
   console.log(`  ${block.title.toUpperCase()}`);
   console.log(`  ${block.subtitle}\n`);

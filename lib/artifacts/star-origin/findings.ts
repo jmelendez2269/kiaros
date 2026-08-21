@@ -175,8 +175,19 @@ export function selectFindings(
 export function writtenUp(
   findings: readonly Finding[],
   count = FINDINGS_WRITTEN_UP,
+  /**
+   * The star that already produced the lineage, if there was one.
+   *
+   * Found by reading a real report. A chart whose Sun sits on Rigel gets a
+   * full Orion history in the lineage section and then, immediately below, a
+   * full Rigel history as the lead finding - the same star twice, at length,
+   * on one page. The contact stays in the workings table because it is true;
+   * it just does not get written up a second time.
+   */
+  alreadyWritten?: string,
 ): Finding[] {
   const seen = new Set<string>();
+  if (alreadyWritten) seen.add(alreadyWritten);
   const chosen: Finding[] = [];
   for (const f of findings) {
     if (seen.has(f.star.id)) continue;
@@ -184,7 +195,12 @@ export function writtenUp(
     chosen.push(f);
     if (chosen.length === count) return chosen;
   }
-  for (const f of findings) {
+  // Only if there are not enough distinct stars to fill the section. Better a
+  // repeat than a short report - but the lineage star is the last resort of
+  // the last resort.
+  for (const f of [...findings].sort((a, b) =>
+    Number(a.star.id === alreadyWritten) - Number(b.star.id === alreadyWritten),
+  )) {
     if (chosen.includes(f)) continue;
     chosen.push(f);
     if (chosen.length === count) break;

@@ -55,7 +55,7 @@ for (const id of RANKED_IDS) {
         const c = composeLineage({
           lineageId: id, standing: standingValue, kind,
           decidedBy: decidedByFor(kind, kind === "single" ? 1 : 2),
-          leadContact: { starName: "Rigel", marker: "sun" },
+          leadContact: { starName: "Rigel", marker: "sun", orb: 0.8 },
         });
         if (c.body.some((s) => s.includes("undefined") || !s.trim().endsWith("."))) {
           failures.push(`${id} x ${kind} x ${standingValue}: malformed`);
@@ -160,7 +160,7 @@ function leadFor(contacts: ReturnType<typeof analyse>["contacts"], lineageId: st
     .filter((c) => c.star.lineage && (GROUP_INTO[c.star.lineage] ?? c.star.lineage) === lineageId)
     .filter((c) => isNotable(c, NOTABLE, DECIDING_MARKERS))
     .sort((a, b) => b.points - a.points)[0];
-  return mine ? { starName: mine.star.name, marker: mine.marker } : undefined;
+  return mine ? { starName: mine.star.name, marker: mine.marker, orb: mine.orb } : undefined;
 }
 
 let shown = 0, tried = 0;
@@ -206,11 +206,18 @@ while (shown < HOW_MANY && tried < 400) {
     }
   }
 
+  const lineageStarId = verdict.kind === "spread"
+    ? undefined
+    : a.contacts
+        .filter((c) => c.star.lineage && (GROUP_INTO[c.star.lineage] ?? c.star.lineage) === verdict.primary)
+        .filter((c) => isNotable(c, NOTABLE, DECIDING_MARKERS))
+        .sort((x, y) => y.points - x.points)[0]?.star.id;
+
   const orb = findingsOrbFor(a.chart);
   const findings = selectFindings(a.chart, s.year, { orb, starPositions: posFor(s.year) });
   console.log(`  YOUR STRONGEST MARKERS`);
   console.log(`  ${findings.length} findings at ${orb} deg\n`);
-  for (const f of writtenUp(findings)) {
+  for (const f of writtenUp(findings, undefined, lineageStarId)) {
     const c = composeFinding(f);
     console.log(`  ${c.title}`);
     for (const line of c.body) console.log(wrap(line) + "\n");

@@ -1,14 +1,14 @@
 /**
  * compose.ts
  *
- * Joins a finding to its written pieces.
+ * Joins a contact to its written pieces.
  *
- * Nothing here decides anything. The star meaning, the marker voice and the
- * closeness band were each written once by a person; this only puts them in
- * order and formats a degree. Keeping the assembly this dumb is the point -
- * every sentence in the finished report can be traced back to a file somebody
- * wrote and signed off, which is the fact-tracing convention the shared
- * contract already asks for.
+ * Nothing here decides anything and nothing here writes anything. The star
+ * meaning, the lineage meaning, the marker voice and the closeness band were
+ * each written once by a person; this only puts them in order and formats a
+ * degree. Keeping the assembly this dumb is the point — every sentence in the
+ * finished report traces back to a file somebody wrote and signed off, which
+ * is the fact-tracing convention the shared contract already asks for.
  */
 
 import { ZODIAC_SIGNS, type ZodiacSign } from "@/types/blueprint";
@@ -16,8 +16,8 @@ import type { Finding } from "../findings.ts";
 import { STAR_MEANINGS } from "./star-meanings.ts";
 import { BAND_VOICES, BODY_VOICES } from "./body-voices.ts";
 import {
-  DECIDED_BY_CONTACT,
   LINEAGE_MEANINGS,
+  namingPhrase,
   RESULT_VOICES,
   SPREAD_OPENING,
   standingPhrase,
@@ -25,11 +25,11 @@ import {
 
 export interface ComposedFinding {
   findingId: string;
-  /** "Regulus on your Moon" */
+  /** "Rigel on your Sun" */
   title: string;
   /** What part of a life this lands in. */
   subtitle: string;
-  /** Two to four sentences, in reading order. */
+  /** Three or four paragraphs, in reading order. */
   body: readonly string[];
   /** Where the meaning came from, printed small under the block. */
   source: "traditional" | "from the object";
@@ -52,7 +52,7 @@ function signAndDegree(longitude: number): { sign: ZodiacSign; degree: number } 
   return { sign: ZODIAC_SIGNS[Math.floor(norm / 30)], degree: norm % 30 };
 }
 
-/** "29 Leo 42'" - the form an astrologer expects, not a decimal. */
+/** "29 Leo 42'" — the form an astrologer expects, not a decimal. */
 export function formatPosition(longitude: number): string {
   const { sign, degree } = signAndDegree(longitude);
   const whole = Math.floor(degree);
@@ -73,6 +73,8 @@ export function formatSeparation(orb: number): string {
 
 export class MissingContentError extends Error {}
 
+const capitalise = (s: string) => `${s[0].toUpperCase()}${s.slice(1)}`;
+
 export function composeFinding(finding: Finding): ComposedFinding {
   const star = STAR_MEANINGS[finding.star.id];
   if (!star) {
@@ -84,19 +86,23 @@ export function composeFinding(finding: Finding): ComposedFinding {
   }
   const band = BAND_VOICES[finding.band];
 
-  const opening = `${body.display} ${band.verb} ${finding.star.name}, ${star.image}, on the day you were born.`;
-  const sentences = [
-    `${opening[0].toUpperCase()}${opening.slice(1)} ${band.note}`,
-    star.theme,
-    `${body.lead} ${star.asks}.`,
+  const spoken = star.proseName ?? finding.star.name;
+  const opening = capitalise(
+    `${body.display} ${band.verb} ${spoken}, ${star.image}, on the day you were born.`,
+  );
+
+  const paragraphs = [
+    `${opening} ${band.note}`,
+    star.history,
+    `${body.lead} ${star.gift}.`,
   ];
-  if (band.showShadow) sentences.push(star.shadow);
+  if (band.showCost) paragraphs.push(star.cost);
 
   return {
     findingId: finding.findingId,
-    title: `${finding.star.name} on ${body.display}`,
+    title: `${spoken} on ${body.display}`,
     subtitle: body.arena,
-    body: sentences,
+    body: paragraphs,
     source: star.lore,
   };
 }
@@ -119,13 +125,12 @@ export function lineageSectionOpening(kind: "single" | "paired" | "spread"): str
  * The rule is not obvious and getting it wrong prints a self-contradiction, so
  * it lives here rather than at each call site:
  *
- *  - one notable lineage -> nothing was ranked. The absolute bar decided it.
- *  - several, one clearly ahead -> the baseline picked the winner. Standing is
- *    a true account and gets printed.
- *  - several, too close to separate -> a `paired` result. The baseline was
- *    consulted and reported that it could not split them, which the section
- *    opening already says. Printing each one's percentile underneath adds a
- *    downgrade to a headline result and explains nothing the reader needs.
+ *  - one notable lineage -> nothing was ranked. The contact decided it alone.
+ *  - several, one clearly ahead -> the baseline picked the winner, so how
+ *    strongly the line is carried is a true account and gets said.
+ *  - several, too close to separate -> a `paired` result. The section opening
+ *    already says they could not be split; saying more under each one adds a
+ *    downgrade to a headline result.
  */
 export function decidedByFor(
   kind: "single" | "paired",
@@ -137,9 +142,9 @@ export function decidedByFor(
 
 export interface ComposedLineage {
   lineageId: string;
-  /** "Orion - specifically Rigel", or just "Sirius" when there is only one. */
+  /** "Orion — specifically Rigel", or just "Sirius" when there is only one. */
   title: string;
-  /** "also called Pleiadian, Alcyonean, Tolekan" - empty when none are named. */
+  /** The image, plus the other names this line goes by. */
   subtitle: string;
   body: readonly string[];
 }
@@ -147,70 +152,61 @@ export interface ComposedLineage {
 /**
  * Write up one lineage result.
  *
- * `leadContact` is the contact that did most to produce the answer. It is what
- * lets the report say "Orion - specifically Rigel" instead of leaving a buyer
- * to wonder which of six stars was meant, and it is why the section can name
- * the marker that carried it without the reader going to the workings table.
+ * `leadContact` is the contact that produced the answer, and it MUST be one
+ * the engine accepted as notable. Choosing it by score alone would let the
+ * report say "your Midheaven named this" — the Midheaven scores higher than
+ * any other marker and is explicitly barred from naming a lineage, so the copy
+ * would quietly reverse a decision the engine enforces. See findings.ts.
  */
 export function composeLineage(input: {
   lineageId: string;
   standing: number;
   kind: "single" | "paired";
-  /**
-   * What actually produced the answer.
-   *
-   * "contact" - one lineage cleared the absolute bar, so the percentile
-   * decided nothing and must not be printed as though it had.
-   * "ranked" - more than one cleared it and the baseline broke the tie, which
-   * is the only case where the standing sentence is a true account of the
-   * reasoning. See lineage-meanings.ts.
-   */
   decidedBy: "contact" | "ranked";
-  leadContact?: { starName: string; marker: string };
+  leadContact?: { starName: string; marker: string; orb: number };
 }): ComposedLineage {
   const lineage = LINEAGE_MEANINGS[input.lineageId];
   if (!lineage) {
     throw new MissingContentError(`no meaning written for lineage ${input.lineageId}`);
   }
-  const voice = RESULT_VOICES[input.kind];
   const lead = input.leadContact;
   const leadBody = lead ? BODY_VOICES[lead.marker] : undefined;
 
-  // Only name a specific star when the lineage has more than one to choose
-  // between. "Sirius - specifically Sirius" helps nobody.
+  // Only name a specific star when the line has more than one to choose
+  // between. "Sirius — specifically Sirius" helps nobody.
   const named =
     lead && lineage.displayName.toLowerCase() !== lead.starName.toLowerCase()
       ? ` — specifically ${lead.starName}`
       : "";
 
-  const produced =
-    leadBody && lead ? `What produced it was ${leadBody.display} meeting ${lead.starName}.` : "";
-  // A paired result has two of these blocks under one opening, and that
-  // opening already explains the standard both of them met. Repeating the
-  // explanation in each block is the same paragraph twice, which is what
-  // `writtenUp` exists to prevent on the findings side.
+  // Precise and unclinical are compatible. A buyer should be able to check
+  // this against the workings table and find it exact, and should also want to
+  // read it out loud.
+  const naming =
+    leadBody && lead
+      ? `On the day you were born, ${leadBody.display} and ${lead.starName} ${namingPhrase(lead.orb)}. That is what named you.`
+      : "";
   const reasoning =
-    input.kind === "paired"
-      ? produced
-      : input.decidedBy === "ranked"
-        ? `${produced} ${standingPhrase(input.standing)}`.trim()
-        : `${produced} ${DECIDED_BY_CONTACT}`.trim();
+    input.decidedBy === "ranked" ? `${naming} ${standingPhrase(input.standing)}`.trim() : naming;
 
   const body = [
-    `${lineage.displayName}, ${lineage.image}.`,
-    lineage.theme,
+    lineage.history,
     reasoning,
-    lineage.carries,
-    `This asks you to ${lineage.asks}.`,
-  ];
-  if (voice.showShadow) body.push(lineage.shadow);
+    lineage.nature,
+    lineage.longing,
+    lineage.purpose,
+  ].filter((p) => p.length > 0);
+
+  if (RESULT_VOICES[input.kind].showCost) body.push(lineage.cost);
+
+  const aliases = lineage.subStrands.length
+    ? ` · also called ${lineage.subStrands.join(", ")}`
+    : "";
 
   return {
     lineageId: lineage.id,
     title: `${lineage.displayName}${named}`,
-    subtitle: lineage.subStrands.length
-      ? `also called ${lineage.subStrands.join(", ")}`
-      : "",
+    subtitle: `${lineage.image}${aliases}`,
     body,
   };
 }
