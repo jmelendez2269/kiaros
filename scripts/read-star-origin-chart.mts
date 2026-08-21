@@ -35,8 +35,10 @@ import {
 import { selectFindings, writtenUp, findingsOrbFor } from "../lib/artifacts/star-origin/findings.ts";
 import {
   composeFinding, composeLineage, decidedByFor, lineageSectionOpening,
-  formatPosition, workingsRow,
+  formatPosition, formatSeparation, workingsRow,
 } from "../lib/artifacts/star-origin/content/compose.ts";
+import { lineageMap } from "../lib/artifacts/star-origin/lineages.ts";
+import { LINEAGE_MEANINGS } from "../lib/artifacts/star-origin/content/lineage-meanings.ts";
 
 // --- args ------------------------------------------------------------------
 const argv = process.argv.slice(2);
@@ -232,6 +234,25 @@ for (const f of writtenUp(findings, undefined, lineageStarId)) {
   console.log(`  ${block.subtitle}\n`);
   for (const line of block.body) console.log(wrap(line) + "\n");
 }
+
+// The whole roster, and where this chart sits against each of them. Half of
+// "where are you from" is where you are NOT, and a nearest approach is always
+// defined so this never has a hole in it.
+console.log(`${rule}`);
+console.log(`THE TWELVE FAMILIES — AND WHERE YOU SIT`);
+console.log(rule);
+console.log(`  ${"family".padEnd(20)}${"nearest approach".padEnd(34)}${"".padEnd(10)}`);
+for (const row of lineageMap(me.chart, year, {
+  scoringOrb: LINEAGE_ORB, notableOrb: NOTABLE, deciding: DECIDING_MARKERS,
+  starPositions: posFor(year),
+})) {
+  const m = LINEAGE_MEANINGS[row.lineage];
+  const mark = row.couldName ? "  <- YOUR LINE" : row.inScoringOrb ? "  <- brushed" : "";
+  const near = `${row.nearestStar} / ${row.nearestMarker}, ${formatSeparation(row.orb)}`;
+  console.log(`  ${(m?.displayName ?? row.lineage).padEnd(20)}${near.padEnd(34)}${mark}`);
+  console.log(`  ${"".padEnd(20)}${m?.essence ?? ""}`);
+}
+console.log("");
 
 console.log(`${rule}`);
 console.log(`THE WORKINGS`);

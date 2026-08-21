@@ -51,6 +51,12 @@ export interface LineageMeaning {
   /** Short noun phrase, printed under the name. */
   image: string;
   /**
+   * One clause on what this family is, for the map of all twelve. It has to
+   * stand completely alone - in the map a buyer reads it about a line they
+   * have no contact with, so it cannot lean on anything around it.
+   */
+  essence: string;
+  /**
    * What this star is in human memory. Real history and real myth - the part
    * nobody else does the reading for. Three or four sentences, and they should
    * be the best three or four sentences in the report.
@@ -72,6 +78,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "The Pleiades",
     subStrands: ["Pleiadian", "Alcyonean", "Tolekan"],
     image: "the seven sisters, and the one who is missing",
+    essence: "feeling, attunement, the raising of everyone nearby",
     history:
       "Almost every people on earth has named this cluster. The Japanese call it Subaru, the gathered ones. For the Māori its rising is Matariki and begins the new year. The Lakota, the Aztec, the Kiowa, the Greeks and the Aboriginal nations of Australia all told stories about it, and the strangest fact in astronomy is that so many of those stories are the same story: seven sisters, pursued, who fled into the sky — and one of them is missing from the count. Cultures that never met each other lost the same sister. It may be the oldest story humans still tell. And the hunter who chased them is still chasing them: Orion crosses the sky behind the Pleiades every night of the year and has never once caught up.",
     nature:
@@ -89,6 +96,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Lyra",
     subStrands: ["Lyran", "Vegan", "Avian", "Feline"],
     image: "the instrument everything else was tuned against",
+    essence: "first principles, pitch, the original version of things",
     history:
       "Vega was the pole star twelve thousand years ago and will be the pole star again in twelve thousand more — the whole sky turns on a wheel far longer than any civilisation, and this is the star at both ends of it. The lyre is Orpheus's, the instrument that made stones weep and stopped rivers to listen, and which could not in the end bring back the one thing he wanted. When he died the gods put it in the sky rather than let it be lost. In the starseed material Lyra is the eldest of all the lineages, the source the others are said to have come out of — the first place, before the scattering.",
     nature:
@@ -106,6 +114,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Orion",
     subStrands: [],
     image: "the hunter, and the war he came from",
+    essence: "conflict, endurance, and the ending of what others leave broken",
     history:
       "Egypt looked at this constellation and saw Osiris — the god who is murdered, dismembered and returns — and built for him accordingly: the three great pyramids at Giza are laid out in the pattern of Orion's Belt, and a shaft cut through the heart of the Great Pyramid points at where the Belt stood, so that the dead king's soul could go to it. Greece made him a giant hunter, son of the sea, who could walk on water; blinded, he walked east until the rising sun healed his eyes. He was killed by a scorpion, and the two of them were set at opposite ends of the sky so they can never be up at once. Look for Orion on a summer night and he is not there — he goes down as Scorpius rises. He has been running from the thing that killed him for three thousand years. In the starseed material Orion is the site of a long war, and its people came here carrying the memory of it.",
     nature:
@@ -123,6 +132,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Sirius",
     subStrands: ["Sirian"],
     image: "the brightest star, and the one that ran the calendar",
+    essence: "the record, the warning, the thing guarded",
     history:
       "For seventy days each year Sirius vanishes from the sky. Egypt held its breath through those days — they were the days Osiris lay dead — and then, on one particular dawn, the star cleared the horizon just ahead of the sun, and within days the Nile rose and the country lived for another year. The Egyptian year began on that morning. They called her Sopdet and they knew her as Isis, and they aligned temples so that her light would fall down the length of the sanctuary on that one dawn. No other star has ever been given a job that large. Rome, further north, only noticed that she rose with the worst heat of the year and called that stretch the dog days, and blamed her for it.",
     nature:
@@ -140,6 +150,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Arcturus",
     subStrands: ["Arcturian"],
     image: "the guardian of the bear",
+    essence: "repair — bodies, systems, households, arguments",
     history:
       "Arcturus is the bear-watcher: the great bear circles the pole and this star follows behind her, keeping her in sight, all night, every night, for as long as there has been anyone to look up. It is one of the very few stars named in the Book of Job. Hesiod told Greek farmers to watch for its rising and take their ships out of the water, because the storms were coming. And it is a stranger here — Arcturus is not from our part of the galaxy but an older, faster star cutting through on a steep path, passing us and moving on. In the starseed material the Arcturians are the physicians and the engineers: the ones who arrive when something is broken.",
     nature:
@@ -157,6 +168,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Andromeda",
     subStrands: ["Andromedan"],
     image: "the one who was chained, and the galaxy coming toward us",
+    essence: "freedom, escape, refusing to pay another's debt",
     history:
       "Andromeda was chained to a rock by her own parents and left for the sea monster, in payment for a boast that was not hers — her mother's vanity, her daughter's body. Perseus came for her. It is one of the oldest stories about being made to pay someone else's debt. And it is not only a story: this is the Andromeda Galaxy, a trillion suns, the furthest thing the human eye can see without help, so far away that the light reaching you tonight left before there were people. It is also coming. Andromeda is falling toward us at a hundred and ten kilometres a second, and in four billion years the two galaxies will pass through one another and become one.",
     nature:
@@ -174,6 +186,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Centaurus",
     subStrands: [],
     image: "the nearest door, and the one who points at it",
+    essence: "the near-at-hand, and pointing others toward it",
     history:
       "The centaur here is Chiron: not the wild kind but the teacher, the one who raised Asclepius and Achilles, who knew medicine better than anyone alive and carried a wound of his own that would not close. Alpha Centauri is the closest star system to our own — four light years, near enough that people alive now argue seriously about reaching it — and it turns out not to be a star at all but a household of three. Alongside it Hadar forms the Southern Pointers, the line that finds the Southern Cross, which is how the southern half of the world has navigated for as long as it has sailed. The Aboriginal nations of Australia read the dark dust beside them not as stars but as the shape between them: the Emu.",
     nature:
@@ -191,6 +204,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Eridanus",
     subStrands: [],
     image: "the river, and the boy who fell into it",
+    essence: "the long becoming, and everything not yet set",
     history:
       "Eridanus is the river — a long winding constellation that pours down out of Orion's foot and runs off the bottom of the sky. Phaethon, who could not prove to his friends that the sun-god was his father, demanded to drive the chariot for one day, lost the horses, scorched the earth into deserts, and was struck out of the sky by Zeus to save the world; he fell into this river, and his sisters stood on the bank weeping until they turned into poplars and their tears into amber. Epsilon Eridani, the star in it that carries this lineage, is a sun much like ours and very much younger, still wrapped in the disc of rubble that planets get built out of — a system unmistakably underway and unmistakably not finished.",
     nature:
@@ -208,6 +222,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Polaris",
     subStrands: [],
     image: "the one that does not move",
+    essence: "steadiness others navigate by without saying so",
     history:
       "Every other star in the northern sky wheels through the night. This one does not — it sits over the pole and the whole sky turns around it, which is why it has been the thing people navigate by rather than a thing people wish on. It has been steering ships for as long as there have been ships worth steering. It guided people north out of slavery, and the song that carried the route told them to follow the drinking gourd, which is the Plough, whose two end stars point straight at it. Up close it is not still at all: Polaris is a triple system, and the bright one is a Cepheid variable that swells and shrinks on a four-day pulse. It only looks steady from here. That is the whole job.",
     nature:
@@ -225,6 +240,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Draco",
     subStrands: ["Draconian"],
     image: "the pole star that used to be",
+    essence: "an older order, and what survives its ending",
     history:
       "Thuban was the north star when the pyramids were built. The long descending passage of the Great Pyramid is bored at exactly the angle that would have pointed at it, so that anyone standing at the bottom four and a half thousand years ago would have seen this one star, unmoving, at the end of the shaft. It is not the pole star now. The earth's axis wobbles on a twenty-six-thousand-year circle, and it moved on. Thuban did not dim, fail or do anything wrong; the centre simply went somewhere else. The dragon it sits in is Ladon, who guarded the golden apples and never slept, and who was killed doing it.",
     nature:
@@ -242,6 +258,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "Reticulum",
     subStrands: [],
     image: "the crosshair in the eyepiece",
+    essence: "precision, resolution, the difference nobody else sees",
     history:
       "Almost every constellation is a god, a hero or an animal. This one is a tool. Reticulum is named for the reticle — the fine grid of crosshairs an astronomer fixes inside an eyepiece so that a position can be measured exactly rather than estimated — and it was put in the sky in the eighteenth century by a man mapping the southern stars, who named it after the instrument he was doing it with. The two stars that carry this lineage, Zeta1 and Zeta2, are a matched pair of suns very like our own, so alike they are difficult to tell apart, which have travelled together through the galaxy for billions of years without separating. Of all the places in the sky, this is the one modern lore has made most famous.",
     nature:
@@ -259,6 +276,7 @@ export const LINEAGE_MEANINGS: Readonly<Record<string, LineageMeaning>> = {
     displayName: "The Galactic Centre",
     subStrands: [],
     image: "the middle of everything we are inside",
+    essence: "scale, transmission, belonging to something enormous",
     history:
       "Look toward Sagittarius on a dark night and you are looking down the length of your own galaxy at its middle. You cannot see it — there is too much dust in the way — but behind that dust is Sagittarius A*, a black hole of four million suns, and every star you have ever looked at is going around it, including this one. Our sun takes two hundred and twenty-five million years to complete a single circuit; the last time it was here, there were no flowers on earth. The Maya looked at the dark rift beside this point and called it the road to the underworld, and built a calendar that runs to the moment the solstice sun lines up with it.",
     nature:
