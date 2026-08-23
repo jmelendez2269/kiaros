@@ -36,13 +36,28 @@
  * ---------------------------------------------------------------------------
  */
 
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { generateObject, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 import type { ChartFact } from "./facts.ts";
 
 export const SYNTHESIS_PROMPT_VERSION = "star-origin.lifetime.v1" as const;
-export const SYNTHESIS_MODEL = "claude-opus-5" as const;
+
+/**
+ * The provider is a string, on purpose.
+ *
+ * `ai@6` routes a plain "provider/model" slug through the Vercel AI Gateway,
+ * which is already a dependency here, so switching model is config rather than
+ * a rewrite. That matters for one specific reason: "which model writes this
+ * better" is a question about taste that nobody can settle by arguing, and
+ * making it a one-word change is what turns it into something you can actually
+ * test. See scripts/compare-star-origin-synthesis.mts, which runs the same
+ * chart through two models and prints them unlabelled.
+ *
+ * Everything that makes this section safe - the fact fence, the forbidden
+ * topics, the length and citation checks - is in validateSynthesis and is
+ * completely provider-independent. None of it changes when this string does.
+ */
+export const SYNTHESIS_MODEL = "openai/gpt-5.4" as const;
 
 const SynthesisSchema = z.object({
   opening: z
@@ -224,9 +239,9 @@ function buildUserMessage(req: SynthesisRequest): string {
  */
 export async function generateSynthesis(
   req: SynthesisRequest,
-  opts: { client?: Anthropic; maxAttempts?: number } = {},
+  opts: { model?: string; maxAttempts?: number } = {},
 ): Promise<{ result: SynthesisResult | null; rejections: SynthesisRejection[] }> {
-  const client = opts.client ?? new Anthropic();
+  const model = opts.model ?? SYNTHESIS_MODEL;
   const maxAttempts = opts.maxAttempts ?? 2;
 
   let lastRejections: SynthesisRejection[] = [];
@@ -241,32 +256,30 @@ export async function generateSynthesis(
             .join("\n")}\nFix these exactly. Do not change anything else.`
         : "";
 
-    const response = await client.messages.parse({
-      model: SYNTHESIS_MODEL,
-      max_tokens: 16000,
-      system: SYSTEM,
-      thinking: { type: "adaptive" },
-      output_config: {
-        effort: "high",
-        format: zodOutputFormat(SynthesisSchema),
-      },
-      messages: [{ role: "user", content: buildUserMessage(req) + correction }],
-    });
-
-    inputTokens += response.usage.input_tokens;
-    outputTokens += response.usage.output_tokens;
-
-    // Safety classifiers can decline; check before reading content.
-    if (response.stop_reason === "refusal") {
+    let parsed: Synthesis;
+    try {
+      const response = await generateObject({
+        model,
+        schema: SynthesisSchema,
+        system: SYSTEM,
+        prompt: buildUserMessage(req) + correction,
+        providerOptions: {
+          gateway: { tags: ["feature:star-origin-synthesis"] },
+        },
+      });
+      inputTokens += response.usage.inputTokens ?? 0;
+      outputTokens += response.usage.outputTokens ?? 0;
+      parsed = response.object;
+    } catch (error) {
+      // A model that will not produce the shape, or declines the request, is
+      // the same outcome as one that fails validation: try once more, then
+      // ship the report without this section.
       lastRejections = [
-        { reason: "refused", detail: response.stop_details?.explanation ?? "no explanation given" },
+        {
+          reason: NoObjectGeneratedError.isInstance(error) ? "unparseable" : "provider error",
+          detail: error instanceof Error ? error.message : String(error),
+        },
       ];
-      continue;
-    }
-
-    const parsed = response.parsed_output;
-    if (!parsed) {
-      lastRejections = [{ reason: "unparseable", detail: "the model did not return the required shape" }];
       continue;
     }
 
@@ -275,7 +288,7 @@ export async function generateSynthesis(
       return {
         result: {
           synthesis: parsed,
-          model: SYNTHESIS_MODEL,
+          model,
           promptVersion: SYNTHESIS_PROMPT_VERSION,
           attempts: attempt,
           usage: { inputTokens, outputTokens },
