@@ -19,7 +19,12 @@ import { scoreChart } from "../lib/artifacts/star-origin/scoring.ts";
 import { buildBaseline, isNotable, DECIDING_MARKERS } from "../lib/artifacts/star-origin/baseline.ts";
 import { groupOf, isRanked } from "../lib/artifacts/star-origin/lineages.ts";
 import { generateStarOrigin } from "../lib/artifacts/star-origin/generator.ts";
-import { StarOriginContractError, LINEAGE_SECTIONS } from "../lib/artifacts/star-origin/contract.ts";
+import {
+  StarOriginContractError, LINEAGE_SECTIONS,
+  assertDeliverable, approveReport, rejectReport,
+} from "../lib/artifacts/star-origin/contract.ts";
+import { attachSynthesis } from "../lib/artifacts/star-origin/lifetime/attach.ts";
+import type { SynthesisResult } from "../lib/artifacts/star-origin/lifetime/synthesis.ts";
 
 const N = Number(process.argv[2] ?? 400);
 const SCORING_ORB = 2.5, NOTABLE = 1.5;
@@ -178,6 +183,69 @@ for (const [label, run] of refusals) {
   }
 }
 
-const allGood = ok === N && miniOk === 60 && miniLeak === 0 && refused === refusals.length;
+// --- 4. the review gate -----------------------------------------------------
+// The whole point of the gate is that model-written prose cannot reach a
+// buyer unread, so the thing to test is that it stops it.
+console.log(`
+The review gate`);
+
+const sample = makeBirth();
+const base = generateStarOrigin({
+  artifactId: "review_1", displayName: null, tier: "standard",
+  normalizedBirth: sample.normalized,
+  chart: computeNatalChart(sample.birth, "whole_sign"),
+  year: sample.year, chartFingerprint: `sha256:${"9".repeat(64)}`, ...common,
+});
+
+const fakeSynthesis: SynthesisResult = {
+  synthesis: {
+    opening: "A line about conflict, landing on a chart built for words.",
+    paragraphs: ["One.", "Two.", "Three."],
+    tension: "Both at once.",
+    citedFactIds: ["placement.sun", "placement.moon", "placement.mercury"],
+  },
+  model: "openai/gpt-5.4",
+  promptVersion: "star-origin.lifetime.v1",
+  attempts: 1,
+  usage: { inputTokens: 2000, outputTokens: 900 },
+};
+
+const gateChecks: Array<[string, boolean]> = [];
+const expectPass = (label: string, run: () => void) => {
+  try { run(); gateChecks.push([label, true]); }
+  catch (e) { gateChecks.push([`${label} — threw: ${(e as Error).message}`, false]); }
+};
+const expectFail = (label: string, run: () => void) => {
+  try { run(); gateChecks.push([`${label} — NOT BLOCKED`, false]); }
+  catch (e) { gateChecks.push([label, e instanceof StarOriginContractError]); }
+};
+
+expectPass("a fully composed report delivers with no review", () => assertDeliverable(base));
+
+const withSynthesis = attachSynthesis(base, fakeSynthesis);
+expectFail("a report with model prose is BLOCKED while pending", () => assertDeliverable(withSynthesis));
+
+const approved = approveReport(withSynthesis, "Jack");
+expectPass("...and delivers once approved by name", () => assertDeliverable(approved));
+
+expectFail("an approval with no reviewer name is refused", () => approveReport(withSynthesis, "   "));
+
+const rejected = rejectReport(withSynthesis, "Jack", "invented a placement");
+expectFail("a rejected report stays BLOCKED", () => assertDeliverable(rejected));
+
+expectFail("a rejection with no reason is refused", () => rejectReport(withSynthesis, "Jack", ""));
+
+expectFail("model prose cannot be marked as needing no review", () =>
+  assertDeliverable({ ...withSynthesis, review: { state: "not_required", reviewer: null, reviewedAt: null, note: null } }));
+
+expectPass("an omitted synthesis leaves the report unchanged and deliverable", () =>
+  assertDeliverable(attachSynthesis(base, null)));
+
+for (const [label, pass] of gateChecks) {
+  console.log(`  ${pass ? "ok     " : "FAILED "} ${label}`);
+}
+const gateOk = gateChecks.every(([, p]) => p);
+
+const allGood = ok === N && miniOk === 60 && miniLeak === 0 && refused === refusals.length && gateOk;
 console.log(`\n${allGood ? "PASS - the generator holds and the contract bites." : "FAIL"}`);
 if (!allGood) process.exitCode = 1;

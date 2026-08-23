@@ -35,7 +35,7 @@ import {
 } from "./content/report-frame.ts";
 import {
   STAR_ORIGIN_SCHEMA_VERSION, STAR_ORIGIN_TEMPLATE_VERSION,
-  TIERS_THAT_MAY_NAME_A_LINEAGE, validateStarOriginInput,
+  TIERS_THAT_MAY_NAME_A_LINEAGE, validateStarOriginInput, NO_REVIEW_NEEDED,
   type LineageProximityRow, type LineageScore, type StarContact, type StarOriginArtifact,
   type StarOriginCalculation, type StarOriginInput, type StarOriginNarrativeSection,
   type StarOriginNormalizedBirth, type StarOriginResult, type StarOriginTier,
@@ -353,6 +353,12 @@ export function generateStarOrigin(opts: GenerateOptions): StarOriginArtifact {
       generationMethod: "composed",
       contentVersion: STAR_ORIGIN_CONTENT_VERSION,
     },
+    // The generator composes only. A per-buyer synthesis is attached
+    // afterwards by attachSynthesis(), which flips the review state with it,
+    // so a report can never gain model-written prose without also gaining the
+    // requirement that somebody read it.
+    synthesisProvenance: null,
+    review: NO_REVIEW_NEEDED,
     sections,
     workings,
     map,

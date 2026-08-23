@@ -70,11 +70,20 @@ export const STAR_ORIGIN_SECTION_IDS = [
   "your_strongest_markers",
   "what_you_carry",
   "named_signatures",
+  "this_lifetime",
   "living_with_it",
   "the_workings",
 ] as const;
 
 export type StarOriginSectionId = (typeof STAR_ORIGIN_SECTION_IDS)[number];
+
+/**
+ * The only section written per buyer rather than composed from signed-off
+ * files. Its presence is what makes a report need a human before it ships.
+ */
+export const REVIEWED_SECTIONS: ReadonlySet<StarOriginSectionId> = new Set([
+  "this_lifetime",
+]);
 
 /** Layer 2 sections. Omitted entirely until k9 lands. */
 export const LAYER_2_SECTIONS: ReadonlySet<StarOriginSectionId> = new Set([
@@ -264,6 +273,12 @@ export interface StarOriginArtifact {
   result: StarOriginResult;
   provenance: StarOriginProvenance;
   narrativeProvenance: { generationMethod: "composed"; contentVersion: string };
+  /**
+   * Present only when the report carries a per-buyer section. Its absence is
+   * the machine-readable statement that nothing here was model-written.
+   */
+  synthesisProvenance: SynthesisProvenance | null;
+  review: NarrativeReview;
   sections: readonly StarOriginNarrativeSection[];
   workings: readonly WorkingsTableRow[];
   map: readonly LineageProximityRow[];
@@ -273,6 +288,47 @@ export interface StarOriginArtifact {
 // ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
+
+/**
+ * Where a report's per-buyer writing stands with a human.
+ *
+ * `pending` is the state a freshly generated report is in and it is not
+ * deliverable. There is no way to reach `approved` except by someone saying
+ * so, which is the entire point.
+ */
+export type ReviewState = "not_required" | "pending" | "approved" | "rejected";
+
+export interface NarrativeReview {
+  state: ReviewState;
+  /** Who approved it. Required to be non-empty when state is approved. */
+  reviewer: string | null;
+  reviewedAt: string | null;
+  /** Why it was sent back. Useful for tuning the prompt against real failures. */
+  note: string | null;
+}
+
+export const UNREVIEWED: NarrativeReview = {
+  state: "pending",
+  reviewer: null,
+  reviewedAt: null,
+  note: null,
+};
+
+export const NO_REVIEW_NEEDED: NarrativeReview = {
+  state: "not_required",
+  reviewer: null,
+  reviewedAt: null,
+  note: null,
+};
+
+/** Recorded on any report carrying a per-buyer section, for the audit trail. */
+export interface SynthesisProvenance {
+  model: string;
+  promptVersion: string;
+  attempts: number;
+  inputTokens: number;
+  outputTokens: number;
+}
 
 export class StarOriginContractError extends Error {}
 
@@ -405,4 +461,105 @@ export function validateStarOriginInput(input: StarOriginInput): void {
       if (!contactIds.has(id)) fail(`${section.id} cites a contact that is not in the chart: ${id}`);
     }
   }
+}
+
+/**
+ * The last gate before a buyer sees anything.
+ *
+ * Every other check in this file runs at generation time, which is the right
+ * place for them - they are about whether the report is well formed. This one
+ * is different: it runs at DELIVERY time, because a report can be perfectly
+ * well formed and still not be something a person has looked at yet.
+ *
+ * It exists as a function rather than a convention because "remember to check
+ * the review state before sending" is not a control. The fulfilment layer
+ * calls this immediately before it hands over a file, and anything that has
+ * not been through a human throws.
+ *
+ * The asymmetry is deliberate and it is what protects the economics. A report
+ * with no per-buyer section is composed entirely from files that were written
+ * once and signed off once, so it needs no review and returns immediately.
+ * Only the reports carrying a synthesis cost anybody time.
+ */
+export function assertDeliverable(artifact: StarOriginArtifact): void {
+  const perBuyer = artifact.sections.filter((s) => REVIEWED_SECTIONS.has(s.id));
+
+  if (perBuyer.length === 0) {
+    if (artifact.synthesisProvenance !== null) {
+      fail("a report with no per-buyer section must not claim synthesis provenance");
+    }
+    if (artifact.review.state !== "not_required") {
+      fail(
+        `a fully composed report needs no review, but its state is "${artifact.review.state}" — ` +
+          "something generated a synthesis and then dropped the section",
+      );
+    }
+    return;
+  }
+
+  if (artifact.synthesisProvenance === null) {
+    fail("a report carrying a per-buyer section must record which model wrote it");
+  }
+
+  switch (artifact.review.state) {
+    case "approved":
+      if (!artifact.review.reviewer || artifact.review.reviewer.trim().length === 0) {
+        fail("approved, but by nobody — an approval needs a name against it");
+      }
+      if (!artifact.review.reviewedAt) fail("approved, but with no timestamp");
+      return;
+    case "pending":
+      fail("this report has model-written prose that nobody has read yet");
+    case "rejected":
+      fail(`this report was rejected in review${artifact.review.note ? `: ${artifact.review.note}` : ""}`);
+    case "not_required":
+      fail("a report carrying model-written prose cannot be marked as needing no review");
+  }
+}
+
+/**
+ * Approve a report for delivery.
+ *
+ * Takes a reviewer name and will not accept an empty one. Deliberately the
+ * only route to `approved` — the state is not settable from a plain object
+ * literal anywhere in the fulfilment path.
+ */
+export function approveReport(
+  artifact: StarOriginArtifact,
+  reviewer: string,
+  now: Date = new Date(),
+): StarOriginArtifact {
+  if (!reviewer || reviewer.trim().length === 0) {
+    fail("an approval needs a reviewer name");
+  }
+  return {
+    ...artifact,
+    review: {
+      state: "approved",
+      reviewer: reviewer.trim(),
+      reviewedAt: now.toISOString(),
+      note: null,
+    },
+  };
+}
+
+export function rejectReport(
+  artifact: StarOriginArtifact,
+  reviewer: string,
+  note: string,
+  now: Date = new Date(),
+): StarOriginArtifact {
+  if (!reviewer || reviewer.trim().length === 0) fail("a rejection needs a reviewer name");
+  if (!note || note.trim().length === 0) {
+    fail("a rejection needs a reason — it is the only record of what the model got wrong");
+  }
+  return {
+    ...artifact,
+    review: {
+      state: "rejected",
+      reviewer: reviewer.trim(),
+      reviewedAt: now.toISOString(),
+      note: note.trim(),
+    },
+  };
 }
