@@ -21,6 +21,11 @@ type RecentJournalEntry = {
 }
 
 interface JournalComposerProps {
+  initialEntry: Pick<
+    RecentJournalEntry,
+    'id' | 'title' | 'body' | 'entry_date' | 'is_ritual' | 'oracle_memory'
+  > | null
+  entryLoadError: string | null
   initialPrompt: string
   initialArea: string
   initialTheme: string
@@ -44,6 +49,8 @@ function truncate(value: string, max = 220) {
 }
 
 export function JournalComposer({
+  initialEntry,
+  entryLoadError,
   initialPrompt,
   initialArea,
   initialTheme,
@@ -55,13 +62,23 @@ export function JournalComposer({
   oracleMemoryCount,
   blueprintYear,
 }: JournalComposerProps) {
+  const isEditing = Boolean(initialEntry)
   const [entryCount, setEntryCount] = useState(journalEntriesCount)
   const [memoryCount, setMemoryCount] = useState(oracleMemoryCount)
-  const [title, setTitle] = useState(initialPrompt ? truncate(initialPrompt, 120) : '')
-  const [entryDate, setEntryDate] = useState('')
-  const [body, setBody] = useState(initialPrompt ? `${initialPrompt}\n\n` : '')
-  const [isRitual, setIsRitual] = useState(Boolean(initialPrompt))
-  const [addToOracleMemory, setAddToOracleMemory] = useState(false)
+  const [title, setTitle] = useState(
+    initialEntry?.title ?? (initialPrompt ? truncate(initialPrompt, 120) : ''),
+  )
+  const [entryDate, setEntryDate] = useState(initialEntry?.entry_date ?? '')
+  const [body, setBody] = useState(
+    initialEntry?.body ?? (initialPrompt ? `${initialPrompt}\n\n` : ''),
+  )
+  const [isRitual, setIsRitual] = useState(initialEntry?.is_ritual ?? Boolean(initialPrompt))
+  const [addToOracleMemory, setAddToOracleMemory] = useState(
+    initialEntry?.oracle_memory ?? false,
+  )
+  const [savedMemoryIncluded, setSavedMemoryIncluded] = useState(
+    initialEntry?.oracle_memory ?? false,
+  )
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
@@ -88,8 +105,8 @@ export function JournalComposer({
   }
 
   useEffect(() => {
-    setEntryDate(todayISO())
-  }, [])
+    if (!isEditing) setEntryDate(todayISO())
+  }, [isEditing])
 
   const contextSummary = useMemo(() => {
     const parts: string[] = []
@@ -109,27 +126,31 @@ export function JournalComposer({
     setSavedMessage(null)
 
     try {
-      const response = await fetch('/api/journal', {
-        method: 'POST',
+      const response = await fetch(initialEntry ? `/api/journal/${initialEntry.id}` : '/api/journal', {
+        method: initialEntry ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim() || null,
           body,
-          entry_date: entryDate,
+          ...(!initialEntry ? { entry_date: entryDate } : {}),
           is_ritual: isRitual,
           oracle_memory: addToOracleMemory,
-          transit_context:
-            initialPrompt || initialArea || initialTheme || initialContext
-              ? {
-                  prompt: initialPrompt || undefined,
-                  area: initialArea || undefined,
-                  theme: initialTheme || undefined,
-                  week: initialWeek ? Number(initialWeek) : undefined,
-                  start: initialStart || undefined,
-                  end: initialEnd || undefined,
-                  context: initialContext || undefined,
-                }
-              : null,
+          ...(!initialEntry
+            ? {
+                transit_context:
+                  initialPrompt || initialArea || initialTheme || initialContext
+                    ? {
+                        prompt: initialPrompt || undefined,
+                        area: initialArea || undefined,
+                        theme: initialTheme || undefined,
+                        week: initialWeek ? Number(initialWeek) : undefined,
+                        start: initialStart || undefined,
+                        end: initialEnd || undefined,
+                        context: initialContext || undefined,
+                      }
+                    : null,
+              }
+            : {}),
         }),
       })
 
@@ -141,21 +162,32 @@ export function JournalComposer({
 
       window.dispatchEvent(new Event(PATTERN_DISCOVERY_CHECK_EVENT))
 
-      setEntryCount((current) => current + 1)
-      if (payload.oracle_memory) {
-        setMemoryCount((current) => current + 1)
+      const isNowInMemory = Boolean(payload.oracle_memory)
+      if (initialEntry) {
+        if (isNowInMemory !== savedMemoryIncluded) {
+          setMemoryCount((current) => current + (isNowInMemory ? 1 : -1))
+        }
+        setSavedMemoryIncluded(isNowInMemory)
+      } else {
+        setEntryCount((current) => current + 1)
+        if (isNowInMemory) setMemoryCount((current) => current + 1)
       }
 
       setSavedMessage(
-        addToOracleMemory
-          ? 'Saved. This entry is now part of Stelloquy memory.'
-          : 'Saved. This entry can stay in your journal without being added to Stelloquy memory.'
+        initialEntry
+          ? 'Changes saved.'
+          : addToOracleMemory
+            ? 'Saved. This entry is now part of Stelloquy memory.'
+            : 'Saved. This entry can stay in your journal without being added to Stelloquy memory.',
       )
       setLastSavedEntry({ title: title.trim() || null, body })
-      setBody(initialPrompt ? `${initialPrompt}\n\n` : '')
-      setTitle(initialPrompt ? truncate(initialPrompt, 120) : '')
-      setIsRitual(Boolean(initialPrompt))
-      setAddToOracleMemory(false)
+      if (!initialEntry) {
+        setBody(initialPrompt ? `${initialPrompt}\n\n` : '')
+        setTitle(initialPrompt ? truncate(initialPrompt, 120) : '')
+        setIsRitual(Boolean(initialPrompt))
+        setAddToOracleMemory(false)
+      }
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save journal entry')
     } finally {
@@ -190,17 +222,38 @@ export function JournalComposer({
       <section className="channel-mine channel-panel px-6 py-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="channel-kicker">Compose</p>
-            <h2 className="mt-1.5 font-display text-[1.4rem] text-bone">New entry</h2>
+            <p className="channel-kicker">{isEditing ? 'Journal entry' : 'Compose'}</p>
+            <h2 className="mt-1.5 font-display text-[1.4rem] text-bone">
+              {isEditing ? 'Edit entry' : 'New entry'}
+            </h2>
           </div>
-          <button
-            type="button"
-            onClick={handleOpenStelloquy}
-            className="inline-flex items-center rounded-xl border border-plum-400/30 bg-plum-400/10 px-4 py-2 text-sm text-plum-200 transition-colors hover:bg-plum-400/18"
-          >
-            Open Stelloquy
-          </button>
+          <div className="flex flex-wrap justify-end gap-2">
+            {isEditing ? (
+              <Link
+                href="/journal"
+                className="inline-flex items-center rounded-xl border border-border/70 px-4 py-2 text-sm text-bone-muted transition-colors hover:text-bone"
+              >
+                New entry
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleOpenStelloquy}
+              className="inline-flex items-center rounded-xl border border-plum-400/30 bg-plum-400/10 px-4 py-2 text-sm text-plum-200 transition-colors hover:bg-plum-400/18"
+            >
+              Open Stelloquy
+            </button>
+          </div>
         </div>
+
+        {entryLoadError ? (
+          <div
+            role="alert"
+            className="mt-5 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+          >
+            {entryLoadError}
+          </div>
+        ) : null}
 
         {contextSummary.length > 0 ? (
           <div className="channel-sky mt-5 rounded-[1.1rem] border border-border/60 bg-stone-950/50 p-5">
@@ -239,7 +292,13 @@ export function JournalComposer({
                 type="date"
                 value={entryDate}
                 onChange={(event) => setEntryDate(event.target.value)}
-                className="w-full rounded-xl border border-border/80 bg-stone-950/80 px-4 py-3 text-sm text-bone focus:outline-none focus:ring-1 focus:ring-moss-400"
+                disabled={isEditing}
+                title={
+                  isEditing
+                    ? 'The original entry date and sky context are preserved when editing.'
+                    : undefined
+                }
+                className="w-full rounded-xl border border-border/80 bg-stone-950/80 px-4 py-3 text-sm text-bone focus:outline-none focus:ring-1 focus:ring-moss-400 disabled:cursor-not-allowed disabled:opacity-65"
               />
             </label>
           </div>
@@ -312,7 +371,7 @@ export function JournalComposer({
               disabled={isSaving || body.trim().length === 0}
               className="rounded-xl border border-moss-400/50 bg-moss-500/30 px-5 py-3 text-sm font-medium text-bone transition-colors hover:bg-moss-500/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSaving ? 'Saving...' : 'Save entry'}
+              {isSaving ? 'Saving...' : isEditing ? 'Save changes' : 'Save entry'}
             </button>
             <button
               type="button"

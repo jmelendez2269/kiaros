@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Frame, K, Kicker } from '@/components/almanac'
+import { ContinueWithStelloquy } from '@/components/today/ContinueWithStelloquy'
 import type { TodayIntentionResult } from '@/lib/today/get-today-intention'
 
 interface Props {
@@ -57,6 +58,13 @@ export function TodayIntention({ result }: Props) {
     quarterNumber ? `Q${quarterNumber}` : null,
     wordOfYear ? `Word: ${wordOfYear}` : null,
   ].filter(Boolean).join(' · ')
+
+  const stelloquyPrompt = [
+    `I want to continue with today's intention: “${line}”`,
+    theme && theme !== line ? `The surrounding theme is “${theme}.”` : null,
+    context ? `The timing context says: ${context}` : null,
+    'Help me explore what this invites me to notice or choose today, grounded in my chart and current timing.',
+  ].filter(Boolean).join('\n\n')
 
   return (
     <Frame tone="umber" padding={22}>
@@ -124,22 +132,22 @@ export function TodayIntention({ result }: Props) {
         </div>
       ) : null}
 
-      {breadcrumb ? (
-        <div
-          style={{
-            marginTop: 14,
-            paddingTop: 10,
-            borderTop: `1px solid ${K.line}`,
-            fontFamily: K.fMono,
-            fontSize: 11,
-            color: K.inkSoft,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-          }}
-        >
-          {breadcrumb}
-        </div>
-      ) : null}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-almanac-line pt-1">
+        {breadcrumb ? (
+          <div
+            style={{
+              fontFamily: K.fMono,
+              fontSize: 11,
+              color: K.inkSoft,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {breadcrumb}
+          </div>
+        ) : null}
+        <ContinueWithStelloquy prompt={stelloquyPrompt} />
+      </div>
     </Frame>
   )
 }

@@ -10,7 +10,14 @@ export default async function JournalPage({
   const supabase = await createServerSupabase()
   const currentYear = new Date().getFullYear()
 
-  const [oracleMemoryRes, journalEntriesRes, blueprintRes] = await Promise.all([
+  function value(key: string) {
+    const raw = params[key]
+    return Array.isArray(raw) ? raw[0] : raw
+  }
+
+  const selectedEntryId = value('entry') ?? ''
+
+  const [oracleMemoryRes, journalEntriesRes, blueprintRes, selectedEntryRes] = await Promise.all([
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('oracle_memory', true),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
     supabase
@@ -21,12 +28,14 @@ export default async function JournalPage({
       .order('version', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    selectedEntryId
+      ? supabase
+          .from('journal_entries')
+          .select('id, title, body, entry_date, is_ritual, oracle_memory')
+          .eq('id', selectedEntryId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ])
-
-  function value(key: string) {
-    const raw = params[key]
-    return Array.isArray(raw) ? raw[0] : raw
-  }
 
   const initialPrompt = value('prompt') ?? ''
   const initialArea = value('area') ?? ''
@@ -38,6 +47,13 @@ export default async function JournalPage({
 
   return (
     <JournalComposer
+      key={selectedEntryRes.data?.id ?? 'new-entry'}
+      initialEntry={selectedEntryRes.data}
+      entryLoadError={
+        selectedEntryId && (selectedEntryRes.error || !selectedEntryRes.data)
+          ? 'That journal entry could not be opened. It may no longer be available.'
+          : null
+      }
       initialPrompt={initialPrompt}
       initialArea={initialArea}
       initialTheme={initialTheme}
