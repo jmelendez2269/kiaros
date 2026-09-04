@@ -328,9 +328,9 @@ function OracleDeepDive() {
             A conversation with your context.
           </h2>
           <p className="mt-5 text-[0.98rem] leading-7 text-almanac-ink-dim">
-            Stelloquy opens already knowing your chart, this week's transits, the goals you named,
-            and whatever you've chosen to let it remember from your journal. Your conversation
-            begins with that context already in place.
+            Available with Planner + Oracle, Stelloquy opens already knowing your chart, this
+            week's transits, the goals you named, and whatever you've chosen to let it remember
+            from your journal. Your conversation begins with that context already in place.
           </p>
           <ul className="mt-6 space-y-3 text-[0.9rem] leading-6 text-almanac-ink-soft">
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Grounded in your actual transits and chart placements.</li>
@@ -409,31 +409,32 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
             Begin where you are
           </p>
           <h2 className="mt-4 font-almanac-serif text-4xl italic text-almanac-ink md:text-5xl">
-            See the whole year today—or begin with one week.
+            Choose your planning window—or begin with a personalized reading.
           </h2>
           <p className="mt-5 text-[0.98rem] leading-7 text-almanac-ink-dim">
-            The free week offers a real glimpse with no card and no automatic charge. Unlocking
-            today opens the complete year, every planning and reflection surface, and the option
-            to bring Stelloquy into the conversation.
+            The Personalized Birth-Chart Week Reading is a one-time, dated reading built from your
+            natal chart and the current sky. It stays in your account to revisit—no card,
+            countdown, or automatic charge. It does not include your Blueprint, Life Areas, Goals,
+            journal, Stelloquy, or the Kairos planning workflow.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           <div className="flex flex-col rounded-2xl border border-almanac-line-hi bg-almanac-bg2/45 p-7 md:p-8">
             <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-copper-hi">
-              Free personal week
+              Personalized Birth-Chart Week Reading
             </p>
-            <h3 className="mt-2 font-almanac-serif text-2xl text-almanac-ink">Begin with seven days</h3>
+            <h3 className="mt-2 font-almanac-serif text-2xl text-almanac-ink">A seven-day reading to keep</h3>
             <p className="mt-3 flex-1 text-[0.9rem] leading-6 text-almanac-ink-dim">
-              One personal week, the current sky, daily invitations, and a reflection to carry.
-              No card and no automatic charge.
+              Your natal chart, the current sky, seven daily invitations, and a reflection to
+              carry. This is a reading—not temporary access to the Kairos app.
             </p>
             <div className="mt-6 flex items-baseline gap-2">
               <span className="font-almanac-display text-4xl text-almanac-ink">$0</span>
-              <span className="text-sm text-almanac-ink-soft">for seven days</span>
+              <span className="text-sm text-almanac-ink-soft">one persistent reading</span>
             </div>
             <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-soft">
-              {["One generated personal week", "Seven daily timing notes", "Upgrade whenever you feel ready"].map((feature) => (
+              {["One dated birth-chart reading", "Seven daily sky notes", "Keep it and return whenever you like"].map((feature) => (
                 <li key={feature} className="flex gap-2">
                   <span className="mt-1 text-almanac-copper">&middot;</span>
                   <span>{feature}</span>
@@ -444,7 +445,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
               href="/sign-up?redirect_url=/onboarding"
               className="mt-7 inline-flex min-h-11 items-center justify-center rounded-full border border-almanac-line-hi px-5 text-sm font-semibold text-almanac-ink transition-colors hover:border-almanac-copper/60"
             >
-              Begin with one free week
+              Get my week reading
             </Link>
           </div>
 
@@ -463,7 +464,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
                 </span>
               ) : null}
               <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-copper-hi">
-                {tier.oracleEnabled ? "The year + Stelloquy" : "The complete year"}
+                {tier.oracleEnabled ? "Planner + Stelloquy" : "Personalized planner"}
               </p>
               <h3 className="mt-2 font-almanac-serif text-2xl text-almanac-ink">{tier.name}</h3>
               <p className="mt-3 flex-1 text-[0.9rem] leading-6 text-almanac-ink-dim">{tier.tagline}</p>
@@ -474,6 +475,12 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
                 </span>
                 <span className="text-sm text-almanac-ink-soft">/mo, or {formatUsd(tier.annualPriceCents)}/yr</span>
               </div>
+
+              <p className="mt-3 text-[0.78rem] leading-5 text-almanac-ink-soft">
+                Monthly shows your current Blueprint week plus the next four Blueprint weeks.
+                Annual unlocks the full canonical Blueprint.
+                {tier.oracleEnabled ? " Planner + Oracle includes Stelloquy." : null}
+              </p>
 
               <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-soft">
                 {tier.features.slice(0, 4).map((f) => (
@@ -497,7 +504,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
                     href="/sign-up?redirect_url=/pricing"
                     className="inline-flex min-h-11 items-center rounded-full bg-almanac-kairos-hi px-5 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02]"
                   >
-                    {tier.oracleEnabled ? "Unlock my year + Stelloquy" : "Unlock my full year"}
+                    {tier.oracleEnabled ? "Choose Planner + Stelloquy" : "Choose my planner"}
                   </Link>
                 )}
                 <Link
