@@ -4,6 +4,11 @@ import { createAdminSupabase } from "@/lib/supabase/admin"
 import { loadCurrentBlueprint } from "@/lib/blueprint/load"
 import { getActiveTransits } from "@/lib/today/get-active-transits"
 import { weekAheadEmail, quietSkyEmail } from "@/lib/email/templates"
+import {
+  groupRetentionEntitlementsByUser,
+  isRetentionEmailEligible,
+  type RetentionEntitlement,
+} from "@/lib/email/retention-eligibility"
 
 const FROM = "Kairos <hello@kairosplanner.xyz>"
 const QUIET_SKY_THRESHOLD_DAYS = 7
@@ -43,16 +48,41 @@ export async function runRetentionEmailCron(appUrl: string): Promise<RetentionEm
   const resend = new Resend(process.env.RESEND_API_KEY)
   const summary: RetentionEmailRunSummary = { weekAheadSent: 0, quietSkySent: 0, errors: [] }
 
-  const { data: users } = await admin
+  const { data: users, error: usersError } = await admin
     .from("user_profiles")
     .select("id, email, display_name, word_of_year, last_seen_at")
     .eq("marketing_consent", true)
     .not("onboarding_completed_at", "is", null)
 
-  const isMonday = new Date().getUTCDay() === 1
-  const today = new Date().toISOString().slice(0, 10)
+  if (usersError) {
+    summary.errors.push("Retention recipients could not be loaded.")
+    return summary
+  }
 
-  for (const user of (users ?? []) as ConsentedUser[]) {
+  const candidates = (users ?? []) as ConsentedUser[]
+  if (candidates.length === 0) return summary
+
+  const { data: entitlements, error: entitlementsError } = await admin
+    .from("product_entitlements")
+    .select("user_id, source, planner_year, oracle_enabled, starts_at, ends_at, status, access_plan")
+    .in("user_id", candidates.map((user) => user.id))
+
+  if (entitlementsError) {
+    summary.errors.push("Retention recipient eligibility could not be resolved.")
+    return summary
+  }
+
+  const entitlementsByUser = groupRetentionEntitlementsByUser(
+    (entitlements ?? []) as RetentionEntitlement[],
+  )
+
+  const asOf = new Date()
+  const isMonday = asOf.getUTCDay() === 1
+  const today = asOf.toISOString().slice(0, 10)
+
+  for (const user of candidates) {
+    if (!isRetentionEmailEligible(entitlementsByUser.get(user.id) ?? [], asOf)) continue
+
     const unsubscribeUrl = `${appUrl}/api/email/unsubscribe?u=${user.id}`
 
     try {

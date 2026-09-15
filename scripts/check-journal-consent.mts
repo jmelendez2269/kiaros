@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {
   journalConsentCompatibilityInputSchema,
+  journalConsentStateSchema,
   normalizeJournalConsent,
   privateJournalConsentInput,
 } from '../lib/journal/consent.ts'
@@ -72,6 +73,23 @@ assert.equal(
 )
 assert.equal(
   journalConsentCompatibilityInputSchema.safeParse({ memory_importance: 2.5 }).success,
+  false,
+)
+
+assert.equal(
+  journalConsentStateSchema.safeParse({
+    include_in_insights: true,
+    include_in_stelloquy: false,
+    memory_pinned: false,
+    memory_importance: null,
+  }).success,
+  true,
+)
+assert.equal(
+  journalConsentStateSchema.safeParse({
+    include_in_insights: true,
+    include_in_stelloquy: false,
+  }).success,
   false,
 )
 

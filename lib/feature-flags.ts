@@ -33,3 +33,11 @@ export function isPersonalizedWeekExperimentEnabled(): boolean {
 export function isEtsyArtifactAdminEnabled(): boolean {
   return enabled(process.env.KIAROS_ETSY_ARTIFACT_ADMIN);
 }
+
+export function isEtsyArtifactPersistenceEnabled(): boolean {
+  return enabled(process.env.KIAROS_ETSY_ARTIFACT_PERSISTENCE);
+}
+
+export function isEtsyArtifactRealIntakeEnabled(): boolean {
+  return enabled(process.env.KIAROS_ETSY_ARTIFACT_REAL_INTAKE);
+}

@@ -17,7 +17,7 @@
 import type { NatalChart, ZodiacSign } from "@/types/blueprint";
 import { ZODIAC_SIGNS } from "@/types/blueprint";
 import { starPositionsForYear, STAR_CATALOG_VERSION, type CatalogStar } from "./stars.ts";
-import { scoreChart, type Contact } from "./scoring.ts";
+import { markersFromChart, scoreChart, type Contact } from "./scoring.ts";
 import {
   classifyByNotable, isNotable, standing,
   DECIDING_MARKERS, MIN_DECIDING_WEIGHT, NOTABLE_ORB, type Baseline,
@@ -28,7 +28,7 @@ import {
 import { groupOf, isRanked, lineageMap } from "./lineages.ts";
 import { LINEAGE_MEANINGS } from "./content/lineage-meanings.ts";
 import {
-  composeFinding, composeLineage, decidedByFor, lineageSectionOpening, workingsRow,
+  composeFinding, composeLineage, composeResonanceProfile, decidedByFor, lineageSectionOpening, workingsRow,
 } from "./content/compose.ts";
 import {
   HOW_TO_READ_THIS, LIVING_WITH_IT, STAR_ORIGIN_CONTENT_VERSION,
@@ -37,10 +37,12 @@ import {
   STAR_ORIGIN_SCHEMA_VERSION, STAR_ORIGIN_TEMPLATE_VERSION,
   TIERS_THAT_MAY_NAME_A_LINEAGE, validateStarOriginInput, NO_REVIEW_NEEDED,
   type LineageProximityRow, type LineageScore, type StarContact, type StarOriginArtifact,
+  type StarOriginChartHighlight, type StarOriginChartMarker,
   type StarOriginCalculation, type StarOriginInput, type StarOriginNarrativeSection,
   type StarOriginNormalizedBirth, type StarOriginResult, type StarOriginTier,
   type WorkingsTableRow,
 } from "./contract.ts";
+import { topThreeResonances } from "./profile.ts";
 
 const DEFAULT_SCORING_ORB = 2.5;
 
@@ -51,6 +53,89 @@ function signAndDegree(longitude: number): { sign: ZodiacSign; degree: number } 
 
 function contactId(marker: string, starId: string): string {
   return `contact.${marker}.${starId}`;
+}
+
+const CHART_MARKERS: ReadonlyArray<{
+  markerId: string;
+  displayName: string;
+  abbreviation: string;
+  kind: StarOriginChartMarker["kind"];
+  longitude: (chart: NatalChart) => number | undefined;
+}> = [
+  { markerId: "sun", displayName: "Sun", abbreviation: "Su", kind: "planet", longitude: (chart) => chart.sun.longitude },
+  { markerId: "moon", displayName: "Moon", abbreviation: "Mo", kind: "planet", longitude: (chart) => chart.moon.longitude },
+  { markerId: "mercury", displayName: "Mercury", abbreviation: "Me", kind: "planet", longitude: (chart) => chart.mercury.longitude },
+  { markerId: "venus", displayName: "Venus", abbreviation: "Ve", kind: "planet", longitude: (chart) => chart.venus.longitude },
+  { markerId: "mars", displayName: "Mars", abbreviation: "Ma", kind: "planet", longitude: (chart) => chart.mars.longitude },
+  { markerId: "jupiter", displayName: "Jupiter", abbreviation: "Ju", kind: "planet", longitude: (chart) => chart.jupiter.longitude },
+  { markerId: "saturn", displayName: "Saturn", abbreviation: "Sa", kind: "planet", longitude: (chart) => chart.saturn.longitude },
+  { markerId: "uranus", displayName: "Uranus", abbreviation: "Ur", kind: "planet", longitude: (chart) => chart.uranus.longitude },
+  { markerId: "neptune", displayName: "Neptune", abbreviation: "Ne", kind: "planet", longitude: (chart) => chart.neptune.longitude },
+  { markerId: "pluto", displayName: "Pluto", abbreviation: "Pl", kind: "planet", longitude: (chart) => chart.pluto.longitude },
+  { markerId: "ascendant", displayName: "Ascendant", abbreviation: "ASC", kind: "angle", longitude: (chart) => chart.ascendantLongitude },
+  { markerId: "midheaven", displayName: "Midheaven", abbreviation: "MC", kind: "angle", longitude: (chart) => chart.midheavenLongitude },
+  { markerId: "north_node", displayName: "North Node", abbreviation: "NN", kind: "node", longitude: (chart) => chart.northNodeLongitude },
+  { markerId: "south_node", displayName: "South Node", abbreviation: "SN", kind: "node", longitude: (chart) => chart.southNodeLongitude },
+];
+
+function chartMarkers(chart: NatalChart): StarOriginChartMarker[] {
+  return CHART_MARKERS.flatMap((definition) => {
+    const longitude = definition.longitude(chart);
+    return longitude === undefined
+      ? []
+      : [{
+          markerId: definition.markerId,
+          displayName: definition.displayName,
+          abbreviation: definition.abbreviation,
+          longitude,
+          kind: definition.kind,
+        }];
+  });
+}
+
+function chartHighlights(
+  result: StarOriginResult,
+  map: readonly LineageProximityRow[],
+  positions: ReadonlyArray<{ star: CatalogStar; longitude: number }>,
+  chart: NatalChart,
+): StarOriginChartHighlight[] {
+  const markerLongitudes = markersFromChart(chart);
+  const markerDefinitions = new Map(
+    CHART_MARKERS.map((definition) => [definition.markerId, definition]),
+  );
+
+  return topThreeResonances(result, map).map((entry) => {
+    const starPosition = positions.find(
+      (position) =>
+        position.star.name === entry.row.nearestStar &&
+        position.star.lineage !== null &&
+        groupOf(position.star.lineage) === entry.row.lineageId,
+    );
+    const markerLongitude = markerLongitudes.get(entry.row.nearestMarker);
+    const marker = markerDefinitions.get(entry.row.nearestMarker);
+    if (!starPosition || markerLongitude === undefined || !marker) {
+      throw new RangeError(
+        "The chart print could not resolve " +
+          entry.row.nearestStar +
+          " to " +
+          entry.row.nearestMarker +
+          ".",
+      );
+    }
+    return {
+      rank: entry.rank,
+      role: entry.role,
+      lineageId: entry.row.lineageId,
+      displayName: entry.row.displayName,
+      starId: starPosition.star.id,
+      starName: starPosition.star.name,
+      starLongitude: starPosition.longitude,
+      markerId: entry.row.nearestMarker,
+      markerName: marker.displayName,
+      markerLongitude,
+      orb: entry.row.orb,
+    };
+  });
 }
 
 function toStarContact(c: Contact | Finding, band: StarContact["band"]): StarContact {
@@ -261,13 +346,17 @@ export function generateStarOrigin(opts: GenerateOptions): StarOriginArtifact {
       sourceContactIds: cited,
     });
 
+    const topThree = topThreeResonances(result, map);
+    const topThreeIds = new Set(topThree.map((entry) => entry.row.lineageId));
+    const profile = composeResonanceProfile(topThree, []);
+
     sections.push({
       id: "the_twelve_families",
-      title: "The twelve families",
-      subtitle: "and where you sit",
+      title: profile.title,
+      subtitle: profile.subtitle,
       paragraphs: [
-        "There are twelve lines in this sky. Here is your distance from every one of them, measured the same way: the closest any point of your chart came to any star of that line, on the day you were born.",
-        ...map.map(
+        ...profile.paragraphs,
+        ...map.filter((row) => !topThreeIds.has(row.lineageId)).map(
           (row) =>
             `${row.displayName} — ${row.essence}. Nearest approach ${row.orb.toFixed(2)}°, ${row.nearestStar} to your ${row.nearestMarker}.${row.isYourLine ? " This is your line." : ""}`,
         ),
@@ -303,11 +392,18 @@ export function generateStarOrigin(opts: GenerateOptions): StarOriginArtifact {
     };
   });
 
+  const chartPrint = {
+    risingSign: opts.chart.birthTimeUnknown ? null : opts.chart.rising,
+    markers: chartMarkers(opts.chart),
+    highlights: chartHighlights(result, map, positions, opts.chart),
+  };
+
   const calculation: StarOriginCalculation = {
     contacts: [...contacts.values()],
     lineages: [...byLineage.keys()].map(lineageScoreFor),
     result,
     map,
+    chartPrint,
     provenance: {
       zodiac: "tropical",
       houseSystem: "whole_sign",
@@ -362,9 +458,23 @@ export function generateStarOrigin(opts: GenerateOptions): StarOriginArtifact {
     sections,
     workings,
     map,
+    chartPrint,
     files: [
       { paperSize: "letter", fileName: `star-origin-${input.artifactId}-letter.pdf` },
       { paperSize: "a4", fileName: `star-origin-${input.artifactId}-a4.pdf` },
     ],
+    chartPrintFiles: chartPrint.highlights.length === 3
+      ? [
+          "8x10",
+          "11x14",
+          "16x20",
+          "a4",
+          "a3",
+        ].map((printSize) => ({
+          printSize: printSize as "8x10" | "11x14" | "16x20" | "a4" | "a3",
+          fileName:
+            `star-family-chart-${input.artifactId}-${printSize}.pdf`,
+        }))
+      : [],
   };
 }

@@ -1,6 +1,6 @@
 import 'server-only'
 import { createAdminSupabase } from '@/lib/supabase/admin'
-import type { MonthBlueprint, QuarterBlueprint, WeekBlueprint } from '@/types/blueprint'
+import { loadBlueprintForYear } from '@/lib/blueprint/load'
 
 export interface TodayIntention {
   /** Most specific theme available — week first, then month, then quarter, then year. */
@@ -38,25 +38,19 @@ function firstSentence(text: string | null): string | null {
 
 export async function getTodayIntention(date: string, supabaseUserId: string): Promise<TodayIntentionResult> {
   const admin = createAdminSupabase()
+  const planYear = Number.parseInt(date.slice(0, 4), 10)
 
-  const [{ data: profile }, { data: blueprint }] = await Promise.all([
+  const [{ data: profile }, loaded] = await Promise.all([
     admin.from('user_profiles').select('word_of_year').eq('id', supabaseUserId).maybeSingle(),
-    admin
-      .from('blueprints')
-      .select('year_theme, year_summary, quarters, months, weeks, plan_year')
-      .eq('user_id', supabaseUserId)
-      .eq('plan_year', Number.parseInt(date.slice(0, 4), 10))
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    loadBlueprintForYear(supabaseUserId, planYear, false),
   ])
 
-  if (!blueprint) return { status: 'no-blueprint' }
+  if (!loaded) return { status: 'no-blueprint' }
 
-  const weeks = (blueprint.weeks as unknown as WeekBlueprint[]) ?? []
-  const months = (blueprint.months as unknown as MonthBlueprint[]) ?? []
-  const quarters = (blueprint.quarters as unknown as QuarterBlueprint[]) ?? []
+  const { blueprint } = loaded
+  const weeks = blueprint.weeks
+  const months = blueprint.months
+  const quarters = blueprint.quarters
 
   const week = weeks.find((w) => w.startDate <= date && date <= w.endDate) ?? null
   const monthNumber = Number.parseInt(date.slice(5, 7), 10)
@@ -113,13 +107,13 @@ export async function getTodayIntention(date: string, supabaseUserId: string): P
     }
   }
 
-  const yearTheme = blueprint.year_theme?.trim()
+  const yearTheme = blueprint.yearTheme.trim()
   if (yearTheme) {
     return {
       status: 'ok',
       data: {
         theme: yearTheme,
-        line: firstSentence(blueprint.year_summary) ?? yearTheme,
+        line: firstSentence(blueprint.yearSummary) ?? yearTheme,
         source: 'year',
         context: null,
         wordOfYear,

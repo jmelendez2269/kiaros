@@ -1,0 +1,654 @@
+{
+  "schemaVersion": "kairos.natal-report.pdf-verification.v2",
+  "pdfUaAssessment": "structural-readiness-only-no-conformance-claim",
+  "assertions": 964,
+  "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "records": [
+    {
+      "fixture": "known-time",
+      "documentKind": "report",
+      "paperSize": "letter",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter.pdf",
+      "bytes": 307795,
+      "sha256": "4ad0087db5092c2843fe9bea53d84301abe50faeda25f4542a90d64f7f9d6449",
+      "pages": 20,
+      "pagePoints": [
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Report · Letter",
+      "structureRoles": [
+        "Aside",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-2.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-3.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-4.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-5.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-6.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-7.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-8.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-9.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-10.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-11.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-12.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-13.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-14.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-15.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-16.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-17.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-18.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-19.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_letter_page-20.png"
+      ]
+    },
+    {
+      "fixture": "known-time",
+      "documentKind": "report",
+      "paperSize": "a4",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4.pdf",
+      "bytes": 308495,
+      "sha256": "bedcfeb3dbe46d2ebf0c4a4d1fb254bed00e5ce71ec5a4c0794a8d92d17c4472",
+      "pages": 20,
+      "pagePoints": [
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Report · A4",
+      "structureRoles": [
+        "Aside",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-2.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-3.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-4.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-5.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-6.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-7.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-8.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-9.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-10.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-11.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-12.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-13.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-14.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-15.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-16.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-17.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-18.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-19.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_natal-report_a4_page-20.png"
+      ]
+    },
+    {
+      "fixture": "known-time",
+      "documentKind": "anchor_print",
+      "paperSize": "letter",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_letter.pdf",
+      "bytes": 77815,
+      "sha256": "2fc718bda814c7847bf336e75828f86c9ee1d9381ce54808ddbf155f46f4eab7",
+      "pages": 1,
+      "pagePoints": [
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Anchor Print · Letter",
+      "structureRoles": [
+        "Art",
+        "Document",
+        "H1",
+        "H2",
+        "NonStruct",
+        "P",
+        "Root"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_letter_page-1.png"
+      ]
+    },
+    {
+      "fixture": "known-time",
+      "documentKind": "anchor_print",
+      "paperSize": "a4",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_a4.pdf",
+      "bytes": 77792,
+      "sha256": "dd55735e5bde3ef234fa018aa0869da0ac5ef25a9da5a464fdb3fdba7f4f8140",
+      "pages": 1,
+      "pagePoints": [
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Anchor Print · A4",
+      "structureRoles": [
+        "Art",
+        "Document",
+        "H1",
+        "H2",
+        "NonStruct",
+        "P",
+        "Root"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_a4_page-1.png"
+      ]
+    },
+    {
+      "fixture": "unknown-time",
+      "documentKind": "report",
+      "paperSize": "letter",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter.pdf",
+      "bytes": 305111,
+      "sha256": "43dbfc5afd5556d7cccbb8f29c0c94dd0efd0985e44e52e73c7b289d59cb4440",
+      "pages": 20,
+      "pagePoints": [
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Report · Letter",
+      "structureRoles": [
+        "Aside",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-2.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-3.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-4.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-5.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-6.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-7.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-8.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-9.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-10.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-11.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-12.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-13.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-14.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-15.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-16.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-17.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-18.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-19.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_letter_page-20.png"
+      ]
+    },
+    {
+      "fixture": "unknown-time",
+      "documentKind": "report",
+      "paperSize": "a4",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4.pdf",
+      "bytes": 305799,
+      "sha256": "0006ac04914798656cc9b6c9590107e7803d75770e5fcea55a72c1913c0503e2",
+      "pages": 20,
+      "pagePoints": [
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Report · A4",
+      "structureRoles": [
+        "Aside",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-2.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-3.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-4.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-5.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-6.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-7.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-8.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-9.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-10.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-11.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-12.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-13.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-14.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-15.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-16.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-17.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-18.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-19.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_natal-report_a4_page-20.png"
+      ]
+    },
+    {
+      "fixture": "unknown-time",
+      "documentKind": "anchor_print",
+      "paperSize": "letter",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_letter.pdf",
+      "bytes": 80774,
+      "sha256": "29d81afd55671a487a04692340fc8f3ecf1d4966c1dbd3248411bc37d4bfb383",
+      "pages": 1,
+      "pagePoints": [
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Anchor Print · Letter",
+      "structureRoles": [
+        "Art",
+        "Document",
+        "H1",
+        "H2",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_letter_page-1.png"
+      ]
+    },
+    {
+      "fixture": "unknown-time",
+      "documentKind": "anchor_print",
+      "paperSize": "a4",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_a4.pdf",
+      "bytes": 80763,
+      "sha256": "b72c01258c1d313c0a03eccf91cdb6da4ddc0fae238a329053b64cd0e0ceb408",
+      "pages": 1,
+      "pagePoints": [
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        }
+      ],
+      "title": "Personal Natal Astrology Report + Anchor Print · Anchor Print · A4",
+      "structureRoles": [
+        "Art",
+        "Document",
+        "H1",
+        "H2",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-natal-report-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_a4_page-1.png"
+      ]
+    }
+  ]
+}

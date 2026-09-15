@@ -1,0 +1,24 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "incremental": false, "noEmit": true },
+  "files": [
+    "../app/(admin)/admin/artifacts/year-ahead/page.tsx",
+    "../app/api/admin/year-ahead/route.ts",
+    "../app/api/admin/year-ahead/[reportId]/actions/route.ts",
+    "../app/api/admin/year-ahead/[reportId]/export/route.ts",
+    "../app/api/admin/year-ahead/[reportId]/map-export/route.ts",
+    "../components/artifacts/YearAheadWorkflowConsole.tsx",
+    "../lib/artifacts/year-ahead/calculation.ts",
+    "../lib/artifacts/year-ahead/contract.ts",
+    "../lib/artifacts/year-ahead/generator.ts",
+    "../lib/artifacts/year-ahead/narrative.ts",
+    "../lib/artifacts/year-ahead/pdf-export.ts",
+    "../lib/artifacts/year-ahead/template.ts",
+    "../lib/artifacts/year-ahead/year-map-template.ts",
+    "../lib/artifacts/year-ahead/workflow.ts",
+    "../types/astronomia.d.ts",
+    "../types/es2021-string-compat.d.ts",
+    "./check-year-ahead-workflow.mts"
+  ],
+  "include": []
+}

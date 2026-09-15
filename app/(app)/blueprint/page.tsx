@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { BlueprintView } from '@/components/blueprint/BlueprintView'
-import { getAppProfile } from '@/lib/app/get-app-profile'
+import { getAppProfile, appProfileId } from '@/lib/app/get-app-profile'
 import { getAccessWindow } from '@/lib/commerce/get-access-window'
-import type { BlueprintOutput, MoonPhase, Tradition } from '@/types/blueprint'
+import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import type { Tradition } from '@/types/blueprint'
 
 const TRADITION_LABELS: Record<Tradition, string> = {
   evolutionary: 'Evolutionary Astrology',
@@ -14,94 +15,21 @@ const TRADITION_LABELS: Record<Tradition, string> = {
   synthesis: 'Synthesis',
 }
 
-function asStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
-}
-
-function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : []
-}
-
-function sanitizePeriodRanges(value: unknown): BlueprintOutput['pushPeriods'] {
-  return asArray<Record<string, unknown>>(value).map((item) => ({
-    startDate: typeof item.startDate === 'string' ? item.startDate : '',
-    endDate: typeof item.endDate === 'string' ? item.endDate : '',
-    reason: typeof item.reason === 'string' ? item.reason : '',
-  }))
-}
-
-function sanitizeMoonPhase(value: unknown): MoonPhase {
-  return value === 'new' || value === 'first-quarter' || value === 'full' || value === 'last-quarter'
-    ? value
-    : 'new'
-}
-
-function sanitizeMonths(value: unknown): BlueprintOutput['months'] {
-  return asArray<Record<string, unknown>>(value).map((item, index) => ({
-    month: typeof item.month === 'number' ? item.month : index + 1,
-    name: typeof item.name === 'string' ? item.name : `Month ${index + 1}`,
-    theme: typeof item.theme === 'string' ? item.theme : '',
-    intentions: asStringArray(item.intentions),
-    keyTransits: asStringArray(item.keyTransits),
-    moonPhases: asArray<Record<string, unknown>>(item.moonPhases).map((phase) => ({
-      phase: sanitizeMoonPhase(phase.phase),
-      date: typeof phase.date === 'string' ? phase.date : '',
-      significance: typeof phase.significance === 'string' ? phase.significance : '',
-    })),
-    energyArc: typeof item.energyArc === 'string' ? item.energyArc : '',
-  }))
-}
-
-function sanitizeQuarters(value: unknown): BlueprintOutput['quarters'] {
-  return asArray<Record<string, unknown>>(value).map((item, index) => ({
-    quarter: typeof item.quarter === 'number' ? item.quarter : index + 1,
-    theme: typeof item.theme === 'string' ? item.theme : `Quarter ${index + 1}`,
-    intention: typeof item.intention === 'string' ? item.intention : '',
-    focusAreas: asStringArray(item.focusAreas),
-    cosmicHighlights: asStringArray(item.cosmicHighlights),
-    pushPeriods: sanitizePeriodRanges(item.pushPeriods),
-    restPeriods: sanitizePeriodRanges(item.restPeriods),
-  }))
-}
-
-function sanitizeWeeks(value: unknown): BlueprintOutput['weeks'] {
-  return asArray<Record<string, unknown>>(value).map((item, index) => ({
-    weekNumber: typeof item.weekNumber === 'number' ? item.weekNumber : index + 1,
-    startDate: typeof item.startDate === 'string' ? item.startDate : '',
-    endDate: typeof item.endDate === 'string' ? item.endDate : '',
-    theme: typeof item.theme === 'string' ? item.theme : '',
-    intentions: asStringArray(item.intentions),
-    energyType:
-      item.energyType === 'push' ||
-      item.energyType === 'rest' ||
-      item.energyType === 'reflect' ||
-      item.energyType === 'initiate'
-        ? item.energyType
-        : 'reflect',
-    cosmicContext: typeof item.cosmicContext === 'string' ? item.cosmicContext : '',
-    goalCategoryFocus: asStringArray(item.goalCategoryFocus),
-  }))
-}
-
 export default async function BlueprintPage() {
   const supabase = await createServerSupabase()
   const currentYear = new Date().getFullYear()
 
   const { userId } = await auth()
-  const appProfile = userId ? await getAppProfile(userId) : null
-  const accessWindow = appProfile?.id ? await getAccessWindow(appProfile.id) : null
+  const [clerkUser, appProfile] = await Promise.all([
+    currentUser(),
+    userId ? getAppProfile(userId) : Promise.resolve(null),
+  ])
+  const isAdmin = clerkUser?.publicMetadata?.isAdmin === true
+  const appProfileUserId = appProfileId(appProfile)
 
-  const [{ data: row }, { data: profile }] = await Promise.all([
-    supabase
-      .from('blueprints')
-      .select(
-        'id, plan_year, year_theme, year_summary, quarters, months, weeks, push_periods, rest_periods, tradition, house_system'
-      )
-      .eq('plan_year', currentYear)
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const [loaded, accessWindow, { data: profile }] = await Promise.all([
+    appProfileUserId ? loadCurrentBlueprint(appProfileUserId, isAdmin) : Promise.resolve(null),
+    appProfileUserId ? getAccessWindow(appProfileUserId) : Promise.resolve(null),
     supabase
       .from('user_profiles')
       .select('tradition, house_system')
@@ -109,16 +37,16 @@ export default async function BlueprintPage() {
   ])
 
   const needsRegeneration =
-    !!row &&
+    !!loaded &&
     !!profile &&
     (
-      (profile.tradition !== null && row.tradition !== profile.tradition) ||
-      (profile.house_system !== null && row.house_system !== profile.house_system)
+      (profile.tradition !== null && loaded.tradition !== profile.tradition) ||
+      (profile.house_system !== null && loaded.houseSystem !== profile.house_system)
     )
 
   const currentTradition = profile?.tradition as Tradition | null
 
-  if (!row) {
+  if (!loaded) {
     return (
       <div className="shell-panel flex flex-col items-center justify-center space-y-5 py-24 text-center">
         <div className="text-4xl text-bone-muted">✦</div>
@@ -137,16 +65,6 @@ export default async function BlueprintPage() {
     )
   }
 
-  const blueprint: BlueprintOutput = {
-    yearTheme: row.year_theme ?? '',
-    yearSummary: row.year_summary ?? '',
-    quarters: sanitizeQuarters(row.quarters),
-    months: sanitizeMonths(row.months),
-    weeks: sanitizeWeeks(row.weeks),
-    pushPeriods: sanitizePeriodRanges(row.push_periods),
-    restPeriods: sanitizePeriodRanges(row.rest_periods),
-  }
-
   return (
     <>
       {needsRegeneration && (
@@ -154,12 +72,12 @@ export default async function BlueprintPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-0.5">
               <p className="text-sm font-medium text-bone">
-                {row.tradition === null
+                {loaded.tradition === null
                   ? 'Tradition-aware readings are now available'
                   : 'Your tradition or house system has changed'}
               </p>
               <p className="text-xs leading-relaxed text-bone-muted">
-                {row.tradition === null
+                {loaded.tradition === null
                   ? `Regenerate your blueprint to weave in your ${currentTradition ? TRADITION_LABELS[currentTradition] : 'chosen tradition'} lens.`
                   : `Regenerate your blueprint to reflect your ${currentTradition ? TRADITION_LABELS[currentTradition] : 'updated'} path.`}
               </p>
@@ -174,8 +92,8 @@ export default async function BlueprintPage() {
         </div>
       )}
       <BlueprintView
-        blueprint={blueprint}
-        planYear={row.plan_year}
+        blueprint={loaded.blueprint}
+        planYear={loaded.planYear}
         accessEndsAt={accessWindow?.endsAt ?? null}
         accessState={accessWindow?.state ?? null}
       />

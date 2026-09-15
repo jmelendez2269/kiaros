@@ -21,8 +21,36 @@
 
 import type { ZodiacSign } from "../../../types/blueprint.ts";
 
-export const STAR_ORIGIN_SCHEMA_VERSION = "kairos.star-origin.v1" as const;
-export const STAR_ORIGIN_TEMPLATE_VERSION = "star-origin.plate.v1" as const;
+export const STAR_ORIGIN_SCHEMA_VERSION = "kairos.star-origin.v2" as const;
+export const STAR_ORIGIN_TEMPLATE_VERSION = "star-origin.plate.v2" as const;
+
+export const STAR_FAMILY_CHART_PRINT_SIZES = [
+  "8x10",
+  "11x14",
+  "16x20",
+  "a4",
+  "a3",
+] as const;
+
+export const STAR_ORIGIN_QA_ITEM_IDS = [
+  "calculation",
+  "product_scope",
+  "layout",
+  "accessibility",
+  "privacy_metadata",
+] as const;
+
+export type StarOriginQaItemId = (typeof STAR_ORIGIN_QA_ITEM_IDS)[number];
+
+export const STAR_ORIGIN_QA_LABELS: Record<StarOriginQaItemId, string> = {
+  calculation: "Top-three fixed-star contacts and birth details checked",
+  product_scope: "Preview and exports match the purchased Etsy product",
+  layout: "Every promised print size reviewed for clipping and legibility",
+  accessibility: "Labels, reading order, contrast, and non-color cues checked",
+  privacy_metadata: "Filename and buyer-visible metadata contain no private internals",
+};
+export type StarFamilyChartPrintSize =
+  (typeof STAR_FAMILY_CHART_PRINT_SIZES)[number];
 
 /**
  * Prices are NOT set here. Open decisions 5 and 6 in the spec are Jack's and
@@ -195,11 +223,40 @@ export interface StarOriginProvenance {
   findingsOrb: number;
 }
 
+export interface StarOriginChartMarker {
+  markerId: string;
+  displayName: string;
+  abbreviation: string;
+  longitude: number;
+  kind: "planet" | "angle" | "node";
+}
+
+export interface StarOriginChartHighlight {
+  rank: 1 | 2 | 3;
+  role: "primary_line" | "co_primary_line" | "supporting_resonance";
+  lineageId: string;
+  displayName: string;
+  starId: string;
+  starName: string;
+  starLongitude: number;
+  markerId: string;
+  markerName: string;
+  markerLongitude: number;
+  orb: number;
+}
+
+export interface StarOriginChartPrint {
+  risingSign: ZodiacSign | null;
+  markers: readonly StarOriginChartMarker[];
+  highlights: readonly StarOriginChartHighlight[];
+}
+
 export interface StarOriginCalculation {
   contacts: readonly StarContact[];
   lineages: readonly LineageScore[];
   result: StarOriginResult;
   map: readonly LineageProximityRow[];
+  chartPrint: StarOriginChartPrint;
   provenance: StarOriginProvenance;
 }
 
@@ -256,6 +313,11 @@ export interface StarOriginFileVariant {
   fileName: string;
 }
 
+export interface StarFamilyChartPrintFileVariant {
+  printSize: StarFamilyChartPrintSize;
+  fileName: string;
+}
+
 export interface StarOriginArtifact {
   schemaVersion: typeof STAR_ORIGIN_SCHEMA_VERSION;
   templateVersion: typeof STAR_ORIGIN_TEMPLATE_VERSION;
@@ -282,7 +344,9 @@ export interface StarOriginArtifact {
   sections: readonly StarOriginNarrativeSection[];
   workings: readonly WorkingsTableRow[];
   map: readonly LineageProximityRow[];
+  chartPrint: StarOriginChartPrint;
   files: readonly StarOriginFileVariant[];
+  chartPrintFiles: readonly StarFamilyChartPrintFileVariant[];
 }
 
 // ---------------------------------------------------------------------------
@@ -428,6 +492,45 @@ export function validateStarOriginInput(input: StarOriginInput): void {
     }
   }
 
+  const chartPrint = input.calculation.chartPrint;
+  const markerIds = new Set<string>();
+  for (const marker of chartPrint.markers) {
+    assertNonEmpty(marker.markerId, "chart marker id", 40);
+    assertNonEmpty(marker.displayName, "chart marker name", 40);
+    assertNonEmpty(marker.abbreviation, "chart marker abbreviation", 5);
+    if (markerIds.has(marker.markerId)) {
+      fail("duplicate chart marker: " + marker.markerId);
+    }
+    markerIds.add(marker.markerId);
+    assertLongitude(marker.longitude, marker.markerId + " longitude");
+  }
+  const expectedHighlightCount = TIERS_THAT_MAY_NAME_A_LINEAGE.has(input.tier) ? 3 : 0;
+  if (chartPrint.highlights.length !== expectedHighlightCount) {
+    fail(
+      "chart print requires " +
+        expectedHighlightCount +
+        " highlighted resonances for the " +
+        input.tier +
+        " tier",
+    );
+  }
+  for (const [index, highlight] of chartPrint.highlights.entries()) {
+    if (highlight.rank !== index + 1) fail("chart print highlight ranks must be 1, 2, 3");
+    if (!markerIds.has(highlight.markerId)) {
+      fail("chart print highlight references a missing marker: " + highlight.markerId);
+    }
+    assertLongitude(highlight.starLongitude, highlight.starName + " longitude");
+    assertLongitude(highlight.markerLongitude, highlight.markerName + " longitude");
+    if (
+      Math.abs(
+        angularSeparation(highlight.starLongitude, highlight.markerLongitude) -
+          highlight.orb,
+      ) > 0.02
+    ) {
+      fail("chart print highlight orb does not match its recorded longitudes");
+    }
+  }
+
   // The report promises three findings. If it cannot keep that, it must not
   // ship silently - the orb rule in findings.ts exists to make this unreachable.
   const written = input.narrative.sections.find((s) => s.id === "your_strongest_markers");
@@ -515,6 +618,17 @@ export function assertDeliverable(artifact: StarOriginArtifact): void {
     case "not_required":
       fail("a report carrying model-written prose cannot be marked as needing no review");
   }
+}
+
+function assertLongitude(value: number, label: string): void {
+  if (!Number.isFinite(value) || value < 0 || value >= 360) {
+    fail(label + " must be a finite tropical longitude from 0 to under 360");
+  }
+}
+
+function angularSeparation(first: number, second: number): number {
+  const difference = Math.abs(first - second) % 360;
+  return difference > 180 ? 360 - difference : difference;
 }
 
 /**

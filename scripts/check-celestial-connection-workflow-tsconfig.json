@@ -1,0 +1,24 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "incremental": false, "noEmit": true },
+  "files": [
+    "../app/(admin)/admin/artifacts/celestial-connection/page.tsx",
+    "../app/api/admin/celestial-connection/route.ts",
+    "../app/api/admin/celestial-connection/[reportId]/actions/route.ts",
+    "../app/api/admin/celestial-connection/[reportId]/export/route.ts",
+    "../app/api/admin/celestial-connection/[reportId]/map-export/route.ts",
+    "../components/artifacts/CelestialConnectionWorkflowConsole.tsx",
+    "../lib/artifacts/celestial-connection/calculation.ts",
+    "../lib/artifacts/celestial-connection/contract.ts",
+    "../lib/artifacts/celestial-connection/connection-map-template.ts",
+    "../lib/artifacts/celestial-connection/generator.ts",
+    "../lib/artifacts/celestial-connection/narrative.ts",
+    "../lib/artifacts/celestial-connection/pdf-export.ts",
+    "../lib/artifacts/celestial-connection/template.ts",
+    "../lib/artifacts/celestial-connection/workflow.ts",
+    "../types/astronomia.d.ts",
+    "../types/es2021-string-compat.d.ts",
+    "./check-celestial-connection-workflow.mts"
+  ],
+  "include": []
+}

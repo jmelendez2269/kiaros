@@ -54,13 +54,13 @@ const TRADITION_PROGRESS: Record<Tradition, [string, string]> = {
 const FEATURE_SLIDES = [
   {
     kicker: "The blueprint",
-    title: "52 weeks shaped around you",
-    body: "Your planner is structured across quarters, months, and weeks — each one anchored to real astronomical timing and your stated goals, not generic milestones.",
+    title: "A canonical year shaped around you",
+    body: "Your Blueprint is structured across quarters, months, and weeks, anchored to real astronomical timing and your stated goals. Monthly access shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full canonical Blueprint.",
   },
   {
     kicker: "Cosmic Calendar",
-    title: "Your year as a living map",
-    body: "The Cosmic Calendar shows you the full arc of the year: planetary transits, moon phases, and timing windows — so you can see what's coming and plan with intention.",
+    title: "Your timing as a living map",
+    body: "The Cosmic Calendar maps planetary transits, moon phases, and timing windows. The visible calendar follows your Blueprint access: a five-week window on monthly or the full canonical year on annual.",
   },
   {
     kicker: "Journal",
@@ -69,18 +69,18 @@ const FEATURE_SLIDES = [
   },
   {
     kicker: `Meet ${BRAND.oracle}`,
-    title: `${BRAND.oracle} — your AI guide`,
-    body: `Pronounced ${BRAND.oraclePronunciation}. ${BRAND.oracle} is a conversational guide built into your planner. It knows your natal chart, your current transits, and your goals — not just generic astrology.`,
+    title: `${BRAND.oracle} — the Planner + Oracle guide`,
+    body: `Pronounced ${BRAND.oraclePronunciation}. Included only with Planner + Oracle, ${BRAND.oracle} is a conversational guide grounded in your natal chart, permitted Blueprint context, current transits, and goals.`,
   },
   {
     kicker: `${BRAND.oracle}`,
     title: "Grounded in your data, not the internet",
-    body: `Most AI assistants start from scratch every conversation. ${BRAND.oracle} starts from your blueprint, your journal captures, and your goals. Every answer is shaped around where you actually are.`,
+    body: `With Planner + Oracle, ${BRAND.oracle} can start from your permitted Blueprint context, goals, and the journal entries you choose to add to memory. Planner by itself does not include Stelloquy.`,
   },
   {
     kicker: "Memory",
     title: "Save what matters",
-    body: `When a conversation with ${BRAND.oracle} lands on something important, you can save it. Those captures feed back into your Insights and ground future guidance — so the planner learns your arc over the year.`,
+    body: `Planner + Oracle lets you save useful ${BRAND.oracle} captures and choose which journal entries can ground later guidance. Stelloquy and its memory layer are not included with Planner alone.`,
   },
   {
     kicker: "Areas + Goals",

@@ -21,7 +21,7 @@ export default function GeneratingWeekPage() {
     async function begin() {
       const response = await fetch("/api/preview/week/generate", { method: "POST" });
       if (!response.ok) {
-        setError("Your personal week couldn't be started. Please try again.");
+        setError("Your birth-chart week reading couldn't be started. Please try again.");
         return;
       }
 
@@ -43,7 +43,7 @@ export default function GeneratingWeekPage() {
           router.replace("/preview");
         } else if (result.status === "error") {
           if (interval) clearInterval(interval);
-          setError(result.error ?? "Your personal week couldn't be generated.");
+          setError(result.error ?? "Your birth-chart week reading couldn't be generated.");
         }
       }, POLL_INTERVAL_MS);
     }
@@ -62,12 +62,13 @@ export default function GeneratingWeekPage() {
           <div className="h-full w-full animate-pulse rounded-full bg-gradient-to-br from-leather-300/70 to-plum-400/30" />
         </div>
         <div>
-          <p className="shell-kicker">Your personal week</p>
+          <p className="shell-kicker">Personalized Birth-Chart Week Reading</p>
           <h2 className="mt-3 font-serif text-3xl text-bone">Looking at the seven days ahead</h2>
           <p className="mx-auto mt-4 max-w-md leading-7 text-bone-muted">
-            Kairos is bringing together your natal chart and the changing sky of this week. Your
-            Blueprint, Life Areas, and Goals remain part of the paid Planner. This usually takes
-            less than a minute.
+            Kairos is bringing together your natal chart and the current sky for one dated
+            reading. It does not include your Blueprint, Life Areas, Goals, journal, Stelloquy, or
+            the Kairos planning workflow. The reading stays in your account to revisit. This
+            usually takes less than a minute.
           </p>
         </div>
         <div className="mx-auto h-1.5 max-w-xs overflow-hidden rounded-full bg-stone-900">

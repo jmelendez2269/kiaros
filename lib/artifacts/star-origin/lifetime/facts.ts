@@ -117,7 +117,13 @@ export function allowedNames(
   starNames: readonly string[],
   lineageName: string,
 ): Set<string> {
-  const names = new Set<string>([lineageName, ...starNames]);
+  const names = new Set<string>();
+  const addName = (name: string) => {
+    names.add(name);
+    for (const word of name.split(/[^A-Za-z]+/).filter(Boolean)) names.add(word);
+  };
+  addName(lineageName);
+  for (const starName of starNames) addName(starName);
   for (const body of BODIES) names.add(label(body));
   names.add("Ascendant");
   names.add("Midheaven");

@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta name="generator" content="Kairos natal-report.obsidian-almanac.v2" />
+  <title>Personal Natal Astrology Report + Anchor Print · Report · Letter</title>
+  <style>
+    :root {
+      --paper: #f7f2e8;
+      --paper-deep: #eee5d6;
+      --ink: #181923;
+      --ink-muted: #4b4b57;
+      --violet: #5135a8;
+      --violet-soft: #e8e0f5;
+      --steel: #315f80;
+      --amber: #754900;
+      --line: #b9afc5;
+    }
+    @page { size: Letter; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #d7d3ca; color: var(--ink); }
+    body { font-family: "Aptos", "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.5; }
+    .artifact-page {
+      width: 215.9mm;
+      height: 279.4mm;
+      margin: 0 auto;
+      padding: 13mm 14mm 12mm;
+      background: var(--paper);
+      break-after: page;
+      page-break-after: always;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      position: relative;
+      overflow: hidden;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .artifact-page:last-child { break-after: auto; page-break-after: auto; }
+    .artifact-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-top: 4mm solid var(--violet);
+      pointer-events: none;
+    }
+    .artifact-header, .artifact-footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 8mm; }
+    .artifact-header { margin-top: 2mm; border-bottom: 0.35mm solid var(--line); padding-bottom: 4mm; }
+    .brand-mark { margin: 0; color: var(--violet); font: 700 9pt/1 "Aptos", "Segoe UI", sans-serif; letter-spacing: 0.22em; }
+    .kicker, .page-number { margin: 1.5mm 0 0; color: var(--ink-muted); font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; }
+    .title-block { margin: 7mm 0 5mm; }
+    .title-block.compact { margin-bottom: 4mm; }
+    h1, h2 { font-family: "Iowan Old Style", Georgia, serif; color: var(--ink); }
+    h1 { margin: 0; font-size: 27pt; line-height: 1.05; font-weight: 600; letter-spacing: -0.02em; }
+    h2 { margin: 0 0 2mm; font-size: 13pt; line-height: 1.15; font-weight: 600; }
+    p { orphans: 3; widows: 3; }
+    .subtitle { max-width: 72ch; margin: 2mm 0 0; color: var(--ink-muted); font-family: "Iowan Old Style", Georgia, serif; font-size: 12pt; line-height: 1.45; }
+    .birth-label { margin: 2mm 0 0; color: var(--steel); font-size: 9pt; font-weight: 600; }
+    .reference-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 7mm; align-items: start; }
+    .chart-panel { margin: 0; }
+    .natal-chart { width: 100%; height: auto; display: block; }
+    .chart-ring, .chart-division { fill: none; stroke: #766f82; stroke-width: 0.8; }
+    .chart-ring-outer { stroke: var(--violet); stroke-width: 1.4; }
+    .chart-ring-inner { stroke-dasharray: 3 4; }
+    .chart-sign, .chart-house, .chart-planet-label, .chart-angle-label { text-anchor: middle; font-family: "Aptos", "Segoe UI", sans-serif; }
+    .chart-sign { fill: var(--violet); font-size: 11px; font-weight: 700; }
+    .chart-house { fill: var(--ink-muted); font-size: 8px; }
+    .chart-planet-marker { fill: var(--paper); stroke: var(--violet); stroke-width: 1.4; }
+    .chart-planet-label { fill: var(--ink); font-size: 8px; font-weight: 700; }
+    .chart-angle-marker { fill: var(--amber); stroke: var(--ink); stroke-width: 0.7; }
+    .chart-angle-label { fill: #fff; font-size: 5px; font-weight: 700; }
+    .chart-center { fill: var(--violet); }
+    .chart-aspect { fill: none; stroke: var(--steel); stroke-width: 1.1; opacity: 0.8; }
+    .chart-aspect-opposition { stroke-dasharray: 8 3; }
+    .chart-aspect-square { stroke-dasharray: 3 3; }
+    .chart-aspect-trine { stroke: var(--violet); }
+    .chart-aspect-sextile { stroke: var(--amber); stroke-dasharray: 1 3; }
+    .chart-aspect-conjunction { stroke-width: 2; }
+    figcaption { margin-top: 2mm; color: var(--ink-muted); font-size: 11pt; line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; font-size: 11pt; line-height: 1.25; font-variant-numeric: tabular-nums; }
+    th, td { border-bottom: 0.25mm solid var(--line); padding: 1.35mm 1mm; text-align: left; vertical-align: top; }
+    thead th { color: var(--ink-muted); font-size: 7pt; letter-spacing: 0.06em; text-transform: uppercase; }
+    tbody th { color: var(--violet); font-weight: 700; }
+    .status-marker { color: var(--amber); font-size: 7pt; font-weight: 700; text-transform: uppercase; }
+    .aspect-section { margin-top: 4mm; }
+    .aspect-list { list-style: none; margin: 0; padding: 0; }
+    .aspect-list li { display: flex; justify-content: space-between; gap: 5mm; border-bottom: 0.25mm solid var(--line); padding: 1.2mm 0; font-size: 11pt; }
+    .uncertainty-note { margin-top: 4mm; border-left: 1.2mm solid var(--amber); background: #f0e4c9; padding: 3mm 4mm; color: #49340d; font-size: 11pt; }
+    .artifact-footer { position: absolute; left: 14mm; right: 14mm; bottom: 8mm; border-top: 0.25mm solid var(--line); padding-top: 2mm; color: var(--ink-muted); font-size: 6.8pt; }
+    .artifact-footer p { margin: 0; max-width: 70%; overflow-wrap: anywhere; }
+    .anchors-page h1 { font-size: 24pt; }
+    .anchors-page { padding-bottom: 8mm; }
+    .anchors-page .subtitle { font-size: 11pt; line-height: 1.35; }
+    .anchor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5mm; }
+    .anchor-card { display: grid; grid-template-columns: 7mm 1fr; gap: 2.5mm; border: 0.3mm solid var(--line); border-radius: 3mm; background: rgba(255,255,255,0.28); padding: 3mm; }
+    .anchor-card h2 { font-size: 12pt; line-height: 1.1; }
+    .anchor-card p { margin: 0; font-size: 11pt; line-height: 1.28; }
+    .anchor-number { color: var(--violet) !important; font-size: 9pt !important; font-weight: 700; letter-spacing: 0.06em; }
+    .source-note { margin-top: 2mm !important; color: var(--steel); font-size: 7.2pt !important; font-weight: 600; }
+    .reflection-panel { margin-top: 3mm; border-top: 0.8mm solid var(--violet); background: var(--violet-soft); padding: 3mm 4mm; }
+    .reflection-panel ol { margin: 1mm 0 0; padding-left: 5mm; columns: 3; column-gap: 7mm; }
+    .reflection-panel li { break-inside: avoid; padding-right: 2mm; font: 11pt/1.4 "Iowan Old Style", Georgia, serif; }
+    .disclosure-footer { margin-top: 2mm; border-top: 0.25mm solid var(--line); padding-top: 1.5mm; color: var(--ink-muted); font-size: 11pt; line-height: 1.25; }
+    .disclosure-footer p { margin: 0 0 0.8mm; }
+    .cover-page, .keepsake-page {
+      color: #f7f2e8;
+      background: #0c0d21;
+    }
+    .cover-page::before, .keepsake-page::before { border-top-color: #b87938; }
+    .cover-brand { margin: 5mm 0 0; color: #d9b47e; font-size: 10pt; font-weight: 700; letter-spacing: 0.32em; }
+    .cover-copy { position: absolute; left: 18mm; right: 18mm; top: 76mm; z-index: 2; }
+    .cover-kicker { margin: 0 0 5mm; color: #93d7e5; font-size: 9pt; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+    .cover-page h1 { max-width: 150mm; color: #fffaf0; font-size: 38pt; line-height: 1.03; }
+    .cover-subtitle { max-width: 120mm; margin: 5mm 0 0; color: #d9d2e8; font: 14pt/1.5 "Iowan Old Style", Georgia, serif; }
+    .cover-birth { margin: 6mm 0 0; color: #a9dce7; font-size: 10pt; font-weight: 600; letter-spacing: 0.04em; }
+    .cover-note, .keepsake-footer {
+      position: absolute; left: 18mm; right: 18mm; bottom: 14mm;
+      display: flex; justify-content: space-between; gap: 8mm;
+      border-top: 0.25mm solid rgba(255,255,255,0.3); padding-top: 3mm;
+      color: #d9d2e8; font-size: 8pt; letter-spacing: 0.04em;
+    }
+    .cover-orbit { position: absolute; border: 0.35mm solid rgba(217,180,126,0.4); border-radius: 50%; }
+    .orbit-one { width: 150mm; height: 150mm; right: -56mm; top: 24mm; }
+    .orbit-two { width: 92mm; height: 92mm; right: -12mm; top: 52mm; border-color: rgba(147,215,229,0.36); }
+    .chapter-heading { margin: 10mm 0 8mm; max-width: 155mm; }
+    .compact-heading { margin-bottom: 5mm; }
+    .chapter-index { margin: 0 0 3mm; color: var(--violet); font-size: 8pt; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+    .chapter-summary { max-width: 72ch; margin: 4mm 0 0; color: var(--steel); font: 13pt/1.45 "Iowan Old Style", Georgia, serif; }
+    .prose-columns, .chapter-body { max-width: 148mm; }
+    .prose-columns p, .chapter-body p, .method-copy p { margin: 0 0 5mm; font: 11pt/1.65 "Iowan Old Style", Georgia, serif; }
+    .reading-guide { margin-top: 8mm; border: 0.35mm solid var(--line); background: var(--paper-deep); padding: 6mm; }
+    .reading-guide ol { margin: 3mm 0 0; padding-left: 6mm; display: grid; gap: 3mm; }
+    .reading-guide li { padding-left: 2mm; font-size: 11pt; line-height: 1.45; }
+    .pattern-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+    .pattern-group { border: 0.3mm solid var(--line); background: rgba(255,255,255,0.35); padding: 5mm; }
+    .pattern-group ul { list-style: none; margin: 0; padding: 0; }
+    .pattern-group li { margin-top: 3mm; }
+    .pattern-group li > div { display: flex; justify-content: space-between; gap: 4mm; font-size: 10.5pt; }
+    .pattern-track { display: block; height: 2.2mm; margin-top: 1.2mm; background: #ddd5e5; }
+    .pattern-track > span { display: block; height: 100%; background: repeating-linear-gradient(135deg, var(--violet), var(--violet) 2mm, #735dc2 2mm, #735dc2 4mm); }
+    .chapter-body { border-left: 0.8mm solid var(--line); padding-left: 7mm; }
+    .practice-panel { margin-top: 8mm; border-top: 0.8mm solid var(--violet); background: var(--violet-soft); padding: 5mm 6mm; }
+    .practice-panel ol { list-style: none; margin: 3mm 0 0; padding: 0; display: grid; gap: 3mm; }
+    .practice-panel li { display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; align-items: start; }
+    .practice-panel li > span, .prompt-list li > span { color: var(--violet); font-size: 8pt; font-weight: 700; letter-spacing: 0.08em; }
+    .practice-panel li p, .prompt-list li p { margin: 0; font: 11pt/1.45 "Iowan Old Style", Georgia, serif; }
+    .chapter-page > .source-note { margin-top: 5mm !important; }
+    .prompt-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+    .prompt-list li { display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; min-height: 31mm; border: 0.3mm solid var(--line); background: rgba(255,255,255,0.32); padding: 5mm; }
+    .method-list { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin: 0 0 8mm; }
+    .method-list div { border-bottom: 0.25mm solid var(--line); padding: 3mm 0; }
+    .method-list dt { color: var(--violet); font-size: 8pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+    .method-list dd { margin: 1mm 0 0; font-size: 11pt; line-height: 1.4; overflow-wrap: anywhere; }
+    .method-copy { max-width: 148mm; }
+    .method-copy h2 { margin-top: 5mm; }
+    .method-page .chapter-heading { margin: 7mm 0 5mm; }
+    .method-page .method-list { margin-bottom: 5mm; }
+    .method-page .method-copy p { margin-bottom: 3mm; font-size: 10.5pt; line-height: 1.45; }
+    .method-page .method-copy h2 { margin-top: 3mm; }
+    .kairos-invitation { margin-top: 5mm; border: 0.35mm solid var(--violet); background: var(--violet-soft); padding: 5mm 6mm; }
+    .kairos-invitation-kicker { margin: 0 0 2mm; color: var(--violet); font-size: 7.5pt; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+    .kairos-invitation h2 { margin-bottom: 2mm; font-size: 16pt; }
+    .kairos-invitation p:not(.kairos-invitation-kicker) { margin: 0 0 2.5mm; font: 10.5pt/1.45 "Iowan Old Style", Georgia, serif; }
+    .kairos-invitation .kairos-invitation-cta { margin-bottom: 0; color: var(--violet); font-family: "Aptos", "Segoe UI", sans-serif; font-size: 9.5pt; font-weight: 700; }
+    .keepsake-page { padding: 12mm 13mm; }
+    .keepsake-page::after {
+      content: ""; position: absolute; inset: 8mm; border: 0.25mm solid rgba(217,180,126,0.42);
+      pointer-events: none;
+    }
+    .keepsake-header { position: relative; z-index: 2; display: flex; align-items: baseline; justify-content: space-between; gap: 6mm; }
+    .keepsake-header p:last-child { color: #a9dce7; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.13em; }
+    .keepsake-title-block { position: relative; z-index: 2; margin: 10mm 4mm 7mm; }
+    .keepsake-title-block h1 { color: #fffaf0; font-size: 29pt; }
+    .keepsake-title-block > p:not(.cover-birth) { margin: 3mm 0 0; color: #d9d2e8; font: 12pt/1.4 "Iowan Old Style", Georgia, serif; }
+    .keepsake-grid { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; margin: 0 4mm; }
+    .keepsake-card { min-height: 44mm; display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; border: 0.25mm solid rgba(255,255,255,0.28); background: rgba(5,8,25,0.52); padding: 4mm; }
+    .keepsake-card h2 { color: #fffaf0; font-size: 12pt; }
+    .keepsake-card p { margin: 0; color: #ddd8e8; font-size: 11pt; line-height: 1.35; }
+    .keepsake-card .keepsake-number { color: #d9b47e; font-size: 8pt; font-weight: 700; }
+    .keepsake-uncertainty { position: relative; z-index: 2; margin: 4mm; border-left: 1mm solid #d9b47e; background: rgba(5,8,25,0.7); padding: 3mm 4mm; color: #fff2d9; font-size: 10.5pt; line-height: 1.35; }
+    .keepsake-constellation { position: absolute; width: 75mm; height: 75mm; right: -18mm; top: -12mm; border: 0.3mm solid rgba(147,215,229,0.3); border-radius: 50%; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media print { html, body { background: transparent; } .artifact-page { margin: 0; } }
+  </style>
+</head>
+<body>
+  <main aria-label="Avery · Natal Report">
+    <section class="artifact-page cover-page" aria-labelledby="report-title">
+    <div class="cover-orbit orbit-one" aria-hidden="true"></div>
+    <div class="cover-orbit orbit-two" aria-hidden="true"></div>
+    <p class="cover-brand">KAIROS</p>
+    <div class="cover-copy">
+      <p class="cover-kicker">Personal natal astrology</p>
+      <h1 id="report-title">Avery · Natal Report</h1>
+      <p class="cover-subtitle">A twenty-page exploration of your natal pattern</p>
+      <p class="cover-birth">1990-04-04 · 08:30 · Portland, United States</p>
+    </div>
+    <div class="cover-note">
+      <span>20-page interpretive report</span>
+      <span>Tropical zodiac · Whole Sign houses</span>
+    </div>
+  </section><section class="artifact-page prose-page" aria-labelledby="welcome-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">How to use this report</p></div>
+    <p class="page-number" aria-label="Page 2 of 20">02 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Orientation</p>
+      <h1 id="welcome-title">A map for reflection, not a verdict</h1>
+      <p class="chapter-summary">Begin with the whole pattern. Return to individual chapters as lived experience gives their symbols more context.</p>
+    </div>
+    <div class="prose-columns">
+      <p>A natal chart is not a verdict about who you must become. It is a symbolic map of recurring orientations: how different parts of life may seek expression, what kinds of tension ask for participation, and which capacities can become more available through attention. This report begins with the astronomical placements, keeps uncertainty visible, and then develops interpretations that you can test against experience rather than accept on authority.</p>
+      <p>Your chart combines immediate fire, embodied earth, and a strong current of emotional and structural depth. The pages ahead move from calculation to synthesis: first the chart and pattern counts, then fourteen interpretive chapters, and finally reflection prompts and method notes. Read slowly, mark what feels precise, question what does not, and allow contradictory passages to remain in conversation rather than forcing them into a single trait.</p>
+    </div>
+    <aside class="reading-guide" aria-labelledby="reading-guide-title">
+      <h2 id="reading-guide-title">A useful reading sequence</h2>
+      <ol>
+        <li><strong>Verify the reference.</strong> Check the birth label and placement table before interpreting.</li>
+        <li><strong>Read for patterns.</strong> Notice repeated ideas across chapters rather than isolating one placement.</li>
+        <li><strong>Test through experience.</strong> Keep what becomes specific and useful; question what remains generic.</li>
+        <li><strong>Preserve uncertainty.</strong> Missing birth-time information is named instead of silently invented.</li>
+      </ol>
+    </aside>
+    <footer class="artifact-footer"><p>Prepared for private personal reflection.</p><p>02 / 20</p></footer>
+  </section><section class="artifact-page reference-page" aria-labelledby="reference-title">
+    <header class="artifact-header">
+      <div><p class="brand-mark">KAIROS</p><p class="kicker">Chart reference</p></div>
+      <p class="page-number" aria-label="Page 3 of 20">03 / 20</p>
+    </header>
+    <div class="title-block">
+      <h1 id="reference-title">Your natal chart</h1>
+      <p class="subtitle">The astronomical reference beneath every interpretation in this report</p>
+      <p class="birth-label">1990-04-04 · 08:30 · Portland, United States</p>
+    </div>
+    <div class="reference-grid">
+      <figure class="chart-panel">
+        <svg class="natal-chart" viewBox="0 0 420 420" role="img" aria-labelledby="art_fixture_known_001-chart-title art_fixture_known_001-chart-description">
+    <title id="art_fixture_known_001-chart-title">Natal placement reference</title>
+    <desc id="art_fixture_known_001-chart-description">Tropical natal placements in a Whole Sign chart. The placement table and aspect list provide a complete text equivalent of the chart graphic.</desc>
+    <circle cx="210" cy="210" r="190" class="chart-ring chart-ring-outer" />
+    <circle cx="210" cy="210" r="135" class="chart-ring" />
+    <circle cx="210" cy="210" r="112" class="chart-ring chart-ring-inner" />
+    <g>
+        <line x1="140" y1="210" x2="20" y2="210" class="chart-division" />
+        <text x="46.7585" y="253.7404" class="chart-sign">Ar</text>
+        <text x="46.7585" y="267.7404" class="chart-house">H1</text>
+        <title>Aries, Whole Sign house 1</title>
+      </g><g>
+        <line x1="149.3782" y1="245" x2="45.4552" y2="305" class="chart-division" />
+        <text x="90.499" y="329.501" class="chart-sign">Ta</text>
+        <text x="90.499" y="343.501" class="chart-house">H2</text>
+        <title>Taurus, Whole Sign house 2</title>
+      </g><g>
+        <line x1="175" y1="270.6218" x2="115" y2="374.5448" class="chart-division" />
+        <text x="166.2596" y="373.2415" class="chart-sign">Ge</text>
+        <text x="166.2596" y="387.2415" class="chart-house">H3</text>
+        <title>Gemini, Whole Sign house 3</title>
+      </g><g>
+        <line x1="210" y1="280" x2="210" y2="400" class="chart-division" />
+        <text x="253.7404" y="373.2415" class="chart-sign">Ca</text>
+        <text x="253.7404" y="387.2415" class="chart-house">H4</text>
+        <title>Cancer, Whole Sign house 4</title>
+      </g><g>
+        <line x1="245" y1="270.6218" x2="305" y2="374.5448" class="chart-division" />
+        <text x="329.501" y="329.501" class="chart-sign">Le</text>
+        <text x="329.501" y="343.501" class="chart-house">H5</text>
+        <title>Leo, Whole Sign house 5</title>
+      </g><g>
+        <line x1="270.6218" y1="245" x2="374.5448" y2="305" class="chart-division" />
+        <text x="373.2415" y="253.7404" class="chart-sign">Vi</text>
+        <text x="373.2415" y="267.7404" class="chart-house">H6</text>
+        <title>Virgo, Whole Sign house 6</title>
+      </g><g>
+        <line x1="280" y1="210" x2="400" y2="210" class="chart-division" />
+        <text x="373.2415" y="166.2596" class="chart-sign">Li</text>
+        <text x="373.2415" y="180.2596" class="chart-house">H7</text>
+        <title>Libra, Whole Sign house 7</title>
+      </g><g>
+        <line x1="270.6218" y1="175" x2="374.5448" y2="115" class="chart-division" />
+        <text x="329.501" y="90.499" class="chart-sign">Sc</text>
+        <text x="329.501" y="104.499" class="chart-house">H8</text>
+        <title>Scorpio, Whole Sign house 8</title>
+      </g><g>
+        <line x1="245" y1="149.3782" x2="305" y2="45.4552" class="chart-division" />
+        <text x="253.7404" y="46.7585" class="chart-sign">Sg</text>
+        <text x="253.7404" y="60.7585" class="chart-house">H9</text>
+        <title>Sagittarius, Whole Sign house 9</title>
+      </g><g>
+        <line x1="210" y1="140" x2="210" y2="20" class="chart-division" />
+        <text x="166.2596" y="46.7585" class="chart-sign">Cp</text>
+        <text x="166.2596" y="60.7585" class="chart-house">H10</text>
+        <title>Capricorn, Whole Sign house 10</title>
+      </g><g>
+        <line x1="175" y1="149.3782" x2="115" y2="45.4552" class="chart-division" />
+        <text x="90.499" y="90.499" class="chart-sign">Aq</text>
+        <text x="90.499" y="104.499" class="chart-house">H11</text>
+        <title>Aquarius, Whole Sign house 11</title>
+      </g><g>
+        <line x1="149.3782" y1="175" x2="45.4552" y2="115" class="chart-division" />
+        <text x="46.7585" y="166.2596" class="chart-sign">Pi</text>
+        <text x="46.7585" y="180.2596" class="chart-house">H12</text>
+        <title>Pisces, Whole Sign house 12</title>
+      </g>
+    <line x1="101.4221" y1="237.4744" x2="289.0576" y2="289.3341" class="chart-aspect chart-aspect-trine">
+        <title>Sun trine Mars, 0.7 degree orb</title>
+      </line><line x1="135.7866" y1="293.883" x2="129.4339" y2="287.8017" class="chart-aspect chart-aspect-conjunction">
+        <title>Moon conjunction Venus, 4.5 degree orb</title>
+      </line><line x1="98.8832" y1="195.9627" x2="278.3363" y2="121.2636" class="chart-aspect chart-aspect-trine">
+        <title>Mercury trine Jupiter, 0.4 degree orb</title>
+      </line><line x1="193.8321" y1="99.1731" x2="186.5227" y2="100.4883" class="chart-aspect chart-aspect-conjunction">
+        <title>Saturn conjunction Neptune, 3.8 degree orb</title>
+      </line><line x1="152.8192" y1="113.6965" x2="306.897" y2="153.8308" class="chart-aspect chart-aspect-square">
+        <title>Uranus square Pluto, 0.6 degree orb</title>
+      </line>
+    <g>
+      <circle cx="79.1249" cy="243.1165" r="11" class="chart-planet-marker" />
+      <text x="79.1249" y="246.6165" class="chart-planet-label">Su</text>
+      <title>Sun at 14.2 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="120.5463" cy="311.109" r="11" class="chart-planet-marker" />
+      <text x="120.5463" y="314.609" class="chart-planet-label">Mo</text>
+      <title>Moon at 48.5 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="76.0645" cy="193.08" r="11" class="chart-planet-marker" />
+      <text x="76.0645" y="196.58" class="chart-planet-label">Me</text>
+      <title>Mercury at 352.8 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="112.8891" cy="303.7789" r="11" class="chart-planet-marker" />
+      <text x="112.8891" y="307.2789" class="chart-planet-label">Ve</text>
+      <title>Venus at 44.0 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="305.2927" cy="305.6259" r="11" class="chart-planet-marker" />
+      <text x="305.2927" y="309.1259" class="chart-planet-label">Ma</text>
+      <title>Mars at 134.9 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="292.3696" cy="103.0409" r="11" class="chart-planet-marker" />
+      <text x="292.3696" y="106.5409" class="chart-planet-label">Ju</text>
+      <title>Jupiter at 232.4 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="190.5119" cy="76.414" r="11" class="chart-planet-marker" />
+      <text x="190.5119" y="79.914" class="chart-planet-label">Sa</text>
+      <title>Saturn at 278.3 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="141.0767" cy="93.9199" r="11" class="chart-planet-marker" />
+      <text x="141.0767" y="97.4199" class="chart-planet-label">Ur</text>
+      <title>Uranus at 300.7 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="181.7015" cy="77.9993" r="11" class="chart-planet-marker" />
+      <text x="181.7015" y="81.4993" class="chart-planet-label">Ne</text>
+      <title>Neptune at 282.1 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="326.7954" cy="142.2961" r="11" class="chart-planet-marker" />
+      <text x="326.7954" y="145.7961" class="chart-planet-label">Pl</text>
+      <title>Pluto at 210.1 degrees tropical longitude</title>
+    </g>
+    <g><circle cx="21.9425" cy="237.0995" r="7" class="chart-angle-marker" /><text x="21.9425" y="240.0995" class="chart-angle-label">ASC</text></g><g><circle cx="179.95" cy="22.3914" r="7" class="chart-angle-marker" /><text x="179.95" y="25.3914" class="chart-angle-label">MC</text></g>
+    <circle cx="210" cy="210" r="3" class="chart-center" />
+  </svg>
+        <figcaption>Tropical natal placements in a Whole Sign chart. The placement table and aspect list provide a complete text equivalent of the chart graphic.</figcaption>
+      </figure>
+      <div class="reference-data">
+        <section aria-labelledby="placements-title">
+          <h2 id="placements-title">Placements</h2>
+          <table>
+            <caption class="sr-only">Planetary placements with houses and certainty labels</caption>
+            <thead><tr><th scope="col">Point</th><th scope="col">Position</th><th scope="col">House</th><th scope="col">Certainty</th></tr></thead>
+            <tbody><tr>
+      <th scope="row">Sun</th>
+      <td>14.2° Aries</td>
+      <td>House 1</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Moon</th>
+      <td>18.5° Taurus</td>
+      <td>House 2</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Mercury</th>
+      <td>22.8° Pisces</td>
+      <td>House 12</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Venus</th>
+      <td>14.0° Taurus</td>
+      <td>House 2</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Mars</th>
+      <td>14.9° Leo</td>
+      <td>House 5</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Jupiter</th>
+      <td>22.4° Scorpio <span class="status-marker">retrograde</span></td>
+      <td>House 8</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Saturn</th>
+      <td>8.3° Capricorn</td>
+      <td>House 10</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Uranus</th>
+      <td>0.7° Aquarius</td>
+      <td>House 11</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Neptune</th>
+      <td>12.1° Capricorn</td>
+      <td>House 10</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Pluto</th>
+      <td>0.1° Scorpio <span class="status-marker">retrograde</span></td>
+      <td>House 8</td>
+      <td>Exact</td>
+    </tr></tbody>
+          </table>
+        </section>
+        <section class="aspect-section" aria-labelledby="aspects-title">
+          <h2 id="aspects-title">Major aspects</h2>
+          <ul class="aspect-list"><li><span>Mercury trine Jupiter</span><span>0.4° orb</span></li><li><span>Uranus square Pluto</span><span>0.6° orb</span></li><li><span>Sun trine Mars</span><span>0.7° orb</span></li><li><span>Saturn conjunction Neptune</span><span>3.8° orb</span></li><li><span>Moon conjunction Venus</span><span>4.5° orb</span></li></ul>
+        </section>
+      </div>
+    </div>
+    
+    <footer class="artifact-footer"><p>Tropical zodiac · Whole Sign houses when birth time is known · astronomia 4.2.0 · calculation anchor-calculation.fixture.v1</p><p>sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</p></footer>
+  </section><section class="artifact-page pattern-page" aria-labelledby="patterns-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Chart architecture</p></div>
+    <p class="page-number" aria-label="Page 4 of 20">04 / 20</p>
+  </header>
+    <div class="chapter-heading compact-heading">
+      <p class="chapter-index">Pattern overview</p>
+      <h1 id="patterns-title">The balance beneath the placements</h1>
+      <p class="chapter-summary">Counts do not define personality. They show which kinds of movement receive repeated emphasis and which may need more deliberate recruitment.</p>
+    </div>
+    <div class="pattern-grid">
+      <section class="pattern-group">
+    <h2>Elements</h2>
+    <ul><li>
+      <div><span>Fire</span><strong>2</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 50%"></span></span>
+    </li><li>
+      <div><span>Earth</span><strong>4</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 100%"></span></span>
+    </li><li>
+      <div><span>Air</span><strong>1</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 25%"></span></span>
+    </li><li>
+      <div><span>Water</span><strong>3</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 75%"></span></span>
+    </li></ul>
+  </section>
+      <section class="pattern-group">
+    <h2>Modalities</h2>
+    <ul><li>
+      <div><span>Cardinal</span><strong>3</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 50%"></span></span>
+    </li><li>
+      <div><span>Fixed</span><strong>6</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 100%"></span></span>
+    </li><li>
+      <div><span>Mutable</span><strong>1</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 16.666666666666664%"></span></span>
+    </li></ul>
+  </section>
+      <section class="pattern-group">
+    <h2>Polarities</h2>
+    <ul><li>
+      <div><span>Active</span><strong>3</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 42.857142857142854%"></span></span>
+    </li><li>
+      <div><span>Receptive</span><strong>7</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 100%"></span></span>
+    </li></ul>
+  </section>
+      <section class="pattern-group">
+    <h2>House emphasis</h2>
+    <ul><li>
+      <div><span>Self &amp; resources · Houses 1–3</span><strong>3</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 75%"></span></span>
+    </li><li>
+      <div><span>Roots &amp; craft · Houses 4–6</span><strong>1</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 25%"></span></span>
+    </li><li>
+      <div><span>Relationship &amp; meaning · Houses 7–9</span><strong>2</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 50%"></span></span>
+    </li><li>
+      <div><span>Calling &amp; community · Houses 10–12</span><strong>4</strong></div>
+      <span class="pattern-track" aria-hidden="true"><span style="width: 100%"></span></span>
+    </li></ul>
+  </section>
+    </div>
+    
+    <footer class="artifact-footer"><p>Counts include the ten planets when their signs are stable.</p><p>04 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-1-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">The whole pattern</p></div>
+    <p class="page-number" aria-label="Page 5 of 20">05 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 01</p>
+      <h1 id="chapter-1-title">A spark that needs something real to build</h1>
+      <p class="chapter-summary">Aries initiative, Taurus steadiness, and concentrated Scorpio–Capricorn depth make this a chart of decisive beginnings that become meaningful through patient embodiment.</p>
+    </div>
+    <div class="chapter-body">
+      <p>The first impression is direct: the Sun in Aries and Mars in Leo both belong to fire, so vitality rises when there is something honest to begin, make, or champion. Yet this is not a chart made only of ignition. Venus in Taurus, the Moon’s Taurus placement, and the strong Capricorn–Scorpio field ask that enthusiasm acquire weight, continuity, and consequence. You may recognize a repeated sequence: an instinct says move, a deeper layer asks whether the choice is durable, and only then does commitment become complete.</p>
+      <p>This combination can feel contradictory when speed and certainty compete. Its more mature expression is rhythmic rather than conflicted: begin experimentally, listen for what settles in the body, then build structure around what continues to matter. The chart does not require you to become uniformly fast or slow. It describes a person who can initiate bravely and sustain selectively, provided that neither urgency nor caution is allowed to make every decision alone.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-1-title">
+      <h2 id="practice-1-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Let first movement be a test of aliveness, not an irreversible promise.</p></li><li><span aria-hidden="true">02</span><p>Use bodily ease and sustained interest as evidence when choosing what deserves commitment.</p></li><li><span aria-hidden="true">03</span><p>Build containers after the spark appears so structure protects energy instead of replacing it.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Sun · Venus · Saturn · pattern.elements · pattern.modalities</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>05 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-2-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Sun · identity</p></div>
+    <p class="page-number" aria-label="Page 6 of 20">06 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 02</p>
+      <h1 id="chapter-2-title">The courage to meet life directly</h1>
+      <p class="chapter-summary">Your Aries Sun describes identity as an active encounter: you learn who you are by beginning, responding, and discovering what becomes possible through movement.</p>
+    </div>
+    <div class="chapter-body">
+      <p>The Sun at 14.2° Aries favors direct contact with experience. This is less about constant confidence than about a constitutional need to find out by doing. In the first house, that solar quality is especially visible in self-presentation, initiative, and the right to occupy your own life. Waiting for complete certainty can drain vitality because certainty often arrives after the first honest step rather than before it.</p>
+      <p>The close trine from the Sun to Mars in Leo gives this solar principle a creative engine. Will and action can cooperate quickly when a choice feels personally meaningful. The shadow is mistaking intensity for alignment or treating every hesitation as weakness. Sustainable confidence grows when you distinguish the heat of immediate reaction from the warmer, steadier conviction that remains after you have slept, listened, and returned.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-2-title">
+      <h2 id="practice-2-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Name the smallest brave beginning available before demanding a complete plan.</p></li><li><span aria-hidden="true">02</span><p>Notice which actions leave you more coherent afterward rather than merely more stimulated.</p></li><li><span aria-hidden="true">03</span><p>Practice directness that reveals your position without requiring another person to surrender theirs.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Sun · Mars · Sun trine Mars</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>06 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-3-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Moon · belonging</p></div>
+    <p class="page-number" aria-label="Page 7 of 20">07 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 03</p>
+      <h1 id="chapter-3-title">A body-led language of safety</h1>
+      <p class="chapter-summary">Your Taurus Moon seeks enough steadiness, sensory clarity, and material continuity for feeling to become understandable rather than overwhelming.</p>
+    </div>
+    <div class="chapter-body">
+      <p>The Moon at 18.5° Taurus in the second house describes an emotional system that notices texture, pace, reliability, and the practical conditions of safety. Feelings may clarify gradually through the body: appetite, tension, fatigue, comfort, and the quality of the surrounding environment can speak before language does. This is not emotional simplicity; it is an invitation to let sensation become information instead of dismissing it as background.</p>
+      <p>The Moon’s conjunction with Venus intensifies the connection between attachment, values, and sensory experience. Beauty and comfort can genuinely regulate you, while relational strain may register physically before it becomes conscious. The growth edge is not to reject comfort but to ask whether a comfort is restorative or merely familiar. Emotional security strengthens when pleasure, money, possessions, and affection are allowed to carry distinct meanings.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-3-title">
+      <h2 id="practice-3-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Give feelings time to become bodily specific before demanding an explanation.</p></li><li><span aria-hidden="true">02</span><p>Separate restorative comfort from habits that only postpone a necessary conversation.</p></li><li><span aria-hidden="true">03</span><p>Treat beauty and material steadiness as legitimate needs without making them tests of love.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Moon · Venus · Moon conjunction Venus</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>07 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-4-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Ascendant · approach</p></div>
+    <p class="page-number" aria-label="Page 8 of 20">08 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 04</p>
+      <h1 id="chapter-4-title">Meeting the world through Aries</h1>
+      <p class="chapter-summary">An Aries Ascendant makes immediacy part of your interface with life, while Mars in Leo places the chart ruler in a creative, visible, heart-led register.</p>
+    </div>
+    <div class="chapter-body">
+      <p>With the Ascendant at 8.2° Aries, your first response to unfamiliar situations may be to orient through action: test the environment, establish a position, or create forward motion. Others may encounter candor and momentum before they see the slower Taurus and Scorpio layers that govern trust. The task is not to soften this edge into vagueness, but to let directness become an opening rather than a verdict.</p>
+      <p>Mars, ruler of the Aries Ascendant, sits in Leo and the fifth house, linking your way of entering life with creativity, authorship, play, risk, and visible self-expression. Because Mars trines the Sun, initiative often restores identity when it is connected to something you can care about openly. The caution is performative urgency: action loses integrity when it exists primarily to secure applause or prove that you are unafraid.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-4-title">
+      <h2 id="practice-4-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Use directness to make contact, then leave room for information to change your approach.</p></li><li><span aria-hidden="true">02</span><p>Choose creative risks that express conviction rather than merely displaying courage.</p></li><li><span aria-hidden="true">03</span><p>Watch for moments when speed protects you from the vulnerability of being influenced.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Ascendant · Mars · Sun trine Mars</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>08 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-5-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Mercury · perception</p></div>
+    <p class="page-number" aria-label="Page 9 of 20">09 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 05</p>
+      <h1 id="chapter-5-title">Imagination that needs a faithful container</h1>
+      <p class="chapter-summary">Mercury in Pisces receives information through atmosphere, association, image, and felt meaning; its trine to Jupiter can turn those impressions into an unusually spacious frame.</p>
+    </div>
+    <div class="chapter-body">
+      <p>Mercury at 22.8° Pisces suggests a mind that may notice tone before argument and relationship before category. Ideas can arrive as clusters of images, memories, or intuitions whose logic becomes visible only after they are given room. In the twelfth house, solitude and incubation may be especially important: language often improves after experience has spent time below the level of immediate explanation. Literal or hurried environments can make this intelligence look less precise than it actually is.</p>
+      <p>The trine to Jupiter in Scorpio supports research, symbolic depth, and the ability to follow an impression toward a larger pattern. Its risk is compelling coherence: a beautiful interpretation can feel true before it has been checked. Your strongest communication process therefore has two movements—receive without premature censorship, then verify without contempt for imagination. Written notes, source tracking, and a deliberate second pass can become bridges between intuition and accountability.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-5-title">
+      <h2 id="practice-5-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Capture images and associations first; evaluate their claims in a separate pass.</p></li><li><span aria-hidden="true">02</span><p>Ask what evidence would strengthen, narrow, or disconfirm an interpretation.</p></li><li><span aria-hidden="true">03</span><p>Protect enough quiet for meaning to gather before translating it for an audience.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Mercury · Jupiter · Mercury trine Jupiter</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>09 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-6-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Venus · reciprocity</p></div>
+    <p class="page-number" aria-label="Page 10 of 20">10 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 06</p>
+      <h1 id="chapter-6-title">Choosing what can be tended</h1>
+      <p class="chapter-summary">Venus in Taurus values continuity, embodied affection, craft, and relationships whose promises can be felt in repeated behavior rather than dramatic declarations.</p>
+    </div>
+    <div class="chapter-body">
+      <p>Venus at 14° Taurus is in its domicile, giving the Venus principle unusual clarity. You may recognize value through quality, pace, touch, food, sound, reliability, or the care with which something is made. In the second house, relationships and aesthetics are intertwined with resources, self-worth, and the practical right to build a sustainable life. A bond becomes believable when care has texture and recurrence.</p>
+      <p>The conjunction between Venus and the Taurus Moon joins affection with emotional regulation. This can make tenderness deeply nourishing and inconsistency especially disruptive. It can also blur the difference between being loved and being made comfortable. Relational maturity comes through naming needs plainly, allowing change to occur without treating it as betrayal, and noticing when loyalty supports growth versus when it protects an arrangement that no longer feels alive.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-6-title">
+      <h2 id="practice-6-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Evaluate care through patterns of behavior instead of intensity alone.</p></li><li><span aria-hidden="true">02</span><p>Name material, sensory, and pacing needs before they harden into silent tests.</p></li><li><span aria-hidden="true">03</span><p>Let stability be a living practice that can adapt, not a demand that nothing change.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Venus · Moon · Moon conjunction Venus</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>10 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-7-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Mars · agency</p></div>
+    <p class="page-number" aria-label="Page 11 of 20">11 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 07</p>
+      <h1 id="chapter-7-title">Action with a visible heart</h1>
+      <p class="chapter-summary">Mars in Leo acts best when effort carries authorship, generosity, and an honest stake in the result; the Sun trine helps purpose and motion reinforce each other.</p>
+    </div>
+    <div class="chapter-body">
+      <p>Mars at 14.9° Leo describes desire that wants to create, protect, perform, or lead from a recognizable center. You may mobilize quickly when a task feels personally meaningful and lose energy when your contribution must remain entirely anonymous or emotionally detached. In the fifth house, creative work, play, romance, and chosen risks become especially direct laboratories for courage. Pride here is not inherently a flaw; it is information about where wholehearted participation matters.</p>
+      <p>The exact trine from the Aries Sun makes decisive action one of your most available resources. Yet ease between planets can become automatic, and automatic confidence can skip consultation, preparation, or the quieter signals of fatigue. Agency becomes more durable when you can act boldly without turning every project into a referendum on your worth. Leadership is strongest when it warms the field for others rather than requiring the field to orbit you.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-7-title">
+      <h2 id="practice-7-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Choose work in which you can care visibly about the quality of the outcome.</p></li><li><span aria-hidden="true">02</span><p>Before acting, distinguish the desire to contribute from the desire to be confirmed.</p></li><li><span aria-hidden="true">03</span><p>Use confidence to create room for participation rather than concentrating all authorship.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Mars · Sun · Sun trine Mars</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>11 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-8-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Jupiter · expansion</p></div>
+    <p class="page-number" aria-label="Page 12 of 20">12 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 08</p>
+      <h1 id="chapter-8-title">Growth through depth rather than breadth</h1>
+      <p class="chapter-summary">Jupiter in Scorpio expands through sustained inquiry, emotional honesty, and the willingness to remain with material that cannot be understood at a glance.</p>
+    </div>
+    <div class="chapter-body">
+      <p>Jupiter at 22.4° Scorpio is less interested in collecting reassuring answers than in discovering what changes when a question is followed beneath its social surface. Curiosity may draw you toward psychology, hidden systems, intimacy, crisis, taboo, or the mechanics of trust. In the eighth house, shared resources, vulnerability, inheritance, and transformation make these themes especially concrete. Growth often begins where superficial certainty stops working.</p>
+      <p>Because Jupiter is retrograde, convictions may need to be tested inwardly before they can become public principles. The trine to Mercury helps translate depth into language, but it also increases the persuasive force of your interpretations. Opportunity appears when inquiry remains reciprocal—when you allow evidence, other people, and experience to alter the story. Expansion is not measured only by how much you can see, but by how honestly your seeing can be revised.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-8-title">
+      <h2 id="practice-8-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Follow consequential questions long enough for the first explanation to become more precise.</p></li><li><span aria-hidden="true">02</span><p>Treat confidence as permission to investigate, not proof that an interpretation is complete.</p></li><li><span aria-hidden="true">03</span><p>Share insight in ways that preserve another person’s right to name their own experience.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Jupiter · Mercury · Mercury trine Jupiter</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>12 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-9-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Saturn · structure</p></div>
+    <p class="page-number" aria-label="Page 13 of 20">13 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 09</p>
+      <h1 id="chapter-9-title">Making imagination accountable to form</h1>
+      <p class="chapter-summary">Saturn in Capricorn knows how to build standards, roles, and durable structures; its conjunction with Neptune asks those structures to serve meaning rather than harden against it.</p>
+    </div>
+    <div class="chapter-body">
+      <p>Saturn at 8.3° Capricorn is in its domicile, emphasizing competence, consequence, and a sober relationship to time. You may be highly alert to what a commitment actually requires and impatient with promises that have no structure beneath them. In the tenth house, public work, vocation, authority, and reputation become major sites where responsibility is tested and refined. The gift is endurance; the shadow is carrying standards so relentlessly that no completed effort can feel sufficient.</p>
+      <p>Neptune’s conjunction with Saturn complicates any purely pragmatic identity. Imagination, longing, compassion, or uncertainty keeps entering the architecture. At times you may alternate between idealizing a calling and distrusting anything that cannot be measured. Integration asks for porous structure: timelines that include recovery, ideals translated into observable practices, and boundaries that protect sensitivity without treating sensitivity as incompetence.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-9-title">
+      <h2 id="practice-9-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Translate ideals into a next practice, owner, boundary, and review date.</p></li><li><span aria-hidden="true">02</span><p>Define enough before beginning while leaving space for reality to revise the structure.</p></li><li><span aria-hidden="true">03</span><p>Measure responsibility partly by sustainability, not only by output or endurance.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Saturn · Neptune · Saturn conjunction Neptune</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>13 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-10-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Outer planets · context</p></div>
+    <p class="page-number" aria-label="Page 14 of 20">14 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 10</p>
+      <h1 id="chapter-10-title">Reforming the structures that shape belonging</h1>
+      <p class="chapter-summary">Uranus in Aquarius, Neptune in Capricorn, and Pluto in Scorpio describe a generational field concerned with systems, power, community, and the hidden costs of inherited structures.</p>
+    </div>
+    <div class="chapter-body">
+      <p>Uranus at 0.7° Aquarius brings disruption into networks, ideals, and collective intelligence. Neptune at 12.1° Capricorn sensitizes the promises and illusions embedded in institutions, while Pluto at 0.1° Scorpio intensifies encounters with power, secrecy, and irreversible change. These slow planets are not private personality traits in isolation. They become personal where your choices, houses and aspects, and biography give their era-specific questions a lived form.</p>
+      <p>The close Uranus–Pluto square supplies friction between systemic liberation and concentrated power. You may be alert to systems that describe themselves as progressive while reproducing control, or to transformations that destroy form without creating trustworthy alternatives. The work is neither obedience nor disruption for its own sake. It is to participate in change with enough historical memory, relational accountability, and practical design that freedom can become inhabitable.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-10-title">
+      <h2 id="practice-10-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Ask who gains agency and who absorbs risk when a system is called innovative.</p></li><li><span aria-hidden="true">02</span><p>Pair critique with a concrete experiment in governance, access, or shared responsibility.</p></li><li><span aria-hidden="true">03</span><p>Distinguish your personal task from a generational atmosphere you were never meant to solve alone.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Uranus · Neptune · Pluto · Uranus square Pluto</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>14 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-11-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Aspect web · dynamics</p></div>
+    <p class="page-number" aria-label="Page 15 of 20">15 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 11</p>
+      <h1 id="chapter-11-title">Where the chart’s voices cooperate and contend</h1>
+      <p class="chapter-summary">Your strongest recorded aspects link fire with action, intuition with depth, structure with imagination, and collective change with concentrated power.</p>
+    </div>
+    <div class="chapter-body">
+      <p>The Sun–Mars and Mercury–Jupiter trines describe two channels of relative fluency: identity can mobilize action, and associative thought can widen into meaningful inquiry. Moon conjunct Venus joins emotional regulation with affection and material value. Saturn conjunct Neptune asks practical form to hold vision, while Uranus square Pluto keeps systemic change from becoming an abstract interest. The chart’s ease aspects provide resources; its harder outer-planet contact supplies pressure and context.</p>
+      <p>Aspects are relationships, not isolated verdicts. A trine can become underused because it feels natural, while a conjunction can fuse two functions so completely that they are difficult to distinguish. The most useful reading therefore asks what each connection does in actual situations. When action outruns reflection, recruit Taurus and Saturn. When caution becomes immobility, recruit the Aries Sun and Leo Mars. Integration is the deliberate movement of attention across the whole network.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-11-title">
+      <h2 id="practice-11-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Treat easy aspects as capacities that still require conscious direction and practice.</p></li><li><span aria-hidden="true">02</span><p>When one planetary voice dominates, deliberately consult the needs represented by another.</p></li><li><span aria-hidden="true">03</span><p>Use recurring real-life situations to test how an aspect behaves under support and under stress.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Sun trine Mars · Moon conjunction Venus · Mercury trine Jupiter · Saturn conjunction Neptune · Uranus square Pluto</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>15 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-12-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Connection · boundaries</p></div>
+    <p class="page-number" aria-label="Page 16 of 20">16 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 12</p>
+      <h1 id="chapter-12-title">Durability without possession, honesty without force</h1>
+      <p class="chapter-summary">Your relational pattern asks for dependable care and embodied presence while preserving enough creative fire for each person to remain recognizably alive.</p>
+    </div>
+    <div class="chapter-body">
+      <p>Venus in Taurus establishes a strong preference for what can be trusted through repetition. The Aries Sun and Leo Mars, however, need candor, authorship, and room to act. Relationship therefore cannot be reduced either to uninterrupted harmony or unrestricted independence. You may feel most secure when promises are consistent, yet most attracted to exchanges with warmth and vitality. The task is to build agreements that support both steadiness and distinct personhood.</p>
+      <p>The Moon–Venus conjunction makes relational atmosphere physically consequential. Care can settle the body, and inconsistency can register as threat before conscious appraisal catches up. This sensitivity deserves communication rather than shame. Repair becomes more possible when you state what happened, what meaning you made, and what concrete recurrence would rebuild trust—without requiring comfort to erase every legitimate difference.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-12-title">
+      <h2 id="practice-12-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Turn unspoken loyalty tests into specific, negotiable requests.</p></li><li><span aria-hidden="true">02</span><p>Protect continuity with repair practices rather than demanding that conflict never occur.</p></li><li><span aria-hidden="true">03</span><p>Make room for separate desire and authorship inside dependable commitment.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Venus · Moon · Moon conjunction Venus · Mars</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>16 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-13-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Contribution · vocation</p></div>
+    <p class="page-number" aria-label="Page 17 of 20">17 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 13</p>
+      <h1 id="chapter-13-title">Building a form strong enough to carry vision</h1>
+      <p class="chapter-summary">A Capricorn Midheaven with Saturn and Neptune in the tenth house points toward work that joins rigorous stewardship with imagination, service, or symbolic vision.</p>
+    </div>
+    <div class="chapter-body">
+      <p>The Midheaven at 9.1° Capricorn makes public contribution a field of construction, mastery, and long-range responsibility. Saturn nearby strengthens the demand for competence, while Neptune insists that achievement without meaning will eventually feel hollow. You may be suited to roles that translate vision into systems, but the title matters less than the integrity of the container: expectations, resources, authority, and purpose must be able to coexist.</p>
+      <p>The Aries–Leo fire in the chart adds entrepreneurial and creative force to the Capricorn structure. You are unlikely to thrive indefinitely as a caretaker of processes you cannot influence. At the same time, inspiration alone will not satisfy the part of you that respects durable work. A compelling vocation may alternate between initiating and institutionalizing: seeing what should exist, making a first living version, and then designing the stewardship that allows it to outlast the initial blaze.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-13-title">
+      <h2 id="practice-13-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Evaluate opportunities by authority, purpose, resources, and sustainability—not title alone.</p></li><li><span aria-hidden="true">02</span><p>Choose structures that let you influence the work instead of only carrying its consequences.</p></li><li><span aria-hidden="true">03</span><p>Plan for stewardship and maintenance while the founding energy is still available.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: Midheaven · Saturn · Neptune · Saturn conjunction Neptune</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>17 / 20</p></footer>
+  </section><section class="artifact-page chapter-page" aria-labelledby="chapter-14-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Living the chart</p></div>
+    <p class="page-number" aria-label="Page 18 of 20">18 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Chapter 14</p>
+      <h1 id="chapter-14-title">A rhythm of spark, sensing, depth, and structure</h1>
+      <p class="chapter-summary">The chart becomes most useful as a repeatable sequence: begin honestly, listen through the body, investigate what matters, and build a form that can sustain the discovery.</p>
+    </div>
+    <div class="chapter-body">
+      <p>No single placement has to carry your entire identity. Aries and Leo supply ignition and visible courage; Taurus tests whether an impulse can be inhabited; Scorpio asks what is true beneath convenience; Capricorn gives the choice consequence and duration. Problems arise when one stage attempts to replace the others—when fire declares a commitment before values are clear, when earth protects stability after vitality has gone, or when depth becomes analysis without a lived next step.</p>
+      <p>A practical integration ritual can be simple. First, name the desire without editing it into respectability. Second, notice the body’s response and the values at stake. Third, identify the fear, power dynamic, or unspoken cost beneath the surface. Finally, choose a structure: one action, one boundary, one resource, and one time to review. Astrology earns its place here by helping attention move, not by making the decision on your behalf.</p>
+    </div>
+    <section class="practice-panel" aria-labelledby="practice-14-title">
+      <h2 id="practice-14-title">Three ways to work with this pattern</h2>
+      <ol><li><span aria-hidden="true">01</span><p>Move decisions through desire, sensation, depth, and structure before calling them complete.</p></li><li><span aria-hidden="true">02</span><p>When stuck, identify which stage of the sequence has been skipped or allowed to dominate.</p></li><li><span aria-hidden="true">03</span><p>Review choices after lived experience and revise without treating revision as failure.</p></li></ol>
+    </section>
+    <p class="source-note">Grounded in: pattern.elements · pattern.modalities · Sun · Venus · Jupiter · Saturn</p>
+    <footer class="artifact-footer"><p>Interpretation is reflective and requires human review before delivery.</p><p>18 / 20</p></footer>
+  </section><section class="artifact-page reflection-page" aria-labelledby="reflection-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Integration</p></div>
+    <p class="page-number" aria-label="Page 19 of 20">19 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Your lived evidence</p>
+      <h1 id="reflection-title">Questions worth returning to</h1>
+      <p class="chapter-summary">These prompts are invitations to observe. They are not tests, predictions, or requirements to agree with the report.</p>
+    </div>
+    <ol class="prompt-list"><li><span aria-hidden="true">01</span><p>Where does a first honest step create information that extended preparation cannot provide?</p></li><li><span aria-hidden="true">02</span><p>Which sensations reliably distinguish restorative steadiness from familiar avoidance?</p></li><li><span aria-hidden="true">03</span><p>When does directness create contact, and when does it protect me from being influenced?</p></li><li><span aria-hidden="true">04</span><p>What do my repeated choices reveal about the difference between comfort and value?</p></li><li><span aria-hidden="true">05</span><p>Where could imagination become more trustworthy through a boundary, schedule, or material practice?</p></li><li><span aria-hidden="true">06</span><p>Which relationships support both dependable care and the right to remain distinct?</p></li><li><span aria-hidden="true">07</span><p>What kind of contribution would let creative authorship and responsible stewardship cooperate?</p></li><li><span aria-hidden="true">08</span><p>Which part of the sequence—desire, sensation, depth, or structure—needs my attention now?</p></li></ol>
+    <footer class="artifact-footer"><p>Write elsewhere or use the open space; this PDF remains selectable and printable.</p><p>19 / 20</p></footer>
+  </section><section class="artifact-page method-page" aria-labelledby="method-title">
+    <header class="artifact-header">
+    <div><p class="brand-mark">KAIROS</p><p class="kicker">Method &amp; scope</p></div>
+    <p class="page-number" aria-label="Page 20 of 20">20 / 20</p>
+  </header>
+    <div class="chapter-heading">
+      <p class="chapter-index">Provenance</p>
+      <h1 id="method-title">How this report was made</h1>
+      <p class="chapter-summary">Interpretation is separated from calculation so every narrative claim can be checked against its astronomical source.</p>
+    </div>
+    <dl class="method-list">
+      <div><dt>Zodiac</dt><dd>Tropical</dd></div>
+      <div><dt>Houses</dt><dd>Whole Sign when birth time is known</dd></div>
+      <div><dt>Ephemeris</dt><dd>astronomia 4.2.0</dd></div>
+      <div><dt>Calculation</dt><dd>anchor-calculation.fixture.v1</dd></div>
+      <div><dt>Timezone source</dt><dd>IANA:America/Los_Angeles</dd></div>
+      <div><dt>Birth time</dt><dd>Known and used</dd></div>
+    </dl>
+    <section class="method-copy">
+      <h2>Narrative process</h2>
+      <p>AI-assisted drafting supported portions of the interpretive text. Every delivered report requires human review against the recorded chart facts.</p>
+      <h2>Scope</h2>
+      <p>Reflective astrology for personal use—not medical, mental-health, legal, financial, or other professional advice. The purchase includes four personalized PDF files only and does not include a Kairos account, subscription, Blueprint, Stelloquy, activation, or off-marketplace purchase.</p>
+    </section>
+    <section class="kairos-invitation" aria-labelledby="kairos-invitation-title">
+      <p class="kairos-invitation-kicker">A product of Kairos</p>
+      <h2 id="kairos-invitation-title">Carry the insight into your year</h2>
+      <p>Kairos is a personalized astrology-informed planner that brings your natal chart, real astrological timing, goals, and private journal entries into one reflective planning space. It helps turn chart insight into priorities, timing, check-ins, and patterns you can revisit as life unfolds.</p>
+      <p class="kairos-invitation-cta">This report is complete on its own. If you would like to continue, look for the Kairos Planner in this Etsy shop.</p>
+    </section>
+    <footer class="artifact-footer"><p>Chart fingerprint: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</p><p>20 / 20</p></footer>
+  </section>
+  </main>
+</body>
+</html>

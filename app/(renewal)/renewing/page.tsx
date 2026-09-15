@@ -15,12 +15,12 @@ const SLIDES = [
   {
     kicker: "Continuity",
     title: "Your history carries forward",
-    body: "Your journal, your oracle captures, your areas and goals — all of it persists into the new year. The blueprint updates; your record doesn't start over.",
+    body: "Your journal, saved captures, areas, and goals persist into the new year. The Blueprint updates; your customer-authored record doesn't start over. Stelloquy remains a Planner + Oracle feature.",
   },
   {
     kicker: "A new blueprint",
-    title: "52 weeks of real timing",
-    body: "This year's activation windows, rest periods, and quarter themes are calculated from actual ephemeris data. What the sky offers this year is genuinely different from last year.",
+    title: "A canonical year of real timing",
+    body: "This year's activation windows, rest periods, and quarter themes are calculated from actual ephemeris data. Annual access unlocks the full canonical Blueprint; monthly access shows the current week plus the next four.",
   },
   {
     kicker: "Cosmic Calendar",
@@ -144,7 +144,8 @@ export default function RenewingPage() {
           Building your {new Date().getFullYear()} planner
         </h2>
         <p className="mx-auto max-w-sm text-sm text-bone-muted">
-          This takes <strong className="text-bone/80">5–15 minutes</strong>. Your existing journal, goals, and oracle history are all still here.
+          This takes <strong className="text-bone/80">5–15 minutes</strong>. Your existing journal,
+          goals, and saved captures are all still here.
         </p>
       </div>
 

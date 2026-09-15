@@ -1,0 +1,28 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true
+  },
+  "files": [
+    "../app/(admin)/admin/artifacts/star-origin/page.tsx",
+    "../app/api/admin/star-origin/route.ts",
+    "../app/api/admin/star-origin/[reportId]/actions/route.ts",
+    "../app/api/admin/star-origin/[reportId]/export/route.ts",
+    "../app/api/admin/star-origin/[reportId]/chart-export/route.ts",
+    "../components/artifacts/StarOriginWorkflowConsole.tsx",
+    "../lib/artifacts/star-origin/pdf-export.ts",
+    "../lib/artifacts/star-origin/chart-print-export.ts",
+    "../lib/artifacts/star-origin/chart-print-template.ts",
+    "../lib/artifacts/star-origin/production.ts",
+    "../lib/artifacts/star-origin/template.ts",
+    "../lib/artifacts/star-origin/workflow.ts",
+    "../types/astronomia.d.ts",
+    "./check-star-origin-workflow.mts",
+    "./render-star-origin-founder-preview.mts",
+    "./render-star-family-chart-preview.mts",
+    "./verify-star-family-chart-print.mts",
+    "./verify-star-origin-pdf.mts"
+  ],
+  "include": []
+}

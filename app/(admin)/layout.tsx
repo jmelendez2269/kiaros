@@ -1,6 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { isArtifactWorkflowEnabled } from "@/lib/artifacts/fulfillment/availability";
 
 export default async function AdminLayout({
   children,
@@ -16,7 +17,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-background md:flex-row">
-      <AdminSidebar />
+      <AdminSidebar showArtifactWorkflow={isArtifactWorkflowEnabled()} />
       <div className="flex flex-1 flex-col">
         <main className="flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8">{children}</main>
       </div>

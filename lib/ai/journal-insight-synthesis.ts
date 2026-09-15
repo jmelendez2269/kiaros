@@ -26,6 +26,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { recordUsage } from './usage'
 import type { PatternRefreshTarget } from '@/lib/journal/intelligence'
 import { BRAND } from '@/lib/brand'
+import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 
 const MODEL_ID = 'claude-haiku-4-5'
 const MAX_OUTPUT_TOKENS = 220
@@ -163,6 +164,10 @@ export async function synthesizeInsight(opts: {
 }): Promise<string> {
   const { userProfileId, pattern, voicePrompt } = opts
 
+  if (isJournalConsentV2Enabled() && pattern.entries.length === 0) {
+    throw new Error('No consented journal evidence is available for synthesis')
+  }
+
   const { text, usage, providerMetadata } = await generateText({
     model: buildModel(),
     system: buildSystemPrompt(voicePrompt),
@@ -259,10 +264,16 @@ async function loadEntriesForPattern(
 
   if (entryIds.length === 0) return []
 
-  const { data: entries } = await admin
+  let entriesQuery = admin
     .from('journal_entries')
     .select('id, entry_date, title, body')
     .in('id', entryIds)
+
+  if (isJournalConsentV2Enabled()) {
+    entriesQuery = entriesQuery.eq('include_in_insights', true)
+  }
+
+  const { data: entries } = await entriesQuery
 
   // Re-sort to match entryIds order (most recent first).
   const byId = new Map((entries ?? []).map((e) => [e.id as unknown as string, e]))
@@ -310,6 +321,8 @@ export async function synthesizePreview(opts: {
     patternKey,
     ENTRIES_PER_SYNTHESIS,
   )
+
+  if (isJournalConsentV2Enabled() && entries.length === 0) return null
 
   const text = await synthesizeInsight({
     userProfileId,
@@ -383,6 +396,13 @@ export async function regenerateAllForUser(opts: {
           patternKey,
           ENTRIES_PER_SYNTHESIS,
         )
+        if (isJournalConsentV2Enabled() && entries.length === 0) {
+          await admin
+            .from('user_pattern_insights')
+            .delete()
+            .eq('id', row.id as unknown as string)
+          continue
+        }
         const text = await synthesizeInsight({
           userProfileId,
           pattern: {
@@ -468,6 +488,14 @@ export async function resyncPatternSynthesisForTargets(opts: {
           target.patternKey,
           ENTRIES_PER_SYNTHESIS,
         )
+
+        if (isJournalConsentV2Enabled() && entries.length === 0) {
+          await admin
+            .from('user_pattern_insights')
+            .delete()
+            .eq('id', row.id as unknown as string)
+          return
+        }
 
         const text = await synthesizeInsight({
           userProfileId,

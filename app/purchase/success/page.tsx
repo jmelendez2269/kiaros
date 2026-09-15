@@ -47,8 +47,11 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
     const result = await finalizeCheckoutSession({ sessionId, clerkUserId: userId });
 
     const bodyText = result.accessPlan === "monthly"
-      ? `Checkout is complete, your monthly subscription is active, and your ${BRAND.product} access is linked to ${result.email}.`
-      : `Checkout is complete, your annual entitlement is active, and your loyalty reward for next year has been reserved for ${result.email}.`;
+      ? `Checkout is complete. Your monthly ${BRAND.product} access is active, with the current Blueprint week plus the next four weeks available, and is linked to ${result.email}.`
+      : `Checkout is complete. Your annual access to the full canonical Blueprint is active, and your loyalty reward for next year has been reserved for ${result.email}.`;
+    const tierText = result.tier.oracleEnabled
+      ? "Your plan includes Stelloquy alongside the Planner."
+      : "Your plan includes the Planner. Stelloquy requires Planner + Oracle.";
 
     return (
       <div className="page-wrapper">
@@ -57,6 +60,7 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
             <p className="shell-kicker mb-4">Purchase Complete</p>
             <h1 className="shell-hero-title max-w-3xl">Your {result.tier.shortName} access is live.</h1>
             <p className="shell-prose-lead mt-4">{bodyText}</p>
+            <p className="mt-3 text-sm leading-7 text-bone-muted">{tierText}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               {result.isRenewal ? (
                 <Link

@@ -654,7 +654,7 @@ function buildLayer5(ctx: OraclePromptContext): string {
       const parts = [
         `${label}`,
         `${pattern.sample_size} entries`,
-        `confidence ${Math.round(pattern.confidence * 100)}%`,
+        'entry count is evidence volume, not statistical certainty',
       ]
       if (pattern.first_seen && pattern.last_seen) parts.push(`${pattern.first_seen} to ${pattern.last_seen}`)
       parts.push(pattern.summary)

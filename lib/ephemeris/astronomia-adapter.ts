@@ -47,8 +47,8 @@ const vsop87Buranus = require('astronomia/data/vsop87Buranus').default
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const vsop87Bneptune = require('astronomia/data/vsop87Bneptune').default
 
-import type { NatalChart, PlanetPosition, ZodiacSign, LunarPhase, MoonPhaseEvent, MoonPhase, HouseSystem } from '@/types/blueprint'
-import { ZODIAC_SIGNS } from '@/types/blueprint'
+import type { NatalChart, PlanetPosition, ZodiacSign, LunarPhase, MoonPhaseEvent, MoonPhase, HouseSystem } from '../../types/blueprint.ts'
+import { ZODIAC_SIGNS } from '../../types/blueprint.ts'
 
 // ─── Planet instances (created once, reused) ──────────────────────────────
 

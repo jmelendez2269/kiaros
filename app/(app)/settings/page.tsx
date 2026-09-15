@@ -614,8 +614,8 @@ export default function SettingsPage() {
               <MessageCircle size={18} />
             </div>
             <div>
-              <p className="shell-kicker">Stelloquy usage</p>
-              <h2 className="shell-subsection-title mt-1">This month</h2>
+              <p className="shell-kicker">Planner + Oracle</p>
+              <h2 className="shell-subsection-title mt-1">Stelloquy usage this month</h2>
             </div>
           </div>
 
@@ -644,7 +644,9 @@ export default function SettingsPage() {
           </div>
 
           <p className="mt-3 text-xs leading-6 text-bone-muted/75">
-            Your Stelloquy limit resets on the first of each month. Cached input tokens cost ~90% less — a high cache hit rate means your natal chart and blueprint aren&apos;t being re-billed on every message.
+            Stelloquy requires active Planner + Oracle access. Its limit resets on the first of
+            each month. Cached input tokens cost ~90% less — a high cache hit rate means your
+            natal chart and permitted Blueprint context aren&apos;t being re-billed on every message.
           </p>
         </section>
       ) : null}
@@ -657,19 +659,48 @@ export default function SettingsPage() {
               Save your preferences here, or jump to the deeper planner surfaces when you want to work directly in them.
             </p>
             {accessWindow ? (
-              <p className="mt-2 text-sm leading-7 text-bone-muted/85">
-                {accessWindow.state === "active" ? (
-                  <>
-                    Your {accessWindow.accessPlan === "monthly" ? "access" : "planner year"} runs through{" "}
-                    <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>.
-                  </>
-                ) : (
-                  <>
-                    Your {accessWindow.accessPlan === "monthly" ? "access" : "planner year"} ran through{" "}
-                    <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>.
-                  </>
-                )}
-              </p>
+              <div className="mt-2 space-y-2 text-sm leading-7 text-bone-muted/85">
+                <p>
+                  {accessWindow.state === "active" ? (
+                    <>
+                      {accessWindow.accessPlan === "monthly" ? (
+                        <>
+                          Your monthly plan runs through{" "}
+                          <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>.
+                          {" "}While active, your Blueprint includes the current week plus the next
+                          four weeks.
+                        </>
+                      ) : (
+                        <>
+                          Your annual plan runs through{" "}
+                          <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>
+                          {" "}and includes the full canonical Blueprint.
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {accessWindow.accessPlan === "monthly" ? (
+                        <>
+                          Your paid Planner and generation access ended on{" "}
+                          <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>.
+                        </>
+                      ) : (
+                        <>
+                          Your annual generation access ended on{" "}
+                          <span className="text-bone">{formatLongDate(accessWindow.endsAt)}</span>.
+                          {" "}Your full canonical Blueprint remains readable.
+                        </>
+                      )}
+                    </>
+                  )}
+                </p>
+                <p>
+                  If you cancel or paid access ends, your customer-authored journal history
+                  remains readable and exportable. Writing and paid generation require active
+                  access.
+                </p>
+              </div>
             ) : null}
           </div>
 

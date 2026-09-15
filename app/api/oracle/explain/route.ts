@@ -14,6 +14,7 @@ import {
 } from '@/lib/ai/usage'
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
+import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
 
 export const maxDuration = 30
 
@@ -75,14 +76,7 @@ export async function POST(req: Request) {
     ] = await Promise.all([
       supabase.from('user_profiles').select('*').maybeSingle(),
       supabase.from('ephemeris_cache').select('data').eq('year', currentYear).maybeSingle(),
-      supabase
-        .from('blueprints')
-        .select('year_theme, quarters, months, weeks')
-        .eq('plan_year', currentYear)
-        .eq('status', 'ready')
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      loadCurrentBlueprint(profileId),
       supabase
         .from('goal_categories')
         .select('name, description, success, sort_order')
@@ -132,7 +126,7 @@ export async function POST(req: Request) {
     const { cached, dynamic } = buildOracleSystemPromptSegments({
       profile: profileRes.data,
       ephemeris: (ephemerisRes.data?.data as unknown as YearEphemeris) ?? null,
-      blueprint: blueprintRes.data,
+      blueprint: toBlueprintPromptRecord(blueprintRes),
       goalCategories: (goalCategoriesRes.data ?? []) as Pick<
         Tables<'goal_categories'>,
         'name' | 'description' | 'success' | 'sort_order'

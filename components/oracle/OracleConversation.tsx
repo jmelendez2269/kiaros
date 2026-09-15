@@ -84,8 +84,17 @@ export function OracleConversation({
   showStatusOrb = false,
   tradition,
 }: Props) {
+  const [memorySources, setMemorySources] = useState<Array<{ id: string; date: string; title: string | null }>>([])
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: '/api/oracle/chat', body: tradition ? { tradition } : undefined }),
+    () => new DefaultChatTransport({ api: '/api/oracle/chat', body: tradition ? { tradition } : undefined,
+      fetch: async (input, init) => {
+        setMemorySources([])
+        const response = await fetch(input, init)
+        const sources = response.headers.get('X-Kairos-Memory-Sources')
+        if (sources) { try { setMemorySources(JSON.parse(decodeURIComponent(sources))) } catch { setMemorySources([]) } }
+        return response
+      },
+    }),
     [tradition]
   )
   const { messages, sendMessage, status, error } = useChat({ transport })
@@ -221,6 +230,10 @@ export function OracleConversation({
 
   return (
     <div className={className}>
+      {memorySources.length > 0 && <details className="mb-3 rounded-lg border border-white/15 px-3 py-2 text-xs text-bone-muted">
+        <summary className="cursor-pointer">Recalled {memorySources.length} relevant journal {memorySources.length === 1 ? 'memory' : 'memories'}</summary>
+        <ul className="mt-2 space-y-2">{memorySources.map(source => <li key={source.id}><a className="underline" href={`/journal?entry=${encodeURIComponent(source.id)}`}>{source.title || 'Journal entry'} - {source.date}</a></li>)}</ul>
+      </details>}
       {showStatusOrb ? (
         <div className="mb-3 flex items-center gap-2 px-1 text-[10px] uppercase tracking-widest text-bone-muted/60">
           <StelloquyOrb size={20} state={orbState} ariaLabel={`Stelloquy ${orbState}`} />

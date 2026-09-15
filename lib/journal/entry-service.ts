@@ -43,6 +43,10 @@ export type CreatedJournalEntry = Pick<
   | 'is_ritual'
   | 'created_at'
   | 'oracle_memory'
+  | 'include_in_insights'
+  | 'include_in_stelloquy'
+  | 'memory_pinned'
+  | 'memory_importance'
   | 'lunar_phase'
   | 'lunar_sign'
   | 'transit_context'
@@ -73,9 +77,10 @@ function failure(
 export async function createJournalEntry(
   input: CreateJournalEntryInput,
 ): Promise<CreateJournalEntryResult> {
+  const consentV2Enabled = isJournalConsentV2Enabled()
   const consent = normalizeJournalConsent(
     input.consent ?? {},
-    isJournalConsentV2Enabled(),
+    consentV2Enabled,
   )
   const supabase: SupabaseClient<Database> = await createServerSupabase()
 
@@ -140,7 +145,7 @@ export async function createJournalEntry(
     .from('journal_entries')
     .insert(entryInsert)
     .select(
-      'id, title, body, entry_date, is_ritual, created_at, oracle_memory, lunar_phase, lunar_sign, transit_context',
+      'id, title, body, entry_date, is_ritual, created_at, oracle_memory, include_in_insights, include_in_stelloquy, memory_pinned, memory_importance, lunar_phase, lunar_sign, transit_context',
     )
     .single()
 
@@ -181,10 +186,10 @@ export async function createJournalEntry(
       }
     }
 
-    // CONSENT-03 will gate and rebuild derived patterns. CONSENT-01 preserves
-    // the existing refresh behavior while the v2 flag defaults off.
-    const refreshTargets = getPatternRefreshTargets(ephemerisDay)
+    const shouldRefreshPatterns = !consentV2Enabled || consent.state.include_in_insights
+    if (!shouldRefreshPatterns) return { success: true, data }
 
+    const refreshTargets = getPatternRefreshTargets(ephemerisDay)
     await Promise.all(
       refreshTargets.map((target) =>
         supabase.rpc('refresh_user_pattern_insight', {

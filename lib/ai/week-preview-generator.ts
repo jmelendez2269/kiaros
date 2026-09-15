@@ -70,7 +70,7 @@ export async function runWeekPreviewGeneration(input: {
       .single();
 
     if (profileError || !profile?.natal_chart) {
-      throw new Error("Complete birth details are required before generating a personal week.");
+      throw new Error("Complete birth details are required before generating a birth-chart week reading.");
     }
 
     const natalChart = profile.natal_chart as unknown as NatalChart;
@@ -96,9 +96,9 @@ export async function runWeekPreviewGeneration(input: {
       })
       .join("\n");
 
-    const prompt = `Create a spacious, grounded personal preview for ${profile.display_name ?? "this person"} covering ${startDate} through ${endDate}.
+    const prompt = `Create a spacious, grounded birth-chart week reading for ${profile.display_name ?? "this person"} covering ${startDate} through ${endDate}.
 
-This is a birth-chart-and-live-sky preview only, not a Blueprint. Do not infer or invent the person's goals, priority Life Areas, year purpose, quarterly arc, or full-year plan.
+This is a birth-chart-and-current-sky reading only, not a Blueprint. Do not infer or invent the person's goals, priority Life Areas, year purpose, quarterly arc, or full-year plan.
 
 This is an invitation, not an instruction. Avoid certainty, commands, identity claims, productivity language, and promises. Prefer "may," "might," "you could notice," and "an invitation to." Keep the astrology specific but readable.
 

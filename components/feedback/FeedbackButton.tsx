@@ -1,5 +1,6 @@
 'use client'
 
+import { MessageSquareText } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { BRAND } from '@/lib/brand'
@@ -75,10 +76,11 @@ export function FeedbackButton() {
       <button
         type="button"
         onClick={openModal}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-border/60 bg-stone-900/90 px-4 py-2 text-xs font-medium text-bone-muted shadow-lg backdrop-blur-sm transition-colors hover:border-border hover:text-bone"
+        className="fixed left-4 z-40 flex min-h-11 items-center gap-2 rounded-full border border-border/60 bg-stone-900/90 px-4 py-2 text-xs font-medium text-bone-muted shadow-lg backdrop-blur-sm transition-colors hover:border-border hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400 sm:left-5"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
         aria-label="Give feedback"
       >
-        <span className="text-base leading-none">✦</span>
+        <MessageSquareText aria-hidden="true" className="h-4 w-4" />
         Feedback
       </button>
 
@@ -97,7 +99,8 @@ export function FeedbackButton() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="feedback-title"
-          className="fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-2xl border border-border/70 bg-stone-950 shadow-2xl sm:inset-x-auto sm:right-5 sm:w-[420px]"
+          className="fixed inset-x-4 z-50 max-w-md rounded-2xl border border-border/70 bg-stone-950 shadow-2xl sm:inset-x-auto sm:left-5 sm:right-auto sm:w-[420px]"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.75rem)' }}
         >
           <div className="px-6 py-6">
             {phase === 'done' ? (

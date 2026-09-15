@@ -26,6 +26,20 @@ export const HOW_TO_READ_THIS: FramePiece = {
   ],
 };
 
+export const TOP_THREE_PROFILE: FramePiece = {
+  title: "Your top three resonances",
+  paragraphs: [
+    "A chart can carry more than one recognisable line. The first place belongs to the lineage this engine can actually name from a qualifying contact and the full baseline. The next two are the nearest supporting resonances: not competing verdicts, but real echoes that change how the primary line is lived.",
+    "You may come to this page already carrying another star-family name. Nothing here asks you to surrender it. Read these three together, then use the wider field to see where that earlier name sits in this chart. Recognition matters more than allegiance to a label.",
+  ],
+};
+
+export const TOP_THREE_SPREAD_INTRO =
+  "No single lineage crossed the engine's threshold for a primary origin in this chart. These are the three closest resonances in the measured field. They are meaningful supporting echoes, but none is being presented as a definitive first line.";
+
+export const WIDER_FIELD_INTRO =
+  "The wider field matters too. The remaining families are shown in order of their nearest approach, so no lineage disappears simply because it did not make the top three.";
+
 export const LIVING_WITH_IT: FramePiece = {
   title: "Living with it",
   paragraphs: [
@@ -37,4 +51,4 @@ export const LIVING_WITH_IT: FramePiece = {
 };
 
 /** Bumped whenever any content file changes, and recorded in every report. */
-export const STAR_ORIGIN_CONTENT_VERSION = "star-origin.content.v1" as const;
+export const STAR_ORIGIN_CONTENT_VERSION = "star-origin.content.v2" as const;

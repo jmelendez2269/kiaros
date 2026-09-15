@@ -11,7 +11,8 @@ import {
   getAreaDefinition,
   slugifyAreaName,
 } from '@/lib/areas'
-import type { MonthBlueprint, NatalChart, WeekBlueprint } from '@/types/blueprint'
+import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import type { NatalChart } from '@/types/blueprint'
 import { AreaGoalsPanel, type AreaGoal } from '@/components/areas/AreaGoalsPanel'
 import { BRAND } from '@/lib/brand'
 
@@ -80,26 +81,20 @@ export default async function AreaDetailPage({
 }) {
   const { slug } = await params
   const supabase = await createServerSupabase()
-  const currentYear = new Date().getFullYear()
   const today = todayISO()
 
-  const [categoryRes, blueprintRes, profileRes] = await Promise.all([
+  const [categoryRes, profileRes] = await Promise.all([
     supabase
       .from('goal_categories')
       .select('id, name, icon_key, success, description'),
     supabase
-      .from('blueprints')
-      .select('year_theme, year_summary, quarters, months, weeks')
-      .eq('plan_year', currentYear)
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
       .from('user_profiles')
-      .select('natal_chart, year_vision, word_of_year')
+      .select('id, natal_chart, year_vision, word_of_year')
       .maybeSingle(),
   ])
+  const loadedPromise = profileRes.data?.id
+    ? loadCurrentBlueprint(profileRes.data.id)
+    : Promise.resolve(null)
 
   const category = (categoryRes.data ?? []).find((item) => slugifyAreaName(item.name) === slug)
   if (!category || slugifyAreaName(category.name) !== slug) {
@@ -107,18 +102,21 @@ export default async function AreaDetailPage({
   }
 
   // Goals for this area. Lives on a separate table (migration 0020).
-  const goalsRes = await supabase
-    .from('area_goals')
-    .select('id, title, description, status, target_label, linked_week_number, sort_order, created_at, updated_at')
-    .eq('category_id', category.id)
-    .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true })
+  const [goalsRes, loaded] = await Promise.all([
+    supabase
+      .from('area_goals')
+      .select('id, title, description, status, target_label, linked_week_number, sort_order, created_at, updated_at')
+      .eq('category_id', category.id)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    loadedPromise,
+  ])
   const initialGoals = (goalsRes.data ?? []) as AreaGoal[]
 
   const area = getAreaDefinition(category.name)
   const natalChart = (profileRes.data?.natal_chart as NatalChart | null) ?? null
-  const weeks = (blueprintRes.data?.weeks as unknown as WeekBlueprint[]) ?? []
-  const months = (blueprintRes.data?.months as unknown as MonthBlueprint[]) ?? []
+  const weeks = loaded?.blueprint.weeks ?? []
+  const months = loaded?.blueprint.months ?? []
   const activeWeeks = areaActivationWeeks(category.name, weeks)
   const activeMonths = areaActivationMonths(category.name, months, weeks)
   const activeNow = activeWeeks.some((week) => week.startDate <= today && today <= week.endDate)
@@ -130,8 +128,8 @@ export default async function AreaDetailPage({
   const primaryPlacement = natalPlacements[0] ?? null
   const areaYearNarrative = buildAreaYearNarrative({
     nameOrSlug: category.name,
-    blueprintTheme: blueprintRes.data?.year_theme,
-    blueprintSummary: blueprintRes.data?.year_summary,
+    blueprintTheme: loaded?.blueprint.yearTheme,
+    blueprintSummary: loaded?.blueprint.yearSummary,
     natalChart,
     weeks,
   })

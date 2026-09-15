@@ -7,10 +7,20 @@
   "include": [
     "../lib/journal/consent.ts",
     "../lib/journal/entry-service.ts",
+    "../lib/journal/derived-rebuild.ts",
+    "../lib/ai/journal-insight-synthesis.ts",
     "../app/api/journal/route.ts",
+    "../app/api/journal/[id]/consent/route.ts",
     "../app/(app)/today/actions.ts",
+    "../app/(app)/journal/page.tsx",
+    "../app/(app)/insights/map/page.tsx",
+    "../components/journal/JournalComposer.tsx",
+    "../components/journal/JournalConsentControls.tsx",
+    "../components/insights/JournalHistoryList.tsx",
+    "../types/astronomia.d.ts",
     "./check-journal-consent.mts",
     "./check-journal-consent-wiring.mts",
+    "./check-journal-consent-enforcement.mts",
     "../next-env.d.ts"
   ]
 }

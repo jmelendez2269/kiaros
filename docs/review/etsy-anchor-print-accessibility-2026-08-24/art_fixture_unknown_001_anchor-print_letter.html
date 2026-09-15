@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta name="generator" content="Kairos anchor-print.obsidian-almanac.v1" />
+  <title>Personal Natal Chart Anchor Print · Letter</title>
+  <style>
+    :root {
+      --paper: #f7f2e8;
+      --paper-deep: #eee5d6;
+      --ink: #181923;
+      --ink-muted: #4b4b57;
+      --violet: #5135a8;
+      --violet-soft: #e8e0f5;
+      --steel: #315f80;
+      --amber: #754900;
+      --line: #b9afc5;
+    }
+    @page { size: Letter; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #d7d3ca; color: var(--ink); }
+    body { font-family: "Aptos", "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.5; }
+    .artifact-page {
+      width: 215.9mm;
+      height: 279.4mm;
+      margin: 0 auto;
+      padding: 13mm 14mm 12mm;
+      background: var(--paper);
+      break-after: page;
+      page-break-after: always;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      position: relative;
+      overflow: hidden;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .artifact-page:last-child { break-after: auto; page-break-after: auto; }
+    .artifact-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-top: 4mm solid var(--violet);
+      pointer-events: none;
+    }
+    .artifact-header, .artifact-footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 8mm; }
+    .artifact-header { margin-top: 2mm; border-bottom: 0.35mm solid var(--line); padding-bottom: 4mm; }
+    .brand-mark { margin: 0; color: var(--violet); font: 700 9pt/1 "Aptos", "Segoe UI", sans-serif; letter-spacing: 0.22em; }
+    .kicker, .page-number { margin: 1.5mm 0 0; color: var(--ink-muted); font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; }
+    .title-block { margin: 7mm 0 5mm; }
+    .title-block.compact { margin-bottom: 4mm; }
+    h1, h2 { font-family: "Iowan Old Style", Georgia, serif; color: var(--ink); }
+    h1 { margin: 0; font-size: 27pt; line-height: 1.05; font-weight: 600; letter-spacing: -0.02em; }
+    h2 { margin: 0 0 2mm; font-size: 13pt; line-height: 1.15; font-weight: 600; }
+    p { orphans: 3; widows: 3; }
+    .subtitle { max-width: 72ch; margin: 2mm 0 0; color: var(--ink-muted); font-family: "Iowan Old Style", Georgia, serif; font-size: 12pt; line-height: 1.45; }
+    .birth-label { margin: 2mm 0 0; color: var(--steel); font-size: 9pt; font-weight: 600; }
+    .reference-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 7mm; align-items: start; }
+    .chart-panel { margin: 0; }
+    .natal-chart { width: 100%; height: auto; display: block; }
+    .chart-ring, .chart-division { fill: none; stroke: #766f82; stroke-width: 0.8; }
+    .chart-ring-outer { stroke: var(--violet); stroke-width: 1.4; }
+    .chart-ring-inner { stroke-dasharray: 3 4; }
+    .chart-sign, .chart-house, .chart-planet-label, .chart-angle-label { text-anchor: middle; font-family: "Aptos", "Segoe UI", sans-serif; }
+    .chart-sign { fill: var(--violet); font-size: 11px; font-weight: 700; }
+    .chart-house { fill: var(--ink-muted); font-size: 8px; }
+    .chart-planet-marker { fill: var(--paper); stroke: var(--violet); stroke-width: 1.4; }
+    .chart-planet-label { fill: var(--ink); font-size: 8px; font-weight: 700; }
+    .chart-angle-marker { fill: var(--amber); stroke: var(--ink); stroke-width: 0.7; }
+    .chart-angle-label { fill: #fff; font-size: 5px; font-weight: 700; }
+    .chart-center { fill: var(--violet); }
+    .chart-aspect { fill: none; stroke: var(--steel); stroke-width: 1.1; opacity: 0.8; }
+    .chart-aspect-opposition { stroke-dasharray: 8 3; }
+    .chart-aspect-square { stroke-dasharray: 3 3; }
+    .chart-aspect-trine { stroke: var(--violet); }
+    .chart-aspect-sextile { stroke: var(--amber); stroke-dasharray: 1 3; }
+    .chart-aspect-conjunction { stroke-width: 2; }
+    figcaption { margin-top: 2mm; color: var(--ink-muted); font-size: 11pt; line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; font-size: 11pt; line-height: 1.25; font-variant-numeric: tabular-nums; }
+    th, td { border-bottom: 0.25mm solid var(--line); padding: 1.35mm 1mm; text-align: left; vertical-align: top; }
+    thead th { color: var(--ink-muted); font-size: 7pt; letter-spacing: 0.06em; text-transform: uppercase; }
+    tbody th { color: var(--violet); font-weight: 700; }
+    .status-marker { color: var(--amber); font-size: 7pt; font-weight: 700; text-transform: uppercase; }
+    .aspect-section { margin-top: 4mm; }
+    .aspect-list { list-style: none; margin: 0; padding: 0; }
+    .aspect-list li { display: flex; justify-content: space-between; gap: 5mm; border-bottom: 0.25mm solid var(--line); padding: 1.2mm 0; font-size: 11pt; }
+    .uncertainty-note { margin-top: 4mm; border-left: 1.2mm solid var(--amber); background: #f0e4c9; padding: 3mm 4mm; color: #49340d; font-size: 11pt; }
+    .artifact-footer { position: absolute; left: 14mm; right: 14mm; bottom: 8mm; border-top: 0.25mm solid var(--line); padding-top: 2mm; color: var(--ink-muted); font-size: 6.8pt; }
+    .artifact-footer p { margin: 0; max-width: 70%; overflow-wrap: anywhere; }
+    .anchors-page h1 { font-size: 24pt; }
+    .anchors-page { padding-bottom: 8mm; }
+    .anchors-page .subtitle { font-size: 11pt; line-height: 1.35; }
+    .anchor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5mm; }
+    .anchor-card { display: grid; grid-template-columns: 7mm 1fr; gap: 2.5mm; border: 0.3mm solid var(--line); border-radius: 3mm; background: rgba(255,255,255,0.28); padding: 3mm; }
+    .anchor-card h2 { font-size: 12pt; line-height: 1.1; }
+    .anchor-card p { margin: 0; font-size: 11pt; line-height: 1.28; }
+    .anchor-number { color: var(--violet) !important; font-size: 9pt !important; font-weight: 700; letter-spacing: 0.06em; }
+    .source-note { margin-top: 2mm !important; color: var(--steel); font-size: 7.2pt !important; font-weight: 600; }
+    .reflection-panel { margin-top: 3mm; border-top: 0.8mm solid var(--violet); background: var(--violet-soft); padding: 3mm 4mm; }
+    .reflection-panel ol { margin: 1mm 0 0; padding-left: 5mm; columns: 3; column-gap: 7mm; }
+    .reflection-panel li { break-inside: avoid; padding-right: 2mm; font: 11pt/1.4 "Iowan Old Style", Georgia, serif; }
+    .disclosure-footer { margin-top: 2mm; border-top: 0.25mm solid var(--line); padding-top: 1.5mm; color: var(--ink-muted); font-size: 11pt; line-height: 1.25; }
+    .disclosure-footer p { margin: 0 0 0.8mm; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media print { html, body { background: transparent; } .artifact-page { margin: 0; } }
+  </style>
+</head>
+<body>
+  <main aria-label="Personal Natal Chart Anchor Print">
+    <section class="artifact-page reference-page" aria-labelledby="reference-title">
+    <header class="artifact-header">
+      <div><p class="brand-mark">KAIROS</p><p class="kicker">Personal Natal Chart Anchor Print</p></div>
+      <p class="page-number" aria-label="Page 1 of 2">01 / 02</p>
+    </header>
+    <div class="title-block">
+      <h1 id="reference-title">Natal Anchor</h1>
+      <p class="subtitle">A stable reference for the sky at your birth</p>
+      <p class="birth-label">1990-04-04 · time unknown · Portland, United States</p>
+    </div>
+    <div class="reference-grid">
+      <figure class="chart-panel">
+        <svg class="natal-chart" viewBox="0 0 420 420" role="img" aria-labelledby="art_fixture_unknown_001-chart-title art_fixture_unknown_001-chart-description">
+    <title id="art_fixture_unknown_001-chart-title">Natal placement reference</title>
+    <desc id="art_fixture_unknown_001-chart-description">Tropical date-stable placements without houses or chart angles. The placement table is the authoritative text equivalent of the chart graphic.</desc>
+    <circle cx="210" cy="210" r="190" class="chart-ring chart-ring-outer" />
+    <circle cx="210" cy="210" r="135" class="chart-ring" />
+    <circle cx="210" cy="210" r="112" class="chart-ring chart-ring-inner" />
+    <g>
+        <line x1="140" y1="210" x2="20" y2="210" class="chart-division" />
+        <text x="46.7585" y="253.7404" class="chart-sign">Ar</text>
+        
+        <title>Aries</title>
+      </g><g>
+        <line x1="149.3782" y1="245" x2="45.4552" y2="305" class="chart-division" />
+        <text x="90.499" y="329.501" class="chart-sign">Ta</text>
+        
+        <title>Taurus</title>
+      </g><g>
+        <line x1="175" y1="270.6218" x2="115" y2="374.5448" class="chart-division" />
+        <text x="166.2596" y="373.2415" class="chart-sign">Ge</text>
+        
+        <title>Gemini</title>
+      </g><g>
+        <line x1="210" y1="280" x2="210" y2="400" class="chart-division" />
+        <text x="253.7404" y="373.2415" class="chart-sign">Ca</text>
+        
+        <title>Cancer</title>
+      </g><g>
+        <line x1="245" y1="270.6218" x2="305" y2="374.5448" class="chart-division" />
+        <text x="329.501" y="329.501" class="chart-sign">Le</text>
+        
+        <title>Leo</title>
+      </g><g>
+        <line x1="270.6218" y1="245" x2="374.5448" y2="305" class="chart-division" />
+        <text x="373.2415" y="253.7404" class="chart-sign">Vi</text>
+        
+        <title>Virgo</title>
+      </g><g>
+        <line x1="280" y1="210" x2="400" y2="210" class="chart-division" />
+        <text x="373.2415" y="166.2596" class="chart-sign">Li</text>
+        
+        <title>Libra</title>
+      </g><g>
+        <line x1="270.6218" y1="175" x2="374.5448" y2="115" class="chart-division" />
+        <text x="329.501" y="90.499" class="chart-sign">Sc</text>
+        
+        <title>Scorpio</title>
+      </g><g>
+        <line x1="245" y1="149.3782" x2="305" y2="45.4552" class="chart-division" />
+        <text x="253.7404" y="46.7585" class="chart-sign">Sg</text>
+        
+        <title>Sagittarius</title>
+      </g><g>
+        <line x1="210" y1="140" x2="210" y2="20" class="chart-division" />
+        <text x="166.2596" y="46.7585" class="chart-sign">Cp</text>
+        
+        <title>Capricorn</title>
+      </g><g>
+        <line x1="175" y1="149.3782" x2="115" y2="45.4552" class="chart-division" />
+        <text x="90.499" y="90.499" class="chart-sign">Aq</text>
+        
+        <title>Aquarius</title>
+      </g><g>
+        <line x1="149.3782" y1="175" x2="45.4552" y2="115" class="chart-division" />
+        <text x="46.7585" y="166.2596" class="chart-sign">Pi</text>
+        
+        <title>Pisces</title>
+      </g>
+    <line x1="101.4221" y1="237.4744" x2="289.0576" y2="289.3341" class="chart-aspect chart-aspect-trine">
+        <title>Sun trine Mars, 0.7 degree orb</title>
+      </line><line x1="98.8832" y1="195.9627" x2="278.3363" y2="121.2636" class="chart-aspect chart-aspect-trine">
+        <title>Mercury trine Jupiter, 0.4 degree orb</title>
+      </line><line x1="129.4339" y1="287.8017" x2="289.0576" y2="289.3341" class="chart-aspect chart-aspect-square">
+        <title>Venus square Mars, 0.9 degree orb</title>
+      </line><line x1="193.8321" y1="99.1731" x2="186.5227" y2="100.4883" class="chart-aspect chart-aspect-conjunction">
+        <title>Saturn conjunction Neptune, 3.8 degree orb</title>
+      </line><line x1="152.8192" y1="113.6965" x2="306.897" y2="153.8308" class="chart-aspect chart-aspect-square">
+        <title>Uranus square Pluto, 0.6 degree orb</title>
+      </line>
+    <g>
+      <circle cx="79.1249" cy="243.1165" r="11" class="chart-planet-marker" />
+      <text x="79.1249" y="246.6165" class="chart-planet-label">Su</text>
+      <title>Sun at 14.2 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="76.0645" cy="193.08" r="11" class="chart-planet-marker" />
+      <text x="76.0645" y="196.58" class="chart-planet-label">Me</text>
+      <title>Mercury at 352.8 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="112.8891" cy="303.7789" r="11" class="chart-planet-marker" />
+      <text x="112.8891" y="307.2789" class="chart-planet-label">Ve</text>
+      <title>Venus at 44.0 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="305.2927" cy="305.6259" r="11" class="chart-planet-marker" />
+      <text x="305.2927" y="309.1259" class="chart-planet-label">Ma</text>
+      <title>Mars at 134.9 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="292.3696" cy="103.0409" r="11" class="chart-planet-marker" />
+      <text x="292.3696" y="106.5409" class="chart-planet-label">Ju</text>
+      <title>Jupiter at 232.4 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="190.5119" cy="76.414" r="11" class="chart-planet-marker" />
+      <text x="190.5119" y="79.914" class="chart-planet-label">Sa</text>
+      <title>Saturn at 278.3 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="141.0767" cy="93.9199" r="11" class="chart-planet-marker" />
+      <text x="141.0767" y="97.4199" class="chart-planet-label">Ur</text>
+      <title>Uranus at 300.7 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="181.7015" cy="77.9993" r="11" class="chart-planet-marker" />
+      <text x="181.7015" y="81.4993" class="chart-planet-label">Ne</text>
+      <title>Neptune at 282.1 degrees tropical longitude</title>
+    </g><g>
+      <circle cx="326.7954" cy="142.2961" r="11" class="chart-planet-marker" />
+      <text x="326.7954" y="145.7961" class="chart-planet-label">Pl</text>
+      <title>Pluto at 210.1 degrees tropical longitude</title>
+    </g>
+    
+    <circle cx="210" cy="210" r="3" class="chart-center" />
+  </svg>
+        <figcaption>Tropical date-stable placements without houses or chart angles. The placement table is the authoritative text equivalent of the chart graphic.</figcaption>
+      </figure>
+      <div class="reference-data">
+        <section aria-labelledby="placements-title">
+          <h2 id="placements-title">Placements</h2>
+          <table>
+            <caption class="sr-only">Planetary placements with houses and certainty labels</caption>
+            <thead><tr><th scope="col">Point</th><th scope="col">Position</th><th scope="col">House</th><th scope="col">Certainty</th></tr></thead>
+            <tbody><tr>
+      <th scope="row">Sun</th>
+      <td>14.2° Aries</td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Moon</th>
+      <td>Cancer or Leo</td>
+      <td>Omitted</td>
+      <td>Sign uncertain</td>
+    </tr><tr>
+      <th scope="row">Mercury</th>
+      <td>22.8° Pisces</td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Venus</th>
+      <td>14.0° Taurus</td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Mars</th>
+      <td>14.9° Leo</td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Jupiter</th>
+      <td>22.4° Scorpio <span class="status-marker">retrograde</span></td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Saturn</th>
+      <td>8.3° Capricorn</td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Uranus</th>
+      <td>0.7° Aquarius</td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Neptune</th>
+      <td>12.1° Capricorn</td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr><tr>
+      <th scope="row">Pluto</th>
+      <td>0.1° Scorpio <span class="status-marker">retrograde</span></td>
+      <td>Omitted</td>
+      <td>Exact</td>
+    </tr></tbody>
+          </table>
+        </section>
+        <section class="aspect-section" aria-labelledby="aspects-title">
+          <h2 id="aspects-title">Five strongest major aspects</h2>
+          <ul class="aspect-list"><li><span>Mercury trine Jupiter</span><span>0.4° orb</span></li><li><span>Uranus square Pluto</span><span>0.6° orb</span></li><li><span>Sun trine Mars</span><span>0.7° orb</span></li><li><span>Venus square Mars</span><span>0.9° orb</span></li><li><span>Saturn conjunction Neptune</span><span>3.8° orb</span></li></ul>
+        </section>
+      </div>
+    </div>
+    <aside class="uncertainty-note" aria-label="Birth-time uncertainty"><strong>Time-aware reading:</strong> Birth time is unknown. Ascendant, Midheaven, and houses are omitted. The Moon may be in Cancer or Leo, so Moon-dependent interpretation is omitted.</aside>
+    <footer class="artifact-footer"><p>Tropical zodiac · Whole Sign houses when birth time is known · astronomia 4.2.0 · calculation anchor-calculation.fixture.v1</p><p>sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb</p></footer>
+  </section>
+    <section class="artifact-page anchors-page" aria-labelledby="anchors-title">
+    <header class="artifact-header">
+      <div><p class="brand-mark">KAIROS</p><p class="kicker">Stable natal anchors</p></div>
+      <p class="page-number" aria-label="Page 2 of 2">02 / 02</p>
+    </header>
+    <div class="title-block compact">
+      <h1 id="anchors-title">Six anchors to return to</h1>
+      <p class="subtitle">These are reflective starting points grounded in the placements and major aspects listed on page one. They are invitations for attention, not predictions or guarantees.</p>
+    </div>
+    <div class="anchor-grid"><article class="anchor-card" aria-labelledby="anchor-1">
+      <p class="anchor-number" aria-hidden="true">01</p>
+      <div>
+        <h2 id="anchor-1">Begin where the spark is</h2>
+        <p>Your Aries Sun describes an orientation toward beginnings and direct contact. Its trine to Mars offers a stable place to examine how purpose and action support one another.</p>
+        <p class="source-note">Grounded in: Sun · Sun trine Mars</p>
+      </div>
+    </article><article class="anchor-card" aria-labelledby="anchor-2">
+      <p class="anchor-number" aria-hidden="true">02</p>
+      <div>
+        <h2 id="anchor-2">Keep uncertainty honest</h2>
+        <p>Without a known birth time, the Moon may be in Cancer or Leo. Let that uncertainty remain visible, and notice which descriptions your lived experience supports.</p>
+        <p class="source-note">Grounded in: Moon · Moon uncertainty</p>
+      </div>
+    </article><article class="anchor-card" aria-labelledby="anchor-3">
+      <p class="anchor-number" aria-hidden="true">03</p>
+      <div>
+        <h2 id="anchor-3">Give intuition a structure</h2>
+        <p>Mercury in Pisces begins with impression and association. The trine to Jupiter can help those impressions become a larger frame when you distinguish what is observed from what is imagined.</p>
+        <p class="source-note">Grounded in: Mercury · Jupiter · Mercury trine Jupiter</p>
+      </div>
+    </article><article class="anchor-card" aria-labelledby="anchor-4">
+      <p class="anchor-number" aria-hidden="true">04</p>
+      <div>
+        <h2 id="anchor-4">Choose durable reciprocity</h2>
+        <p>Venus in Taurus emphasizes what can be tended. Its square to Mars invites you to name the tension between comfort and self-expression without forcing a quick resolution.</p>
+        <p class="source-note">Grounded in: Venus · Mars · Venus square Mars</p>
+      </div>
+    </article><article class="anchor-card" aria-labelledby="anchor-5">
+      <p class="anchor-number" aria-hidden="true">05</p>
+      <div>
+        <h2 id="anchor-5">Act with visible heart</h2>
+        <p>Mars in Leo favors action that can be owned. The Sun trine offers a factual anchor for exploring where initiative feels aligned with identity rather than performed for recognition.</p>
+        <p class="source-note">Grounded in: Mars · Sun · Sun trine Mars</p>
+      </div>
+    </article><article class="anchor-card" aria-labelledby="anchor-6">
+      <p class="anchor-number" aria-hidden="true">06</p>
+      <div>
+        <h2 id="anchor-6">Hold vision against structure</h2>
+        <p>Saturn close to Neptune asks form and imagination to work together. The Uranus–Pluto square adds tension around change; treat both as reflections, not promised outcomes.</p>
+        <p class="source-note">Grounded in: Saturn conjunction Neptune · Uranus square Pluto</p>
+      </div>
+    </article></div>
+    <section class="reflection-panel" aria-labelledby="reflection-title">
+      <h2 id="reflection-title">Reflection, in your own words</h2>
+      <ol><li>What remains true even when I leave uncertain details unresolved?</li><li>Where could comfort and expression negotiate instead of compete?</li><li>Which observation belongs to the chart, and which meaning belongs to me?</li></ol>
+    </section>
+    <footer class="disclosure-footer">
+      <p>Designed, written, and reviewed by Kairos from the supplied birth details and versioned astronomical calculations.</p>
+      <p>A reflective astrology artifact—not medical, mental-health, legal, financial, or other professional advice. This purchase includes these personalized files only; it does not include a Kairos account, subscription, Blueprint, Stelloquy, activation, or off-marketplace purchase.</p>
+    </footer>
+  </section>
+  </main>
+</body>
+</html>

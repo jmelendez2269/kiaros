@@ -19,7 +19,7 @@ import { getWeekDates } from '@/components/calendar/utils'
 import { getSabianForDegree } from '@/lib/ephemeris/sabian'
 import { derivePushRestArc } from '@/lib/year/push-rest-arc'
 import { todayISO } from '@/lib/today/get-today-context'
-import { getAppProfile } from '@/lib/app/get-app-profile'
+import { appProfileId, getAppProfile } from '@/lib/app/get-app-profile'
 import { computeTransitWindows } from '@/lib/planetary/transit-windows'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
@@ -138,8 +138,7 @@ async function loadSupabaseUserId() {
   const { userId } = await auth()
   if (!userId) return null
 
-  const profile = await getAppProfile(userId)
-  return profile?.id ?? null
+  return appProfileId(await getAppProfile(userId))
 }
 
 async function loadYearBase() {

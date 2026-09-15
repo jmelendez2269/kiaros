@@ -115,7 +115,7 @@ export default function OnboardingYearFocusPage() {
         </p>
         <div className="flex w-fit items-center gap-2 rounded-full border border-leather-500/25 bg-leather-500/8 px-3 py-1.5 text-xs text-leather-200/80">
           <span className="h-1.5 w-1.5 rounded-full bg-leather-300/70" />
-          Anchors Stelloquy to this season of your life
+          With Planner + Oracle, this can anchor Stelloquy to your season
         </div>
         <p className="text-sm italic text-bone-muted/80">
           Messy, honest answers make better blueprints than polished ones.

@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "kairos.anchor-print.pdf-verification.v1",
+  "pdfUaAssessment": "structural-readiness-only-no-conformance-claim",
+  "assertions": 206,
+  "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "records": [
+    {
+      "fixture": "known-time",
+      "paperSize": "letter",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_letter.pdf",
+      "bytes": 147514,
+      "sha256": "9d06e6f226abf96782e36004f491c1a839762a714f216b03670b5f31ea1881c0",
+      "pages": 2,
+      "pagePoints": [
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "title": "Personal Natal Chart Anchor Print · Letter",
+      "structureRoles": [
+        "Art",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_letter_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_letter_page-2.png"
+      ]
+    },
+    {
+      "fixture": "known-time",
+      "paperSize": "a4",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_a4.pdf",
+      "bytes": 147738,
+      "sha256": "198d363fec813902f4bfd5669bc76685a121a2ae9e87f09c299df8843f2f24d9",
+      "pages": 2,
+      "pagePoints": [
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        }
+      ],
+      "title": "Personal Natal Chart Anchor Print · A4",
+      "structureRoles": [
+        "Art",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_a4_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_known_001_anchor-print_a4_page-2.png"
+      ]
+    },
+    {
+      "fixture": "unknown-time",
+      "paperSize": "letter",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_letter.pdf",
+      "bytes": 147957,
+      "sha256": "a4118bc9bed9e1562d107212e4dcda91886603f8e82bfbdb8c5bbb8c35acc3a1",
+      "pages": 2,
+      "pagePoints": [
+        {
+          "width": 612,
+          "height": 792
+        },
+        {
+          "width": 612,
+          "height": 792
+        }
+      ],
+      "title": "Personal Natal Chart Anchor Print · Letter",
+      "structureRoles": [
+        "Art",
+        "Aside",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_letter_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_letter_page-2.png"
+      ]
+    },
+    {
+      "fixture": "unknown-time",
+      "paperSize": "a4",
+      "pdfFile": "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_a4.pdf",
+      "bytes": 148069,
+      "sha256": "a50ea5f330dde90ad069c0a5ed6031d5af3fc6e6715902af06b49de4cd0ffcf4",
+      "pages": 2,
+      "pagePoints": [
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        },
+        {
+          "width": 594.95996,
+          "height": 841.91998
+        }
+      ],
+      "title": "Personal Natal Chart Anchor Print · A4",
+      "structureRoles": [
+        "Art",
+        "Aside",
+        "Caption",
+        "Document",
+        "Figure",
+        "H1",
+        "H2",
+        "L",
+        "LI",
+        "Lbl",
+        "NonStruct",
+        "P",
+        "Root",
+        "Strong",
+        "TD",
+        "TH",
+        "TR",
+        "Table"
+      ],
+      "screenshotFiles": [
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_a4_page-1.png",
+        "G:\\Projects\\Kiaros\\docs\\review\\etsy-anchor-print-accessibility-2026-08-24\\art_fixture_unknown_001_anchor-print_a4_page-2.png"
+      ]
+    }
+  ]
+}

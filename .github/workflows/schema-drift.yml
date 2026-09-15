@@ -1,0 +1,38 @@
+name: Schema drift
+
+# Catches the case where a migration lands in the repo but never reaches the
+# database — the gap that left `user_profiles.last_seen_at` missing in
+# production while the deployed app layout wrote to it on every render.
+#
+# The daily schedule matters as much as the PR run: drift can appear with no
+# code change at all, e.g. when a migration is applied by hand to one
+# environment and not another.
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/check-schema-drift.mjs'
+      - '.github/workflows/schema-drift.yml'
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # No install step: the check uses only Node built-ins and fetch.
+      - name: Check migrations against the live schema
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/check-schema-drift.mjs

@@ -32,7 +32,7 @@ export async function POST() {
 
   if (!profile?.id || !profile.profile_setup_completed_at || !profile.natal_chart) {
     return NextResponse.json(
-      { error: "Complete your profile before generating a personal week." },
+      { error: "Complete your profile before generating your birth-chart week reading." },
       { status: 409 }
     );
   }
@@ -60,18 +60,8 @@ export async function POST() {
     .single();
 
   if (error || !preview) {
-    return NextResponse.json({ error: "The preview could not be started." }, { status: 500 });
+    return NextResponse.json({ error: "The week reading could not be started." }, { status: 500 });
   }
-
-  await admin.from("preview_access").upsert(
-    {
-      user_id: profile.id,
-      status: "active",
-      started_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    { onConflict: "user_id" }
-  );
 
   after(() => runWeekPreviewGeneration({ previewId: preview.id, userId: profile.id }));
   return NextResponse.json({ previewId: preview.id, status: "generating" });

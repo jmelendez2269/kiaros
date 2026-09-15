@@ -393,3 +393,8 @@ A feature is done when:
 3. Error paths are handled (user-visible message, not a console trace)
 4. RLS holds (tested with a second user if it touches user data)
 5. No TODOs about "real implementation" — if it's mocked, it's flagged in session notes
+
+
+### Local implementation note — 2026-09-14: Reflections and Yearly Unwrapped
+
+Monthly and quarterly period-end reflections, Yearly Unwrapped, evidence-backed synthesis, corrections and intention follow-up, opt-in scheduling, and relevance-based journal recall are implemented locally. Migration 0047_reflections.sql passed isolated PostgreSQL tests but is not applied to the configured database. These features are not yet deployed. See [the implementation and verification record](docs/planning/reflections-memory-unwrapped-plan.md) for scope, tests, limits and activation steps. Goals remain a small optional passage.

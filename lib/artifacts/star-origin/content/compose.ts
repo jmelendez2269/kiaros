@@ -13,6 +13,11 @@
 
 import { ZODIAC_SIGNS, type ZodiacSign } from "@/types/blueprint";
 import type { Finding } from "../findings.ts";
+import {
+  resonanceRoleLabel,
+  type ResonanceProfileEntry,
+} from "../profile.ts";
+import type { LineageProximityRow } from "../contract.ts";
 import { STAR_MEANINGS } from "./star-meanings.ts";
 import { BAND_VOICES, BODY_VOICES } from "./body-voices.ts";
 import {
@@ -22,6 +27,11 @@ import {
   SPREAD_OPENING,
   standingPhrase,
 } from "./lineage-meanings.ts";
+import {
+  TOP_THREE_PROFILE,
+  TOP_THREE_SPREAD_INTRO,
+  WIDER_FIELD_INTRO,
+} from "./report-frame.ts";
 
 export interface ComposedFinding {
   findingId: string;
@@ -208,6 +218,117 @@ export function composeLineage(input: {
     title: `${lineage.displayName}${named}`,
     subtitle: `${lineage.image}${aliases}`,
     body,
+  };
+}
+
+export interface ComposedResonanceProfile {
+  title: string;
+  subtitle: string;
+  paragraphs: readonly string[];
+}
+
+function markerLabel(marker: string): string {
+  return marker
+    .split("_")
+    .map((word) => capitalise(word))
+    .join(" ");
+}
+
+function profileEvidence(row: LineageProximityRow): string {
+  return (
+    "Chart evidence: " +
+    row.nearestStar +
+    " came within " +
+    row.orb.toFixed(2) +
+    "° of your " +
+    markerLabel(row.nearestMarker) +
+    "."
+  );
+}
+
+export function composeResonanceProfile(
+  entries: readonly ResonanceProfileEntry[],
+  remaining: readonly LineageProximityRow[],
+): ComposedResonanceProfile {
+  if (entries.length !== 3) {
+    throw new MissingContentError("a named Star Origin report requires three profile entries");
+  }
+
+  const supportingOnly = entries.every(
+    (entry) => entry.role === "supporting_resonance",
+  );
+  const paragraphs = supportingOnly
+    ? [TOP_THREE_SPREAD_INTRO, TOP_THREE_PROFILE.paragraphs[1]]
+    : [...TOP_THREE_PROFILE.paragraphs];
+  for (const entry of entries) {
+    const meaning = LINEAGE_MEANINGS[entry.row.lineageId];
+    if (!meaning) {
+      throw new MissingContentError("no meaning written for lineage " + entry.row.lineageId);
+    }
+    paragraphs.push(
+      entry.rank + ". " + meaning.displayName + " — " + resonanceRoleLabel(entry.role),
+    );
+    if (entry.role === "supporting_resonance") {
+      paragraphs.push(
+        meaning.history,
+        meaning.nature,
+        meaning.longing,
+        meaning.purpose,
+        meaning.cost,
+        profileEvidence(entry.row),
+      );
+    } else {
+      paragraphs.push(
+        capitalise(meaning.essence) +
+          ". " +
+          profileEvidence(entry.row) +
+          " The full lineage reading appears in the preceding section.",
+      );
+    }
+  }
+
+  const [first, second, third] = entries.map((entry) => LINEAGE_MEANINGS[entry.row.lineageId]);
+  paragraphs.push(
+    "How the three work together",
+    first.displayName +
+      " sets the central pattern: " +
+      first.essence +
+      ". " +
+      second.displayName +
+      " adds " +
+      second.essence +
+      ". " +
+      third.displayName +
+      " adds " +
+      third.essence +
+      ". The point is not to choose between them; it is to notice which one is speaking in a given part of your life.",
+    "The deepest place to look is the friction between their costs. Notice which pattern protects you first, which one appears when you feel most at home, and which one becomes loudest under pressure.",
+    "The wider field",
+    WIDER_FIELD_INTRO,
+    ...remaining.map(
+      (row) =>
+        row.displayName +
+        " — " +
+        row.essence +
+        ". Nearest approach " +
+        row.orb.toFixed(2) +
+        "°, " +
+        row.nearestStar +
+        " to your " +
+        markerLabel(row.nearestMarker) +
+        ".",
+    ),
+  );
+
+  const paired = entries.filter((entry) => entry.role === "co_primary_line").length === 2;
+  return {
+    title: TOP_THREE_PROFILE.title,
+    subtitle: supportingOnly
+      ? "three supporting echoes; no single line qualified"
+      : paired
+        ? "two co-primary lines and one supporting echo"
+        : "one primary line and two supporting echoes",
+    paragraphs,
   };
 }
 

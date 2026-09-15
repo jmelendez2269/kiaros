@@ -8,43 +8,63 @@ import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
 import { TourOverlay } from '@/components/tour/TourOverlay'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
+import { ReflectionNotification } from '@/components/reflections/ReflectionNotification'
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
 import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { getAppProfile } from '@/lib/app/get-app-profile'
+import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { ESTABLISHED_PATTERN_MIN_SAMPLE } from '@/lib/journal/pattern-discoveries'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const [clerkUser, profile] = await Promise.all([currentUser(), getAppProfile(userId)])
+  const [clerkUser, profileResult] = await Promise.all([currentUser(), getAppProfile(userId)])
   const isAppAdmin = clerkUser?.publicMetadata?.isAdmin === true
+
+  // The gate query failed rather than came back empty — hold the user here
+  // instead of reading it as "never onboarded" and bouncing them to /onboarding.
+  if (profileResult.status === 'unavailable') {
+    return <DataUnavailable />
+  }
+
+  if (profileResult.status === 'missing' || !profileResult.profile.onboarding_completed_at) {
+    redirect('/onboarding')
+  }
+
+  const profile = profileResult.profile
 
   const admin = createAdminSupabase()
 
-  const [entitlementsResult, establishedPatternsResult] = profile?.id
-    ? await Promise.all([
-        admin
-          .from('product_entitlements')
-          .select('id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan')
-          .eq('user_id', profile.id)
-          .neq('status', 'revoked'),
-        admin
-          .from('user_pattern_insights')
-          .select('id')
-          .eq('user_id', profile.id)
-          .gte('sample_size', ESTABLISHED_PATTERN_MIN_SAMPLE)
-          .limit(250),
-      ])
-    : [{ data: [] }, { data: [] }]
+  const [entitlementsResult, establishedPatternsResult] = await Promise.all([
+    admin
+      .from('product_entitlements')
+      .select('id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan')
+      .eq('user_id', profile.id)
+      .neq('status', 'revoked'),
+    admin
+      .from('user_pattern_insights')
+      .select('id')
+      .eq('user_id', profile.id)
+      .gte('sample_size', ESTABLISHED_PATTERN_MIN_SAMPLE)
+      .limit(250),
+  ])
+
+  // An entitlements query that *failed* looks exactly like a user who owns
+  // nothing. Don't tell a paying subscriber their access lapsed because the
+  // data API blinked — log it and stay quiet instead.
+  if (entitlementsResult.error) {
+    console.error('[app-layout] product_entitlements lookup failed', {
+      userId: profile.id,
+      code: entitlementsResult.error.code,
+      message: entitlementsResult.error.message,
+    })
+  }
+  const entitlementsUnknown = Boolean(entitlementsResult.error)
   const entitlements = entitlementsResult.data
   const initialPatternIds = (establishedPatternsResult.data ?? []).map((pattern) => pattern.id)
 
   const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[])
-
-  if (!profile?.onboarding_completed_at) {
-    redirect('/onboarding')
-  }
 
   // Drives the "quiet sky" win-back email — fire-and-forget so it never
   // slows down the page render.
@@ -81,11 +101,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         (new Date(activeYearlyEntitlement.ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       )
     : null
-  const showExpiredBanner = !isAppAdmin && access.hasReadOnlyPlannerAccess
-  const showExpiringSoonBanner = !isAppAdmin && !showExpiredBanner && daysUntilExpiry !== null && daysUntilExpiry <= 30
+  // `entitlementsUnknown` means the lookup errored, so `access` describes a
+  // failed query rather than this user. Every banner below is an assertion
+  // about what they own — suppress them all rather than assert something false.
+  const showExpiredBanner = !isAppAdmin && !entitlementsUnknown && access.hasReadOnlyPlannerAccess
+  const showExpiringSoonBanner = !isAppAdmin && !entitlementsUnknown && !showExpiredBanner && daysUntilExpiry !== null && daysUntilExpiry <= 30
   // entitlements exist but none are active/read-only → lapsed monthly sub or other expired state
-  const showLapsedBanner = !isAppAdmin && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length > 0
-  const showNoAccessBanner = !isAppAdmin && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length === 0
+  const showLapsedBanner = !isAppAdmin && !entitlementsUnknown && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length > 0
+  const showNoAccessBanner = !isAppAdmin && !entitlementsUnknown && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length === 0
 
   return (
     <StelloquyProvider hasOracleAccess={isAppAdmin || access.hasOracleAccess}>
@@ -153,6 +176,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                     </Link>
                   </div>
                 )}
+                <ReflectionNotification />
                 {children}
               </div>
             </main>

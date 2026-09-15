@@ -21,7 +21,7 @@ export async function GET() {
 
   const { data: blueprint } = await admin
     .from("blueprints")
-    .select("*")
+    .select("id, plan_year, version, status, error_message, generated_at, created_at")
     .eq("user_id", profile.id)
     .eq("plan_year", plan_year)
     .order("version", { ascending: false })

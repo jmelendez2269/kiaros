@@ -14,7 +14,7 @@ type DiscoveryResponse =
   | { success: false; error: string }
 
 const POLL_INTERVAL_MS = 60_000
-const DISPLAY_DURATION_MS = 7_000
+const DISPLAY_DURATION_MS = 12_000
 const STORAGE_PREFIX = 'kairos:seen-pattern-discoveries:v1'
 
 function readSeenPatternIds(storageKey: string): Set<string> | null {
@@ -49,15 +49,19 @@ export function PatternDiscoveryNotifier({
   const [queue, setQueue] = useState<PatternDiscovery[]>([])
   const current = queue[0] ?? null
 
-  const dismiss = useCallback(() => {
+  const showNext = useCallback(() => {
     setQueue((existing) => existing.slice(1))
+  }, [])
+
+  const dismissAll = useCallback(() => {
+    setQueue([])
   }, [])
 
   useEffect(() => {
     if (!current) return
-    const timer = window.setTimeout(dismiss, DISPLAY_DURATION_MS)
+    const timer = window.setTimeout(showNext, DISPLAY_DURATION_MS)
     return () => window.clearTimeout(timer)
-  }, [current, dismiss])
+  }, [current, showNext])
 
   useEffect(() => {
     let cancelled = false
@@ -152,15 +156,23 @@ export function PatternDiscoveryNotifier({
 
   if (!current) return null
 
-  return <PatternDiscoveryToast pattern={current} onDismiss={dismiss} />
+  return (
+    <PatternDiscoveryToast
+      pattern={current}
+      onOpen={showNext}
+      onDismissAll={dismissAll}
+    />
+  )
 }
 
 function PatternDiscoveryToast({
   pattern,
-  onDismiss,
+  onOpen,
+  onDismissAll,
 }: {
   pattern: PatternDiscovery
-  onDismiss: () => void
+  onOpen: () => void
+  onDismissAll: () => void
 }) {
   const patternLabel = formatPatternLabel(pattern.pattern_type, pattern.pattern_key)
   const patternSummary = pattern.ai_summary ?? pattern.summary
@@ -196,7 +208,7 @@ function PatternDiscoveryToast({
             </p>
             <Link
               href="/insights/map"
-              onClick={onDismiss}
+              onClick={onOpen}
               className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-leather-300/45 bg-leather-500/20 px-4 text-sm font-medium text-bone transition-colors hover:bg-leather-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-300/70"
             >
               See the pattern
@@ -206,8 +218,8 @@ function PatternDiscoveryToast({
 
           <button
             type="button"
-            onClick={onDismiss}
-            aria-label="Dismiss pattern notification"
+            onClick={onDismissAll}
+            aria-label="Dismiss all pattern notifications"
             className="absolute -right-2 -top-2 flex h-11 w-11 items-center justify-center rounded-full text-bone-muted transition-colors hover:bg-stone-800 hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-300/70"
           >
             <X className="h-4 w-4" aria-hidden="true" />
