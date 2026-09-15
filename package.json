@@ -11,7 +11,10 @@
     "test:hd-transits": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-human-design-transits.mts",
     "start": "next start --port 3699",
     "start:fresh": "npm run clean:next && next build && next start --port 3699",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:reflections": "node --experimental-strip-types scripts/check-reflections.mts && node scripts/check-reflections-db.mjs",
+    "test:reflections:integration": "node scripts/run-reflections-integration.mjs",
+    "test:reflections:ai": "node scripts/check-reflections-ai.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
@@ -59,6 +62,8 @@
     "eslint-config-next": "^15.0.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@electric-sql/pglite": "^0.5.8",
+    "esbuild": "^0.28.2"
   }
 }

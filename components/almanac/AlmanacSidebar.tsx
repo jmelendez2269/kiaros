@@ -60,6 +60,8 @@ const NAV: ReadonlyArray<{
     href: '/year',
     subItems: [
       { label: 'Blueprint',  href: '/blueprint',        hint: 'the full 52-week read' },
+      { label: 'Reflections', href: '/reflections', hint: 'your months and quarters' },
+      { label: 'Yearly Unwrapped', href: '/year/unwrapped', hint: 'the story of your year' },
     ],
   },
   {
@@ -116,6 +118,7 @@ function isSectionActive(key: NavKey, pathname: string, view: string | null = nu
   }
   if (key === 'year') {
     return (
+      pathname.startsWith('/reflections') ||
       pathname.startsWith('/calendar') ||
       pathname.startsWith('/blueprint') ||
       (pathname.startsWith('/year') && view !== 'week' && view !== 'month')

@@ -48,3 +48,4 @@ Thumbs.db
 
 # Local tooling
 supabase/.temp/
+**/.temp/
