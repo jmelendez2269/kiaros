@@ -31,6 +31,7 @@ import {
   assembleBlueprintUserPrompt,
 } from './blueprint-system-prompt'
 import type { NatalChart, YearEphemeris, BlueprintOutput, HouseSystem } from '@/types/blueprint'
+import { FALLBACK_TZ } from '@/lib/planner/resolve-planner-location'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -327,6 +328,19 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
 
     if (completionError) {
       console.error('[blueprint-generator] Failed to set onboarding_completed_at:', completionError)
+    }
+
+    // Turn reflections on by default using the timezone already captured at
+    // onboarding — no separate opt-in screen. A user who later sets a planner
+    // location override in Settings can still change this from Reflections.
+    const { error: reflectionPrefsError } = await admin.rpc('save_reflection_preferences', {
+      p_user_id: userId,
+      p_timezone: profile.birth_tz ?? FALLBACK_TZ,
+      p_automatic: true,
+      p_include_goals: true,
+    })
+    if (reflectionPrefsError) {
+      console.error('[blueprint-generator] Failed to seed reflection preferences:', reflectionPrefsError)
     }
 
     log('written to DB — done')
