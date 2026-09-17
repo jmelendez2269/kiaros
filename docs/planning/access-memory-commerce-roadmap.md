@@ -44,9 +44,9 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Next three actions
 
-1. Start `ACCESS-03` (Blueprint/calendar navigation, locked states, upgrade, cancellation behavior) now that `ACCESS-02` is `done`; decide separately when `KIAROS_MONTHLY_BLUEPRINT_WINDOW` actually turns on in production, since clearing the staging gate is not itself that decision.
-2. Complete `docs/etsy-anchor-print-launch-approval-packet.md` (legal/address/market wording, Privacy Policy/Terms/listing review, independent PDF/assistive-technology testing), then continue the fictional Year Ahead / Celestial Connection admin review before any real intake or listing publication.
-3. `CONSENT-03` is now `done` (2026-09-17). `MEM-03` was the only row blocked on it and now only waits on `MEM-01`/`MEM-02`; pick up journal-memory retrieval work next if this track continues.
+1. Three P0 rows (`SAFE-02`, `CONSENT-02`, `ACCESS-04`) share the same remaining gap: authenticated browser interaction evidence. Unlike the staging work closed 2026-09-17, this needs a real signed-in Clerk session, not just direct server-side/RLS calls — establish a Clerk test-mode path (or accept manual sign-in) before attempting it.
+2. `METRICS-02`'s remaining gap (staged Stripe/DB reconciliation) is closer to the pattern already proven: Stripe test-mode checkout against the local Docker Supabase stack, verifying checkout-start/cancel/completion events persist and reconcile. Test Stripe keys already exist locally; no Clerk session needed for the webhook path itself.
+3. `MEM-01` (journal full-text search/retrieval RPC) is unblocked now that `CONSENT-01`/`CONSENT-03` are both `done`; the wider `docs/planning/reflections-memory-unwrapped-plan.md` may already cover related ground from the `star-origin-engine` merge — check before restarting it.
 
 ## How this tracker works
 
