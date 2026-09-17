@@ -35,7 +35,27 @@ declare module 'astronomia' {
   }
   export const pluto: {
     heliocentric(jde: number): { lon: number; lat: number; range: number }
+    /** J2000.0-equinox astrometric coords — precess to date before use. */
     astrometric(jde: number, earth: unknown): { ra: number; dec: number }
+  }
+  export const precess: {
+    /** Precess equatorial coords between Julian-year epochs (e.g. 2000 → 2026.7). mα/mδ = proper motion, 0 for planets. */
+    position(
+      eqFrom: { ra: number; dec: number },
+      epochFrom: number,
+      epochTo: number,
+      mα: number,
+      mδ: number
+    ): { ra: number; dec: number }
+  }
+  export const apparent: {
+    /** Annual aberration in ecliptic coords (radians): [Δλ, Δβ]. */
+    eclipticAberration(lon: number, lat: number, jd: number): [number, number]
+  }
+  export const base: {
+    J2000: number
+    JDEToJulianYear(jde: number): number
+    JulianYearToJDE(jy: number): number
   }
   export const planetposition: {
     Planet: new (data: unknown) => {

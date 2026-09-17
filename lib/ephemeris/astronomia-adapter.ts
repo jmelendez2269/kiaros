@@ -26,6 +26,9 @@ import {
   elliptic,
   planetposition,
   pluto as plutoModule,
+  precess,
+  apparent,
+  base as astroBase,
   coord,
 } from 'astronomia'
 
@@ -201,14 +204,35 @@ function planetGeocentricLon(planet: unknown, jde: number): number {
 // Pluto: not in VSOP87. astronomia ships Meeus ch.37's analytical series,
 // valid 1885–2099, ~0.07° longitude accuracy — same regime as the truncated
 // VSOP87B series we use for the other outers.
+//
+// `pluto.astrometric` returns coordinates referred to the FIXED J2000.0
+// equinox (light-time corrected, no precession, aberration or nutation).
+// Every other planet here comes out of `elliptic.position` as an apparent
+// position of date. To match, we precess J2000 → equinox of date, then add
+// aberration and nutation in longitude. Skipping the precession step reads
+// a J2000 longitude as a longitude of date and drifts ~0.014°/yr away from
+// 2000 (≈0.37° today, ≈0.7° for a 1950 chart) — enough to flip a sign or
+// house near a boundary.
 export function getPlutoLongitude(jde: number): number {
-  const eps = getObliquity(jde)
   const { ra, dec } = (plutoModule as any).astrometric(jde, earthPlanet) as {
     ra: number
     dec: number
   }
-  const eclCoord = new (coord as any).Equatorial(ra, dec).toEcliptic(eps)
-  return normalizeDeg(eclCoord.lon * DEG)
+
+  // 1. Precess equatorial coords from J2000.0 to the mean equinox of date.
+  const epochOfDate = astroBase.JDEToJulianYear(jde)
+  const eqOfDate = precess.position({ ra, dec }, 2000, epochOfDate, 0, 0)
+
+  // 2. Mean equatorial of date → mean ecliptic of date (mean obliquity).
+  const meanObl = nutation.meanObliquity(jde)
+  const ecl = new coord.Equatorial(eqOfDate.ra, eqOfDate.dec).toEcliptic(meanObl)
+
+  // 3. Aberration + nutation in longitude → apparent longitude of date.
+  const [dLonAberration] = apparent.eclipticAberration(ecl.lon, ecl.lat, jde)
+  const [dPsi] = nutation.nutation(jde)
+  const apparentLon = ecl.lon + dLonAberration + dPsi
+
+  return normalizeDeg(apparentLon * DEG)
 }
 
 // ─── All planet longitudes ────────────────────────────────────────────────
