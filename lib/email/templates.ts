@@ -32,23 +32,19 @@ export function weekAheadEmail(input: {
   unsubscribeUrl: string
 }): RetentionEmailContent {
   const greeting = input.displayName ? `${input.displayName},` : 'Hello,'
-  const themeLine = input.weekTheme
-    ? `This week's read: ${input.weekTheme.toLowerCase()}.`
-    : `A new week is opening.`
   const wordLine = input.wordOfYear
     ? `You named this year "${input.wordOfYear}" — worth carrying into these seven days.`
     : null
 
   const paragraphs = [
     greeting,
-    themeLine,
-    input.transitLine,
+    `A new week is opening.`,
     wordLine,
-    `Your week is waiting in ${BRAND.product}: ${input.appUrl}/today`,
+    `Open ${BRAND.product} to see what is currently available with your account: ${input.appUrl}/today`,
   ].filter((p): p is string => Boolean(p))
 
   return {
-    subject: input.weekTheme ? `Your week ahead: ${input.weekTheme}` : 'Your week ahead',
+    subject: 'A new week in Kairos',
     text: paragraphs.join('\n\n') + `\n\n—\nUnsubscribe: ${input.unsubscribeUrl}`,
     html: wrapHtml(paragraphs, input.unsubscribeUrl),
   }
@@ -64,8 +60,8 @@ export function quietSkyEmail(input: {
 
   const paragraphs = [
     greeting,
-    `It's been a little while. The sky kept moving regardless — ${input.transitLine}`,
-    `No catching up required. Rest counts as part of the year too. Whenever you're ready, today is right here: ${input.appUrl}/today`,
+    `It's been a little while.`,
+    `No catching up required. Rest counts too. You can review what is currently available with your account here: ${input.appUrl}/today`,
   ]
 
   return {

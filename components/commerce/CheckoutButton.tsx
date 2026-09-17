@@ -2,7 +2,8 @@
 
 import { startTransition, useState } from "react";
 
-import { AccessPlan, CommerceTierKey } from "@/lib/commerce/config";
+import { captureBrowserCheckoutFunnelContext } from "@/lib/analytics/checkout-context";
+import type { AccessPlan, CommerceTierKey } from "@/lib/commerce/config";
 
 interface Props {
   tierKey: CommerceTierKey;
@@ -21,10 +22,11 @@ export function CheckoutButton({ tierKey, accessPlan = "yearly", className, labe
 
     startTransition(async () => {
       try {
+        const funnelContext = captureBrowserCheckoutFunnelContext();
         const response = await fetch("/api/commerce/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tierKey, accessPlan }),
+          body: JSON.stringify({ tierKey, accessPlan, funnelContext }),
         });
 
         const payload = (await response.json()) as { url?: string; error?: string };

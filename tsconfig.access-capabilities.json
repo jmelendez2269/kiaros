@@ -10,6 +10,7 @@
     "lib/commerce/entitlements.ts",
     "lib/commerce/access.ts",
     "lib/commerce/get-access-window.ts",
+    "lib/blueprint/access-projection.ts",
     "scripts/check-access-capabilities.mts"
   ]
 }

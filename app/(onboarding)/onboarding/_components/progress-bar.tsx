@@ -10,7 +10,7 @@ export function OnboardingProgressBar() {
     return (
       <div className="mt-6 space-y-2">
         <div className="flex justify-between text-xs uppercase tracking-[0.18em] text-bone-muted/70">
-          <span>Chart preview</span>
+          <span>Week reading</span>
           <span>Ready</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-stone-800">

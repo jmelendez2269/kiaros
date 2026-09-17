@@ -2,6 +2,8 @@
 
 > **Superseded for new listings.** This document describes selling Kairos website access through Etsy and must not be used to publish new offers. As of 2026-08-06, new Etsy items must be complete standalone artifacts delivered through Etsy. Existing software-access orders remain a legacy support case. See [`docs/planning/access-memory-commerce-roadmap.md`](./planning/access-memory-commerce-roadmap.md), especially `DEC-06` and M7.
 
+> **Current launch draft:** use [`docs/etsy-anchor-print-listing-package.md`](./etsy-anchor-print-listing-package.md). It contains the standalone `$34` Anchor Print listing and explicitly excludes software access, activation, subscriptions, and off-platform fulfillment.
+
 This doc turns the current Kairos commerce and pricing decisions into Etsy-ready listing material.
 
 It is grounded in:

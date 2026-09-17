@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { recordVerifiedCheckoutCompleted } from "@/lib/analytics/checkout-events";
 import {
   fulfillCheckoutSession,
   getStripeClient,
@@ -43,7 +44,13 @@ export async function POST(request: Request) {
       case "checkout.session.completed":
       case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
-        await fulfillCheckoutSession({ sessionId: session.id });
+        const fulfillment = await fulfillCheckoutSession({ sessionId: session.id });
+        await recordVerifiedCheckoutCompleted({
+          session,
+          userId: fulfillment.userProfileId,
+          convertedEntitlementId: fulfillment.entitlementId,
+          occurredAt: new Date(event.created * 1000),
+        });
         break;
       }
 

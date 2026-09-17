@@ -12,6 +12,7 @@
     "start": "next start --port 3699",
     "start:fresh": "npm run clean:next && next build && next start --port 3699",
     "lint": "next lint",
+    "check:schema": "node scripts/check-schema-drift.mjs",
     "test:reflections": "node --experimental-strip-types scripts/check-reflections.mts && node scripts/check-reflections-db.mjs",
     "test:reflections:integration": "node scripts/run-reflections-integration.mjs",
     "test:reflections:ai": "node scripts/check-reflections-ai.mjs"
@@ -30,6 +31,7 @@
     "@radix-ui/react-dropdown-menu": "^2.1.1",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sparticuz/chromium": "^149.0.0",
     "@supabase/supabase-js": "^2.103.0",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
@@ -41,6 +43,7 @@
     "lucide-react": "^0.364.0",
     "next": "^15.0.0",
     "pdf-parse": "^2.4.5",
+    "puppeteer-core": "^25.9.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-force-graph-2d": "^1.29.1",

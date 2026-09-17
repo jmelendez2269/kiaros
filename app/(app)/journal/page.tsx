@@ -1,5 +1,6 @@
 import { createServerSupabase } from '@/lib/supabase/server'
 import { JournalComposer } from '@/components/journal/JournalComposer'
+import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 
 export default async function JournalPage({
   searchParams,
@@ -9,6 +10,8 @@ export default async function JournalPage({
   const params = (await searchParams) ?? {}
   const supabase = await createServerSupabase()
   const currentYear = new Date().getFullYear()
+  const consentV2Enabled = isJournalConsentV2Enabled()
+  const recallColumn = consentV2Enabled ? 'include_in_stelloquy' : 'oracle_memory'
 
   function value(key: string) {
     const raw = params[key]
@@ -17,21 +20,19 @@ export default async function JournalPage({
 
   const selectedEntryId = value('entry') ?? ''
 
-  const [oracleMemoryRes, journalEntriesRes, blueprintRes, selectedEntryRes] = await Promise.all([
-    supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('oracle_memory', true),
+  const [oracleMemoryRes, journalEntriesRes, profileRes, selectedEntryRes] = await Promise.all([
+    supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq(recallColumn, true),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
     supabase
-      .from('blueprints')
+      .from('user_profiles')
       .select('plan_year')
-      .eq('plan_year', currentYear)
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
       .maybeSingle(),
     selectedEntryId
       ? supabase
           .from('journal_entries')
-          .select('id, title, body, entry_date, is_ritual, oracle_memory')
+          .select(
+            'id, title, body, entry_date, is_ritual, oracle_memory, include_in_insights, include_in_stelloquy, memory_pinned, memory_importance',
+          )
           .eq('id', selectedEntryId)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -63,7 +64,8 @@ export default async function JournalPage({
       initialContext={initialContext}
       journalEntriesCount={journalEntriesRes.error ? 0 : (journalEntriesRes.count ?? 0)}
       oracleMemoryCount={oracleMemoryRes.error ? 0 : (oracleMemoryRes.count ?? 0)}
-      blueprintYear={blueprintRes.data?.plan_year ?? null}
+      blueprintYear={profileRes.data?.plan_year === currentYear ? currentYear : null}
+      consentV2Enabled={consentV2Enabled}
     />
   )
 }

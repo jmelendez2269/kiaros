@@ -43,7 +43,6 @@ const TYPE_LABEL: Record<PatternType, string> = {
  * behind it. Everything thinner collapses into a one-line row so a handful of
  * two-entry coincidences can't crowd out a real signal.
  */
-const FEATURE_MIN_CONFIDENCE = 0.5
 const MAX_FEATURED = 2
 
 export function parseEvidence(value: Json): EvidenceEntry[] {
@@ -70,9 +69,6 @@ function truncate(text: string, max: number): string {
   return text.slice(0, max).trimEnd() + '…'
 }
 
-function pct(value: number) {
-  return Math.round(Math.min(1, Math.max(0, value)) * 100)
-}
 
 /** The evidence list — the user's own entries, so it reads moss. */
 function EvidenceList({
@@ -151,7 +147,6 @@ function FeaturedPattern({
   bodyByEntryId: Map<string, string>
 }) {
   const evidence = parseEvidence(pattern.evidence)
-  const confidence = pct(pattern.confidence)
 
   return (
     <article className="channel-panel flex flex-col gap-5 px-6 py-6 md:px-7">
@@ -173,21 +168,7 @@ function FeaturedPattern({
         </div>
       </header>
 
-      <div className="space-y-1.5">
-        <div
-          className="channel-meter"
-          role="progressbar"
-          aria-label="Pattern confidence"
-          aria-valuenow={confidence}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div className="channel-meter-fill" style={{ width: `${confidence}%` }} />
-        </div>
-        <p className="text-[0.68rem] uppercase tracking-[0.18em] text-bone-muted/60">
-          {confidence}% of your entries in this window
-        </p>
-      </div>
+      <p className="text-sm text-bone-muted">An observation from your recorded entries, not a measure of certainty.</p>
 
       <PatternRead pattern={pattern} />
 
@@ -205,7 +186,6 @@ function CompactPattern({
   bodyByEntryId: Map<string, string>
 }) {
   const evidence = parseEvidence(pattern.evidence)
-  const confidence = pct(pattern.confidence)
 
   return (
     <details className="group border-b border-border/40 last:border-b-0">
@@ -215,7 +195,7 @@ function CompactPattern({
           {formatPatternLabel(pattern.pattern_type, pattern.pattern_key)}
         </span>
         <span className="shrink-0 text-xs text-bone-muted/70">
-          {pattern.sample_size} · {confidence}%
+          {pattern.sample_size} entries
         </span>
         <span
           aria-hidden="true"
@@ -252,8 +232,7 @@ export function PatternInsights({
   const featured = patterns
     .filter(
       (p) =>
-        p.sample_size >= ESTABLISHED_PATTERN_MIN_SAMPLE &&
-        p.confidence >= FEATURE_MIN_CONFIDENCE,
+        p.sample_size >= ESTABLISHED_PATTERN_MIN_SAMPLE,
     )
     .slice(0, MAX_FEATURED)
 

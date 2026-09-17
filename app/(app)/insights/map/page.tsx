@@ -12,6 +12,7 @@ import { InsightsTabs } from '@/components/insights/InsightsTabs'
 import { InsightsPollingShell } from '@/components/journal/InsightsPollingShell'
 import { DEFAULT_VOICE_KEY, VOICE_PRESETS } from '@/lib/ai/journal-insight-synthesis'
 import { BRAND } from '@/lib/brand'
+import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 
 export const metadata = {
   title: `Patterns — ${BRAND.product}`,
@@ -20,6 +21,7 @@ export const metadata = {
 
 export default async function PatternsPage() {
   const supabase = await createServerSupabase()
+  const consentV2Enabled = isJournalConsentV2Enabled()
 
   const [patternsRes, entryCountRes, settingsRes, entriesRes, oracleCapturesRes] = await Promise.all([
     supabase
@@ -36,7 +38,7 @@ export default async function PatternsPage() {
       .maybeSingle(),
     supabase
       .from('journal_entries')
-      .select('id, title, body, entry_date, is_ritual, created_at, oracle_memory, lunar_phase, lunar_sign, transit_context')
+      .select('id, title, body, entry_date, is_ritual, created_at, oracle_memory, include_in_insights, include_in_stelloquy, memory_pinned, memory_importance, lunar_phase, lunar_sign, transit_context')
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(12),
@@ -58,10 +60,16 @@ export default async function PatternsPage() {
   )
   const bodyByEntryId = new Map<string, string>()
   if (evidenceEntryIds.length > 0) {
-    const { data: entryBodies } = await supabase
+    let entryBodiesQuery = supabase
       .from('journal_entries')
       .select('id, body')
       .in('id', evidenceEntryIds)
+
+    if (consentV2Enabled) {
+      entryBodiesQuery = entryBodiesQuery.eq('include_in_insights', true)
+    }
+
+    const { data: entryBodies } = await entryBodiesQuery
     for (const row of entryBodies ?? []) {
       const id = row.id as unknown as string | null
       const body = (row.body as unknown as string | null) ?? null
@@ -135,7 +143,10 @@ export default async function PatternsPage() {
                   Revisit past entries, rituals, and timing-window notes in one place.
                 </p>
               </header>
-              <JournalHistoryList entries={recentEntries} />
+              <JournalHistoryList
+                entries={recentEntries}
+                consentV2Enabled={consentV2Enabled}
+              />
             </section>
           }
           captures={

@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  outputFileTracingIncludes: {
+    '/api/admin/artifacts/[orderId]/export': [
+      './docs/assets/etsy/natal-report-tour/*.jpg',
+      './node_modules/@sparticuz/chromium/bin/**/*',
+    ],
+  },
   async redirects() {
     return [
       // Kairos redesign — Today supersedes the dashboard. Permanent so the

@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { DataUnavailable } from "@/components/shared/DataUnavailable";
+import { PersonalizedWeekAttribution } from "@/components/analytics/PersonalizedWeekAttribution";
 import { CheckoutButton } from "@/components/commerce/CheckoutButton";
 import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
 import type { WeekPreviewContent } from "@/types/preview";
@@ -21,38 +23,39 @@ export default async function PreviewPage() {
   if (!userId) redirect("/sign-in");
 
   const admin = createAdminSupabase();
-  const { data: profile } = await admin
+  const { data: profile, error: profileError } = await admin
     .from("user_profiles")
     .select("id, display_name")
     .eq("clerk_user_id", userId)
     .maybeSingle();
 
+  // A failed lookup is not the same as a missing profile — don't send a
+  // signed-up user back through onboarding because the data API blinked.
+  if (profileError) {
+    console.error("[preview] user_profiles lookup failed", {
+      clerkUserId: userId,
+      code: profileError.code,
+      message: profileError.message,
+    });
+    return <DataUnavailable />;
+  }
+
   if (!profile?.id) redirect("/onboarding");
 
-  const [{ data: preview }, { data: previewAccess }] = await Promise.all([
-    admin
-      .from("week_previews")
-      .select("status, content, start_date, end_date")
-      .eq("user_id", profile.id)
-      .maybeSingle(),
-    admin
-      .from("preview_access")
-      .select("expires_at, status")
-      .eq("user_id", profile.id)
-      .maybeSingle(),
-  ]);
+  const { data: preview } = await admin
+    .from("week_previews")
+    .select("status, content, start_date, end_date")
+    .eq("user_id", profile.id)
+    .maybeSingle();
 
   if (!preview || preview.status === "generating") redirect("/onboarding/generating-week");
   if (preview.status !== "ready" || !preview.content) redirect("/onboarding/generating-week");
 
   const content = preview.content as unknown as WeekPreviewContent;
-  const expiresAt = previewAccess?.expires_at ? new Date(previewAccess.expires_at) : null;
-  const remainingDays = expiresAt
-    ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 86_400_000))
-    : 0;
 
   return (
     <main className="min-h-screen bg-almanac-bg text-almanac-ink">
+      <PersonalizedWeekAttribution />
       <header className="border-b border-almanac-line">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 md:px-8">
           <Link href="/" className="font-almanac-display tracking-[0.08em] text-almanac-ink">
@@ -60,10 +63,10 @@ export default async function PreviewPage() {
           </Link>
           <div className="text-right">
             <p className="font-almanac-mono text-[0.62rem] uppercase tracking-[0.16em] text-almanac-ink-soft">
-              Free personal week
+              Personalized Birth-Chart Week Reading
             </p>
             <p className="mt-1 text-sm text-almanac-ink-dim">
-              {remainingDays > 0 ? `${remainingDays} day${remainingDays === 1 ? "" : "s"} remaining` : "Preview complete"}
+              Saved to your account to revisit
             </p>
           </div>
         </div>
@@ -130,13 +133,15 @@ export default async function PreviewPage() {
         <section className="mt-16 border-t border-almanac-line pt-12">
           <div className="max-w-3xl">
             <p className="font-almanac-mono text-[0.7rem] uppercase tracking-[0.24em] text-almanac-copper-hi">
-              One week is a beginning
+              This reading is a beginning
             </p>
             <h2 className="mt-4 font-almanac-serif text-4xl italic text-almanac-ink md:text-5xl">
               The full year reveals the larger pattern.
             </h2>
             <p className="mt-5 text-base leading-7 text-almanac-ink-dim">
-              Your Blueprint is not included in this preview. Upgrading unlocks all 52 weeks,
+              This dated reading uses your birth chart and the sky for the week shown above. It
+              does not include your Blueprint, Life Areas, Goals, journal, Stelloquy, or the Kairos
+              planning workflow. Upgrading unlocks all 52 weeks,
               twelve monthly arcs, four quarterly chapters, timing windows, and the complete
               planner—where your Life Areas and Goals let you further customize the year. If you
               choose Planner + Oracle, Stelloquy can work in conversation with the whole system.

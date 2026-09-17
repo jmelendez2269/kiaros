@@ -10,6 +10,7 @@ import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 
 import { createAdminSupabase } from '@/lib/supabase/admin'
+import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 import {
   assembleMonthBriefSystemPrompt,
   assembleMonthBriefUserPrompt,
@@ -18,7 +19,8 @@ import {
   type PriorQuarterReviewContext,
 } from './month-brief-system-prompt'
 import { recordUsage } from './usage'
-import type { BlueprintOutput, MonthBlueprint, NatalChart } from '@/types/blueprint'
+import { loadBlueprintForYear } from '@/lib/blueprint/load'
+import type { NatalChart } from '@/types/blueprint'
 
 const MODEL_ID = 'claude-sonnet-4-6'
 const MAX_OUTPUT_TOKENS = 700
@@ -106,15 +108,7 @@ export async function fetchOrGenerateMonthBrief(
       .select('display_name, natal_chart, year_vision, word_of_year, what_to_release')
       .eq('id', userProfileId)
       .maybeSingle(),
-    admin
-      .from('blueprints')
-      .select('id, year_theme, months, quarters')
-      .eq('user_id', userProfileId)
-      .eq('plan_year', planYear)
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    loadBlueprintForYear(userProfileId, planYear, false),
     admin
       .from('user_pattern_insights')
       .select('pattern_type, pattern_key, sample_size, confidence, summary, evidence')
@@ -160,22 +154,23 @@ export async function fetchOrGenerateMonthBrief(
   if (!profileRes.data) {
     throw new Error(`Profile not found for user ${userProfileId}`)
   }
-  if (!blueprintRes.data) {
+  if (!blueprintRes) {
     throw new Error(`No ready blueprint for user ${userProfileId} year ${planYear}`)
   }
   if (!profileRes.data.natal_chart) {
     throw new Error('Natal chart missing — cannot personalise brief')
   }
 
-  const months = (blueprintRes.data.months ?? []) as unknown as MonthBlueprint[]
-  const quarters = (blueprintRes.data.quarters ?? []) as unknown as BlueprintOutput['quarters']
+  const months = blueprintRes.blueprint.months
+  const quarters = blueprintRes.blueprint.quarters
   const monthBlueprint = months.find((m) => m.month === month)
   if (!monthBlueprint) {
     throw new Error(`No month blueprint for month ${month} in plan_year ${planYear}`)
   }
   const quarterBlueprint = quarters.find((q) => q.quarter === Math.floor((month - 1) / 3) + 1) ?? null
 
-  const priorMonthBrief: PriorMonthBriefContext | null = priorBriefRes.data?.brief_text
+  const priorMonthBrief: PriorMonthBriefContext | null =
+    !isJournalConsentV2Enabled() && priorBriefRes.data?.brief_text
     ? {
         month: priorMonth,
         monthName: MONTH_NAMES[priorMonth - 1] ?? '',
@@ -204,7 +199,7 @@ export async function fetchOrGenerateMonthBrief(
     monthName: MONTH_NAMES[month - 1] ?? '',
     monthBlueprint,
     quarterBlueprint,
-    yearTheme: blueprintRes.data.year_theme ?? null,
+    yearTheme: blueprintRes.blueprint.yearTheme || null,
     yearVision: profileRes.data.year_vision ?? null,
     wordOfYear: profileRes.data.word_of_year ?? null,
     whatToRelease: profileRes.data.what_to_release ?? null,
@@ -241,7 +236,7 @@ export async function fetchOrGenerateMonthBrief(
     .upsert(
       {
         user_id: userProfileId,
-        blueprint_id: blueprintRes.data.id,
+        blueprint_id: blueprintRes.blueprintId,
         plan_year: planYear,
         month,
         brief_text: briefText,

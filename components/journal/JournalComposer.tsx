@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries'
+import { JournalConsentControls } from '@/components/journal/JournalConsentControls'
+import type { JournalConsentState } from '@/lib/journal/consent'
 
 type RecentJournalEntry = {
   id: string
@@ -14,6 +16,10 @@ type RecentJournalEntry = {
   entry_date: string
   is_ritual: boolean | null
   oracle_memory: boolean | null
+  include_in_insights: boolean
+  include_in_stelloquy: boolean
+  memory_pinned: boolean
+  memory_importance: number | null
   lunar_phase: string | null
   lunar_sign: string | null
   transit_context: unknown
@@ -23,7 +29,16 @@ type RecentJournalEntry = {
 interface JournalComposerProps {
   initialEntry: Pick<
     RecentJournalEntry,
-    'id' | 'title' | 'body' | 'entry_date' | 'is_ritual' | 'oracle_memory'
+    | 'id'
+    | 'title'
+    | 'body'
+    | 'entry_date'
+    | 'is_ritual'
+    | 'oracle_memory'
+    | 'include_in_insights'
+    | 'include_in_stelloquy'
+    | 'memory_pinned'
+    | 'memory_importance'
   > | null
   entryLoadError: string | null
   initialPrompt: string
@@ -36,6 +51,14 @@ interface JournalComposerProps {
   journalEntriesCount: number
   oracleMemoryCount: number
   blueprintYear: number | null
+  consentV2Enabled: boolean
+}
+
+const PRIVATE_CONSENT: JournalConsentState = {
+  include_in_insights: false,
+  include_in_stelloquy: false,
+  memory_pinned: false,
+  memory_importance: null,
 }
 
 function todayISO() {
@@ -61,6 +84,7 @@ export function JournalComposer({
   journalEntriesCount,
   oracleMemoryCount,
   blueprintYear,
+  consentV2Enabled,
 }: JournalComposerProps) {
   const isEditing = Boolean(initialEntry)
   const [entryCount, setEntryCount] = useState(journalEntriesCount)
@@ -73,11 +97,23 @@ export function JournalComposer({
     initialEntry?.body ?? (initialPrompt ? `${initialPrompt}\n\n` : ''),
   )
   const [isRitual, setIsRitual] = useState(initialEntry?.is_ritual ?? Boolean(initialPrompt))
-  const [addToOracleMemory, setAddToOracleMemory] = useState(
+  const [legacyOracleMemory, setLegacyOracleMemory] = useState(
     initialEntry?.oracle_memory ?? false,
   )
+  const [consent, setConsent] = useState<JournalConsentState>(
+    initialEntry
+      ? {
+          include_in_insights: initialEntry.include_in_insights,
+          include_in_stelloquy: initialEntry.include_in_stelloquy,
+          memory_pinned: initialEntry.memory_pinned,
+          memory_importance: initialEntry.memory_importance,
+        }
+      : { ...PRIVATE_CONSENT },
+  )
   const [savedMemoryIncluded, setSavedMemoryIncluded] = useState(
-    initialEntry?.oracle_memory ?? false,
+    consentV2Enabled
+      ? (initialEntry?.include_in_stelloquy ?? false)
+      : (initialEntry?.oracle_memory ?? false),
   )
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -134,7 +170,9 @@ export function JournalComposer({
           body,
           ...(!initialEntry ? { entry_date: entryDate } : {}),
           is_ritual: isRitual,
-          oracle_memory: addToOracleMemory,
+          ...(consentV2Enabled
+            ? { ...consent, oracle_memory: consent.include_in_stelloquy }
+            : { oracle_memory: legacyOracleMemory }),
           ...(!initialEntry
             ? {
                 transit_context:
@@ -162,7 +200,9 @@ export function JournalComposer({
 
       window.dispatchEvent(new Event(PATTERN_DISCOVERY_CHECK_EVENT))
 
-      const isNowInMemory = Boolean(payload.oracle_memory)
+      const isNowInMemory = consentV2Enabled
+        ? payload.include_in_stelloquy
+        : Boolean(payload.oracle_memory)
       if (initialEntry) {
         if (isNowInMemory !== savedMemoryIncluded) {
           setMemoryCount((current) => current + (isNowInMemory ? 1 : -1))
@@ -173,19 +213,32 @@ export function JournalComposer({
         if (isNowInMemory) setMemoryCount((current) => current + 1)
       }
 
-      setSavedMessage(
-        initialEntry
-          ? 'Changes saved.'
-          : addToOracleMemory
+      if (initialEntry) {
+        setSavedMessage('Changes saved.')
+      } else if (consentV2Enabled) {
+        const enabledUses = [
+          consent.include_in_insights ? 'Patterns' : null,
+          consent.include_in_stelloquy ? 'Stelloquy recall' : null,
+        ].filter(Boolean)
+        setSavedMessage(
+          enabledUses.length > 0
+            ? `Saved with permission for ${enabledUses.join(' and ')}. You can change this from journal history.`
+            : 'Saved privately. This entry is not available to Patterns or Stelloquy recall.',
+        )
+      } else {
+        setSavedMessage(
+          legacyOracleMemory
             ? 'Saved. This entry is now part of Stelloquy memory.'
             : 'Saved. This entry can stay in your journal without being added to Stelloquy memory.',
-      )
+        )
+      }
       setLastSavedEntry({ title: title.trim() || null, body })
       if (!initialEntry) {
         setBody(initialPrompt ? `${initialPrompt}\n\n` : '')
         setTitle(initialPrompt ? truncate(initialPrompt, 120) : '')
         setIsRitual(Boolean(initialPrompt))
-        setAddToOracleMemory(false)
+        setLegacyOracleMemory(false)
+        setConsent({ ...PRIVATE_CONSENT })
       }
       router.refresh()
     } catch (err) {
@@ -335,23 +388,33 @@ export function JournalComposer({
               Ritual entry
             </label>
 
-            <label
-              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8rem] transition-colors ${
-                addToOracleMemory
-                  ? 'border-plum-400/50 bg-plum-400/14 text-plum-200'
-                  : 'border-border/70 bg-stone-950/60 text-bone-muted hover:text-bone'
-              }`}
-              title="Future Stelloquy conversations can draw from this entry"
-            >
-              <input
-                type="checkbox"
-                checked={addToOracleMemory}
-                onChange={(event) => setAddToOracleMemory(event.target.checked)}
-                className="h-3.5 w-3.5 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
-              />
-              Add to Stelloquy memory
-            </label>
+            {!consentV2Enabled ? (
+              <label
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8rem] transition-colors ${
+                  legacyOracleMemory
+                    ? 'border-plum-400/50 bg-plum-400/14 text-plum-200'
+                    : 'border-border/70 bg-stone-950/60 text-bone-muted hover:text-bone'
+                }`}
+                title="Future Stelloquy conversations can draw from this entry"
+              >
+                <input
+                  type="checkbox"
+                  checked={legacyOracleMemory}
+                  onChange={(event) => setLegacyOracleMemory(event.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
+                />
+                Add to Stelloquy memory
+              </label>
+            ) : null}
           </div>
+
+          {consentV2Enabled ? (
+            <JournalConsentControls
+              value={consent}
+              onChange={setConsent}
+              disabled={isSaving}
+            />
+          ) : null}
 
           {error ? (
             <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">

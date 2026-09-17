@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createAdminSupabase } from '@/lib/supabase/admin'
+import { getAppProfile } from '@/lib/app/get-app-profile'
+import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { todayISO } from '@/lib/today/get-today-context'
 import { getDayPlan } from '@/lib/planner/get-day-plan'
 import { getWeekPlan } from '@/lib/planner/get-week-plan'
@@ -53,16 +54,14 @@ export default async function PlannerPage({
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  const admin = createAdminSupabase()
-  const { data: profile } = await admin
-    .from('user_profiles')
-    .select('id')
-    .eq('clerk_user_id', userId)
-    .maybeSingle()
+  // Shares the app layout's request-cached lookup, so the page and its layout
+  // can never reach opposite verdicts about whether this user has a profile.
+  const profileResult = await getAppProfile(userId)
+  if (profileResult.status === 'unavailable') return <DataUnavailable />
 
-  // If no profile row exists the app layout would have already redirected to
-  // /onboarding, so this is a safety net only — don't loop back to /sign-in.
-  if (!profile?.id) redirect('/onboarding')
+  // Safety net only — the layout redirects first on a genuinely missing row.
+  if (profileResult.status === 'missing') redirect('/onboarding')
+  const profile = profileResult.profile
 
   const params = await searchParams
   const today = todayISO()

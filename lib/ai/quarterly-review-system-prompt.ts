@@ -102,8 +102,7 @@ function journalPatternsToText(patterns: QuarterlyReviewPromptContext['journalPa
   return patterns
     .slice(0, 5)
     .map((p) => {
-      const confidence = Math.round(p.confidence * 100)
-      return `  ${patternLabel(p.pattern_type, p.pattern_key)}: ${p.sample_size} entries, ${confidence}% confidence. ${p.summary}${evidenceCompact(p.evidence)}`
+      return `  ${patternLabel(p.pattern_type, p.pattern_key)}: ${p.sample_size} recorded entries (evidence volume, not statistical certainty). ${p.summary}${evidenceCompact(p.evidence)}`
     })
     .join('\n')
 }

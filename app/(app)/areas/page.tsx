@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { areaActivationWeeks, areaHouseDetails, getAreaDefinition, slugifyAreaName } from '@/lib/areas'
 import { BRAND } from '@/lib/brand'
-import type { NatalChart, WeekBlueprint } from '@/types/blueprint'
+import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import type { NatalChart } from '@/types/blueprint'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -10,30 +11,26 @@ function todayISO(): string {
 
 export default async function AreasPage() {
   const supabase = await createServerSupabase()
-  const currentYear = new Date().getFullYear()
   const today = todayISO()
 
-  const [categoriesRes, blueprintRes, profileRes] = await Promise.all([
+  const profilePromise = supabase
+    .from('user_profiles')
+    .select('id, natal_chart')
+    .maybeSingle()
+  const loadedPromise = profilePromise.then(({ data }) =>
+    data?.id ? loadCurrentBlueprint(data.id) : null,
+  )
+  const [categoriesRes, profileRes, loaded] = await Promise.all([
     supabase
       .from('goal_categories')
       .select('id, name, icon_key, success, description, sort_order')
       .order('sort_order', { ascending: true }),
-    supabase
-      .from('blueprints')
-      .select('weeks')
-      .eq('plan_year', currentYear)
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from('user_profiles')
-      .select('natal_chart')
-      .maybeSingle(),
+    profilePromise,
+    loadedPromise,
   ])
 
   const categories = categoriesRes.data ?? []
-  const weeks = (blueprintRes.data?.weeks as unknown as WeekBlueprint[]) ?? []
+  const weeks = loaded?.blueprint.weeks ?? []
   const natalChart = (profileRes.data?.natal_chart as NatalChart | null) ?? null
 
   return (

@@ -18,11 +18,24 @@ const NAV_LINKS = [
   { href: '/admin/feedback', label: 'Feedback', glyph: '!' },
 ]
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({
+  onNavigate,
+  showArtifactWorkflow,
+}: {
+  onNavigate?: () => void
+  showArtifactWorkflow: boolean
+}) {
   const pathname = usePathname()
+  const links = showArtifactWorkflow
+    ? [
+        ...NAV_LINKS.slice(0, 4),
+        { href: '/admin/artifacts', label: 'Artifacts', glyph: 'A' },
+        ...NAV_LINKS.slice(4),
+      ]
+    : NAV_LINKS
   return (
     <ul className="space-y-0.5" role="list">
-      {NAV_LINKS.map(({ href, label, glyph }) => (
+      {links.map(({ href, label, glyph }) => (
         <li key={href}>
           <Link
             href={href}
@@ -43,7 +56,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ showArtifactWorkflow = false }: { showArtifactWorkflow?: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
@@ -66,7 +79,7 @@ export function AdminSidebar() {
           </Link>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <NavLinks />
+          <NavLinks showArtifactWorkflow={showArtifactWorkflow} />
         </nav>
         <div className="flex h-14 shrink-0 items-center border-t border-border px-4">
           <UserButton />
@@ -109,7 +122,10 @@ export function AdminSidebar() {
               <span className="text-lg font-bold">Menu</span>
             </div>
             <nav className="overflow-y-auto px-3 py-4">
-              <NavLinks onNavigate={() => setMobileOpen(false)} />
+              <NavLinks
+                onNavigate={() => setMobileOpen(false)}
+                showArtifactWorkflow={showArtifactWorkflow}
+              />
             </nav>
           </div>
         </div>

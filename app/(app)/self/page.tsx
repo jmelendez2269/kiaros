@@ -13,7 +13,8 @@ import { getLifeArc } from '@/lib/today/get-life-arc'
 import { computeNatalAspects } from '@/lib/ephemeris/natal-aspects'
 import { areaActivationWeeks, areaHouseDetails, getAreaDefinition, slugifyAreaName } from '@/lib/areas'
 import { SelfView, type AreaPreview } from '@/components/self/SelfView'
-import type { NatalChart, WeekBlueprint } from '@/types/blueprint'
+import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import type { NatalChart } from '@/types/blueprint'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -59,10 +60,9 @@ async function resolveHumanDesign(
 export default async function SelfPage() {
   const { userId } = await auth()
   const supabase = await createServerSupabase()
-  const currentYear = new Date().getFullYear()
   const today = todayISO()
 
-  const [profileRes, categoriesRes, blueprintRes] = await Promise.all([
+  const [profileRes, categoriesRes] = await Promise.all([
     supabase
       .from('user_profiles')
       .select(
@@ -73,14 +73,6 @@ export default async function SelfPage() {
       .from('goal_categories')
       .select('id, name, icon_key, success, description, sort_order')
       .order('sort_order', { ascending: true }),
-    supabase
-      .from('blueprints')
-      .select('weeks, quarters')
-      .eq('plan_year', currentYear)
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
   ])
 
   const profile = profileRes.data
@@ -92,7 +84,7 @@ export default async function SelfPage() {
 
   const birthTimeKnown = !profile.birth_time_unknown && !!profile.birth_time
 
-  const [lifeArc, hdChart] = await Promise.all([
+  const [lifeArc, hdChart, loaded] = await Promise.all([
     getLifeArc(today, profile.id),
     birthTimeKnown
       ? resolveHumanDesign(
@@ -108,14 +100,15 @@ export default async function SelfPage() {
           userId,
         )
       : Promise.resolve(null),
+    loadCurrentBlueprint(profile.id),
   ])
 
   const natalAspects = computeNatalAspects(natalChart)
 
   const categories = categoriesRes.data ?? []
-  const weeks = (blueprintRes.data?.weeks as unknown as WeekBlueprint[]) ?? []
+  const weeks = loaded?.blueprint.weeks ?? []
   const currentQuarterNumber = Math.ceil((new Date().getMonth() + 1) / 3)
-  const currentQuarterTheme = findCurrentQuarterTheme(blueprintRes.data?.quarters, currentQuarterNumber)
+  const currentQuarterTheme = findCurrentQuarterTheme(loaded?.blueprint.quarters, currentQuarterNumber)
   const currentQuarter = currentQuarterTheme
     ? { number: currentQuarterNumber, theme: currentQuarterTheme }
     : null

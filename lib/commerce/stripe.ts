@@ -2,6 +2,8 @@ import "server-only";
 
 import Stripe from "stripe";
 
+import { buildCheckoutAnalyticsMetadata } from "@/lib/analytics/checkout-events-core";
+import type { CheckoutFunnelContext } from "@/lib/analytics/checkout-context";
 import {
   AccessPlan,
   buildTierMetadata,
@@ -178,12 +180,15 @@ export async function createCheckoutSession(params: {
   clerkUserId: string;
   customerEmail: string;
   loyaltyReward?: { rewardId: string; promotionCodeId: string } | null;
+  checkoutAttemptId: string;
+  funnelContext?: CheckoutFunnelContext | null;
 }) {
   const stripe = getStripeClient();
   const appUrl = getAppUrl();
   const accessPlan = params.accessPlan ?? "yearly";
   const metadata = {
     ...buildTierMetadata(params.tier, accessPlan),
+    ...buildCheckoutAnalyticsMetadata(params.checkoutAttemptId, params.funnelContext ?? null),
     ...(params.loyaltyReward ? { loyalty_reward_id: params.loyaltyReward.rewardId } : {}),
   };
   const commonParams = {
@@ -194,7 +199,7 @@ export async function createCheckoutSession(params: {
     client_reference_id: params.clerkUserId,
     customer_email: params.customerEmail,
     success_url: `${appUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/pricing?canceled=1`,
+    cancel_url: `${appUrl}/pricing?canceled=1&attempt_id=${encodeURIComponent(params.checkoutAttemptId)}`,
     line_items: [buildLineItem(params.tier, accessPlan)],
     metadata,
   };
@@ -306,11 +311,13 @@ async function fulfillOneTimeCheckout(params: {
     startAt: purchasedAt,
   });
 
-  const { error: entitlementError } = await supabase
+  const { data: entitlement, error: entitlementError } = await supabase
     .from("product_entitlements")
-    .upsert(entitlementPayload, { onConflict: "source,source_order_id" });
+    .upsert(entitlementPayload, { onConflict: "source,source_order_id" })
+    .select("id")
+    .single();
 
-  if (entitlementError) {
+  if (entitlementError || !entitlement) {
     throw new Error("We couldn't activate your planner access yet.");
   }
 
@@ -360,6 +367,9 @@ async function fulfillOneTimeCheckout(params: {
     accessPlan: "yearly" as const,
     isRenewal: !!profile.onboarding_completed_at,
     profileSetupComplete: !!profile.profile_setup_completed_at,
+    userProfileId: profile.id,
+    orderId: order.id,
+    entitlementId: entitlement.id,
   };
 }
 
@@ -461,7 +471,7 @@ async function fulfillSubscriptionCheckout(params: {
     throw new Error("We couldn't save your purchase record yet.");
   }
 
-  const { error: entitlementError } = await supabase
+  const { data: entitlement, error: entitlementError } = await supabase
     .from("product_entitlements")
     .upsert(
       {
@@ -477,9 +487,11 @@ async function fulfillSubscriptionCheckout(params: {
         status: entitlementStatus,
       },
       { onConflict: "source,source_order_id" }
-    );
+    )
+    .select("id")
+    .single();
 
-  if (entitlementError) {
+  if (entitlementError || !entitlement) {
     throw new Error("We couldn't activate your planner access yet.");
   }
 
@@ -501,6 +513,9 @@ async function fulfillSubscriptionCheckout(params: {
     accessPlan: "monthly" as const,
     isRenewal: !!profile.onboarding_completed_at,
     profileSetupComplete: !!profile.profile_setup_completed_at,
+    userProfileId: profile.id,
+    orderId: order.id,
+    entitlementId: entitlement.id,
   };
 }
 

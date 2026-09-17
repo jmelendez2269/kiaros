@@ -1,6 +1,10 @@
+import { randomUUID } from "node:crypto";
+
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { validateCheckoutFunnelContext } from "@/lib/analytics/checkout-context";
+import { recordCheckoutStarted } from "@/lib/analytics/checkout-events";
 import { getCommerceTier, parseAccessPlan, parseCommerceTierKey } from "@/lib/commerce/config";
 import { createCheckoutSession, findRedeemableLoyaltyReward } from "@/lib/commerce/stripe";
 import { createAdminSupabase } from "@/lib/supabase/admin";
@@ -17,9 +21,15 @@ export async function POST(request: Request) {
   const payload = await request.json().catch(() => null);
   const tierKey = parseCommerceTierKey(payload?.tierKey);
   const accessPlan = parseAccessPlan(payload?.accessPlan) ?? "yearly";
+  const checkoutContext = payload?.funnelContext === undefined
+    ? null
+    : validateCheckoutFunnelContext(payload.funnelContext);
 
   if (!tierKey) {
     return NextResponse.json({ error: "Choose a valid tier first." }, { status: 400 });
+  }
+  if (checkoutContext && !checkoutContext.success) {
+    return NextResponse.json({ error: "Checkout attribution is invalid." }, { status: 400 });
   }
 
   const tier = getCommerceTier(tierKey);
@@ -44,13 +54,22 @@ export async function POST(request: Request) {
   });
 
   try {
+    const checkoutAttemptId = randomUUID();
     const session = await createCheckoutSession({
       tier,
       accessPlan,
       clerkUserId: userId,
       customerEmail: profile.email,
       loyaltyReward,
+      checkoutAttemptId,
+      funnelContext: checkoutContext?.success ? checkoutContext.context : null,
     });
+
+    try {
+      await recordCheckoutStarted({ session, userId: profile.id });
+    } catch {
+      console.error("[checkout] Unable to record checkout start.");
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (error) {

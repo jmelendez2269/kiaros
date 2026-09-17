@@ -3,18 +3,19 @@ import { z } from 'zod'
 export const JOURNAL_MEMORY_IMPORTANCE_MIN = 1
 export const JOURNAL_MEMORY_IMPORTANCE_MAX = 5
 
-export const journalConsentInputSchema = z.object({
-  include_in_insights: z.boolean().optional(),
-  include_in_stelloquy: z.boolean().optional(),
-  memory_pinned: z.boolean().optional(),
+export const journalConsentStateSchema = z.object({
+  include_in_insights: z.boolean(),
+  include_in_stelloquy: z.boolean(),
+  memory_pinned: z.boolean(),
   memory_importance: z
     .number()
     .int()
     .min(JOURNAL_MEMORY_IMPORTANCE_MIN)
     .max(JOURNAL_MEMORY_IMPORTANCE_MAX)
-    .nullable()
-    .optional(),
+    .nullable(),
 })
+
+export const journalConsentInputSchema = journalConsentStateSchema.partial()
 
 export const journalConsentCompatibilityInputSchema = journalConsentInputSchema.extend({
   oracle_memory: z.boolean().optional(),

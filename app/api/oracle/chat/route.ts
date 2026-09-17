@@ -14,6 +14,9 @@ import {
 } from '@/lib/ai/usage'
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
+import { recallJournalMemories } from '@/lib/journal/memory-retrieval'
+import { isJournalConsentV2Enabled, isRelevanceMemoryEnabled } from '@/lib/feature-flags'
+import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
 
 export const maxDuration = 60
 
@@ -65,6 +68,11 @@ export async function POST(req: Request) {
     const supabase = await createServerSupabase()
     const today = new Date().toISOString().slice(0, 10)
     const currentYear = new Date().getFullYear()
+    const latestQuestion = [...messages].reverse().find(m => m.role === 'user')?.parts.filter(p => p.type === 'text').map(p => p.text).join(' ') ?? ''
+    const recalledMemories = isRelevanceMemoryEnabled() ? await recallJournalMemories(profileId, latestQuestion) : null
+    const journalRecallColumn = isJournalConsentV2Enabled()
+      ? 'include_in_stelloquy'
+      : 'oracle_memory'
 
     const [
       profileRes,
@@ -84,14 +92,7 @@ export async function POST(req: Request) {
     ] = await Promise.all([
       supabase.from('user_profiles').select('*').maybeSingle(),
       supabase.from('ephemeris_cache').select('data').eq('year', currentYear).maybeSingle(),
-      supabase
-        .from('blueprints')
-        .select('year_theme, quarters, months, weeks')
-        .eq('plan_year', currentYear)
-        .eq('status', 'ready')
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      loadCurrentBlueprint(profileId),
       supabase
         .from('goal_categories')
         .select('name, description, success, sort_order')
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
       supabase
         .from('journal_entries')
         .select('entry_date, title, body, mood_tag, is_ritual')
-        .eq('oracle_memory', true)
+        .eq(journalRecallColumn, true)
         .order('entry_date', { ascending: false })
         .limit(5),
       supabase
@@ -169,7 +170,7 @@ export async function POST(req: Request) {
     const { cached, dynamic } = buildOracleSystemPromptSegments({
       profile: profileRes.data,
       ephemeris: (ephemerisRes.data?.data as unknown as YearEphemeris) ?? null,
-      blueprint: blueprintRes.data,
+      blueprint: toBlueprintPromptRecord(blueprintRes),
       goalCategories: (goalCategoriesRes.data ?? []) as Pick<
         Tables<'goal_categories'>,
         'name' | 'description' | 'success' | 'sort_order'
@@ -205,7 +206,7 @@ export async function POST(req: Request) {
         Tables<'daily_logs'>,
         'log_date' | 'energy_level' | 'mood_tag' | 'notes'
       >[],
-      journalEntries: (journalEntriesRes.data ?? []) as Pick<
+      journalEntries: (recalledMemories ?? journalEntriesRes.data ?? []) as Pick<
         Tables<'journal_entries'>,
         'entry_date' | 'title' | 'body' | 'mood_tag' | 'is_ritual'
       >[],
@@ -287,6 +288,7 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse({
       originalMessages: messages,
+      headers: recalledMemories ? { 'X-Kairos-Memory-Sources': encodeURIComponent(JSON.stringify(recalledMemories.map(e => ({ id: e.id, date: e.entry_date, title: e.title })))) } : undefined,
       onError: (error) => {
         const message = getErrorMessage(error)
         console.error('[oracle-chat] Stream error:', error)

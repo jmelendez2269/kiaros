@@ -14,6 +14,7 @@ import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 
 import { createAdminSupabase } from '@/lib/supabase/admin'
+import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 import {
   assembleQuarterlyReviewSystemPrompt,
   assembleQuarterlyReviewUserPrompt,
@@ -22,7 +23,8 @@ import {
   type QuarterlyReviewStats,
 } from './quarterly-review-system-prompt'
 import { recordUsage } from './usage'
-import type { BlueprintOutput, NatalChart } from '@/types/blueprint'
+import { loadBlueprintForYear } from '@/lib/blueprint/load'
+import type { NatalChart } from '@/types/blueprint'
 
 const MODEL_ID = 'claude-sonnet-4-6'
 const MAX_OUTPUT_TOKENS = 600
@@ -82,6 +84,16 @@ export async function loadQuarterlyReviewPromptBundle(
   const admin = createAdminSupabase()
   const { start, end } = quarterDateRange(planYear, quarter)
   const prior = priorQuarterCoords(planYear, quarter)
+  let journalEntriesQuery = admin
+    .from('journal_entries')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userProfileId)
+    .gte('entry_date', start)
+    .lte('entry_date', end)
+
+  if (isJournalConsentV2Enabled()) {
+    journalEntriesQuery = journalEntriesQuery.eq('include_in_insights', true)
+  }
 
   const [
     profileRes,
@@ -101,15 +113,7 @@ export async function loadQuarterlyReviewPromptBundle(
       .select('display_name, natal_chart, year_vision, word_of_year, what_to_release')
       .eq('id', userProfileId)
       .maybeSingle(),
-    admin
-      .from('blueprints')
-      .select('year_theme, quarters')
-      .eq('user_id', userProfileId)
-      .eq('plan_year', planYear)
-      .eq('status', 'ready')
-      .order('version', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    loadBlueprintForYear(userProfileId, planYear, false),
     admin
       .from('user_pattern_insights')
       .select('pattern_type, pattern_key, sample_size, confidence, summary, evidence')
@@ -122,12 +126,7 @@ export async function loadQuarterlyReviewPromptBundle(
       .eq('user_id', userProfileId)
       .gte('log_date', start)
       .lte('log_date', end),
-    admin
-      .from('journal_entries')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userProfileId)
-      .gte('entry_date', start)
-      .lte('entry_date', end),
+    journalEntriesQuery,
     admin
       .from('oracle_captures')
       .select('id', { count: 'exact', head: true })
@@ -173,14 +172,14 @@ export async function loadQuarterlyReviewPromptBundle(
   if (!profileRes.data) {
     throw new Error(`Profile not found for user ${userProfileId}`)
   }
-  if (!blueprintRes.data) {
+  if (!blueprintRes) {
     throw new Error(`No ready blueprint for user ${userProfileId} year ${planYear}`)
   }
   if (!profileRes.data.natal_chart) {
     throw new Error('Natal chart missing — cannot personalise summary')
   }
 
-  const quarters = (blueprintRes.data.quarters ?? []) as unknown as BlueprintOutput['quarters']
+  const quarters = blueprintRes.blueprint.quarters
   const quarterBlueprint = quarters.find((q) => q.quarter === quarter) ?? null
 
   const sessionRows = sessionsRes.data ?? []
@@ -216,7 +215,7 @@ export async function loadQuarterlyReviewPromptBundle(
     quarter,
     quarterMonths: QUARTER_MONTHS_LABEL[quarter] ?? '',
     quarterBlueprint,
-    yearTheme: blueprintRes.data.year_theme ?? null,
+    yearTheme: blueprintRes.blueprint.yearTheme || null,
     yearVision: profileRes.data.year_vision ?? null,
     wordOfYear: profileRes.data.word_of_year ?? null,
     whatToRelease: profileRes.data.what_to_release ?? null,

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta name="generator" content="Kairos natal-report.obsidian-almanac.v2" />
+  <title>Personal Natal Astrology Report + Anchor Print · Anchor Print · A4</title>
+  <style>
+    :root {
+      --paper: #f7f2e8;
+      --paper-deep: #eee5d6;
+      --ink: #181923;
+      --ink-muted: #4b4b57;
+      --violet: #5135a8;
+      --violet-soft: #e8e0f5;
+      --steel: #315f80;
+      --amber: #754900;
+      --line: #b9afc5;
+    }
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #d7d3ca; color: var(--ink); }
+    body { font-family: "Aptos", "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.5; }
+    .artifact-page {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      padding: 13mm 14mm 12mm;
+      background: var(--paper);
+      break-after: page;
+      page-break-after: always;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      position: relative;
+      overflow: hidden;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .artifact-page:last-child { break-after: auto; page-break-after: auto; }
+    .artifact-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-top: 4mm solid var(--violet);
+      pointer-events: none;
+    }
+    .artifact-header, .artifact-footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 8mm; }
+    .artifact-header { margin-top: 2mm; border-bottom: 0.35mm solid var(--line); padding-bottom: 4mm; }
+    .brand-mark { margin: 0; color: var(--violet); font: 700 9pt/1 "Aptos", "Segoe UI", sans-serif; letter-spacing: 0.22em; }
+    .kicker, .page-number { margin: 1.5mm 0 0; color: var(--ink-muted); font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; }
+    .title-block { margin: 7mm 0 5mm; }
+    .title-block.compact { margin-bottom: 4mm; }
+    h1, h2 { font-family: "Iowan Old Style", Georgia, serif; color: var(--ink); }
+    h1 { margin: 0; font-size: 27pt; line-height: 1.05; font-weight: 600; letter-spacing: -0.02em; }
+    h2 { margin: 0 0 2mm; font-size: 13pt; line-height: 1.15; font-weight: 600; }
+    p { orphans: 3; widows: 3; }
+    .subtitle { max-width: 72ch; margin: 2mm 0 0; color: var(--ink-muted); font-family: "Iowan Old Style", Georgia, serif; font-size: 12pt; line-height: 1.45; }
+    .birth-label { margin: 2mm 0 0; color: var(--steel); font-size: 9pt; font-weight: 600; }
+    .reference-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 7mm; align-items: start; }
+    .chart-panel { margin: 0; }
+    .natal-chart { width: 100%; height: auto; display: block; }
+    .chart-ring, .chart-division { fill: none; stroke: #766f82; stroke-width: 0.8; }
+    .chart-ring-outer { stroke: var(--violet); stroke-width: 1.4; }
+    .chart-ring-inner { stroke-dasharray: 3 4; }
+    .chart-sign, .chart-house, .chart-planet-label, .chart-angle-label { text-anchor: middle; font-family: "Aptos", "Segoe UI", sans-serif; }
+    .chart-sign { fill: var(--violet); font-size: 11px; font-weight: 700; }
+    .chart-house { fill: var(--ink-muted); font-size: 8px; }
+    .chart-planet-marker { fill: var(--paper); stroke: var(--violet); stroke-width: 1.4; }
+    .chart-planet-label { fill: var(--ink); font-size: 8px; font-weight: 700; }
+    .chart-angle-marker { fill: var(--amber); stroke: var(--ink); stroke-width: 0.7; }
+    .chart-angle-label { fill: #fff; font-size: 5px; font-weight: 700; }
+    .chart-center { fill: var(--violet); }
+    .chart-aspect { fill: none; stroke: var(--steel); stroke-width: 1.1; opacity: 0.8; }
+    .chart-aspect-opposition { stroke-dasharray: 8 3; }
+    .chart-aspect-square { stroke-dasharray: 3 3; }
+    .chart-aspect-trine { stroke: var(--violet); }
+    .chart-aspect-sextile { stroke: var(--amber); stroke-dasharray: 1 3; }
+    .chart-aspect-conjunction { stroke-width: 2; }
+    figcaption { margin-top: 2mm; color: var(--ink-muted); font-size: 11pt; line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; font-size: 11pt; line-height: 1.25; font-variant-numeric: tabular-nums; }
+    th, td { border-bottom: 0.25mm solid var(--line); padding: 1.35mm 1mm; text-align: left; vertical-align: top; }
+    thead th { color: var(--ink-muted); font-size: 7pt; letter-spacing: 0.06em; text-transform: uppercase; }
+    tbody th { color: var(--violet); font-weight: 700; }
+    .status-marker { color: var(--amber); font-size: 7pt; font-weight: 700; text-transform: uppercase; }
+    .aspect-section { margin-top: 4mm; }
+    .aspect-list { list-style: none; margin: 0; padding: 0; }
+    .aspect-list li { display: flex; justify-content: space-between; gap: 5mm; border-bottom: 0.25mm solid var(--line); padding: 1.2mm 0; font-size: 11pt; }
+    .uncertainty-note { margin-top: 4mm; border-left: 1.2mm solid var(--amber); background: #f0e4c9; padding: 3mm 4mm; color: #49340d; font-size: 11pt; }
+    .artifact-footer { position: absolute; left: 14mm; right: 14mm; bottom: 8mm; border-top: 0.25mm solid var(--line); padding-top: 2mm; color: var(--ink-muted); font-size: 6.8pt; }
+    .artifact-footer p { margin: 0; max-width: 70%; overflow-wrap: anywhere; }
+    .anchors-page h1 { font-size: 24pt; }
+    .anchors-page { padding-bottom: 8mm; }
+    .anchors-page .subtitle { font-size: 11pt; line-height: 1.35; }
+    .anchor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5mm; }
+    .anchor-card { display: grid; grid-template-columns: 7mm 1fr; gap: 2.5mm; border: 0.3mm solid var(--line); border-radius: 3mm; background: rgba(255,255,255,0.28); padding: 3mm; }
+    .anchor-card h2 { font-size: 12pt; line-height: 1.1; }
+    .anchor-card p { margin: 0; font-size: 11pt; line-height: 1.28; }
+    .anchor-number { color: var(--violet) !important; font-size: 9pt !important; font-weight: 700; letter-spacing: 0.06em; }
+    .source-note { margin-top: 2mm !important; color: var(--steel); font-size: 7.2pt !important; font-weight: 600; }
+    .reflection-panel { margin-top: 3mm; border-top: 0.8mm solid var(--violet); background: var(--violet-soft); padding: 3mm 4mm; }
+    .reflection-panel ol { margin: 1mm 0 0; padding-left: 5mm; columns: 3; column-gap: 7mm; }
+    .reflection-panel li { break-inside: avoid; padding-right: 2mm; font: 11pt/1.4 "Iowan Old Style", Georgia, serif; }
+    .disclosure-footer { margin-top: 2mm; border-top: 0.25mm solid var(--line); padding-top: 1.5mm; color: var(--ink-muted); font-size: 11pt; line-height: 1.25; }
+    .disclosure-footer p { margin: 0 0 0.8mm; }
+    .cover-page, .keepsake-page {
+      color: #f7f2e8;
+      background: #0c0d21;
+    }
+    .cover-page::before, .keepsake-page::before { border-top-color: #b87938; }
+    .cover-brand { margin: 5mm 0 0; color: #d9b47e; font-size: 10pt; font-weight: 700; letter-spacing: 0.32em; }
+    .cover-copy { position: absolute; left: 18mm; right: 18mm; top: 76mm; z-index: 2; }
+    .cover-kicker { margin: 0 0 5mm; color: #93d7e5; font-size: 9pt; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+    .cover-page h1 { max-width: 150mm; color: #fffaf0; font-size: 38pt; line-height: 1.03; }
+    .cover-subtitle { max-width: 120mm; margin: 5mm 0 0; color: #d9d2e8; font: 14pt/1.5 "Iowan Old Style", Georgia, serif; }
+    .cover-birth { margin: 6mm 0 0; color: #a9dce7; font-size: 10pt; font-weight: 600; letter-spacing: 0.04em; }
+    .cover-note, .keepsake-footer {
+      position: absolute; left: 18mm; right: 18mm; bottom: 14mm;
+      display: flex; justify-content: space-between; gap: 8mm;
+      border-top: 0.25mm solid rgba(255,255,255,0.3); padding-top: 3mm;
+      color: #d9d2e8; font-size: 8pt; letter-spacing: 0.04em;
+    }
+    .cover-orbit { position: absolute; border: 0.35mm solid rgba(217,180,126,0.4); border-radius: 50%; }
+    .orbit-one { width: 150mm; height: 150mm; right: -56mm; top: 24mm; }
+    .orbit-two { width: 92mm; height: 92mm; right: -12mm; top: 52mm; border-color: rgba(147,215,229,0.36); }
+    .chapter-heading { margin: 10mm 0 8mm; max-width: 155mm; }
+    .compact-heading { margin-bottom: 5mm; }
+    .chapter-index { margin: 0 0 3mm; color: var(--violet); font-size: 8pt; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+    .chapter-summary { max-width: 72ch; margin: 4mm 0 0; color: var(--steel); font: 13pt/1.45 "Iowan Old Style", Georgia, serif; }
+    .prose-columns, .chapter-body { max-width: 148mm; }
+    .prose-columns p, .chapter-body p, .method-copy p { margin: 0 0 5mm; font: 11pt/1.65 "Iowan Old Style", Georgia, serif; }
+    .reading-guide { margin-top: 8mm; border: 0.35mm solid var(--line); background: var(--paper-deep); padding: 6mm; }
+    .reading-guide ol { margin: 3mm 0 0; padding-left: 6mm; display: grid; gap: 3mm; }
+    .reading-guide li { padding-left: 2mm; font-size: 11pt; line-height: 1.45; }
+    .pattern-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+    .pattern-group { border: 0.3mm solid var(--line); background: rgba(255,255,255,0.35); padding: 5mm; }
+    .pattern-group ul { list-style: none; margin: 0; padding: 0; }
+    .pattern-group li { margin-top: 3mm; }
+    .pattern-group li > div { display: flex; justify-content: space-between; gap: 4mm; font-size: 10.5pt; }
+    .pattern-track { display: block; height: 2.2mm; margin-top: 1.2mm; background: #ddd5e5; }
+    .pattern-track > span { display: block; height: 100%; background: repeating-linear-gradient(135deg, var(--violet), var(--violet) 2mm, #735dc2 2mm, #735dc2 4mm); }
+    .chapter-body { border-left: 0.8mm solid var(--line); padding-left: 7mm; }
+    .practice-panel { margin-top: 8mm; border-top: 0.8mm solid var(--violet); background: var(--violet-soft); padding: 5mm 6mm; }
+    .practice-panel ol { list-style: none; margin: 3mm 0 0; padding: 0; display: grid; gap: 3mm; }
+    .practice-panel li { display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; align-items: start; }
+    .practice-panel li > span, .prompt-list li > span { color: var(--violet); font-size: 8pt; font-weight: 700; letter-spacing: 0.08em; }
+    .practice-panel li p, .prompt-list li p { margin: 0; font: 11pt/1.45 "Iowan Old Style", Georgia, serif; }
+    .chapter-page > .source-note { margin-top: 5mm !important; }
+    .prompt-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+    .prompt-list li { display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; min-height: 31mm; border: 0.3mm solid var(--line); background: rgba(255,255,255,0.32); padding: 5mm; }
+    .planner-ad-page { padding: 12mm 14mm; color: #f7f2e8; background: #0c0d21; }
+    .planner-ad-page::before { border-top-color: #b87938; }
+    .planner-ad-header { position: relative; z-index: 2; display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 6mm; border-bottom: 0.25mm solid rgba(255,255,255,0.3); padding: 2mm 0 4mm; }
+    .planner-ad-header p { margin: 0; color: #a9dce7; font-size: 8pt; font-weight: 700; letter-spacing: 0.14em; }
+    .planner-ad-header p:first-child { color: #d9b47e; font-size: 10pt; letter-spacing: 0.3em; }
+    .planner-ad-header p:last-child { text-align: right; }
+    .planner-ad-hero { position: relative; z-index: 2; margin: 13mm 0 8mm; max-width: 155mm; }
+    .planner-ad-kicker { margin: 0 0 4mm; color: #93d7e5; font-size: 9pt; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+    .planner-ad-page h1, .planner-ad-page h2 { color: #fffaf0; }
+    .planner-ad-page h1 { max-width: 145mm; font-size: 38pt; line-height: 1.02; }
+    .planner-ad-hero > p:last-child { max-width: 145mm; margin: 5mm 0 0; color: #d9d2e8; font: 14pt/1.48 "Iowan Old Style", Georgia, serif; }
+    .planner-ad-features { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+    .planner-ad-features article { min-height: 37mm; display: grid; grid-template-columns: 9mm 1fr; gap: 3mm; border: 0.25mm solid rgba(255,255,255,0.25); background: rgba(21,17,55,0.68); padding: 4mm; }
+    .planner-ad-features article > p { margin: 1mm 0 0; color: #d9b47e; font-size: 8pt; font-weight: 700; letter-spacing: 0.08em; }
+    .planner-ad-features h2 { margin: 0 0 1.5mm; font-size: 14pt; }
+    .planner-ad-features article div p { margin: 0; color: #d9d2e8; font-size: 11pt; line-height: 1.35; }
+    .planner-ad-cta { position: relative; z-index: 2; margin-top: 7mm; border-left: 1.2mm solid #d9b47e; background: #5135a8; padding: 5mm 6mm; }
+    .planner-ad-cta > p:first-child { margin: 0 0 1.5mm; color: #bdebf3; font-size: 8pt; font-weight: 700; letter-spacing: 0.14em; }
+    .planner-ad-cta h2 { margin: 0 0 2mm; font-size: 19pt; }
+    .planner-ad-cta > p:not(:first-child) { margin: 0 0 3mm; color: #f0ebf6; font: 11pt/1.4 "Iowan Old Style", Georgia, serif; }
+    .planner-ad-cta a { display: inline-block; color: #fffaf0; font-size: 16pt; font-weight: 700; text-decoration: underline; text-decoration-thickness: 0.35mm; text-underline-offset: 1.2mm; }
+    .planner-ad-footer { position: absolute; z-index: 2; left: 14mm; right: 14mm; bottom: 10mm; display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; border-top: 0.25mm solid rgba(255,255,255,0.3); padding-top: 3mm; }
+    .planner-ad-footer p { margin: 0; color: #cfc8dc; font-size: 8pt; line-height: 1.35; }
+    .planner-ad-orbit { position: absolute; border: 0.35mm solid rgba(217,180,126,0.28); border-radius: 50%; }
+    .planner-ad-orbit-one { width: 125mm; height: 125mm; right: -58mm; top: 22mm; }
+    .planner-ad-orbit-two { width: 70mm; height: 70mm; right: -10mm; top: 50mm; border-color: rgba(147,215,229,0.25); }
+    .keepsake-page { padding: 12mm 13mm; }
+    .keepsake-page::after {
+      content: ""; position: absolute; inset: 8mm; border: 0.25mm solid rgba(217,180,126,0.42);
+      pointer-events: none;
+    }
+    .keepsake-header { position: relative; z-index: 2; display: flex; align-items: baseline; justify-content: space-between; gap: 6mm; }
+    .keepsake-header p:last-child { color: #a9dce7; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.13em; }
+    .keepsake-title-block { position: relative; z-index: 2; margin: 10mm 4mm 7mm; }
+    .keepsake-title-block h1 { color: #fffaf0; font-size: 29pt; }
+    .keepsake-title-block > p:not(.cover-birth) { margin: 3mm 0 0; color: #d9d2e8; font: 12pt/1.4 "Iowan Old Style", Georgia, serif; }
+    .keepsake-grid { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; margin: 0 4mm; }
+    .keepsake-card { min-height: 44mm; display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; border: 0.25mm solid rgba(255,255,255,0.28); background: rgba(5,8,25,0.52); padding: 4mm; }
+    .keepsake-card h2 { color: #fffaf0; font-size: 12pt; }
+    .keepsake-card p { margin: 0; color: #ddd8e8; font-size: 11pt; line-height: 1.35; }
+    .keepsake-card .keepsake-number { color: #d9b47e; font-size: 8pt; font-weight: 700; }
+    .keepsake-uncertainty { position: relative; z-index: 2; margin: 4mm; border-left: 1mm solid #d9b47e; background: rgba(5,8,25,0.7); padding: 3mm 4mm; color: #fff2d9; font-size: 10.5pt; line-height: 1.35; }
+    .keepsake-constellation { position: absolute; width: 75mm; height: 75mm; right: -18mm; top: -12mm; border: 0.3mm solid rgba(147,215,229,0.3); border-radius: 50%; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media print { html, body { background: transparent; } .artifact-page { margin: 0; } }
+  </style>
+</head>
+<body>
+  <main aria-label="Avery · Six Natal Anchors">
+    <section class="artifact-page keepsake-page" aria-labelledby="keepsake-title">
+    <div class="keepsake-constellation" aria-hidden="true"></div>
+    <header class="keepsake-header"><p class="cover-brand">KAIROS</p><p>PERSONAL NATAL ANCHOR PRINT</p></header>
+    <div class="keepsake-title-block">
+      <h1 id="keepsake-title">Avery · Six Natal Anchors</h1>
+      <p>A one-page keepsake drawn from the accompanying full report</p>
+      <p class="cover-birth">1990-04-04 · 08:30 · Portland, United States</p>
+    </div>
+    <div class="keepsake-grid"><article class="keepsake-card">
+    <p class="keepsake-number" aria-hidden="true">01</p>
+    <div><h2>The courage to meet life directly</h2><p>Your Aries Sun describes identity as an active encounter: you learn who you are by beginning, responding, and discovering what becomes possible through movement.</p></div>
+  </article><article class="keepsake-card">
+    <p class="keepsake-number" aria-hidden="true">02</p>
+    <div><h2>A body-led language of safety</h2><p>Your Taurus Moon seeks enough steadiness, sensory clarity, and material continuity for feeling to become understandable rather than overwhelming.</p></div>
+  </article><article class="keepsake-card">
+    <p class="keepsake-number" aria-hidden="true">03</p>
+    <div><h2>Imagination that needs a faithful container</h2><p>Mercury in Pisces receives information through atmosphere, association, image, and felt meaning; its trine to Jupiter can turn those impressions into an unusually spacious frame.</p></div>
+  </article><article class="keepsake-card">
+    <p class="keepsake-number" aria-hidden="true">04</p>
+    <div><h2>Choosing what can be tended</h2><p>Venus in Taurus values continuity, embodied affection, craft, and relationships whose promises can be felt in repeated behavior rather than dramatic declarations.</p></div>
+  </article><article class="keepsake-card">
+    <p class="keepsake-number" aria-hidden="true">05</p>
+    <div><h2>Action with a visible heart</h2><p>Mars in Leo acts best when effort carries authorship, generosity, and an honest stake in the result; the Sun trine helps purpose and motion reinforce each other.</p></div>
+  </article><article class="keepsake-card">
+    <p class="keepsake-number" aria-hidden="true">06</p>
+    <div><h2>A rhythm of spark, sensing, depth, and structure</h2><p>The chart becomes most useful as a repeatable sequence: begin honestly, listen through the body, investigate what matters, and build a form that can sustain the discovery.</p></div>
+  </article></div>
+    
+    <footer class="keepsake-footer"><p>Use with the accompanying twenty-page report.</p><p>Reflective astrology · personal use</p></footer>
+  </section>
+  </main>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Frame, K, Kicker } from '@/components/almanac'
+import { ContinueWithJournal } from '@/components/today/ContinueWithJournal'
 import { ContinueWithStelloquy } from '@/components/today/ContinueWithStelloquy'
 import type { TodayIntentionResult } from '@/lib/today/get-today-intention'
 
@@ -146,7 +147,15 @@ export function TodayIntention({ result }: Props) {
             {breadcrumb}
           </div>
         ) : null}
-        <ContinueWithStelloquy prompt={stelloquyPrompt} />
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-x-1 gap-y-0">
+          <ContinueWithJournal
+            intention={line}
+            theme={theme}
+            context={context}
+            weekNumber={weekNumber}
+          />
+          <ContinueWithStelloquy prompt={stelloquyPrompt} />
+        </div>
       </div>
     </Frame>
   )

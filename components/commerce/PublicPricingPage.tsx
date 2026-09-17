@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Activity, Brain, Orbit } from "lucide-react";
 
+import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
 import { CheckoutButton } from "@/components/commerce/CheckoutButton";
 import { MoonPhaseIcon } from "@/components/shared/MoonPhaseIcon";
 import { COMMERCE_TIERS, CURRENT_PLANNER_YEAR, formatUsd } from "@/lib/commerce/config";
@@ -9,6 +10,7 @@ interface Props {
   isSignedIn: boolean;
   mode?: "home" | "pricing";
   showCanceledMessage?: boolean;
+  canceledCheckoutAttemptId?: string;
 }
 
 function CheckIcon() {
@@ -161,6 +163,7 @@ export function PublicPricingPage({
   isSignedIn,
   mode = "pricing",
   showCanceledMessage = false,
+  canceledCheckoutAttemptId,
 }: Props) {
   const isFullPage = mode === "pricing";
 
@@ -173,6 +176,7 @@ export function PublicPricingPage({
 
   return (
     <div className="page-wrapper">
+      <FunnelAttributionCapture canceledCheckoutAttemptId={canceledCheckoutAttemptId} />
       <header className="sticky top-0 z-40 border-b border-border/40 bg-stone-950/70 backdrop-blur-md supports-[backdrop-filter]:bg-stone-950/55">
         <div className="container flex items-center justify-between gap-6 py-4">
           <Link
@@ -963,9 +967,9 @@ export function PublicPricingPage({
                 Start with the way you want to pay, not the way you think you should.
               </h2>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
-                Kairos is built to guide you throughout the year, so the pricing can be flexible
-                too: monthly for accessibility and annual for the best value. Stelloquy access is
-                tied to the Planner + Oracle tier whichever direct billing cadence you choose.
+                Monthly access includes your current Blueprint week plus the next four weeks.
+                Annual access unlocks the full canonical Blueprint. Stelloquy is included only
+                with Planner + Oracle, whichever direct billing cadence you choose.
               </p>
             </div>
             <div className="rounded-[1.1rem] border border-leather-500/25 bg-leather-500/10 px-5 py-4">
@@ -1014,7 +1018,9 @@ export function PublicPricingPage({
                     <p className="text-3xl font-semibold text-bone">
                       {formatUsd(tier.monthlyPriceCents)}
                     </p>
-                    <p className="text-sm text-bone-muted">Direct access</p>
+                    <p className="text-sm text-bone-muted">
+                      Current Blueprint week + next four
+                    </p>
                   </div>
                   <div className="rounded-[1rem] border border-leather-300/45 bg-leather-300/12 px-4 py-3 shadow-[0_0_24px_rgba(216,180,151,0.08)]">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1029,7 +1035,7 @@ export function PublicPricingPage({
                       {formatUsd(tier.annualPriceCents)}
                     </p>
                     <p className="text-sm font-medium text-leather-200">
-                      Save {formatUsd(annualSavings)} per year
+                      Full canonical Blueprint · Save {formatUsd(annualSavings)} per year
                     </p>
                   </div>
                 </div>
@@ -1064,7 +1070,7 @@ export function PublicPricingPage({
                     </>
                   ) : (
                     <Link
-                      href="/sign-up"
+                      href="/sign-up?redirect_url=/pricing"
                       className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
                     >
                       Create account to choose checkout
@@ -1094,7 +1100,7 @@ export function PublicPricingPage({
               {
                 step: "3",
                 title: "Your blueprint generates",
-                body: "Kairos runs your natal chart, calculates your 2026 transits, and generates a full year-long blueprint built specifically for you.",
+                body: "Kairos runs your natal chart and calculates your 2026 transits. Monthly shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full canonical Blueprint.",
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex gap-4">
@@ -1135,9 +1141,9 @@ export function PublicPricingPage({
               </h2>
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
-                  Kairos already gives guidance throughout the year, so a monthly option makes
-                  sense for people who need a more accessible way in. Annual access is still the
-                  clearest best-value commitment for people who know they want the full year.
+                  Monthly keeps the initial commitment smaller and shows the current Blueprint
+                  week plus the next four weeks. Annual unlocks that same canonical Blueprint for
+                  the full year and remains the best value.
                 </p>
                 <p>
                   Oracle adds the higher-touch layer for people who want more interpretation,
@@ -1153,8 +1159,8 @@ export function PublicPricingPage({
               <h2 className="shell-section-title">Choose the cadence that fits your year.</h2>
               <ul className="mt-5 space-y-2 text-sm leading-7 text-bone-muted">
                 {[
-                  "Monthly access for a smaller initial commitment",
-                  "Annual access for the complete year and best value",
+                  "Monthly: current Blueprint week plus the next four weeks",
+                  "Annual: full canonical Blueprint and best value",
                   "Immediate, secure checkout through Kairos",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2">

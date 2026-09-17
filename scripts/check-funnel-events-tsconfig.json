@@ -10,7 +10,14 @@
     "../lib/analytics/**/*.ts",
     "../lib/feature-flags.ts",
     "../lib/supabase/admin.ts",
-    "../app/api/analytics/events/route.ts"
+    "../app/api/analytics/events/route.ts",
+    "../app/api/commerce/checkout/**/*.ts",
+    "../app/api/webhooks/stripe/route.ts",
+    "../app/pricing/page.tsx",
+    "../components/analytics/**/*.tsx",
+    "../components/commerce/CheckoutButton.tsx",
+    "../components/commerce/PublicPricingPage.tsx",
+    "check-checkout-attribution.mts"
   ],
   "exclude": ["../node_modules", "../.next"]
 }

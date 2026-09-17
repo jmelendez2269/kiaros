@@ -37,8 +37,8 @@ export async function POST(req: Request) {
 
   const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[]);
 
-  // Paid customers continue into the intent/customization layers. Preview
-  // accounts stop after birth data so their sample is genuinely chart-only.
+  // Paid customers continue into the intent/customization layers. Limited-reading
+  // accounts stop after birth data so their artifact is genuinely chart-only.
   if (body.stage === "chart_foundation" && access.hasPlannerAccess) {
     return NextResponse.json({ destination: "/onboarding/tradition" });
   }
