@@ -44,9 +44,17 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Next three actions
 
-1. Three P0 rows (`SAFE-02`, `CONSENT-02`, `ACCESS-04`) share the same remaining gap: authenticated browser interaction evidence. Unlike the staging work closed 2026-09-17, this needs a real signed-in Clerk session, not just direct server-side/RLS calls — establish a Clerk test-mode path (or accept manual sign-in) before attempting it.
-2. `METRICS-02`'s remaining gap (staged Stripe/DB reconciliation) is closer to the pattern already proven: Stripe test-mode checkout against the local Docker Supabase stack, verifying checkout-start/cancel/completion events persist and reconcile. Test Stripe keys already exist locally; no Clerk session needed for the webhook path itself.
-3. `MEM-01` (journal full-text search/retrieval RPC) is unblocked now that `CONSENT-01`/`CONSENT-03` are both `done`; the wider `docs/planning/reflections-memory-unwrapped-plan.md` may already cover related ground from the `star-origin-engine` merge — check before restarting it.
+Session ending 2026-09-17 closed `ACCESS-02`, `ACCESS-03`, `CONSENT-03`, `METRICS-02`, `SAFE-02`, `CONSENT-02`, and `ACCESS-04` — see that date's five change-log entries for what shipped and two real bugs found and fixed along the way (annual-Stripe-entitlement fulfillment; local Clerk auth config). Tracker: 14/32 implementation rows `done` (44%). **A new session should read this file's full 2026-09-17 change-log block before doing anything else here.**
+
+Founder decision pending, asked at session end, not yet answered: which of these three now-unblocked rows to start next —
+
+1. `MEM-01` — journal full-text search/deterministic retrieval RPC. Needs a new migration (confirm with founder before applying). Unblocks the `MEM-02`→`MEM-03`→`MEM-04` chain, so starting here has the most downstream leverage.
+2. `SAMPLE-01` — Stripe one-time Stelloquy sampler product + checkout fulfillment.
+3. `METRICS-03` — admin funnel/retention summary and metric definitions.
+
+`PREVIEW-01` is also unblocked but needs real traffic, not engineering — not a candidate to just start.
+
+Still waiting on the founder, unrelated to the above: Stripe dashboard check for any real customer harmed by the entitlement bug (founder confirmed 2026-09-17 there has been only one purchase, via Etsy, unaffected — this is very likely already closed, but wasn't independently re-verified against Stripe's dashboard); and the Etsy launch-packet gates (offer approval, accessibility review, publication) — founder stated 2026-09-17 that legal review is not needed for this launch.
 
 ## How this tracker works
 
