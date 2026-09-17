@@ -25,11 +25,11 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Progress snapshot — 2026-08-23
 
-- **Full implementation:** 7 of 31 implementation rows are `done` — **23% complete**.
-- **Including completed local work awaiting verification:** 15 of 31 implementation rows are `done` or `verification` — **48% delivered to verification**.
-- **Whole tracker, including founder decisions:** 14 of 38 rows are `done` — **37%**; 22 of 38 are `done` or `verification` — **58%**.
+- **Full implementation:** 8 of 31 implementation rows are `done` — **26% complete**.
+- **Including completed local work awaiting verification:** 14 of 31 implementation rows are `done` or `verification` — **45% delivered to verification**.
+- **Whole tracker, including founder decisions:** 15 of 38 rows are `done` — **39%**; 21 of 38 are `done` or `verification` — **55%**.
 - The unrelated **3/114 points** figure is not a Kairos metric and must not be used for this roadmap.
-- `SAFE-02`, `CONSENT-02`, `CONSENT-03`, `ACCESS-02`, `ACCESS-04`, and `METRICS-02` are implemented locally but do not count as complete until their remaining authenticated UI, staging, RLS, privacy/access-leakage, lifecycle-delivery, audit, payment-webhook, and idempotency evidence passes.
+- `SAFE-02`, `CONSENT-02`, `CONSENT-03`, `ACCESS-04`, and `METRICS-02` are implemented locally but do not count as complete until their remaining authenticated UI, staging, privacy/access-leakage, lifecycle-delivery, audit, payment-webhook, and idempotency evidence passes. `ACCESS-02` cleared its staging RLS/persona-leakage gate 2026-09-17 and is `done`.
 
 ## Current recommendation
 
@@ -44,9 +44,9 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Next three actions
 
-1. Produce `ACCESS-02`'s remaining staging RLS/persona-leakage evidence against the SAFE-02 persona matrix before turning `KIAROS_MONTHLY_BLUEPRINT_WINDOW` on anywhere; the flag stays off in the meantime, so `0043` alone changed no user-visible behavior.
+1. Start `ACCESS-03` (Blueprint/calendar navigation, locked states, upgrade, cancellation behavior) now that `ACCESS-02` is `done`; decide separately when `KIAROS_MONTHLY_BLUEPRINT_WINDOW` actually turns on in production, since clearing the staging gate is not itself that decision.
 2. Complete `docs/etsy-anchor-print-launch-approval-packet.md` (legal/address/market wording, Privacy Policy/Terms/listing review, independent PDF/assistive-technology testing), then continue the fictional Year Ahead / Celestial Connection admin review before any real intake or listing publication.
-3. Designate or create an isolated Kairos staging project before applying `0040`/`0041` (journal-derived cleanup/rebuild) — the migration-history reconciliation removed one blocker on this, but no staging target is positively identified yet, and destructive cleanup/two-user RLS tests still should not run against production.
+3. Apply `0040`/`0041` (journal-derived cleanup/rebuild) against the local Docker Supabase staging stack (`supabase init` + `supabase start`, now set up — see 2026-09-17 change log) and run destructive-cleanup/two-user RLS evidence there before either ever touches production.
 
 ## How this tracker works
 
@@ -352,8 +352,8 @@ Recommended privacy-safe policy:
 | MEM-03 | P1 | Memory | Integrate selected memories into Stelloquy after the question is known | blocked | MEM-02, CONSENT-03 | 1–2d | A-Journal + Root | — | 2026-08-06 |
 | MEM-04 | P1 | Memory | Show recalled-memory count and user-reviewable sources | blocked | MEM-03 | 1–2d | A-Journal | — | 2026-08-06 |
 | ACCESS-01 | P0 | Paid access | Replace broad plan checks with explicit capabilities | done | DEC-01 | 1–2d | B-Access + Root | `check-access-capabilities.mts` passes 87 assertions; focused/full TS and flags-off build pass | 2026-08-06 |
-| ACCESS-02 | P0 | Paid access | Enforce monthly Blueprint window on the server | verification | ACCESS-01 | 2–4d | Root-Access | `0043`; 40 projection/RLS assertions, 87 capability assertions, full TypeScript, diff check, and flag-off/on builds pass; staging RLS/persona leakage evidence remains | 2026-08-12 |
-| ACCESS-03 | P0 | Paid access | Update Blueprint/calendar navigation, locked states, upgrade, and cancellation behavior | blocked | ACCESS-02 | 2–3d | B-Access | — | 2026-08-06 |
+| ACCESS-02 | P0 | Paid access | Enforce monthly Blueprint window on the server | done | ACCESS-01 | 2–4d | Root-Access | `0043`; 40 projection/RLS assertions, 87 capability assertions, full TypeScript, diff check, flag-off/on builds pass; `scripts/check-access-02-staging.mts` — 37 assertions against local Docker Supabase, 8 of 10 SAFE-02 personas, 0 failures | 2026-09-17 |
+| ACCESS-03 | P0 | Paid access | Update Blueprint/calendar navigation, locked states, upgrade, and cancellation behavior | pending | ACCESS-02 | 2–3d | B-Access | — | 2026-09-17 |
 | ACCESS-04 | P0 | Paid access | Align pricing, onboarding, success, billing, and retention copy | verification | ACCESS-01, SAFE-01 | 1–2d | Agent A + Root | Copy/offer contract passes; retention delivery batch-loads entitlements, fails closed on lookup errors, and requires `canUsePlanner` before content/send work; 16 eligibility assertions, all focused regressions, full TypeScript, diff check, 99-page build, and public browser checks pass; authenticated lifecycle personas remain | 2026-08-12 |
 | SAMPLE-01 | P1 | Sampler | Add Stripe one-time sampler product and checkout fulfillment | blocked | DEC-03, METRICS-02 | 1–2d | B-Commerce + Root | — | 2026-08-06 |
 | SAMPLE-02 | P1 | Sampler | Add append-only credit ledger and idempotent consumption | blocked | SAMPLE-01 | 2–3d | B-Commerce | — | 2026-08-06 |
@@ -1004,7 +1004,7 @@ Avoid client-only flags for security boundaries.
 | Parallel migrations or type generation drift | Broken deployment order/types | Central reservations and one schema captain/type-generation pass | Root | open |
 | Linked Supabase history contained 17 timestamped versions absent from this checkout | A linked/staging dry run could not establish an apply plan and production history could be mis-repaired | Resolved 2026-09-17: the 17 remote entries were the same 44 local migrations applied under Supabase-generated timestamp versions instead of this repo's `00NN` numbering (3 early entries cover a consolidated `0001`–`0030`-ish squash; 14 later entries map 1:1 by name to `0031`–`0047`). `supabase migration repair --status applied` recorded all 44 local versions against the remote ledger, then `--status reverted` retired the 17 now-redundant timestamped rows. `supabase db push --dry-run --linked` reports "Remote database is up to date"; `check:schema` confirms all 53 tables/44 columns from all 45 migration files present, both before and after. No SQL was replayed — this was ledger metadata only | Root + Founder | resolved 2026-09-17 |
 | `0038` and `0039` appeared on production as timestamped versions without an authorized apply in this session | Release controls may be bypassed and the audit trail is incomplete | Resolved as part of the ledger reconciliation above: both were applied under `first_party_funnel_events` (`20260812185700`) and `journal_consent` (`20260812185721`), consistent with their content and the 2026-08-12 evidence dates already recorded against `METRICS-01`/`CONSENT-01`. No unauthorized/unattributed apply found beyond the naming mismatch itself | Founder + Root | resolved 2026-09-17 |
-| No dedicated Kairos staging project or preview branch is positively identified | Destructive cleanup and two-user RLS tests cannot be run safely | Create or designate isolated staging before applying `0040`/`0041`; keep all consent/access/metrics flags off | Founder + Root | open |
+| No dedicated Kairos staging project or preview branch is positively identified | Destructive cleanup and two-user RLS tests cannot be run safely | Resolved 2026-09-17: Supabase cloud branching needs a paid plan upgrade not yet made, so local Docker Supabase (`supabase init` + `supabase start`) is now the staging target — zero cost, schema/RLS-identical (`check:schema` confirms), no production data. Used already for `ACCESS-02`'s persona/RLS evidence. `0040`/`0041` should run there next, same as any other staging use | Founder + Root | resolved 2026-09-17 |
 | Root becomes an integration bottleneck | Parallel work waits or merges late | Interface-first modules, small adapters, one gate per wave | Root | open |
 | Speed pressure skips privacy/access gates | Customer harm despite faster coding | Fail closed; no dependent wave before its integration gate | Root + Founder | open |
 
@@ -1345,3 +1345,11 @@ Append one row to the change log and update the tracker rather than creating a s
 - Ran `supabase migration repair --status applied` for all 44 local versions (`0001`–`0041`, `0043`, `0045`–`0047`; `0042`/`0044` never existed as files), then `--status reverted` for the 17 now-redundant remote-only timestamped rows, both via `--linked`. Ledger metadata only — no SQL executed, no schema touched.
 - Verified: `supabase migration list` shows all 44 local versions matched (Local/Remote/Time aligned); `supabase db push --dry-run --linked` reports "Remote database is up to date"; `check:schema` unchanged at 53 tables/44 columns from 45 migration files, both before and after.
 - `supabase db push` is now safe to use for future migrations without risk of replaying already-applied files. No staging project is still identified for `0040`/`0041`'s destructive cleanup/two-user RLS testing — that risk remains open and is now `Next three actions` item 3.
+
+### 2026-09-17 — Local Docker staging stood up; `ACCESS-02` cleared to `done`
+
+- Cloud Supabase branching requires a paid plan the org does not currently have (`402 entitlement_required`). Used local Docker Supabase instead: `supabase init` (no `config.toml` existed before) then `supabase start`, applying all 44 local migrations fresh. `check:schema` on the local stack matches production exactly: 53 tables, 44 columns. Anon/authenticated get `42501` on `blueprints` locally too, matching `0043`'s effect in production.
+- Credentials for the local stack live in `.env.staging.local` (gitignored via the existing `.env.*.local` pattern), never `.env.local`.
+- Wrote `scripts/check-access-02-staging.mts`, a reusable staging check (refuses to run against any non-`127.0.0.1`/`localhost` URL). It seeds 8 of the 10 SAFE-02 personas — sampler-credit personas are skipped because `SAMPLE-01`/`SAMPLE-02` have no schema yet; `admin` is skipped because it's a Clerk `publicMetadata` flag, not a DB row, and is already covered by the 87 local capability assertions — then verifies two things against real rows through real code, not mocks: (1) `blueprints` stays `42501`-denied for every persona's minted session, and `journal_entries`/`product_entitlements` RLS never leaks one persona's rows to another's session; (2) `loadCurrentBlueprint()`, called exactly as app code calls it, returns `null` for personas with no access, a `windowed` capability with a redacted `yearTheme` and fewer than 52 weeks for monthly personas, and `full` with all 52 weeks for annual/read-only-annual/legacy-Etsy personas. 37 assertions, 0 failures. Cleans up its own seeded rows before and after every run.
+- Updated the `ACCESS-02` tracker row to `done` and `ACCESS-03` to `pending` (its blocker is cleared). Turning `KIAROS_MONTHLY_BLUEPRINT_WINDOW` on in production is a separate decision this session did not make.
+- Resolved the "no staging project identified" risk-register row: local Docker Supabase is now the designated staging target for this and future work, including `0040`/`0041`.
