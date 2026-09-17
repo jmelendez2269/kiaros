@@ -15,7 +15,8 @@
     "check:schema": "node scripts/check-schema-drift.mjs",
     "test:reflections": "node --experimental-strip-types scripts/check-reflections.mts && node scripts/check-reflections-db.mjs",
     "test:reflections:integration": "node scripts/run-reflections-integration.mjs",
-    "test:reflections:ai": "node scripts/check-reflections-ai.mjs"
+    "test:reflections:ai": "node scripts/check-reflections-ai.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
@@ -57,16 +58,18 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.2.36",
+    "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.16",
+    "esbuild": "^0.28.2",
     "eslint": "^8",
     "eslint-config-next": "^15.0.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5",
-    "@electric-sql/pglite": "^0.5.8",
-    "esbuild": "^0.28.2"
+    "typescript": "^5"
   }
 }

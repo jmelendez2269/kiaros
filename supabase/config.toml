@@ -353,9 +353,10 @@ enabled = false
 
 # Use Clerk as a third-party provider alongside Supabase Auth.
 [auth.third_party.clerk]
-enabled = false
-# Obtain from https://clerk.com/setup/supabase
-# domain = "example.clerk.accounts.dev"
+enabled = true
+# Decoded from NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (same dev instance as
+# production auth; local Supabase still holds none of production's data).
+domain = "workable-slug-6.clerk.accounts.dev"
 
 # OAuth server configuration
 [auth.oauth_server]

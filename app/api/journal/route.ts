@@ -67,6 +67,7 @@ export async function POST(req: Request) {
       )
     }
 
+    console.error('[journal/create] Unhandled error:', error)
     return NextResponse.json({ error: 'Failed to save journal entry' }, { status: 500 })
   }
 }

@@ -49,3 +49,9 @@ Thumbs.db
 # Local tooling
 supabase/.temp/
 **/.temp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
