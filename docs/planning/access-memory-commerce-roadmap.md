@@ -25,11 +25,11 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Progress snapshot — 2026-08-23
 
-- **Full implementation:** 8 of 31 implementation rows are `done` — **26% complete**.
-- **Including completed local work awaiting verification:** 14 of 31 implementation rows are `done` or `verification` — **45% delivered to verification**.
-- **Whole tracker, including founder decisions:** 15 of 38 rows are `done` — **39%**; 21 of 38 are `done` or `verification` — **55%**.
+- **Full implementation:** 9 of 31 implementation rows are `done` — **29% complete**.
+- **Including completed local work awaiting verification:** 13 of 31 implementation rows are `done` or `verification` — **42% delivered to verification**.
+- **Whole tracker, including founder decisions:** 16 of 38 rows are `done` — **42%**; 20 of 38 are `done` or `verification` — **53%**.
 - The unrelated **3/114 points** figure is not a Kairos metric and must not be used for this roadmap.
-- `SAFE-02`, `CONSENT-02`, `CONSENT-03`, `ACCESS-04`, and `METRICS-02` are implemented locally but do not count as complete until their remaining authenticated UI, staging, privacy/access-leakage, lifecycle-delivery, audit, payment-webhook, and idempotency evidence passes. `ACCESS-02` cleared its staging RLS/persona-leakage gate 2026-09-17 and is `done`.
+- `SAFE-02`, `CONSENT-02`, `ACCESS-04`, and `METRICS-02` are implemented locally but do not count as complete until their remaining authenticated UI, lifecycle-delivery, audit, payment-webhook, and idempotency evidence passes. `ACCESS-02` and `CONSENT-03` cleared their staging RLS/persona-leakage and privacy gates 2026-09-17 and are `done`.
 
 ## Current recommendation
 
@@ -46,7 +46,7 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 1. Start `ACCESS-03` (Blueprint/calendar navigation, locked states, upgrade, cancellation behavior) now that `ACCESS-02` is `done`; decide separately when `KIAROS_MONTHLY_BLUEPRINT_WINDOW` actually turns on in production, since clearing the staging gate is not itself that decision.
 2. Complete `docs/etsy-anchor-print-launch-approval-packet.md` (legal/address/market wording, Privacy Policy/Terms/listing review, independent PDF/assistive-technology testing), then continue the fictional Year Ahead / Celestial Connection admin review before any real intake or listing publication.
-3. Produce `CONSENT-03`'s staging privacy/RLS evidence on the local Docker Supabase stack. Correction: `0040`/`0041` are already applied to production (2026-09-15) — this item is the same staging-evidence gap `ACCESS-02` just closed, applied to consent enforcement/revocation instead of Blueprint access.
+3. `CONSENT-03` is now `done` (2026-09-17). `MEM-03` was the only row blocked on it and now only waits on `MEM-01`/`MEM-02`; pick up journal-memory retrieval work next if this track continues.
 
 ## How this tracker works
 
@@ -346,7 +346,7 @@ Recommended privacy-safe policy:
 | METRICS-03 | P1 | Measurement | Add admin funnel/retention summary and metric definitions | blocked | METRICS-02 | 1–2d | C-Data | — | 2026-08-06 |
 | CONSENT-01 | P0 | Journal trust | Add separate pattern-use, Stelloquy-recall, pin, and importance fields | done | DEC-05 | 1–2d | A-Journal + Root | `0039`; shared create service + private Today path; runtime/wiring/migration/type/build checks pass | 2026-08-06 |
 | CONSENT-02 | P0 | Journal trust | Update journal create/edit/history controls and explanations | verification | CONSENT-01 | 2–3d | Root-Journal | Contract/wiring tests, focused/full TypeScript, and flag-off/on builds pass; authenticated browser interaction remains | 2026-08-12 |
-| CONSENT-03 | P0 | Journal trust | Enforce consent in synthesis and support revocation/rebuild | verification | CONSENT-01, DEC-07 | 2–3d | Root-Journal | `0040`/`0041`; enforcement tests, SQL parsing, focused/full TypeScript, and flag-off/on builds pass; staging privacy/RLS evidence remains | 2026-08-12 |
+| CONSENT-03 | P0 | Journal trust | Enforce consent in synthesis and support revocation/rebuild | done | CONSENT-01, DEC-07 | 2–3d | Root-Journal | `0040`/`0041` applied to production 2026-09-15; `scripts/check-consent-03-staging.mts` — 12 assertions against local Docker Supabase, 0 failures: revoked entries never counted in a shared pattern, invalidation/rebuild scoped to the calling user only, cross-user RLS holds on aspects/sky/pattern tables | 2026-09-17 |
 | MEM-01 | P1 | Memory | Add full-text search/index and deterministic retrieval RPC | blocked | CONSENT-01 | 1–2d | A-Journal | — | 2026-08-06 |
 | MEM-02 | P1 | Memory | Build relevance scorer, excerpts, threshold, and token budget | blocked | MEM-01 | 2–3d | A-Journal | — | 2026-08-06 |
 | MEM-03 | P1 | Memory | Integrate selected memories into Stelloquy after the question is known | blocked | MEM-02, CONSENT-03 | 1–2d | A-Journal + Root | — | 2026-08-06 |
