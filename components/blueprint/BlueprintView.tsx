@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { LayoutList, Rows3 } from 'lucide-react'
 import { BlueprintNarrative } from './BlueprintNarrative'
 import { QuarterSection } from './QuarterSection'
 import { BlueprintListMode } from './BlueprintListMode'
 import type { BlueprintOutput, PeriodRange } from '@/types/blueprint'
+import type { BlueprintYearCapability } from '@/lib/commerce/capabilities'
 import { cn } from '@/lib/utils'
 
 interface BlueprintViewProps {
@@ -14,6 +16,8 @@ interface BlueprintViewProps {
   /** ISO date the user's purchased window runs through; null when never entitled. */
   accessEndsAt?: string | null
   accessState?: 'active' | 'read_only' | 'expired' | 'revoked' | null
+  /** ACCESS-02 server-enforced scope. Null/'full' renders unchanged. */
+  capability?: BlueprintYearCapability | null
 }
 
 type Mode = 'layered' | 'list'
@@ -40,6 +44,7 @@ export function BlueprintView({
   planYear,
   accessEndsAt = null,
   accessState = null,
+  capability = null,
 }: BlueprintViewProps) {
   const currentMonth = new Date().getMonth() + 1
   const currentQuarter = Math.ceil(currentMonth / 3)
@@ -104,6 +109,10 @@ export function BlueprintView({
         </div>
       </header>
 
+      {capability?.access === 'windowed' ? (
+        <WindowedAccessBanner windowEnd={capability.windowEnd} />
+      ) : null}
+
       <YearOverview blueprint={blueprint} />
 
       {mode === 'layered' ? (
@@ -122,6 +131,29 @@ export function BlueprintView({
       ) : (
         <BlueprintListMode blueprint={blueprint} currentQuarter={currentQuarter} />
       )}
+    </div>
+  )
+}
+
+function WindowedAccessBanner({ windowEnd }: { windowEnd: string | null }) {
+  return (
+    <div className="shell-panel flex flex-col gap-3 border-leather-400/40 bg-leather-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium text-bone">
+          You&apos;re seeing the weeks your monthly plan covers right now.
+        </p>
+        <p className="text-xs leading-relaxed text-bone-muted">
+          {windowEnd
+            ? `Open through ${longDate(windowEnd)}. Weeks and quarters outside this window, and your full-year themes, are part of the annual Blueprint.`
+            : 'Weeks outside your current window, and your full-year themes, are part of the annual Blueprint.'}
+        </p>
+      </div>
+      <Link
+        href="/pricing"
+        className="shrink-0 rounded-xl border border-leather-400/50 bg-leather-500/30 px-4 py-2 text-center text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+      >
+        See annual access
+      </Link>
     </div>
   )
 }

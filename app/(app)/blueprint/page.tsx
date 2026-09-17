@@ -4,7 +4,7 @@ import { createServerSupabase } from '@/lib/supabase/server'
 import { BlueprintView } from '@/components/blueprint/BlueprintView'
 import { getAppProfile, appProfileId } from '@/lib/app/get-app-profile'
 import { getAccessWindow } from '@/lib/commerce/get-access-window'
-import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import { currentBlueprintRowExists, loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { Tradition } from '@/types/blueprint'
 
 const TRADITION_LABELS: Record<Tradition, string> = {
@@ -47,6 +47,30 @@ export default async function BlueprintPage() {
   const currentTradition = profile?.tradition as Tradition | null
 
   if (!loaded) {
+    // loadCurrentBlueprint() returns null both when nothing was ever
+    // generated and when a Blueprint exists but the caller's access
+    // capability is 'none' (ACCESS-02) — those need different messaging.
+    const rowExists = appProfileUserId ? await currentBlueprintRowExists(appProfileUserId) : false
+
+    if (rowExists) {
+      return (
+        <div className="shell-panel flex flex-col items-center justify-center space-y-5 py-24 text-center">
+          <div className="text-4xl text-bone-muted">✦</div>
+          <h1 className="font-serif text-3xl text-bone">Your {currentYear} Blueprint is locked</h1>
+          <p className="max-w-sm text-sm leading-relaxed text-bone-muted">
+            Your year plan exists, but your current access doesn&apos;t cover it right now.
+            Upgrade to reopen it.
+          </p>
+          <Link
+            href="/pricing"
+            className="rounded-2xl border border-leather-400/50 bg-leather-500/35 px-5 py-3 text-sm font-semibold text-bone shadow-glow"
+          >
+            See plans
+          </Link>
+        </div>
+      )
+    }
+
     return (
       <div className="shell-panel flex flex-col items-center justify-center space-y-5 py-24 text-center">
         <div className="text-4xl text-bone-muted">✦</div>
@@ -96,6 +120,7 @@ export default async function BlueprintPage() {
         planYear={loaded.planYear}
         accessEndsAt={accessWindow?.endsAt ?? null}
         accessState={accessWindow?.state ?? null}
+        capability={loaded.access}
       />
     </>
   )

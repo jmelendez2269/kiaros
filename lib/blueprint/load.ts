@@ -201,3 +201,30 @@ export const loadCurrentBlueprint = cache(
   async (supabaseUserId: string, isAdmin = false): Promise<LoadedBlueprint | null> =>
     loadBlueprintForYearUncached(supabaseUserId, new Date().getFullYear(), isAdmin),
 )
+
+/**
+ * loadCurrentBlueprint() returns null both when no Blueprint was ever
+ * generated and when one exists but the caller's access capability is
+ * `none` (ACCESS-02) — those need different UI (onboarding vs. a locked
+ * state pointing at an actual owned artifact). This distinguishes them
+ * without duplicating the row query's shape into every caller.
+ */
+export const currentBlueprintRowExists = cache(
+  async (supabaseUserId: string): Promise<boolean> => {
+    const admin = createAdminSupabase()
+    const { data, error } = await admin
+      .from('blueprints')
+      .select('id')
+      .eq('user_id', supabaseUserId)
+      .eq('plan_year', new Date().getFullYear())
+      .eq('status', 'ready')
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      console.error('[blueprint-load] Row-existence query failed:', error.message)
+      return false
+    }
+    return data !== null
+  },
+)
