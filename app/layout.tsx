@@ -11,6 +11,7 @@ import {
   Lora,
 } from "next/font/google";
 import { cookies } from "next/headers";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
 import "./globals.css";
 
 const lora = Lora({
@@ -105,6 +106,7 @@ export default async function RootLayout({
           {children}
           <SpeedInsights />
           <Analytics />
+          <MetaPixel />
         </body>
       </html>
     </ClerkProvider>

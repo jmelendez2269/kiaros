@@ -16,6 +16,7 @@ import {
 import { buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { BRAND } from "@/lib/brand";
+import { sendMetaPurchaseEvent } from "@/lib/analytics/meta-capi";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -514,11 +515,24 @@ export async function fulfillCheckoutSession(params: {
   }
 
   const accessPlan = parseAccessPlan(session.metadata?.access_plan);
-  if (session.mode === "subscription" || accessPlan === "monthly") {
-    return fulfillSubscriptionCheckout({ session, clerkUserId: params.clerkUserId });
-  }
+  const result =
+    session.mode === "subscription" || accessPlan === "monthly"
+      ? await fulfillSubscriptionCheckout({ session, clerkUserId: params.clerkUserId })
+      : await fulfillOneTimeCheckout({ session, clerkUserId: params.clerkUserId });
 
-  return fulfillOneTimeCheckout({ session, clerkUserId: params.clerkUserId });
+  // Fires from both the webhook and the success-page retry path; the shared
+  // event_id lets Meta dedupe the second delivery instead of double-counting.
+  await sendMetaPurchaseEvent({
+    eventId: `purchase_${session.id}`,
+    email: result.email,
+    valueCents: session.amount_total ?? 0,
+    currency: session.currency ?? "usd",
+    eventSourceUrl: process.env.NEXT_PUBLIC_APP_URL
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/purchase/success`
+      : undefined,
+  });
+
+  return result;
 }
 
 export async function finalizeCheckoutSession(params: {

@@ -33,3 +33,7 @@ export function isPersonalizedWeekExperimentEnabled(): boolean {
 export function isEtsyArtifactAdminEnabled(): boolean {
   return enabled(process.env.KIAROS_ETSY_ARTIFACT_ADMIN);
 }
+
+export function isMetaCapiEnabled(): boolean {
+  return enabled(process.env.KIAROS_META_CAPI);
+}
