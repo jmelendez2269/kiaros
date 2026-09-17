@@ -146,10 +146,16 @@ export function buildAnnualEntitlementRecord(
     startAt?: Date | string;
   }
 ): AnnualEntitlementRecord {
-  const window = buildAnnualEntitlementWindow(input.startAt);
+  // `startAt` only feeds the window calculation below; it must not survive
+  // into the returned row. The object spread previously carried it straight
+  // through into a product_entitlements upsert, which PostgREST rejected
+  // ("Could not find the 'startAt' column") — silently failing every real
+  // annual Stripe purchase's entitlement grant after a successful charge.
+  const { startAt, ...rest } = input;
+  const window = buildAnnualEntitlementWindow(startAt);
 
   return {
-    ...input,
+    ...rest,
     starts_at: window.startsAt,
     ends_at: window.endsAt,
     access_plan: window.accessPlan,
