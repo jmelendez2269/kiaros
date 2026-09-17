@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { CosmicPlanView } from '@/components/cosmic-plan/CosmicPlanView'
 import { WeekView } from '@/components/calendar/WeekView'
 import { YearChartShell } from '@/components/year/YearChartShell'
-import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import { currentBlueprintRowExists, loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import type { EphemerisDay, MonthBlueprint, MoonPhase, NatalChart, YearEphemeris } from '@/types/blueprint'
 import type { CurriculumSessionRow } from '@/types/curriculum'
@@ -184,7 +184,7 @@ function clampWeekToPlanYear(dateIso: string, planYear: number): string {
 
 async function loadYearOverview() {
   const supabaseUserId = await loadSupabaseUserId()
-  if (!supabaseUserId) return { loaded: null, yearEphemeris: null }
+  if (!supabaseUserId) return { loaded: null, yearEphemeris: null, supabaseUserId: null }
 
   const planYear = new Date().getFullYear()
   const admin = createAdminSupabase()
@@ -201,6 +201,7 @@ async function loadYearOverview() {
   return {
     loaded,
     yearEphemeris: (ephemerisRes.data?.data as YearEphemeris | null) ?? null,
+    supabaseUserId,
   }
 }
 
@@ -414,8 +415,32 @@ export default async function YearPage({ searchParams }: PageProps) {
   return <YearChartView />
 }
 
-function NoBlueprintCard() {
+async function NoBlueprintCard({ supabaseUserId }: { supabaseUserId: string | null }) {
   const currentYear = new Date().getFullYear()
+  // loadCurrentBlueprint() returns null both when nothing was ever generated
+  // and when a Blueprint exists but the caller's access capability is 'none'
+  // (ACCESS-02) — those need different messaging. See blueprint/page.tsx.
+  const rowExists = supabaseUserId ? await currentBlueprintRowExists(supabaseUserId) : false
+
+  if (rowExists) {
+    return (
+      <div className="shell-panel flex flex-col items-center justify-center space-y-5 py-24 text-center">
+        <div className="text-4xl text-bone-muted">✦</div>
+        <h2 className="font-serif text-3xl text-bone">Your {currentYear} plan is locked</h2>
+        <p className="max-w-sm text-sm leading-relaxed text-bone-muted">
+          Your cosmic plan exists, but your current access doesn&apos;t cover it right now.
+          Upgrade to reopen it.
+        </p>
+        <Link
+          href="/pricing"
+          className="rounded-2xl border border-leather-400/50 bg-leather-500/35 px-5 py-3 text-sm font-semibold text-bone shadow-glow"
+        >
+          See plans
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="shell-panel flex flex-col items-center justify-center space-y-5 py-24 text-center">
       <div className="text-4xl text-bone-muted">✦</div>
@@ -429,6 +454,29 @@ function NoBlueprintCard() {
         className="rounded-2xl border border-leather-400/50 bg-leather-500/35 px-5 py-3 text-sm font-semibold text-bone shadow-glow"
       >
         Complete Setup
+      </Link>
+    </div>
+  )
+}
+
+function WindowedAccessNote({ windowEnd }: { windowEnd: string | null }) {
+  return (
+    <div className="shell-panel flex flex-col gap-3 border-leather-400/40 bg-leather-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium text-bone">
+          You&apos;re seeing the plan your monthly access covers right now.
+        </p>
+        <p className="text-xs leading-relaxed text-bone-muted">
+          {windowEnd
+            ? `Open through ${new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(`${windowEnd}T12:00:00`))}. Dates outside this window are part of the annual Blueprint.`
+            : 'Dates outside your current window are part of the annual Blueprint.'}
+        </p>
+      </div>
+      <Link
+        href="/pricing"
+        className="shrink-0 rounded-xl border border-leather-400/50 bg-leather-500/30 px-4 py-2 text-center text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+      >
+        See annual access
       </Link>
     </div>
   )
@@ -449,13 +497,17 @@ function PageHeader({ current }: { current: View }) {
 }
 
 async function YearChartView() {
-  const { loaded, yearEphemeris } = await loadYearOverview()
+  const { loaded, yearEphemeris, supabaseUserId } = await loadYearOverview()
 
   return (
     <div className="space-y-6">
       <PageHeader current="year" />
       {loaded ? (
         <div className="space-y-6">
+          {loaded.access.access === 'windowed' ? (
+            <WindowedAccessNote windowEnd={loaded.access.windowEnd} />
+          ) : null}
+
           {yearEphemeris ? (
             <YearChartShell yearEphemeris={yearEphemeris} weeks={loaded.blueprint.weeks} />
           ) : (
@@ -471,7 +523,7 @@ async function YearChartView() {
           <CosmicPlanView blueprint={loaded.blueprint} planYear={loaded.planYear} />
         </div>
       ) : (
-        <NoBlueprintCard />
+        <NoBlueprintCard supabaseUserId={supabaseUserId} />
       )}
     </div>
   )
@@ -481,7 +533,7 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
   const todayIso = todayISO()
   const planYear = new Date().getFullYear()
   const selectedDate = clampWeekToPlanYear(parseDate(searchParams.date, todayIso), planYear)
-  const { loaded, yearEphemeris, curriculumSessions, planItems, areaGoals, plannerContext } =
+  const { loaded, yearEphemeris, curriculumSessions, planItems, areaGoals, plannerContext, supabaseUserId } =
     await loadWeekData(selectedDate)
 
   if (!loaded || !yearEphemeris) {
@@ -497,7 +549,7 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
             </p>
           </div>
         ) : (
-          <NoBlueprintCard />
+          <NoBlueprintCard supabaseUserId={supabaseUserId} />
         )}
       </div>
     )
@@ -535,6 +587,9 @@ async function WeekChartView({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="space-y-6">
       <PageHeader current="week" />
+      {loaded.access.access === 'windowed' ? (
+        <WindowedAccessNote windowEnd={loaded.access.windowEnd} />
+      ) : null}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="shell-kicker mb-2">Weekly planner</p>
@@ -686,6 +741,9 @@ async function MonthChartView({ searchParams }: { searchParams: SearchParams }) 
   return (
     <div className="space-y-6">
       <PageHeader current="month" />
+      {loaded?.access.access === 'windowed' ? (
+        <WindowedAccessNote windowEnd={loaded.access.windowEnd} />
+      ) : null}
       <div
         style={{
           fontFamily: K.fBody,
@@ -1168,7 +1226,7 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
     return (
       <div className="space-y-6">
         <PageHeader current="review" />
-        <NoBlueprintCard />
+        <NoBlueprintCard supabaseUserId={supabaseUserId} />
       </div>
     )
   }
@@ -1240,6 +1298,9 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
   return (
     <div className="space-y-6">
       <PageHeader current="review" />
+      {loaded.access.access === 'windowed' ? (
+        <WindowedAccessNote windowEnd={loaded.access.windowEnd} />
+      ) : null}
       <div
         style={{
           fontFamily: K.fBody,
