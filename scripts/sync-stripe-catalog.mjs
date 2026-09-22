@@ -58,18 +58,41 @@ function priceLookupKey(tierKey, accessPlan) {
 async function findProduct(stripe, tier) {
   const existing = await stripe.products.search({
     query: `metadata['product_tier']:'${tier.key}'`,
-    limit: 1,
+    limit: 10,
   });
 
-  if (existing.data[0]) {
-    return stripe.products.update(existing.data[0].id, {
-      name: tier.name,
-      description: tier.description,
-      metadata: { product_tier: tier.key },
-      active: true,
-    });
+  // Sort candidates: active products first, then by creation date (newest first)
+  const candidates = existing.data.sort((a, b) => {
+    if (a.active !== b.active) return b.active ? 1 : -1;
+    return b.created - a.created;
+  });
+
+  // Try to update each candidate, skipping auto-created products
+  for (const candidate of candidates) {
+    try {
+      return await stripe.products.update(candidate.id, {
+        name: tier.name,
+        description: tier.description,
+        metadata: { product_tier: tier.key },
+        active: true,
+      });
+    } catch (error) {
+      // Skip auto-created products that Stripe refuses to update
+      if (
+        error.type === "invalid_request_error" &&
+        error.message?.includes("created by Stripe automatically")
+      ) {
+        console.warn(
+          `Skipping auto-created product ${candidate.id} (${candidate.name}) - cannot be updated`
+        );
+        continue;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
+  // No updatable product found, create a new managed product
   return stripe.products.create({
     name: tier.name,
     description: tier.description,
