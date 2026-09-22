@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: '/admin/sources', label: 'Sources', glyph: '*' },
   { href: '/admin/imports', label: 'Imports', glyph: 'v' },
   { href: '/admin/commerce', label: 'Commerce', glyph: '$' },
+  { href: '/admin/metrics', label: 'Metrics', glyph: '%' },
   { href: '/admin/drafts', label: 'Drafts', glyph: '#' },
   { href: '/admin/published', label: 'Published', glyph: '+' },
   { href: '/admin/mapping', label: 'Mapping', glyph: '@' },
