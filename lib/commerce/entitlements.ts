@@ -111,6 +111,7 @@ export function resolveEntitlement(
 export function resolveUserAccess(
   entitlements: ProductEntitlementRecord[],
   asOf: Date | string = new Date(),
+  samplerCredits?: number,
 ): UserAccessSnapshot {
   const resolved = entitlements
     .map((entitlement) => resolveEntitlement(entitlement, asOf))
@@ -129,6 +130,7 @@ export function resolveUserAccess(
       startsAt: entitlement.starts_at,
       status: entitlement.status,
     })),
+    samplerCredits,
   });
 
   return {
@@ -161,4 +163,15 @@ export function buildAnnualEntitlementRecord(
     access_plan: window.accessPlan,
     status: "active",
   };
+}
+
+export async function loadSamplerCredits(supabase: any, userId: string): Promise<number> {
+  const { data } = await supabase
+    .from("stelloquy_sampler_purchases")
+    .select("credits_remaining")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  return data?.credits_remaining ?? 0;
 }

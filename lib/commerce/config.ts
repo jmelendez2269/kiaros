@@ -1,6 +1,7 @@
 import { BRAND } from "@/lib/brand";
 
 export type CommerceTierKey = "planner" | "planner_oracle";
+export type ProductKind = CommerceTierKey | "stelloquy_sampler";
 export type AccessPlan = "monthly" | "yearly";
 
 export interface CommerceTier {
@@ -95,6 +96,17 @@ export function parseCommerceTierKey(value: string | null | undefined): Commerce
   if (!value) return null;
 
   return COMMERCE_TIERS.some((tier) => tier.key === value) ? (value as CommerceTierKey) : null;
+}
+
+export function parseProductKind(value: string | null | undefined): ProductKind | null {
+  if (!value) return null;
+
+  if (value === "stelloquy_sampler") return "stelloquy_sampler";
+  return parseCommerceTierKey(value);
+}
+
+export function isCommerceTierKey(value: ProductKind): value is CommerceTierKey {
+  return value === "planner" || value === "planner_oracle";
 }
 
 export function parseAccessPlan(value: string | null | undefined): AccessPlan | null {
