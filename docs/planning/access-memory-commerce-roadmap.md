@@ -1429,3 +1429,7 @@ Append one row to the change log and update the tracker rather than creating a s
 - Also chased down and eliminated a red herring along the way: Next.js's client-side router cache can serve a stale RSC payload across same-tab navigations in dev; the test now verifies persistence from a freshly opened tab instead of `page.reload()`.
 - Marked `SAFE-02`, `CONSENT-02`, and `ACCESS-04` `done`. Recomputed the tracker summary directly from the table (14/32 implementation rows done, 44%) rather than continue patching incremental arithmetic that had drifted.
 - Cleaned up: journal test entries cleared (persona fixture kept for future runs), dev server and local Supabase stopped/restarted as needed, no temporary debug code left in the diff (`git diff` on touched app files was empty before the final `console.error` addition).
+
+### 2026-09-22 — Reflections cron relaxed to daily for Vercel Hobby deploy unblock
+
+- Changed reflections cron schedule in `vercel.json` from `15 * * * *` (hourly) to `15 13 * * *` (daily at 1:15 PM UTC) to satisfy Vercel Hobby's daily-cron-only limit. This unblocks production deploys for kairosplanner.xyz, which were failing with `cron_jobs_limits_reached`. Hourly reflections can return after upgrading to Vercel Pro.
