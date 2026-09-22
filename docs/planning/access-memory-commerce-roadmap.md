@@ -23,13 +23,13 @@ This is the living implementation plan and canonical tracker for the work discus
 
 Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflections-memory-unwrapped-plan.md) defines monthly and quarterly period-end reports, evidence improvements, and the annual retrospective, with goals as a small optional thread. Its REF-* tasks are implemented and verified locally; migration 0047 and deployment remain pending. Question-relevant recall and source links have local implementation and tests. Existing CONSENT-* and MEM-* activation dependencies remain tracked here.
 
-## Progress snapshot — 2026-08-23
+## Progress snapshot — 2026-09-22
 
-- **Full implementation:** 14 of 32 implementation rows are `done` — **44% complete**.
-- **Including completed local work awaiting verification:** 17 of 32 implementation rows are `done` or `verification` — **53% delivered to verification**.
-- **Whole tracker, including founder decisions:** 21 of 39 rows are `done` — **54%**; 24 of 39 are `done` or `verification` — **62%**.
+- **Full implementation:** 15 of 32 implementation rows are `done` — **47% complete**.
+- **Including completed local work awaiting verification:** 18 of 32 implementation rows are `done` or `verification` — **56% delivered to verification**.
+- **Whole tracker, including founder decisions:** 22 of 39 rows are `done` — **56%**; 25 of 39 are `done` or `verification` — **64%**.
 - The unrelated **3/114 points** figure is not a Kairos metric and must not be used for this roadmap.
-- Recomputed 2026-09-17 directly from the tracker table rather than patched incrementally, after `ACCESS-02`, `ACCESS-03`, `CONSENT-03`, `METRICS-02`, `SAFE-02`, `CONSENT-02`, and `ACCESS-04` all cleared their remaining staging/authenticated-evidence gates in one session. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
+- Updated 2026-09-22 after MEM-01 tracker sync: the journal memory retrieval RPC/index/client wrapper shipped in migration 0047 and were already applied to production, but the tracker incorrectly showed `blocked`. MEM-01 moved to `done`; MEM-02/03/04 unblocked to `pending`. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
 
 ## Current recommendation
 
@@ -44,17 +44,28 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Next three actions
 
-Session ending 2026-09-17 closed `ACCESS-02`, `ACCESS-03`, `CONSENT-03`, `METRICS-02`, `SAFE-02`, `CONSENT-02`, and `ACCESS-04` — see that date's five change-log entries for what shipped and two real bugs found and fixed along the way (annual-Stripe-entitlement fulfillment; local Clerk auth config). Tracker: 14/32 implementation rows `done` (44%). **A new session should read this file's full 2026-09-17 change-log block before doing anything else here.**
+Session 2026-09-22 closed `MEM-01` after discovering it was already implemented and applied to production in migration 0047. The tracker was out of sync with the codebase. Full audit: `MEM-01-AUDIT.md`. Tracker: 15/32 implementation rows `done` (47%).
 
-Founder decision pending, asked at session end, not yet answered: which of these three now-unblocked rows to start next —
+**MEM-01 closure unblocked three rows:**
 
-1. `MEM-01` — journal full-text search/deterministic retrieval RPC. Needs a new migration (confirm with founder before applying). Unblocks the `MEM-02`→`MEM-03`→`MEM-04` chain, so starting here has the most downstream leverage.
-2. `SAMPLE-01` — Stripe one-time Stelloquy sampler product + checkout fulfillment.
-3. `METRICS-03` — admin funnel/retention summary and metric definitions.
+1. `MEM-02` — Advanced relevance scorer with Goal/Area/date/lunar filters (basic scorer already exists; this extends it).
+2. `SAMPLE-01` — Stripe one-time Stelloquy sampler product + checkout fulfillment (was already unblocked).
+3. `METRICS-03` — admin funnel/retention summary and metric definitions (was already unblocked).
 
-`PREVIEW-01` is also unblocked but needs real traffic, not engineering — not a candidate to just start.
+**Founder decision pending:**
 
-Still waiting on the founder, unrelated to the above: Stripe dashboard check for any real customer harmed by the entitlement bug (founder confirmed 2026-09-17 there has been only one purchase, via Etsy, unaffected — this is very likely already closed, but wasn't independently re-verified against Stripe's dashboard); and the Etsy launch-packet gates (offer approval, accessibility review, publication) — founder stated 2026-09-17 that legal review is not needed for this launch.
+Which of the three now-unblocked/ready rows to prioritize:
+- **MEM-02** — Extends question-relevant recall with structured filters (2–3d). Unblocks MEM-03 (refined Oracle integration) and MEM-04 (transparency UI). Starting here has downstream leverage but requires ML/scoring design choices.
+- **SAMPLE-01** — Paid Stelloquy sampler (1–2d). Unblocks SAMPLE-02 (credit ledger) and SAMPLE-03 (limited-context experience). Fast shipping and revenue-adjacent.
+- **METRICS-03** — Admin analytics and metric definitions (1–2d). Pure visibility, no downstream blockers, can ship anytime.
+
+**Separate founder decision: KIAROS_RELEVANCE_MEMORY flag activation**
+
+MEM-01's RPC is production-ready and safe. Should `KIAROS_RELEVANCE_MEMORY` be enabled now (activates question-relevant recall immediately) or wait until MEM-04 transparency UI ships? Flag is currently OFF.
+
+**Still waiting on the founder:**
+- Stripe dashboard check for any real customer harmed by the 2026-09-17 entitlement bug (founder confirmed only one Etsy purchase, unaffected — very likely closed).
+- Etsy launch-packet gates: accessibility review, publication approval (legal review confirmed not needed per 2026-09-17).
 
 ## How this tracker works
 
@@ -355,10 +366,10 @@ Recommended privacy-safe policy:
 | CONSENT-01 | P0 | Journal trust | Add separate pattern-use, Stelloquy-recall, pin, and importance fields | done | DEC-05 | 1–2d | A-Journal + Root | `0039`; shared create service + private Today path; runtime/wiring/migration/type/build checks pass | 2026-08-06 |
 | CONSENT-02 | P0 | Journal trust | Update journal create/edit/history controls and explanations | done | CONSENT-01 | 2–3d | Root-Journal | Contract/wiring tests, focused/full TypeScript, and flag-off/on builds pass. Authenticated browser interaction 2026-09-17: real Clerk sign-in, journal composer's consent toggle verified visible, a real entry saved (`POST /api/journal` 201) and confirmed persisted via a fresh tab (avoiding Next.js client-router-cache staleness). Surfaced and fixed a real local-environment gap in the process — see risk register | 2026-09-17 |
 | CONSENT-03 | P0 | Journal trust | Enforce consent in synthesis and support revocation/rebuild | done | CONSENT-01, DEC-07 | 2–3d | Root-Journal | `0040`/`0041` applied to production 2026-09-15; `scripts/check-consent-03-staging.mts` — 12 assertions against local Docker Supabase, 0 failures: revoked entries never counted in a shared pattern, invalidation/rebuild scoped to the calling user only, cross-user RLS holds on aspects/sky/pattern tables | 2026-09-17 |
-| MEM-01 | P1 | Memory | Add full-text search/index and deterministic retrieval RPC | blocked | CONSENT-01 | 1–2d | A-Journal | — | 2026-08-06 |
-| MEM-02 | P1 | Memory | Build relevance scorer, excerpts, threshold, and token budget | blocked | MEM-01 | 2–3d | A-Journal | — | 2026-08-06 |
-| MEM-03 | P1 | Memory | Integrate selected memories into Stelloquy after the question is known | blocked | MEM-02, CONSENT-03 | 1–2d | A-Journal + Root | — | 2026-08-06 |
-| MEM-04 | P1 | Memory | Show recalled-memory count and user-reviewable sources | blocked | MEM-03 | 1–2d | A-Journal | — | 2026-08-06 |
+| MEM-01 | P1 | Memory | Add full-text search/index and deterministic retrieval RPC | done | CONSENT-01 | 1–2d | A-Journal | Migration `0047` applied to production; RPC `recall_journal_memories` with partial GIN index `journal_recall_search`, SECURITY DEFINER, deterministic ranking (ts_rank_cd + pin/importance boosts), consent filter, 8-result limit, 900-char body truncation; client wrapper `lib/journal/memory-retrieval.ts` with 4200-char token budget, 5-entry limit, consent recheck, score threshold; Oracle integration `app/api/oracle/chat/route.ts` with flag `KIAROS_RELEVANCE_MEMORY`; verification script `scripts/verify-mem-01.mts` with 15 test scenarios; full audit doc `MEM-01-AUDIT.md` | 2026-09-22 |
+| MEM-02 | P1 | Memory | Build relevance scorer, excerpts, threshold, and token budget | pending | MEM-01 | 2–3d | A-Journal | Note: basic relevance scorer already exists in MEM-01 (ts_rank_cd + boosts); this task is for advanced scoring with Goal/Area/date/lunar filters per roadmap section M3 | 2026-09-22 |
+| MEM-03 | P1 | Memory | Integrate selected memories into Stelloquy after the question is known | pending | MEM-02, CONSENT-03 | 1–2d | A-Journal + Root | Note: basic integration already exists (Oracle calls recallJournalMemories when KIAROS_RELEVANCE_MEMORY=true); this task is for advanced scorer integration after MEM-02 | 2026-09-22 |
+| MEM-04 | P1 | Memory | Show recalled-memory count and user-reviewable sources | pending | MEM-03 | 1–2d | A-Journal | Note: response header already includes source metadata (X-Kairos-Memory-Sources); this task is for UI transparency component | 2026-09-22 |
 | ACCESS-01 | P0 | Paid access | Replace broad plan checks with explicit capabilities | done | DEC-01 | 1–2d | B-Access + Root | `check-access-capabilities.mts` passes 87 assertions; focused/full TS and flags-off build pass | 2026-08-06 |
 | ACCESS-02 | P0 | Paid access | Enforce monthly Blueprint window on the server | done | ACCESS-01 | 2–4d | Root-Access | `0043`; 40 projection/RLS assertions, 87 capability assertions, full TypeScript, diff check, flag-off/on builds pass; `scripts/check-access-02-staging.mts` — 37 assertions against local Docker Supabase, 8 of 10 SAFE-02 personas, 0 failures | 2026-09-17 |
 | ACCESS-03 | P0 | Paid access | Update Blueprint/calendar navigation, locked states, upgrade, and cancellation behavior | done | ACCESS-02 | 2–3d | B-Access | Cancellation already existed (Stripe billing portal, unchanged). Blueprint page: `currentBlueprintRowExists()` distinguishes never-generated from access-lapsed; windowed-access banner with upgrade link. `/year` (all 4 views — year/month/week/quarterly-review): same `NoBlueprintCard` locked-state fix reused across all call sites, `WindowedAccessNote` banner added to each; `MonthChartView` keeps its existing soft-degrade design (no full block) with the banner added on top. Verified against local Docker Supabase: 4 assertions (windowed persona → quarters redacted; lapsed persona → row-exists true), plus the 4 from the Blueprint-page slice; `tsc`/build pass both times | 2026-09-17 |
@@ -1063,6 +1074,18 @@ Avoid client-only flags for security boundaries.
 | 2026-08-26 | Approved an isolated three-stage production rollout for natal-report fulfillment: deploy all gates off, enable founder admin plus persistence, then enable manual real intake last | Preserves the dirty worktree, proves fail-closed deployment first, and makes the first-order workflow usable without connecting Etsy, creating buyer data, or adding another paid cloud resource | ETSY-03, QA-01–03 |
 
 | 2026-08-26 | Approved Celestial Connection as the next Etsy product pair: a full synastry/composite report and a separately sellable double-orbit wall print | Gives buyers a relationship-centered product without compatibility scoring or soulmate promises; the Top 3 structure leads with useful orientation while the report preserves depth and the map remains independently valuable | ETSY-06 |
+| 2026-09-22 | MEM-01 was already implemented and applied to production in migration 0047 but tracker showed `blocked` | Full code audit revealed recall RPC, index, client wrapper, Oracle integration, and feature flag all shipped; updated tracker to `done` and unblocked MEM-02/03/04 to `pending` | MEM-01, MEM-02, MEM-03, MEM-04 |
+
+### 2026-09-22 — MEM-01 tracker sync
+
+- **Completed:** MEM-01 (tracker was out of sync; implementation already existed and was applied to production)
+- **Files audited:** `supabase/migrations/0047_reflections.sql`, `lib/journal/memory-retrieval.ts`, `app/api/oracle/chat/route.ts`, `lib/feature-flags.ts`
+- **Created:** `scripts/verify-mem-01.mts` (15 test scenarios), `MEM-01-AUDIT.md` (comprehensive implementation audit)
+- **Tracker updates:** MEM-01 → `done` with full evidence; MEM-02/03/04 → `pending` (unblocked); progress snapshot updated to 15/32 done (47%)
+- **Findings:** Migration 0047 already contains complete MEM-01 implementation: RPC `recall_journal_memories` with partial GIN index `journal_recall_search`, SECURITY DEFINER access control, deterministic ranking (ts_rank_cd + pin boost 0.05 + importance boost 0.005), consent filter, 8-result limit, 900-char body truncation; client wrapper with 4200-char token budget, 5-entry limit, consent recheck, score threshold; Oracle integration flag-gated with `KIAROS_RELEVANCE_MEMORY`
+- **Decision pending:** Should `KIAROS_RELEVANCE_MEMORY` flag be enabled now (question-relevant recall active immediately) or wait until MEM-04 transparency UI ships? RPC is production-ready and safe
+- **No gaps found:** Roadmap preferred generated search_vector column, but expression-based GIN index is functionally equivalent and already working in production; no migration needed
+- **Next priorities:** Founder to choose between MEM-02 (advanced scorer), SAMPLE-01 (paid sampler), or METRICS-03 (admin analytics)
 
 ## Session update template
 
