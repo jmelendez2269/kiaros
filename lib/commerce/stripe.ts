@@ -10,10 +10,13 @@ import {
   CommerceTier,
   getCommerceTier,
   getTierPriceCents,
+  isCommerceTierKey,
   LOYALTY_REWARD_AMOUNT_OFF_CENTS,
   NEXT_PLANNER_YEAR,
   parseAccessPlan,
   parseCommerceTierKey,
+  parseProductKind,
+  type ProductKind,
 } from "@/lib/commerce/config";
 import { buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
 import { createAdminSupabase } from "@/lib/supabase/admin";
@@ -223,6 +226,138 @@ export async function createCheckoutSession(params: {
       metadata,
     },
   });
+}
+
+export async function createSamplerCheckoutSession(params: {
+  clerkUserId: string;
+  customerEmail: string;
+  checkoutAttemptId: string;
+  funnelContext?: CheckoutFunnelContext | null;
+}) {
+  const stripe = getStripeClient();
+  const appUrl = getAppUrl();
+  const metadata = {
+    product_tier: "stelloquy_sampler",
+    credits_granted: "3",
+    ...buildCheckoutAnalyticsMetadata(params.checkoutAttemptId, params.funnelContext ?? null),
+  };
+
+  return stripe.checkout.sessions.create({
+    mode: "payment",
+    billing_address_collection: "auto" as const,
+    client_reference_id: params.clerkUserId,
+    customer_email: params.customerEmail,
+    customer_creation: "always",
+    success_url: `${appUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/pricing?canceled=1&attempt_id=${encodeURIComponent(params.checkoutAttemptId)}`,
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: 100,
+          product_data: {
+            name: "Stelloquy Sampler",
+            description: "Three Stelloquy conversations grounded in your natal chart and current sky",
+            metadata,
+          },
+        },
+      },
+    ],
+    payment_intent_data: {
+      metadata,
+    },
+    metadata,
+  });
+}
+
+async function fulfillSamplerCheckout(params: {
+  session: Stripe.Checkout.Session;
+  clerkUserId?: string;
+}) {
+  const supabase = createAdminSupabase();
+  const { session } = params;
+
+  if (params.clerkUserId && session.client_reference_id !== params.clerkUserId) {
+    throw new Error("This checkout session does not belong to the signed-in user.");
+  }
+
+  if (session.payment_status !== "paid") {
+    throw new Error("This checkout session has not been paid yet.");
+  }
+
+  const productKind = parseProductKind(session.metadata?.product_tier);
+  if (productKind !== "stelloquy_sampler") {
+    throw new Error("The checkout session is not for a Stelloquy Sampler.");
+  }
+
+  const clerkUserId = session.client_reference_id;
+  if (!clerkUserId) {
+    throw new Error("The checkout session is missing user metadata.");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("id, email, onboarding_completed_at, profile_setup_completed_at")
+    .eq("clerk_user_id", clerkUserId)
+    .single();
+
+  if (profileError || !profile) {
+    throw new Error(`Your ${BRAND.product} profile is not ready yet. Please try again.`);
+  }
+
+  const purchasedAt = session.created
+    ? new Date(session.created * 1000).toISOString()
+    : new Date().toISOString();
+
+  const { data: existingPurchase } = await supabase
+    .from("stelloquy_sampler_purchases")
+    .select("id, stripe_checkout_session_id")
+    .eq("user_id", profile.id)
+    .in("status", ["active", "exhausted"])
+    .maybeSingle();
+
+  if (existingPurchase && existingPurchase.stripe_checkout_session_id !== session.id) {
+    throw new Error("You have already purchased a Stelloquy Sampler. Only one sampler pack is available per account.");
+  }
+
+  const purchasePayload = {
+    user_id: profile.id,
+    stripe_checkout_session_id: session.id,
+    stripe_payment_intent_id:
+      typeof session.payment_intent === "string" ? session.payment_intent : null,
+    stripe_customer_id: getStripeId(session.customer),
+    credits_granted: 3,
+    credits_remaining: 3,
+    amount_cents: session.amount_total ?? 100,
+    currency: session.currency ?? "usd",
+    status: "active",
+    purchased_at: purchasedAt,
+    metadata: {
+      checkout_session_id: session.id,
+      payment_status: session.payment_status,
+      customer_email: session.customer_details?.email ?? session.customer_email ?? null,
+    },
+  };
+
+  const { data: purchase, error: purchaseError } = await supabase
+    .from("stelloquy_sampler_purchases")
+    .upsert(purchasePayload, { onConflict: "stripe_checkout_session_id" })
+    .select("id, credits_remaining")
+    .single();
+
+  if (purchaseError || !purchase) {
+    throw new Error("We couldn't save your sampler purchase yet.");
+  }
+
+  return {
+    email: profile.email,
+    isRenewal: !!profile.onboarding_completed_at,
+    profileSetupComplete: !!profile.profile_setup_completed_at,
+    userProfileId: profile.id,
+    purchaseId: purchase.id,
+    creditsRemaining: purchase.credits_remaining,
+  };
 }
 
 async function fulfillOneTimeCheckout(params: {
@@ -529,14 +664,39 @@ export async function fulfillCheckoutSession(params: {
     throw new Error("Checkout session not found.");
   }
 
+  const productKind = parseProductKind(session.metadata?.product_tier);
+
+  if (productKind === "stelloquy_sampler") {
+    const result = await fulfillSamplerCheckout({ session, clerkUserId: params.clerkUserId });
+
+    await sendMetaPurchaseEvent({
+      eventId: `purchase_${session.id}`,
+      email: result.email,
+      valueCents: session.amount_total ?? 0,
+      currency: session.currency ?? "usd",
+      eventSourceUrl: process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/purchase/success`
+        : undefined,
+    });
+
+    return {
+      tier: null,
+      email: result.email,
+      accessPlan: null,
+      isRenewal: result.isRenewal,
+      profileSetupComplete: result.profileSetupComplete,
+      userProfileId: result.userProfileId,
+      orderId: null,
+      entitlementId: null,
+    };
+  }
+
   const accessPlan = parseAccessPlan(session.metadata?.access_plan);
   const result =
     session.mode === "subscription" || accessPlan === "monthly"
       ? await fulfillSubscriptionCheckout({ session, clerkUserId: params.clerkUserId })
       : await fulfillOneTimeCheckout({ session, clerkUserId: params.clerkUserId });
 
-  // Fires from both the webhook and the success-page retry path; the shared
-  // event_id lets Meta dedupe the second delivery instead of double-counting.
   await sendMetaPurchaseEvent({
     eventId: `purchase_${session.id}`,
     email: result.email,

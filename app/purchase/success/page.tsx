@@ -46,6 +46,39 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
   try {
     const result = await finalizeCheckoutSession({ sessionId, clerkUserId: userId });
 
+    if (!result.tier || !result.accessPlan) {
+      return (
+        <div className="page-wrapper">
+          <div className="container py-12 md:py-16">
+            <div className="shell-panel-hero p-8 md:p-10">
+              <p className="shell-kicker mb-4">Purchase Complete</p>
+              <h1 className="shell-hero-title max-w-3xl">Your Stelloquy Sampler is ready.</h1>
+              <p className="shell-prose-lead mt-4">
+                Checkout is complete. You have three Stelloquy conversations available, grounded in your natal chart and current sky. Your sampler is linked to {result.email}.
+              </p>
+              <p className="mt-3 text-sm leading-7 text-bone-muted">
+                Your sampler credits never expire. Upgrade to the full Planner + Oracle for unlimited conversations with journal memory.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href="/oracle"
+                  className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
+                >
+                  Start a conversation
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
+                >
+                  View upgrade options
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const bodyText = result.accessPlan === "monthly"
       ? `Checkout is complete. Your monthly ${BRAND.product} access is active, with the current Blueprint week plus the next four weeks available, and is linked to ${result.email}.`
       : `Checkout is complete. Your annual access to the full canonical Blueprint is active, and your loyalty reward for next year has been reserved for ${result.email}.`;

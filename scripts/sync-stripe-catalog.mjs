@@ -24,6 +24,15 @@ const CATALOG = [
       { accessPlan: "yearly", amount: 22000 },
     ],
   },
+  {
+    key: "stelloquy_sampler",
+    name: "Stelloquy Sampler",
+    description:
+      "A starter pack of three Stelloquy conversations grounded in your natal chart and current sky. One sampler pack per account.",
+    prices: [
+      { accessPlan: "onetime", amount: 100 },
+    ],
+  },
 ];
 
 function loadEnvFile(path) {
