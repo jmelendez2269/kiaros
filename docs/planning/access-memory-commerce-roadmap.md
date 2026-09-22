@@ -25,11 +25,11 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Progress snapshot — 2026-09-22
 
-- **Full implementation:** 15 of 32 implementation rows are `done` — **47% complete**.
+- **Full implementation:** 16 of 32 implementation rows are `done` — **50% complete**.
 - **Including completed local work awaiting verification:** 18 of 32 implementation rows are `done` or `verification` — **56% delivered to verification**.
-- **Whole tracker, including founder decisions:** 22 of 39 rows are `done` — **56%**; 25 of 39 are `done` or `verification` — **64%**.
+- **Whole tracker, including founder decisions:** 23 of 39 rows are `done` — **59%**; 25 of 39 are `done` or `verification` — **64%**.
 - The unrelated **3/114 points** figure is not a Kairos metric and must not be used for this roadmap.
-- Updated 2026-09-22 after MEM-01 tracker sync: the journal memory retrieval RPC/index/client wrapper shipped in migration 0047 and were already applied to production, but the tracker incorrectly showed `blocked`. MEM-01 moved to `done`; MEM-02/03/04 unblocked to `pending`. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
+- Updated 2026-09-22: Both MEM-01 (tracker sync — was already in production via migration 0047) and METRICS-03 (admin metrics dashboard) completed. MEM-01 unblocked MEM-02/03/04 to `pending`. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
 
 ## Current recommendation
 
@@ -44,20 +44,21 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Next three actions
 
-Session 2026-09-22 closed `MEM-01` after discovering it was already implemented and applied to production in migration 0047. The tracker was out of sync with the codebase. Full audit: `MEM-01-AUDIT.md`. Tracker: 15/32 implementation rows `done` (47%).
+Sessions 2026-09-22 closed both `MEM-01` (tracker sync — was already in production) and `METRICS-03` (admin metrics dashboard with 7 primary metrics at `/admin/metrics`). Full MEM-01 audit: `MEM-01-AUDIT.md`. Tracker: 16/32 implementation rows `done` (50%).
 
 **MEM-01 closure unblocked three rows:**
 
 1. `MEM-02` — Advanced relevance scorer with Goal/Area/date/lunar filters (basic scorer already exists; this extends it).
-2. `SAMPLE-01` — Stripe one-time Stelloquy sampler product + checkout fulfillment (was already unblocked).
-3. `METRICS-03` — admin funnel/retention summary and metric definitions (was already unblocked).
+2. `MEM-03` — Integrate selected memories into Stelloquy after the question is known.
+3. `MEM-04` — Show recalled-memory count and user-reviewable sources.
+
+**SAMPLE-01** remains unblocked and ready.
 
 **Founder decision pending:**
 
-Which of the three now-unblocked/ready rows to prioritize:
+Which of the now-unblocked/ready rows to prioritize:
 - **MEM-02** — Extends question-relevant recall with structured filters (2–3d). Unblocks MEM-03 (refined Oracle integration) and MEM-04 (transparency UI). Starting here has downstream leverage but requires ML/scoring design choices.
 - **SAMPLE-01** — Paid Stelloquy sampler (1–2d). Unblocks SAMPLE-02 (credit ledger) and SAMPLE-03 (limited-context experience). Fast shipping and revenue-adjacent.
-- **METRICS-03** — Admin analytics and metric definitions (1–2d). Pure visibility, no downstream blockers, can ship anytime.
 
 **Separate founder decision: KIAROS_RELEVANCE_MEMORY flag activation**
 
@@ -362,7 +363,7 @@ Recommended privacy-safe policy:
 | SAFE-03 | P0 | Safety | Verify no free signed-in Stelloquy allowance remains in code or current copy | done | DEC-03 | 0.5d | B-Access + Root | `node scripts/check-stelloquy-access.mjs` passes: 3 generation entrypoints guarded; 337 source files contain no retired free/core allowance | 2026-08-06 |
 | METRICS-01 | P0 | Measurement | Define and persist first-party funnel events and attribution | done | — | 2–3d | C-Data + Root | `0038`; runtime/focused TS/migration checks and flags-off build pass; public route permits only 3 low-trust events | 2026-08-06 |
 | METRICS-02 | P0 | Measurement | Persist checkout starts, cancellations, completions, and experiment source | done | METRICS-01 | 1–2d | Root-Data | Trusted server start/cancel/webhook completion hooks, first-touch preservation, replay/privacy contract, focused/full TS, regressions, diff check, and flag-off/on 99-page builds pass. Staged Stripe/DB reconciliation 2026-09-17: real `sk_test_` Stripe checkout session completed via Playwright against Stripe's actual hosted page, `checkout_started`/`checkout_completed`/`checkout_canceled` all verified against local Docker Supabase, replay-idempotent (11 assertions). Surfaced and fixed a real production bug in the process — see risk register | 2026-09-17 |
-| METRICS-03 | P1 | Measurement | Add admin funnel/retention summary and metric definitions | blocked | METRICS-02 | 1–2d | C-Data | — | 2026-08-06 |
+| METRICS-03 | P1 | Measurement | Add admin funnel/retention summary and metric definitions | done | METRICS-02 | 1–2d | C-Data | `/admin/metrics` page + `lib/analytics/metrics.ts` calculation module + `MetricsView.tsx` UI; 7 primary metrics with date filters; read-only queries on `first_party_funnel_events`; TypeScript/build/106-page checks pass; PR #8 | 2026-09-22 |
 | CONSENT-01 | P0 | Journal trust | Add separate pattern-use, Stelloquy-recall, pin, and importance fields | done | DEC-05 | 1–2d | A-Journal + Root | `0039`; shared create service + private Today path; runtime/wiring/migration/type/build checks pass | 2026-08-06 |
 | CONSENT-02 | P0 | Journal trust | Update journal create/edit/history controls and explanations | done | CONSENT-01 | 2–3d | Root-Journal | Contract/wiring tests, focused/full TypeScript, and flag-off/on builds pass. Authenticated browser interaction 2026-09-17: real Clerk sign-in, journal composer's consent toggle verified visible, a real entry saved (`POST /api/journal` 201) and confirmed persisted via a fresh tab (avoiding Next.js client-router-cache staleness). Surfaced and fixed a real local-environment gap in the process — see risk register | 2026-09-17 |
 | CONSENT-03 | P0 | Journal trust | Enforce consent in synthesis and support revocation/rebuild | done | CONSENT-01, DEC-07 | 2–3d | Root-Journal | `0040`/`0041` applied to production 2026-09-15; `scripts/check-consent-03-staging.mts` — 12 assertions against local Docker Supabase, 0 failures: revoked entries never counted in a shared pattern, invalidation/rebuild scoped to the calling user only, cross-user RLS holds on aspects/sky/pattern tables | 2026-09-17 |
@@ -1101,6 +1102,25 @@ Append one row to the change log and update the tracker rather than creating a s
 - Risks or blockers:
 - Next three actions:
 ```
+
+### 2026-09-22 — METRICS-03 admin funnel/retention summary completed
+
+- Implemented admin metrics dashboard at `/admin/metrics` with exact definitions for the seven primary acquisition and retention metrics defined in the roadmap's Measurement section.
+- Created `lib/analytics/metrics.ts` with `calculateFunnelMetrics()` function that queries `first_party_funnel_events` table using read-only SQL aggregations. All calculations are documented and reproducible.
+- Built `components/admin/MetricsView.tsx` client component with date range filters (defaults to last 30 days), metric cards with inline definitions, and N/A handling for metrics without sufficient data (preview/sampler events).
+- Updated `components/admin/AdminSidebar.tsx` to add Metrics navigation link (glyph: %) between Commerce and Drafts, respecting `LOCK-ADMIN-NAV` pattern.
+- Seven metrics implemented:
+  1. 14-day net first-payment revenue per unique pricing visitor
+  2. Pricing-to-checkout and checkout-to-paid conversion rates
+  3. Preview-to-paid vs paid-first conversion comparison
+  4. Blueprint-ready rate and median time to ready
+  5. Day-7 return rate
+  6. Cancellation before second invoice and second-invoice retention
+  7. Sampler-to-subscription conversion (shows N/A when no sampler data exists)
+- All metrics use existing `first_party_funnel_events` table with no new migrations required. Privacy contract preserved: no journal text, birth data, Stelloquy prompts, or Blueprint content in analytics.
+- Verification passed: TypeScript compiles clean, Next.js build succeeds with 106 pages including `/admin/metrics`, admin auth pattern respected (Clerk `isAdmin` check in layout).
+- Evidence: PR #8 (https://github.com/jmelendez2269/kiaros/pull/8), commit `573b236`, build output confirms metrics page included.
+- Moved `METRICS-03` from `blocked` to `done` in tracker. Progress: 15/32 implementation rows (47%) now complete. No database changes, no migrations, no flag changes, no production deployment in this session.
 
 ## Change log
 
