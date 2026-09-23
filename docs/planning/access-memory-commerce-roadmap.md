@@ -23,13 +23,13 @@ This is the living implementation plan and canonical tracker for the work discus
 
 Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflections-memory-unwrapped-plan.md) defines monthly and quarterly period-end reports, evidence improvements, and the annual retrospective, with goals as a small optional thread. Its REF-* tasks are implemented and verified locally; migration 0047 and deployment remain pending. Question-relevant recall and source links have local implementation and tests. Existing CONSENT-* and MEM-* activation dependencies remain tracked here.
 
-## Progress snapshot — 2026-09-22
+## Progress snapshot — 2026-09-23
 
-- **Full implementation:** 16 of 32 implementation rows are `done` — **50% complete**.
-- **Including completed local work awaiting verification:** 18 of 32 implementation rows are `done` or `verification` — **56% delivered to verification**.
-- **Whole tracker, including founder decisions:** 23 of 39 rows are `done` — **59%**; 25 of 39 are `done` or `verification` — **64%**.
+- **Full implementation:** 17 of 32 implementation rows are `done` — **53% complete**.
+- **Including completed local work awaiting verification:** 17 of 32 implementation rows are `done` or `verification` — **53% delivered to verification**.
+- **Whole tracker, including founder decisions:** 24 of 39 rows are `done` — **62%**; 24 of 39 are `done` or `verification` — **62%**.
 - The unrelated **3/114 points** figure is not a Kairos metric and must not be used for this roadmap.
-- Updated 2026-09-22: Both MEM-01 (tracker sync — was already in production via migration 0047) and METRICS-03 (admin metrics dashboard) completed. MEM-01 unblocked MEM-02/03/04 to `pending`. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
+- Updated 2026-09-23: SAMPLE-01 (paid Stelloquy sampler) completed. Production verification: PR #10 merged, deploy `dpl_9M9NTTduCAV65BHyECf3u1CC4mqL` READY, `/sampler` live walkthrough PASS. Production flag `KIAROS_RELEVANCE_MEMORY=true` confirmed. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
 
 ## Current recommendation
 
@@ -44,7 +44,7 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 
 ## Next three actions
 
-Sessions 2026-09-22 closed both `MEM-01` (tracker sync — was already in production) and `METRICS-03` (admin metrics dashboard with 7 primary metrics at `/admin/metrics`). Full MEM-01 audit: `MEM-01-AUDIT.md`. Tracker: 16/32 implementation rows `done` (50%).
+Sessions 2026-09-22 closed both `MEM-01` (tracker sync — was already in production) and `METRICS-03` (admin metrics dashboard with 7 primary metrics at `/admin/metrics`). Session 2026-09-23 closed `SAMPLE-01` (paid Stelloquy sampler). Tracker: 17/32 implementation rows `done` (53%).
 
 **MEM-01 closure unblocked three rows:**
 
@@ -52,17 +52,16 @@ Sessions 2026-09-22 closed both `MEM-01` (tracker sync — was already in produc
 2. `MEM-03` — Integrate selected memories into Stelloquy after the question is known.
 3. `MEM-04` — Show recalled-memory count and user-reviewable sources.
 
-**SAMPLE-01** remains unblocked and ready.
+**SAMPLE-01** complete 2026-09-23.
 
 **Founder decision pending:**
 
-Which of the now-unblocked/ready rows to prioritize:
+Next priority choice:
 - **MEM-02** — Extends question-relevant recall with structured filters (2–3d). Unblocks MEM-03 (refined Oracle integration) and MEM-04 (transparency UI). Starting here has downstream leverage but requires ML/scoring design choices.
-- **SAMPLE-01** — Paid Stelloquy sampler (1–2d). Unblocks SAMPLE-02 (credit ledger) and SAMPLE-03 (limited-context experience). Fast shipping and revenue-adjacent.
 
-**Separate founder decision: KIAROS_RELEVANCE_MEMORY flag activation**
+**Memory flag status confirmed**
 
-MEM-01's RPC is production-ready and safe. Should `KIAROS_RELEVANCE_MEMORY` be enabled now (activates question-relevant recall immediately) or wait until MEM-04 transparency UI ships? Flag is currently OFF.
+Production verification 2026-09-23: `KIAROS_RELEVANCE_MEMORY=true` in Vercel kairosplanner.xyz production environment (env id `HxcH37iUU2DyvrI9`). Question-relevant journal recall is active. MEM-01 remains done; transparency UI (MEM-04) remains pending.
 
 **Still waiting on the founder:**
 - Stripe dashboard check for any real customer harmed by the 2026-09-17 entitlement bug (founder confirmed only one Etsy purchase, unaffected — very likely closed).
@@ -375,7 +374,7 @@ Recommended privacy-safe policy:
 | ACCESS-02 | P0 | Paid access | Enforce monthly Blueprint window on the server | done | ACCESS-01 | 2–4d | Root-Access | `0043`; 40 projection/RLS assertions, 87 capability assertions, full TypeScript, diff check, flag-off/on builds pass; `scripts/check-access-02-staging.mts` — 37 assertions against local Docker Supabase, 8 of 10 SAFE-02 personas, 0 failures | 2026-09-17 |
 | ACCESS-03 | P0 | Paid access | Update Blueprint/calendar navigation, locked states, upgrade, and cancellation behavior | done | ACCESS-02 | 2–3d | B-Access | Cancellation already existed (Stripe billing portal, unchanged). Blueprint page: `currentBlueprintRowExists()` distinguishes never-generated from access-lapsed; windowed-access banner with upgrade link. `/year` (all 4 views — year/month/week/quarterly-review): same `NoBlueprintCard` locked-state fix reused across all call sites, `WindowedAccessNote` banner added to each; `MonthChartView` keeps its existing soft-degrade design (no full block) with the banner added on top. Verified against local Docker Supabase: 4 assertions (windowed persona → quarters redacted; lapsed persona → row-exists true), plus the 4 from the Blueprint-page slice; `tsc`/build pass both times | 2026-09-17 |
 | ACCESS-04 | P0 | Paid access | Align pricing, onboarding, success, billing, and retention copy | done | ACCESS-01, SAFE-01 | 1–2d | Agent A + Root | Copy/offer contract passes; retention delivery batch-loads entitlements, fails closed on lookup errors, and requires `canUsePlanner` before content/send work; 16 eligibility assertions, all focused regressions, full TypeScript, diff check, 99-page build, and public browser checks pass. Authenticated lifecycle persona 2026-09-17: real Clerk sign-in as an active-annual planner+oracle persona — `/settings` shows a working "Manage billing" control, `/pricing` does not tell her to upgrade to what she already has. Only one persona tested (active top-tier); expired/read-only/legacy-Etsy lifecycle copy is not separately re-verified here | 2026-09-17 |
-| SAMPLE-01 | P1 | Sampler | Add Stripe one-time sampler product and checkout fulfillment | verification | DEC-03, METRICS-02 | 1–2d | B-Commerce + Root | Implementation complete; catalog extended, migration 0048 created, fulfillment branches on product_tier, enforces one-per-account; types compile, build passes; 30/30 automated checks pass in `scripts/verify-sample-01.mjs` | 2026-09-22 |
+| SAMPLE-01 | P1 | Sampler | Add Stripe one-time sampler product and checkout fulfillment | done | DEC-03, METRICS-02 | 1–2d | B-Commerce + Root | Migration 0048 created; catalog extended; fulfillment branches on product_tier; enforces one-per-account; `/sampler`, `/pricing`, and `/stelloquy` CTAs wired; 30/30 automated checks pass in `scripts/verify-sample-01.mjs`. PR #10 squash-merged to main as `0ea989a`. Prod deploy `dpl_9M9NTTduCAV65BHyECf3u1CC4mqL` READY on kairosplanner.xyz. Kai prod re-walk PASS 2026-09-23: `/sampler` → Buy sampler $1 → Stripe Checkout `cs_live_` Stelloquy Sampler $1.00, stop-before-Pay; CTAs also present on `/pricing` and `/stelloquy` | 2026-09-23 |
 | SAMPLE-02 | P1 | Sampler | Add append-only credit ledger and idempotent consumption | blocked | SAMPLE-01 | 2–3d | B-Commerce | — | 2026-08-06 |
 | SAMPLE-03 | P1 | Sampler | Build limited-context Stelloquy sampler experience and upgrade handoff | blocked | SAMPLE-02 | 2–3d | B-Commerce + Root | — | 2026-08-06 |
 | PREVIEW-01 | P1 | Experiment | Compare paid-first versus personalized-reading-first acquisition | blocked | SAFE-02, METRICS-02 | 1–2d + traffic | C-Product | — | 2026-08-06 |
@@ -1076,6 +1075,7 @@ Avoid client-only flags for security boundaries.
 
 | 2026-08-26 | Approved Celestial Connection as the next Etsy product pair: a full synastry/composite report and a separately sellable double-orbit wall print | Gives buyers a relationship-centered product without compatibility scoring or soulmate promises; the Top 3 structure leads with useful orientation while the report preserves depth and the map remains independently valuable | ETSY-06 |
 | 2026-09-22 | MEM-01 was already implemented and applied to production in migration 0047 but tracker showed `blocked` | Full code audit revealed recall RPC, index, client wrapper, Oracle integration, and feature flag all shipped; updated tracker to `done` and unblocked MEM-02/03/04 to `pending` | MEM-01, MEM-02, MEM-03, MEM-04 |
+| 2026-09-23 | SAMPLE-01 completed and deployed; production verification confirmed `KIAROS_RELEVANCE_MEMORY=true` | PR #10 merged, deploy `dpl_9M9NTTduCAV65BHyECf3u1CC4mqL` READY, sampler CTAs wired at `/sampler`, `/pricing`, `/stelloquy`; prod re-walk PASS (Stripe Checkout live session); corrected stale roadmap notes stating memory flag was OFF | SAMPLE-01 |
 
 ### 2026-09-22 — MEM-01 tracker sync
 
@@ -1433,3 +1433,11 @@ Append one row to the change log and update the tracker rather than creating a s
 ### 2026-09-22 — Reflections cron relaxed to daily for Vercel Hobby deploy unblock
 
 - Changed reflections cron schedule in `vercel.json` from `15 * * * *` (hourly) to `15 13 * * *` (daily at 1:15 PM UTC) to satisfy Vercel Hobby's daily-cron-only limit. This unblocks production deploys for kairosplanner.xyz, which were failing with `cron_jobs_limits_reached`. Hourly reflections can return after upgrading to Vercel Pro.
+
+### 2026-09-23 — SAMPLE-01 completed: paid Stelloquy sampler live
+
+- SAMPLE-01 (paid Stelloquy sampler) completed and deployed. PR #10 (https://github.com/jmelendez2269/kiaros/pull/10) squash-merged to main as commit `0ea989a41e5ee85588206e8498d4afe093163008`.
+- Production deployment `dpl_9M9NTTduCAV65BHyECf3u1CC4mqL` READY on kairosplanner.xyz. Live walkthrough PASS: `/sampler` → "Buy sampler $1" button → Stripe Checkout with live `cs_live_` session showing "Stelloquy Sampler $1.00" (stopped before payment). CTAs also visible on `/pricing` and `/stelloquy`.
+- Production environment verification confirmed: `KIAROS_RELEVANCE_MEMORY=true` in Vercel environment (env id `HxcH37iUU2DyvrI9`). Question-relevant journal recall is active. Corrected stale roadmap notes that previously stated the flag was OFF.
+- Updated tracker: SAMPLE-01 → `done`; progress now 17/32 implementation rows (53%). SAMPLE-02 (credit ledger) and SAMPLE-03 (limited-context experience) remain blocked pending SAMPLE-01's ledger dependency.
+- No database migrations, no production flag changes, no Stripe product mutations performed in this docs-only update session.
