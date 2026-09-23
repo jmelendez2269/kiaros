@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { StarField } from "@/components/almanac/StarField";
+import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { StelloquyOrb } from "@/components/oracle/StelloquyOrb";
 import { BRAND } from "@/lib/brand";
 import { formatUsd, getCommerceTier } from "@/lib/commerce/config";
@@ -457,7 +458,7 @@ function QuestionsSection() {
 
 function ComparisonSection() {
   return (
-    <section className="border-b border-almanac-line py-20 md:py-28">
+    <section className="border-b border-almanac-line bg-almanac-bg2/40 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="font-almanac-mono text-[0.7rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
@@ -507,6 +508,106 @@ function ComparisonSection() {
             </ul>
           </article>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function SamplerSection({ isSignedIn }: Props) {
+  return (
+    <section className="border-b border-almanac-line py-20 md:py-28">
+      <div className="mx-auto max-w-6xl px-5 md:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="font-almanac-mono text-[0.7rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
+            Not ready for a full year?
+          </p>
+          <h2 className="mt-4 font-almanac-serif text-4xl italic leading-tight text-almanac-ink md:text-5xl">
+            Try Stelloquy for $1.
+          </h2>
+          <p className="mt-5 text-[0.98rem] leading-7 text-almanac-ink-dim">
+            Get three Stelloquy conversations grounded in your natal chart and the current sky —
+            no planner required.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-2xl rounded-2xl border border-[rgba(169,138,239,0.4)] bg-gradient-to-br from-[rgba(112,75,210,0.12)] to-almanac-bg p-6 md:p-8">
+          <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <p className="font-almanac-display text-[0.68rem] uppercase tracking-[0.18em] text-almanac-copper-hi">
+                Stelloquy Sampler
+              </p>
+              <div className="mt-3 flex items-end gap-2">
+                <span className="font-almanac-display text-5xl text-almanac-ink">$1</span>
+                <span className="pb-1 text-sm text-almanac-ink-soft">one-time</span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-almanac-ink-dim">
+                Three messages with chart and sky context. One sampler per account.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {isSignedIn ? (
+                <>
+                  <SamplerCheckoutButton
+                    label="Buy sampler — $1"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-almanac-kairos-hi px-5 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                  <Link
+                    href="/sampler"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-almanac-line-hi px-5 text-sm font-medium text-almanac-ink transition-colors hover:border-[rgba(169,138,239,0.6)]"
+                  >
+                    Learn more
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-up?redirect_url=/sampler"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-almanac-kairos-hi px-5 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02]"
+                  >
+                    Create account
+                  </Link>
+                  <Link
+                    href="/sampler"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-almanac-line-hi px-5 text-sm font-medium text-almanac-ink transition-colors hover:border-[rgba(169,138,239,0.6)]"
+                  >
+                    Learn more
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 border-t border-almanac-line-hi pt-6 sm:grid-cols-3">
+            <div>
+              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+                Included
+              </p>
+              <p className="mt-2 text-sm text-almanac-ink">Your natal chart</p>
+            </div>
+            <div>
+              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+                Included
+              </p>
+              <p className="mt-2 text-sm text-almanac-ink">Current sky</p>
+            </div>
+            <div>
+              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+                Messages
+              </p>
+              <p className="mt-2 text-sm text-almanac-ink">3 total</p>
+            </div>
+          </div>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-almanac-ink-soft">
+          Want ongoing Stelloquy with your planner?{" "}
+          <Link
+            href="/pricing#tiers"
+            className="text-almanac-ink underline transition-colors hover:text-almanac-copper-hi"
+          >
+            See Planner + Oracle
+          </Link>
+        </p>
       </div>
     </section>
   );
@@ -729,6 +830,7 @@ export function StelloquyMarketingPage({ isSignedIn }: Props) {
         <MemorySection />
         <QuestionsSection />
         <ComparisonSection />
+        <SamplerSection isSignedIn={isSignedIn} />
         <UpgradeSection isSignedIn={isSignedIn} />
       </main>
 

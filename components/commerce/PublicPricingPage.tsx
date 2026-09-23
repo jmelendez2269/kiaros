@@ -3,6 +3,7 @@ import { Activity, Brain, Orbit } from "lucide-react";
 
 import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
 import { CheckoutButton } from "@/components/commerce/CheckoutButton";
+import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { MoonPhaseIcon } from "@/components/shared/MoonPhaseIcon";
 import { COMMERCE_TIERS, CURRENT_PLANNER_YEAR, formatUsd } from "@/lib/commerce/config";
 
@@ -958,6 +959,69 @@ export function PublicPricingPage({
             you&apos;re ready.
           </div>
         ) : null}
+
+        {/* ── Stelloquy Sampler ─────────────────────────────────────────────── */}
+        <section className="mt-8 shell-panel border-plum-400/30 bg-gradient-to-br from-plum-500/8 to-stone-950 p-6 md:p-7">
+          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+            <div>
+              <p className="shell-kicker text-plum-200">Not ready for a full year?</p>
+              <h2 className="shell-section-title mt-3">
+                Try Stelloquy for $1
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-bone-muted">
+                Get three Stelloquy conversations grounded in your natal chart and the current sky — no planner required. One sampler per account.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                {isSignedIn ? (
+                  <>
+                    <SamplerCheckoutButton
+                      label="Buy sampler — $1"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-plum-300 px-5 py-3 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <Link
+                      href="/sampler"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone transition-colors hover:border-plum-400/50"
+                    >
+                      Learn more
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/sign-up?redirect_url=/sampler"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-plum-300 px-5 py-3 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90"
+                    >
+                      Create account to try
+                    </Link>
+                    <Link
+                      href="/sampler"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone transition-colors hover:border-plum-400/50"
+                    >
+                      Learn more
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="rounded-xl border border-plum-400/40 bg-stone-900/60 px-5 py-4">
+              <p className="text-sm font-medium text-bone">What's included</p>
+              <ul className="mt-3 space-y-2 text-sm text-bone-muted">
+                <li className="flex items-start gap-2">
+                  <CheckIcon />
+                  Your natal chart (all ten placements)
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckIcon />
+                  Current sky conditions and transits
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckIcon />
+                  Three Stelloquy messages
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
 
         <section className="mt-8 shell-panel p-6 md:p-7">
           <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
