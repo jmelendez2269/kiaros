@@ -5,12 +5,7 @@ import { NextResponse } from "next/server";
 
 import { validateCheckoutFunnelContext } from "@/lib/analytics/checkout-context";
 import { recordCheckoutStarted } from "@/lib/analytics/checkout-events";
-import {
-  getCommerceTier,
-  parseAccessPlan,
-  parseCommerceTierKey,
-  parseProductKind,
-} from "@/lib/commerce/config";
+import { getCommerceTier, parseAccessPlan, parseProductKind } from "@/lib/commerce/config";
 import {
   createCheckoutSession,
   createSamplerCheckoutSession,
