@@ -9,7 +9,7 @@ import { BRAND } from "@/lib/brand";
 export const metadata: Metadata = {
   title: "Try Stelloquy for $1 | Kairos",
   description:
-    "Get three Stelloquy conversations grounded in your natal chart and current sky for $1.",
+    "Three Stelloquy conversations grounded in your natal chart and the current sky — $1, one-time.",
 };
 
 export default async function SamplerPage() {
@@ -57,12 +57,11 @@ export default async function SamplerPage() {
             
             <p className="shell-kicker mb-4 mt-6">Stelloquy Sampler</p>
             <h1 className="shell-hero-title max-w-2xl">
-              Try three conversations grounded in your chart for $1
+              Three conversations with your chart and the current sky — $1
             </h1>
 
             <p className="shell-prose-lead mt-5 max-w-2xl">
-              Get a taste of {BRAND.oracle} — three Stelloquy conversations that begin with your
-              natal chart and the current sky already assembled.
+              Stelloquy arrives with your natal chart and the current sky already assembled. This sampler includes three messages — enough to ask, follow up, or change lenses.
             </p>
 
             <div className="mt-8 grid w-full max-w-lg gap-4 rounded-[1.15rem] border border-border/80 bg-stone-950/50 p-6">
@@ -97,7 +96,7 @@ export default async function SamplerPage() {
                 <div className="text-left">
                   <p className="text-sm font-semibold text-bone">Three messages</p>
                   <p className="mt-1 text-sm text-bone-muted">
-                    Ask questions, follow up, or try different interpretive lenses
+                    Ask a question, follow up, or switch interpretive lenses
                   </p>
                 </div>
               </div>
@@ -105,16 +104,21 @@ export default async function SamplerPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {userId ? (
-                <SamplerCheckoutButton
-                  label="Buy sampler — $1"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-leather-300 px-6 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                />
+                <div className="flex flex-col gap-3">
+                  <SamplerCheckoutButton
+                    label="Continue to checkout — $1"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-leather-300 px-6 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                  <p className="text-center text-sm text-bone-muted">
+                    One sampler per account. Chart and sky only — no planner.
+                  </p>
+                </div>
               ) : (
                 <Link
                   href="/sign-up?redirect_url=/sampler"
                   className="inline-flex min-h-11 items-center justify-center rounded-full bg-leather-300 px-6 text-sm font-semibold text-stone-950 transition-opacity hover:opacity-90"
                 >
-                  Create account to buy sampler
+                  Create an account to continue
                 </Link>
               )}
               <Link
@@ -144,7 +148,7 @@ export default async function SamplerPage() {
             </div>
 
             <p className="mt-6 text-sm text-bone-muted">
-              Want the full planner with ongoing Stelloquy access?{" "}
+              Want ongoing Stelloquy with the planner?{" "}
               <Link href="/pricing" className="text-bone underline hover:text-leather-300">
                 See Planner + Oracle
               </Link>
