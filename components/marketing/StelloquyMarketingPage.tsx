@@ -519,14 +519,13 @@ function SamplerSection({ isSignedIn }: Props) {
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="font-almanac-mono text-[0.7rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
-            Not ready for a full year?
+            Or begin with three messages
           </p>
           <h2 className="mt-4 font-almanac-serif text-4xl italic leading-tight text-almanac-ink md:text-5xl">
-            Try Stelloquy for $1.
+            A $1 sampler of Stelloquy
           </h2>
           <p className="mt-5 text-[0.98rem] leading-7 text-almanac-ink-dim">
-            Get three Stelloquy conversations grounded in your natal chart and the current sky —
-            no planner required.
+            Three messages grounded in your natal chart and the current sky — no planner required.
           </p>
         </div>
 
@@ -548,7 +547,7 @@ function SamplerSection({ isSignedIn }: Props) {
               {isSignedIn ? (
                 <>
                   <SamplerCheckoutButton
-                    label="Buy sampler — $1"
+                    label="Continue to checkout — $1"
                     className="inline-flex min-h-11 items-center justify-center rounded-full bg-almanac-kairos-hi px-5 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <Link
@@ -564,7 +563,7 @@ function SamplerSection({ isSignedIn }: Props) {
                     href="/sign-up?redirect_url=/sampler"
                     className="inline-flex min-h-11 items-center justify-center rounded-full bg-almanac-kairos-hi px-5 text-sm font-semibold text-almanac-midnight transition-transform hover:scale-[1.02]"
                   >
-                    Create account
+                    Create an account to continue
                   </Link>
                   <Link
                     href="/sampler"
