@@ -5,8 +5,17 @@ import { NextResponse } from "next/server";
 
 import { validateCheckoutFunnelContext } from "@/lib/analytics/checkout-context";
 import { recordCheckoutStarted } from "@/lib/analytics/checkout-events";
-import { getCommerceTier, parseAccessPlan, parseCommerceTierKey } from "@/lib/commerce/config";
-import { createCheckoutSession, findRedeemableLoyaltyReward } from "@/lib/commerce/stripe";
+import {
+  getCommerceTier,
+  parseAccessPlan,
+  parseCommerceTierKey,
+  parseProductKind,
+} from "@/lib/commerce/config";
+import {
+  createCheckoutSession,
+  createSamplerCheckoutSession,
+  findRedeemableLoyaltyReward,
+} from "@/lib/commerce/stripe";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -19,20 +28,19 @@ export async function POST(request: Request) {
   }
 
   const payload = await request.json().catch(() => null);
-  const tierKey = parseCommerceTierKey(payload?.tierKey);
-  const accessPlan = parseAccessPlan(payload?.accessPlan) ?? "yearly";
-  const checkoutContext = payload?.funnelContext === undefined
-    ? null
-    : validateCheckoutFunnelContext(payload.funnelContext);
+  const productKind = parseProductKind(payload?.tierKey ?? payload?.productKind);
+  const checkoutContext =
+    payload?.funnelContext === undefined
+      ? null
+      : validateCheckoutFunnelContext(payload.funnelContext);
 
-  if (!tierKey) {
-    return NextResponse.json({ error: "Choose a valid tier first." }, { status: 400 });
+  if (!productKind) {
+    return NextResponse.json({ error: "Choose a valid product first." }, { status: 400 });
   }
   if (checkoutContext && !checkoutContext.success) {
     return NextResponse.json({ error: "Checkout attribution is invalid." }, { status: 400 });
   }
 
-  const tier = getCommerceTier(tierKey);
   const supabase = createAdminSupabase();
 
   const { data: profile, error: profileError } = await supabase
@@ -48,22 +56,37 @@ export async function POST(request: Request) {
     );
   }
 
-  const loyaltyReward = await findRedeemableLoyaltyReward({
-    userProfileId: profile.id,
-    plannerYear: tier.plannerYear,
-  });
-
   try {
     const checkoutAttemptId = randomUUID();
-    const session = await createCheckoutSession({
-      tier,
-      accessPlan,
-      clerkUserId: userId,
-      customerEmail: profile.email,
-      loyaltyReward,
-      checkoutAttemptId,
-      funnelContext: checkoutContext?.success ? checkoutContext.context : null,
-    });
+    let session;
+
+    if (productKind === "stelloquy_sampler") {
+      session = await createSamplerCheckoutSession({
+        clerkUserId: userId,
+        customerEmail: profile.email,
+        checkoutAttemptId,
+        funnelContext: checkoutContext?.success ? checkoutContext.context : null,
+      });
+    } else {
+      const tierKey = productKind;
+      const accessPlan = parseAccessPlan(payload?.accessPlan) ?? "yearly";
+      const tier = getCommerceTier(tierKey);
+
+      const loyaltyReward = await findRedeemableLoyaltyReward({
+        userProfileId: profile.id,
+        plannerYear: tier.plannerYear,
+      });
+
+      session = await createCheckoutSession({
+        tier,
+        accessPlan,
+        clerkUserId: userId,
+        customerEmail: profile.email,
+        loyaltyReward,
+        checkoutAttemptId,
+        funnelContext: checkoutContext?.success ? checkoutContext.context : null,
+      });
+    }
 
     try {
       await recordCheckoutStarted({ session, userId: profile.id });
