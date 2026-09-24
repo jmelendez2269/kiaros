@@ -1,9 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { LOYALTY_REWARD_AMOUNT_OFF_CENTS, NEXT_PLANNER_YEAR } from "@/lib/commerce/config";
+import { LOYALTY_REWARD_AMOUNT_OFF_CENTS } from "@/lib/commerce/config";
 import { buildAnnualEntitlementRecord } from "@/lib/commerce/entitlements";
 import { activationCompleteSchema } from "@/lib/commerce/activation";
+import { getNextPlannerYear } from "@/lib/commerce/planner-year";
 import { createLoyaltyRewardCoupon } from "@/lib/commerce/stripe";
 import { createServerSupabase } from "@/lib/supabase";
 import { BRAND } from "@/lib/brand";
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
         entitlement_id: null,
         delivery_email: profile.email ?? claim.claim_email,
         status: "pending",
-        reward_year: NEXT_PLANNER_YEAR,
+        reward_year: getNextPlannerYear(),
         amount_off_cents: LOYALTY_REWARD_AMOUNT_OFF_CENTS,
         currency: "usd",
         metadata: {

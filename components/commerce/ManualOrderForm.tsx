@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { CURRENT_PLANNER_YEAR } from "@/lib/commerce/config";
 
 type ManualOrderResult =
   | { success: true; orderId: string }

@@ -2,8 +2,8 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { CURRENT_PLANNER_YEAR } from "@/lib/commerce/config";
 import { upsertMarketplaceOrders } from "@/lib/commerce/marketplace-orders";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 export const runtime = "nodejs";
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
         purchaserName: name ?? null,
         listingKey: null,
         productTier: tier,
-        plannerYear: CURRENT_PLANNER_YEAR,
+        plannerYear: getPlannerYearWithOverride(),
         oracleEnabled: tier === "planner_oracle",
         purchasedAt: purchasedAtISO,
         accessPlan: "yearly",

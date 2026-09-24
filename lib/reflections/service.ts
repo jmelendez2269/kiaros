@@ -1,16 +1,26 @@
 import 'server-only'
 import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
-import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { assertClosed, type ReflectionPeriod } from './periods'
 import { preferences, feedback } from './repository'
 import { loadEvidence } from './load-evidence'
 import { analyzePeriod } from './analyze-period'
 import { generateReflectionContent } from '@/lib/ai/reflection-generator'
 export async function hasReflectionAccess(userId: string): Promise<boolean> {
-  const { data, error } = await createAdminSupabase().from('product_entitlements').select('*').eq('user_id', userId).neq('status', 'revoked')
+  const admin = createAdminSupabase()
+  const { data, error } = await admin.from('product_entitlements').select('*').eq('user_id', userId).neq('status', 'revoked')
   if (error) throw new Error('Access could not be verified')
-  return resolveUserAccess((data ?? []) as ProductEntitlementRecord[]).hasPlannerAccess
+  
+  const orderIds = extractStripeOrderIds(data ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId });
+  
+  return resolveUserAccess(
+    (data ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap
+  ).hasPlannerAccess
 }
 export async function generateReflection(userId: string, period: ReflectionPeriod, force = false) {
   assertClosed(period)

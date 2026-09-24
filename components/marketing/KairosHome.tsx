@@ -2,7 +2,8 @@ import Link from "next/link";
 import { StarField } from "@/components/almanac/StarField";
 import { EphemerisWheel } from "@/components/almanac/EphemerisWheel";
 import { Divider } from "@/components/almanac/Divider";
-import { COMMERCE_TIERS, formatUsd, CURRENT_PLANNER_YEAR } from "@/lib/commerce/config";
+import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 import { BRAND } from "@/lib/brand";
 
 interface Props {
@@ -523,6 +524,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
 }
 
 function MarketingFooter() {
+  const currentPlannerYear = getPlannerYearWithOverride();
   return (
     <footer className="border-t border-almanac-line py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 md:flex-row md:items-center md:justify-between md:px-8">
@@ -539,7 +541,7 @@ function MarketingFooter() {
           <Link href="/terms" className="transition-colors hover:text-almanac-ink">Terms</Link>
         </nav>
         <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.12em] text-[rgba(110,109,124,0.7)]">
-          &copy; {CURRENT_PLANNER_YEAR} {BRAND.product}
+          &copy; {currentPlannerYear} {BRAND.product}
         </p>
       </div>
     </footer>
@@ -547,6 +549,7 @@ function MarketingFooter() {
 }
 
 export function KairosHome({ isSignedIn }: Props) {
+  const currentPlannerYear = getPlannerYearWithOverride();
   return (
     <div className="bg-almanac-bg text-almanac-ink">
       <NavBar />

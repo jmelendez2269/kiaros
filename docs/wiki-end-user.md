@@ -70,9 +70,11 @@ Cosmic Calendar's month/week/quarter views, the Today dashboard, and Area pages.
 your old one — it creates a new, incrementing version, so your history is preserved and the latest version
 is what's shown everywhere.
 
-**Year rollover:** when a new calendar year begins, Kiaros automatically detects you're due for a new
-blueprint and takes you to a short "Renewing" screen (visually similar to the onboarding generation screen)
-that builds next year's blueprint while carrying your history forward.
+**Year rollover:** the planner year rolls on **December 1** (not January 1). Starting December 1 at midnight Eastern Time, the next planner year becomes available. If you're an active subscriber (monthly or annual), you'll automatically gain access to generate and view the new year's blueprint. The system detects when you need a new blueprint and takes you to a short "Renewing" screen that builds next year's blueprint while carrying your history forward.
+
+**For subscribers:** If you have an active paid subscription (monthly or annual direct purchase), you'll get access to the new planner year starting December 1, with no gap in access.
+
+**For Etsy and one-time annual purchases:** These purchases follow the specific plan year you purchased and do not automatically roll forward to the next year unless the product settings are updated in the future.
 
 ---
 
