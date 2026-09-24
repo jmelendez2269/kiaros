@@ -22,12 +22,12 @@ This SOP documents the controlled manual delivery workflow for Etsy Anchor Print
 
 ### Who qualifies as a named operator
 
-A **named operator** is a Clerk-authenticated user with **both** of these grants:
+A **named operator** is a Clerk-authenticated user with:
 
 1. **Clerk `publicMetadata.isAdmin === true`** — set manually via Clerk dashboard by an existing admin  
    _Source: `lib/artifacts/fulfillment/admin-access.ts` lines 28-29_
 
-2. **Environment flags enabled** (see Flag Inventory below)
+**No separate environment variable allowlist.** Operator authorization is Clerk-based only.
 
 Optional future layer (schema exists but not actively enforced in admin route code as of 2026-09-24):
 
@@ -37,43 +37,31 @@ Optional future layer (schema exists but not actively enforced in admin route co
 ### How to verify operator access
 
 1. Sign in to the Kiaros admin surface
-2. Navigate to `/admin/artifacts`
+2. Navigate to `/admin/artifacts` (route exists at `app/(admin)/admin/artifacts`)
 3. If the page loads and shows the artifact workflow console → access granted
-4. If redirected to sign-in or shown `404` → access denied or flags disabled
+4. If redirected to sign-in or shown `404` → access denied
+
+**Production status 2026-09-24:** Admin UI is durable on `main`. All three flags enabled in Vercel production. Named operators have full access to the workflow console.
 
 ---
 
-## Flag Inventory & Controlled Values
+## Flag Inventory & Production Status
 
-### (a) Internal Admin/Persistence Flags — SAFE for Named Operators
+**Production environment verified 2026-09-24:**
 
-These flags gate admin UI visibility, persistence, and fictional dry-run workflows. **Safe to enable** for named operators in a non-production or controlled production environment.
+| Flag | Vercel Production Value | What It Gates | Enforcement Layer |
+|------|-------------------------|---------------|-------------------|
+| `KIAROS_ETSY_ARTIFACT_ADMIN` | `"true"` ✅ | Admin UI routes (`/admin/artifacts`, `/api/admin/artifacts/*`) | `lib/feature-flags.ts` line 34, checked in `lib/artifacts/fulfillment/availability.ts` lines 9-11 |
+| `KIAROS_ETSY_ARTIFACT_PERSISTENCE` | `"true"` ✅ | Supabase persistence (all eight operational tables active) | `lib/feature-flags.ts` line 38, checked in `lib/artifacts/fulfillment/availability.ts` lines 10-11 and `lib/artifacts/fulfillment/repository.ts` line 98 |
+| `KIAROS_ETSY_ARTIFACT_REAL_INTAKE` | `"true"` ✅ | Manual real-order intake via `/admin/artifacts` (UI unlocked) | `lib/feature-flags.ts` line 42, checked in `lib/artifacts/fulfillment/availability.ts` lines 14-18 |
 
-| Flag | Expected Value | What It Gates | Enforcement Layer |
-|------|---------------|---------------|-------------------|
-| `KIAROS_ETSY_ARTIFACT_ADMIN` | `"true"` | Admin UI routes (`/admin/artifacts`, `/api/admin/artifacts/*`) | `lib/feature-flags.ts` line 34, checked in `lib/artifacts/fulfillment/availability.ts` lines 9-11 |
-| `KIAROS_ETSY_ARTIFACT_PERSISTENCE` | `"true"` | Supabase persistence vs in-memory repository | `lib/feature-flags.ts` line 38, checked in `lib/artifacts/fulfillment/availability.ts` lines 10-11 and `lib/artifacts/fulfillment/repository.ts` line 98 |
+**All three flags are enabled in production.** This unlocks the admin workflow for named operators but does **not** automatically activate the product or publish the Etsy listing.
 
-**Combined gate logic:**
+**Additional production constraints (held separately):**
 
-```typescript
-// lib/artifacts/fulfillment/availability.ts lines 9-11
-function isArtifactWorkflowEnabled(): boolean {
-  return isEtsyArtifactAdminEnabled()
-    && (process.env.NODE_ENV !== "production" || isEtsyArtifactPersistenceEnabled());
-}
-```
-
-In production, **both** flags must be `"true"` for the admin workflow to be available.
-
-### (b) Real Buyer Intake & Etsy Delivery Flags — MUST STAY OFF
-
-These flags gate real (non-fictional) order intake and any future automated Etsy API delivery. **Keep disabled** until all approval gates close.
-
-| Flag | Expected Value (controlled) | What It Gates | Enforcement Layer |
-|------|----------------------------|---------------|-------------------|
-| `KIAROS_ETSY_ARTIFACT_REAL_INTAKE` | `"false"` (OFF) | Manual real-order intake via `/admin/artifacts`; fictional fixtures remain available when off | `lib/feature-flags.ts` line 42, checked in `lib/artifacts/fulfillment/availability.ts` lines 14-18 |
-| (none yet) | N/A | Automated Etsy API delivery — not implemented; all delivery is manual Etsy Messages | N/A |
+- **Product inactive:** `KAI-ETSY-ANCHOR-V1` row in `artifact_products` table has `active=false` — no orders can reference this SKU until separately activated
+- **Etsy listing unpublished:** Listing remains in draft on Etsy Seller Dashboard — no buyers can discover or purchase until separately published
+- **Real buyer intake held:** Named operators have UI access but must not process real buyer orders until all approval gates close
 
 **Combined gate logic:**
 
@@ -86,9 +74,9 @@ function isRealArtifactIntakeEnabled(): boolean {
 }
 ```
 
-Real intake requires all three flags enabled. For controlled dry-run, keep `KIAROS_ETSY_ARTIFACT_REAL_INTAKE` off.
+All three flags `"true"` → real intake **technically enabled**, but **operationally held** via inactive product + unpublished listing + operator discipline.
 
-### (c) Etsy SKU/Listing Mapping — Legacy Activation Only
+### Etsy SKU/Listing Mapping — Legacy Activation Only (Not Artifact Fulfillment)
 
 These environment variables map Etsy orders to Kairos access tiers for the **separate legacy activation workflow** (`POST /api/commerce/etsy-ingest`). They do **not** control artifact fulfillment.
 
@@ -101,35 +89,62 @@ These environment variables map Etsy orders to Kairos access tiers for the **sep
 
 **Do not confuse these with artifact fulfillment.** Anchor Print uses SKU `KAI-ETSY-ANCHOR-V1` internally but has no automated Etsy intake yet.
 
-### (d) n8n Ingest Secret — Not Used for Artifacts
+### n8n Ingest Secret — Not Used for Artifacts
 
 `N8N_INGEST_SECRET` gates `POST /api/commerce/etsy-ingest`, the legacy activation webhook. **This is not the artifact fulfillment path.** Artifacts currently have no automated Etsy intake; all orders are entered manually at `/admin/artifacts`.
 
 ---
 
-## Admin Dry-Run Click Path (Fictional Data Only)
+## Admin Dry-Run Click Path (Non-Production or Production with Fake IDs)
 
 Use this workflow to verify the generate → QA → download flow without touching real buyer data or publishing to Etsy.
 
 ### Prerequisites
 
 - Signed in as a Clerk admin (`publicMetadata.isAdmin === true`)
-- `KIAROS_ETSY_ARTIFACT_ADMIN=true`
-- `KIAROS_ETSY_ARTIFACT_PERSISTENCE=true`
-- `KIAROS_ETSY_ARTIFACT_REAL_INTAKE=false` (keep OFF for dry-run)
+- All three artifact flags enabled (current production state)
 
-### Step-by-step
+### Important: Local Dev vs Production Dry-Run
+
+**Local development (NODE_ENV !== "production"):**
+- Use fictional **fixture** orders: click "Known time fixture" or "Unknown time fixture"
+- System creates orders with `fixture-*` shop/receipt/transaction IDs
+- Support email ending in `.test`
+- Artifact ID prefixed `art_fixture_`
+
+**Production dry-run (kairosplanner.xyz):**
+- **Fixtures are NOT available** in production
+- Use **manual intake** with clearly fake IDs:
+  - Shop ID: `DRYRUN-SHOP-001`
+  - Receipt ID: `DRYRUN-RECEIPT-001`
+  - Transaction ID: `DRYRUN-TX-001`
+  - Support email: `dryrun@example.test` (or similar clearly fake address)
+  - Display name: `DRYRUN Test` or `Avery (dry-run)`
+- Mark order as `fictional: true` during intake
+- Use recognizable fake birth data (e.g., Portland 1990-04-04)
+
+### Step-by-step (Production Manual Intake)
 
 1. **Navigate:** `/admin/artifacts`
 
-2. **Create Fictional Order:**
-   - Click **"Known time fixture"** or **"Unknown time fixture"**
-   - System creates a fictional order with:
-     - Fictional Etsy shop/receipt/transaction IDs (all prefixed `fixture-`)
-     - Fictional birth data (Portland, Oregon, 1990-04-04)
-     - Support email ending in `.test`
-     - Artifact ID prefixed `art_fixture_`
-   - Order appears in the workflow console in `Intake draft` state
+2. **Create Dry-Run Order:**
+   - Click **"Create manual order"** (real intake UI available in production)
+   - Fill the intake form with clearly fake data:
+     - **Shop ID:** `DRYRUN-SHOP-001`
+     - **Receipt ID:** `DRYRUN-RECEIPT-001`
+     - **Transaction ID:** `DRYRUN-TX-001`
+     - **Unit index:** `1`
+     - **Quantity:** `1`
+     - **Listing ID:** (blank or `DRYRUN-LISTING-001`)
+     - **Purchased at:** Current timestamp
+     - **Support email:** `dryrun@example.test`
+     - **Display name:** `DRYRUN Test` or `Avery (dry-run)`
+     - **Birth date:** `1990-04-04`
+     - **Birth time:** `08:30 AM` (or `UNKNOWN` for unknown-time test)
+     - **Birth city:** `Portland`
+     - **Birth country:** `United States`
+     - **Fictional:** ☑ Check this box
+   - Submit → order appears in workflow console in `Intake draft` state
 
 3. **Validate Intake:**
    - Select the new order
@@ -178,12 +193,13 @@ Use this workflow to verify the generate → QA → download flow without touchi
 
 ### What NOT to do in dry-run
 
-- ❌ **Do not enable** `KIAROS_ETSY_ARTIFACT_REAL_INTAKE`
-- ❌ **Do not create** manual real orders (UI hidden when flag off)
-- ❌ **Do not publish** any Etsy listing
+- ❌ **Do not use** real Etsy shop/receipt/transaction IDs from actual orders
+- ❌ **Do not use** real buyer birth data, names, emails, or addresses
+- ❌ **Do not publish** any Etsy listing (listing remains draft on Etsy Seller Dashboard)
+- ❌ **Do not activate** the product row in `artifact_products` (`active=false` must remain)
 - ❌ **Do not upload** PDFs to Etsy or any public URL
 - ❌ **Do not send** any Etsy Messages or emails to real people
-- ❌ **Do not use** real buyer birth data, names, emails, or order IDs
+- ❌ **Do not uncheck** the "Fictional" checkbox for dry-run orders
 
 ---
 
@@ -341,24 +357,27 @@ When order volume exceeds ~50/month:
 
 ## What This SOP Explicitly Does NOT Authorize
 
-1. **Etsy listing publication** — requires separate founder approval after all gates close
-2. **Real buyer data intake via n8n webhook** — requires separate approval and `KIAROS_ETSY_ARTIFACT_REAL_INTAKE=true`
-3. **Automated Etsy API upload or messaging** — not implemented; all delivery is manual
-4. **Gifting or third-party orders** — not supported; buyer must provide own birth data with consent
-5. **Using real buyer data in dry-runs** — always use fictional fixtures for testing
-6. **Bypassing QA approval** — every order requires complete 6-item QA checklist
+1. **Etsy listing publication** — requires separate founder approval after all gates close (listing remains draft on Etsy Seller Dashboard)
+2. **Product activation** — `KAI-ETSY-ANCHOR-V1` must remain `active=false` in `artifact_products` until separate approval
+3. **Real buyer order processing** — only `DRYRUN-*` IDs with fictional checkbox checked until all approval gates close
+4. **Automated Etsy API upload or messaging** — not implemented; all delivery is manual Etsy Messages
+5. **Gifting or third-party orders** — not supported; buyer must provide own birth data with consent
+6. **Using real buyer data in dry-runs** — always use clearly fake `DRYRUN-*` IDs + fictional checkbox
+7. **Bypassing QA approval** — every order requires complete 6-item QA checklist
 
 ---
 
-## Operator Checklist for One Fictional Dry-Run
+## Operator Checklist for One Production Dry-Run
 
-Use this checklist to verify the workflow before touching any real data:
+Use this checklist to verify the workflow in production before processing any real buyer order:
 
 - [ ] Confirm Clerk admin access granted (`publicMetadata.isAdmin === true`)
-- [ ] Confirm `KIAROS_ETSY_ARTIFACT_ADMIN=true` and `KIAROS_ETSY_ARTIFACT_PERSISTENCE=true`
-- [ ] Confirm `KIAROS_ETSY_ARTIFACT_REAL_INTAKE=false` (OFF)
+- [ ] Confirm all three artifact flags enabled in Vercel production (current state)
+- [ ] Confirm `KAI-ETSY-ANCHOR-V1` product row has `active=false` in `artifact_products` table
+- [ ] Confirm Etsy listing remains unpublished (draft on Etsy Seller Dashboard)
 - [ ] Navigate to `/admin/artifacts` → page loads successfully
-- [ ] Click **"Known time fixture"** → fictional order created in `Intake draft`
+- [ ] Click **"Create manual order"** → fill intake form with clearly fake `DRYRUN-*` IDs
+- [ ] Check **"Fictional"** checkbox → submit → order created in `Intake draft`
 - [ ] Click **"Validate intake"** → state changes to `Ready to generate`
 - [ ] Click **"Generate"** → state changes through `Generating` to `QA required`
 - [ ] Verify artifact generated: 26-page report + 1-page Anchor Print visible in UI
@@ -367,33 +386,40 @@ Use this checklist to verify the workflow before touching any real data:
 - [ ] Download each of the four PDF variants (Report Letter/A4, Anchor Print Letter/A4)
 - [ ] Open each PDF → verify:
   - [ ] Selectable text, embedded fonts, readable at 100% zoom
-  - [ ] No real buyer data (fictional name "Avery", Portland 1990-04-04)
+  - [ ] Only dry-run data (name/email contain "DRYRUN" or clearly fake)
   - [ ] Calculation facts, interpretive chapters, prompts, disclosures all present
   - [ ] Chart wheel, placement table, aspect grid visible
   - [ ] Anchor Print shows six themes, no private metadata in filename
 - [ ] Verify audit trail in UI → all events recorded with timestamps, actor IDs
 - [ ] **Do not send** any Etsy Messages, emails, or upload files anywhere
-- [ ] **Do not enable** `KIAROS_ETSY_ARTIFACT_REAL_INTAKE` unless separately approved
+- [ ] **Do not publish** Etsy listing or activate product row
+- [ ] **Do not process** real buyer orders until all approval gates close
 
 ---
 
 ## Summary
 
-- **Named operators** are Clerk admins with artifact flags enabled
-- **Internal flags** (`ADMIN`, `PERSISTENCE`) are safe for controlled environments
-- **Real intake flag** (`REAL_INTAKE`) must stay OFF until approval
+- **Named operators** are Clerk admins (`publicMetadata.isAdmin === true`), no separate env allowlist
+- **All three artifact flags enabled** in Vercel production as of 2026-09-24
+- **Product inactive** (`KAI-ETSY-ANCHOR-V1` has `active=false` in database)
+- **Etsy listing unpublished** (draft on Etsy Seller Dashboard)
+- **Real buyer intake held** by operator discipline (fictional checkbox, fake IDs only)
 - **Listing publication** is a separate manual Etsy Seller action, not gated by a Kiaros flag
 - **Delivery** is manual Etsy Messages attachment after QA approval
 - **Retention** follows published Privacy/Terms schedule (30/180 days/12 months/7 years)
-- **Dry-run testing** uses fictional fixtures only, never real buyer data
+- **Production dry-run** uses manual intake with `DRYRUN-*` IDs + fictional checkbox
 
 **Before first real order:**
 
-1. Close all approval gates in `docs/etsy-anchor-print-launch-approval-packet.md`
-2. Enable `KIAROS_ETSY_ARTIFACT_REAL_INTAKE=true` (separately approved)
-3. Publish Etsy listing manually via Etsy Seller Dashboard (separately approved)
-4. Monitor first 5-10 orders closely for QA quality, delivery timing, buyer feedback
-5. Document any issues, iterate SOP as needed
+1. Close all approval gates in `docs/etsy-anchor-print-launch-approval-packet.md`:
+   - ☑ Founder offer approved (26-page report, $34, separate Anchor Print)
+   - ☐ Legal review complete
+   - ☐ Independent accessibility review complete
+2. Activate product row: set `active=true` on `KAI-ETSY-ANCHOR-V1` in `artifact_products` (separate approval + migration)
+3. Publish Etsy listing manually via Etsy Seller Dashboard (separate approval)
+4. Process first real order: uncheck "Fictional", use real Etsy receipt/transaction IDs, verify buyer consent
+5. Monitor first 5-10 orders closely for QA quality, delivery timing, buyer feedback
+6. Document any issues, iterate SOP as needed
 
 ---
 
