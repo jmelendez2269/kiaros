@@ -341,9 +341,14 @@ access entirely on lapse.
 external N8N workflow hitting `/api/commerce/etsy-ingest`), `activation_claims` (7-day expiry tokens),
 `direct_purchase_orders` (Stripe), `loyalty_rewards`.
 
-**Stripe:** annual = `mode: "payment"` one-time + `customer_creation: "always"`; monthly =
-`mode: "subscription"`. Webhook (`checkout.session.completed`, `invoice.payment_succeeded/failed`,
-`customer.subscription.updated/deleted`) syncs `product_entitlements`.
+**Stripe:** Both monthly and annual direct purchases are now `mode: "subscription"`. Monthly uses
+`recurring.interval: "month"`; annual uses `recurring.interval: "year"`. Annual subscriptions extend
+entitlements by 365 days on each renewal (detected via `invoice.payment_succeeded` with
+`billing_reason: "subscription_cycle"`). When an annual subscription is canceled (`cancel_at_period_end`),
+access continues through the paid period, then transitions to read-only. Legacy one-time annual purchases
+(before 2026-09-24) remain as one-time payments. Etsy annual purchases remain one-time. Webhook
+(`checkout.session.completed`, `invoice.payment_succeeded/failed`, `customer.subscription.updated/deleted`)
+syncs `product_entitlements`.
 
 **Etsy tier inference** (`lib/commerce/etsy-mapping.ts`): matches listing ID env vars first, then SKU env
 vars, then falls back to checking whether listing text contains "oracle", finally defaults to base "planner"

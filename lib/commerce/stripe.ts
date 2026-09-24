@@ -8,6 +8,7 @@ import {
   AccessPlan,
   buildTierMetadata,
   CommerceTier,
+  formatUsd,
   getCommerceTier,
   getTierPriceCents,
   isCommerceTierKey,
@@ -81,17 +82,18 @@ function buildLineItem(tier: CommerceTier, accessPlan: AccessPlan) {
       currency: "usd",
       unit_amount: getTierPriceCents(tier, accessPlan),
       product_data: {
-        name: accessPlan === "monthly" ? `${tier.name} Monthly` : tier.name,
+        name: accessPlan === "monthly" ? `${tier.name} Monthly` : `${tier.name} Annual`,
         description: tier.description,
         metadata,
       },
-      ...(accessPlan === "monthly"
-        ? {
-            recurring: {
+      recurring:
+        accessPlan === "monthly"
+          ? {
               interval: "month" as const,
+            }
+          : {
+              interval: "year" as const,
             },
-          }
-        : {}),
     },
   };
 }
@@ -207,24 +209,28 @@ export async function createCheckoutSession(params: {
     metadata,
   };
 
-  if (accessPlan === "monthly") {
-    return stripe.checkout.sessions.create({
-      ...commonParams,
-      mode: "subscription",
-      subscription_data: {
-        description: `${params.tier.name} monthly access`,
-        metadata,
-      },
-    });
-  }
+  // COPY: voice-approved 2026-09-24
+  const customTextForAnnual = `Your subscription renews each year on your purchase date at the same price, ${formatUsd(params.tier.annualPriceCents)} a year. You can cancel anytime. Full access continues through the year you've paid for. If you cancel, you keep read-only access to everything you've created, but you can't add anything new.`;
 
   return stripe.checkout.sessions.create({
     ...commonParams,
-    mode: "payment",
-    customer_creation: "always",
-    payment_intent_data: {
+    mode: "subscription",
+    subscription_data: {
+      description:
+        accessPlan === "monthly"
+          ? `${params.tier.name} monthly access`
+          : `${params.tier.name} annual access`,
       metadata,
     },
+    ...(accessPlan === "yearly"
+      ? {
+          custom_text: {
+            submit: {
+              message: customTextForAnnual,
+            },
+          },
+        }
+      : {}),
   });
 }
 
@@ -539,6 +545,7 @@ async function fulfillSubscriptionCheckout(params: {
   }
 
   const tier = getCommerceTier(tierKey);
+  const accessPlan = parseAccessPlan(session.metadata?.access_plan) ?? "monthly";
   const subscription =
     typeof session.subscription === "object" && session.subscription
       ? session.subscription
@@ -548,8 +555,26 @@ async function fulfillSubscriptionCheckout(params: {
     throw new Error("The Stripe subscription is missing its billing item.");
   }
 
-  const startsAt = toISODate(getUnixDate(subscriptionItem?.current_period_start ?? subscription.created));
-  const endsAt = toISODate(getUnixDate(subscriptionItem?.current_period_end));
+  // For annual subscriptions, use a 365-day window from purchase date.
+  // For monthly subscriptions, use the Stripe subscription period dates.
+  const purchasedAt = session.created
+    ? new Date(session.created * 1000).toISOString()
+    : new Date().toISOString();
+  const startsAt =
+    accessPlan === "yearly"
+      ? toISODate(purchasedAt)
+      : toISODate(getUnixDate(subscriptionItem?.current_period_start ?? subscription.created));
+  const endsAt =
+    accessPlan === "yearly"
+      ? buildAnnualEntitlementRecord({
+          user_id: "",
+          source: "stripe",
+          product_tier: tier.key,
+          planner_year: tier.plannerYear,
+          oracle_enabled: tier.oracleEnabled,
+          startAt: purchasedAt,
+        }).ends_at
+      : toISODate(getUnixDate(subscriptionItem?.current_period_end));
   const entitlementStatus = getSubscriptionAccessStatus(subscription);
 
   const { data: profile, error: profileError } = await supabase
@@ -562,10 +587,6 @@ async function fulfillSubscriptionCheckout(params: {
     throw new Error(`Your ${BRAND.product} profile is not ready yet. Please try again.`);
   }
 
-  const purchasedAt = session.created
-    ? new Date(session.created * 1000).toISOString()
-    : new Date().toISOString();
-
   const orderPayload = {
     clerk_user_id: clerkUserId,
     user_id: profile.id,
@@ -574,7 +595,7 @@ async function fulfillSubscriptionCheckout(params: {
     product_tier: tier.key,
     planner_year: tier.plannerYear,
     oracle_enabled: tier.oracleEnabled,
-    access_plan: "monthly" as const,
+    access_plan: accessPlan,
     stripe_checkout_session_id: session.id,
     stripe_payment_intent_id:
       typeof session.payment_intent === "string" ? session.payment_intent : null,
@@ -582,8 +603,12 @@ async function fulfillSubscriptionCheckout(params: {
     stripe_subscription_id: subscription.id,
     stripe_subscription_item_id: subscriptionItem?.id ?? null,
     stripe_price_id: subscriptionItem?.price.id ?? null,
-    amount_subtotal_cents: session.amount_subtotal ?? tier.monthlyPriceCents,
-    amount_total_cents: session.amount_total ?? tier.monthlyPriceCents,
+    amount_subtotal_cents:
+      session.amount_subtotal ??
+      (accessPlan === "yearly" ? tier.annualPriceCents : tier.monthlyPriceCents),
+    amount_total_cents:
+      session.amount_total ??
+      (accessPlan === "yearly" ? tier.annualPriceCents : tier.monthlyPriceCents),
     currency: session.currency ?? subscription.currency ?? "usd",
     status: entitlementStatus === "active" ? "paid" : "initiated",
     purchased_at: purchasedAt,
@@ -592,7 +617,7 @@ async function fulfillSubscriptionCheckout(params: {
       payment_status: session.payment_status,
       subscription_status: subscription.status,
       customer_email: session.customer_details?.email ?? session.customer_email ?? null,
-      access_plan: "monthly",
+      access_plan: accessPlan,
     },
   };
 
@@ -618,7 +643,7 @@ async function fulfillSubscriptionCheckout(params: {
         oracle_enabled: tier.oracleEnabled,
         starts_at: startsAt,
         ends_at: endsAt,
-        access_plan: "monthly",
+        access_plan: accessPlan,
         status: entitlementStatus,
       },
       { onConflict: "source,source_order_id" }
@@ -635,6 +660,38 @@ async function fulfillSubscriptionCheckout(params: {
     .update({ status: "converted", converted_at: new Date().toISOString() })
     .eq("user_id", profile.id);
 
+  // Create loyalty reward for annual subscriptions (not monthly)
+  if (accessPlan === "yearly") {
+    const { data: reward } = await supabase
+      .from("loyalty_rewards")
+      .upsert(
+        {
+          user_id: profile.id,
+          entitlement_id: null,
+          delivery_email: profile.email,
+          status: "pending",
+          reward_year: NEXT_PLANNER_YEAR,
+          amount_off_cents: LOYALTY_REWARD_AMOUNT_OFF_CENTS,
+          currency: "usd",
+          stripe_customer_id: getStripeId(session.customer ?? subscription.customer),
+          metadata: {
+            source: "stripe",
+            stripe_checkout_session_id: session.id,
+            stripe_subscription_id: subscription.id,
+          },
+        },
+        { onConflict: "user_id,reward_year" }
+      )
+      .select("id, amount_off_cents, currency, stripe_customer_id, stripe_promotion_code_id")
+      .single();
+
+    if (reward && !reward.stripe_promotion_code_id) {
+      await createLoyaltyRewardCoupon(reward).catch((err) =>
+        console.error("[stripe] Failed to create loyalty reward coupon:", err)
+      );
+    }
+  }
+
   await redeemLoyaltyRewardFromSession(session);
 
   await supabase
@@ -645,7 +702,7 @@ async function fulfillSubscriptionCheckout(params: {
   return {
     tier,
     email: profile.email,
-    accessPlan: "monthly" as const,
+    accessPlan,
     isRenewal: !!profile.onboarding_completed_at,
     profileSetupComplete: !!profile.profile_setup_completed_at,
     userProfileId: profile.id,
@@ -732,11 +789,10 @@ export async function syncSubscriptionEntitlement(subscription: Stripe.Subscript
   const subscriptionItem = getSubscriptionItem(subscription);
   const subscriptionCustomerId = getStripeId(subscription.customer);
   const status = getSubscriptionAccessStatus(subscription);
-  const endsAt = toISODate(getUnixDate(subscriptionItem?.current_period_end));
 
   const { data: order } = await supabase
     .from("direct_purchase_orders")
-    .select("id, metadata")
+    .select("id, metadata, access_plan")
     .eq("stripe_subscription_id", subscription.id)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -745,6 +801,8 @@ export async function syncSubscriptionEntitlement(subscription: Stripe.Subscript
   if (!order) {
     return { synced: false, reason: "order_not_found" as const };
   }
+
+  const accessPlan = parseAccessPlan(order.access_plan) ?? "monthly";
 
   await supabase
     .from("direct_purchase_orders")
@@ -761,14 +819,33 @@ export async function syncSubscriptionEntitlement(subscription: Stripe.Subscript
     })
     .eq("id", order.id);
 
-  await supabase
-    .from("product_entitlements")
-    .update({
-      status,
-      ends_at: endsAt,
-    })
-    .eq("source", "stripe")
-    .eq("source_order_id", order.id);
+  // For monthly subscriptions, update ends_at to the subscription period end.
+  // For annual subscriptions, extend ends_at by 365 days on renewal (detected by invoice.paid webhook).
+  // The entitlement status remains "active" until the subscription truly ends, allowing
+  // cancel_at_period_end to keep access through the paid period.
+  if (accessPlan === "monthly") {
+    const endsAt = toISODate(getUnixDate(subscriptionItem?.current_period_end));
+    await supabase
+      .from("product_entitlements")
+      .update({
+        status,
+        ends_at: endsAt,
+      })
+      .eq("source", "stripe")
+      .eq("source_order_id", order.id);
+  } else {
+    // For annual subscriptions: only update status, not ends_at.
+    // The ends_at extension happens in syncInvoiceSubscription on invoice.payment_succeeded.
+    // When the subscription ends (status becomes inactive), keep the entitlement status as "active"
+    // so the capabilities resolver can transition it to read-only based on the date.
+    await supabase
+      .from("product_entitlements")
+      .update({
+        status: "active",
+      })
+      .eq("source", "stripe")
+      .eq("source_order_id", order.id);
+  }
 
   return { synced: true, reason: null };
 }
@@ -780,5 +857,47 @@ export async function syncInvoiceSubscription(invoice: Stripe.Invoice) {
   }
 
   const subscription = await retrieveSubscription(subscriptionId);
+
+  // For annual subscriptions, when an invoice is successfully paid, extend the entitlement by 365 days.
+  if (invoice.status === "paid" && invoice.billing_reason === "subscription_cycle") {
+    const supabase = createAdminSupabase();
+    const { data: order } = await supabase
+      .from("direct_purchase_orders")
+      .select("id, access_plan")
+      .eq("stripe_subscription_id", subscription.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (order) {
+      const accessPlan = parseAccessPlan(order.access_plan) ?? "monthly";
+
+      if (accessPlan === "yearly") {
+        // Fetch current entitlement to get the existing ends_at
+        const { data: entitlement } = await supabase
+          .from("product_entitlements")
+          .select("ends_at")
+          .eq("source", "stripe")
+          .eq("source_order_id", order.id)
+          .single();
+
+        if (entitlement) {
+          // Extend by 365 days from the current ends_at
+          const currentEndsAt = new Date(`${entitlement.ends_at}T00:00:00.000Z`);
+          const newEndsAt = new Date(currentEndsAt);
+          newEndsAt.setUTCDate(newEndsAt.getUTCDate() + 365);
+
+          await supabase
+            .from("product_entitlements")
+            .update({
+              ends_at: toISODate(newEndsAt),
+            })
+            .eq("source", "stripe")
+            .eq("source_order_id", order.id);
+        }
+      }
+    }
+  }
+
   return syncSubscriptionEntitlement(subscription);
 }

@@ -247,21 +247,23 @@ the day-by-day Today view or the tabbed Calendar.
 
 Kiaros is available two ways, and both lead to the same product:
 
-**Direct purchase (website / Stripe).** Choose Planner or Planner + Oracle, monthly or annual. Monthly is a
-recurring subscription; annual is a one-time purchase good for a full plan year. Checkout redirects to
-Stripe, then back to a success page that unlocks access.
+**Direct purchase (website / Stripe).** Choose Planner or Planner + Oracle, monthly or annual. Both monthly
+and annual are recurring subscriptions. Monthly renews every month; annual renews yearly on your purchase
+date. Both can be canceled anytime. Checkout redirects to Stripe, then back to a success page that unlocks
+access.
 
 **Etsy purchase.** After buying on Etsy, you verify your purchase at `/activate` using your Etsy order
 number and the email you used to buy. If you're not signed in yet, you'll be prompted to create an account
 or sign in, then finish activation — this unlocks the same product as a direct purchase. Etsy buyers get
-full access, not a lesser version.
+full access, not a lesser version. Etsy annual purchases remain one-time purchases (not subscriptions).
 
 **What determines what you can do:**
 - **Active** — full read/write access: create blueprints, journal, tracker logs, curricula; Oracle access
-  if you bought the Oracle tier. Monthly renews automatically until canceled; annual runs for a full plan
-  year.
-- **Read-only** — an annual purchase's plan year has ended: you keep permanent access to everything you
-  already created, but can't add new content until you renew.
+  if you bought the Oracle tier. Monthly and annual direct subscriptions renew automatically until canceled;
+  Etsy annual purchases and legacy direct annual one-time purchases run for a full plan year.
+- **Read-only** — an annual subscription or one-time purchase's plan year has ended: you keep permanent
+  access to everything you already created, but can't add new content until you renew. If you cancel an
+  annual subscription, full access continues through the year you paid for, then switches to read-only.
 - **Expired** — a monthly subscription lapsed or was canceled: no access until you resubscribe.
 - **Revoked** — an admin-applied state (refund/abuse); access fully blocked.
 
@@ -275,7 +277,8 @@ full access, not a lesser version.
 | Blueprint taking a while | A generation screen, up to ~10 minutes, with a retry option if it times out |
 | Trying to create content without active access | A message that an active planner subscription is required |
 
-Annual purchasers (both direct and Etsy) also get a **loyalty reward** reserved for next year's renewal.
+Annual direct subscription buyers get a **loyalty reward** reserved for next year's renewal. Legacy direct
+annual one-time purchases and Etsy annual purchases also qualify for the loyalty reward.
 
 ---
 
