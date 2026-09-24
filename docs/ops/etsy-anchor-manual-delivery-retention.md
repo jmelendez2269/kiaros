@@ -95,9 +95,9 @@ These environment variables map Etsy orders to Kairos access tiers for the **sep
 
 ---
 
-## Admin Dry-Run Click Path (Non-Production or Production with Fake IDs)
+## Admin Dry-Run Click Path (Production with Clearly Fake IDs)
 
-Use this workflow to verify the generate → QA → download flow without touching real buyer data or publishing to Etsy.
+Use this workflow to verify the generate → QA → download flow in production without touching real buyer data or publishing to Etsy.
 
 ### Prerequisites
 
@@ -111,40 +111,46 @@ Use this workflow to verify the generate → QA → download flow without touchi
 - System creates orders with `fixture-*` shop/receipt/transaction IDs
 - Support email ending in `.test`
 - Artifact ID prefixed `art_fixture_`
+- These are validated by `validateFixtureArtifactIntake()` which **requires** fictional markers
 
 **Production dry-run (kairosplanner.xyz):**
 - **Fixtures are NOT available** in production
-- Use **manual intake** with clearly fake IDs:
-  - Shop ID: `DRYRUN-SHOP-001`
-  - Receipt ID: `DRYRUN-RECEIPT-001`
-  - Transaction ID: `DRYRUN-TX-001`
-  - Support email: `dryrun@example.test` (or similar clearly fake address)
-  - Display name: `DRYRUN Test` or `Avery (dry-run)`
-- Mark order as `fictional: true` during intake
-- Use recognizable fake birth data (e.g., Portland 1990-04-04)
+- Use **manual intake** (`kind: "manual"`) which goes through `validateManualArtifactIntake()`
+- **Critical:** Manual intake **rejects** `fictional: true`, `fixture-*` IDs, `.test` emails, and `art_fixture_*` artifact IDs
+- Use clearly fake but validator-compliant data:
+  - Shop ID: `DRYRUN-SHOP-001` ✅ (not `fixture-*`)
+  - Receipt ID: `DRYRUN-RECEIPT-001` ✅ (not `fixture-*`)
+  - Transaction ID: `DRYRUN-TX-001` ✅ (not `fixture-*`)
+  - Support email: `dryrun.anchor@example.com` ✅ (not `.test`)
+  - Display name: `Avery (dry-run)` or `DRYRUN Test`
+  - Artifact ID: System-generated opaque production ID (not `art_fixture_*`)
+  - **Fictional field:** Leave unchecked (`fictional: false`) ✅
+- Use recognizable fake birth data (e.g., Portland 1990-04-04, 08:30 AM)
+- Validator source: `lib/artifacts/fulfillment/workflow.ts` lines 152-168 (`validateManualArtifactIntake`)
 
 ### Step-by-step (Production Manual Intake)
 
 1. **Navigate:** `/admin/artifacts`
 
 2. **Create Dry-Run Order:**
-   - Click **"Create manual order"** (real intake UI available in production)
-   - Fill the intake form with clearly fake data:
-     - **Shop ID:** `DRYRUN-SHOP-001`
-     - **Receipt ID:** `DRYRUN-RECEIPT-001`
-     - **Transaction ID:** `DRYRUN-TX-001`
+   - Click **"Create manual order"** (manual intake UI, not fixtures)
+   - Fill the intake form with clearly fake but validator-compliant data:
+     - **Shop ID:** `DRYRUN-SHOP-001` (not `fixture-*`)
+     - **Receipt ID:** `DRYRUN-RECEIPT-001` (not `fixture-*`)
+     - **Transaction ID:** `DRYRUN-TX-001` (not `fixture-*`)
      - **Unit index:** `1`
      - **Quantity:** `1`
      - **Listing ID:** (blank or `DRYRUN-LISTING-001`)
      - **Purchased at:** Current timestamp
-     - **Support email:** `dryrun@example.test`
-     - **Display name:** `DRYRUN Test` or `Avery (dry-run)`
+     - **Support email:** `dryrun.anchor@example.com` (not `.test` — validator rejects those)
+     - **Display name:** `Avery (dry-run)` or `DRYRUN Test`
      - **Birth date:** `1990-04-04`
      - **Birth time:** `08:30 AM` (or `UNKNOWN` for unknown-time test)
      - **Birth city:** `Portland`
      - **Birth country:** `United States`
-     - **Fictional:** ☑ Check this box
+     - **Fictional:** Leave unchecked (`fictional: false`) — **critical: validator rejects fictional=true for manual intake**
    - Submit → order appears in workflow console in `Intake draft` state
+   - **Why these restrictions?** `validateManualArtifactIntake()` in `lib/artifacts/fulfillment/workflow.ts` lines 152-168 explicitly rejects `fictional: true`, `fixture-*` IDs, `.test` emails, and `art_fixture_*` artifact IDs to enforce production data hygiene
 
 3. **Validate Intake:**
    - Select the new order
@@ -195,23 +201,22 @@ Use this workflow to verify the generate → QA → download flow without touchi
 
 - ❌ **Do not use** real Etsy shop/receipt/transaction IDs from actual orders
 - ❌ **Do not use** real buyer birth data, names, emails, or addresses
+- ❌ **Do not use** `fixture-*` prefixed IDs (validator rejects those in manual intake)
+- ❌ **Do not use** emails ending in `.test` (validator rejects those in manual intake)
+- ❌ **Do not check** the "Fictional" checkbox if present (validator rejects `fictional: true` in manual intake)
 - ❌ **Do not publish** any Etsy listing (listing remains draft on Etsy Seller Dashboard)
 - ❌ **Do not activate** the product row in `artifact_products` (`active=false` must remain)
 - ❌ **Do not upload** PDFs to Etsy or any public URL
 - ❌ **Do not send** any Etsy Messages or emails to real people
-- ❌ **Do not uncheck** the "Fictional" checkbox for dry-run orders
 
 ---
 
-## Manual Etsy Messages Delivery (Real Orders After Approval)
+## Manual Etsy Messages Delivery (Real Orders After Controlled Dry-Run)
 
-**Pre-flight check:** All approval gates in `docs/etsy-anchor-print-launch-approval-packet.md` must be closed:
+**Pre-flight check:** Controlled dry-run and this SOP must pass first. Jack waived waiting on external accessibility and legal review for Anchor launch on 2026-09-24. After dry-run verification, proceed to publish the founder-approved $34 listing.
 
-- ☑ Founder offer approved
-- ☑ Legal review complete
-- ☑ Independent accessibility review complete
-- ☑ Controlled deployment/flag activation approved
-- ☑ Etsy publication separately approved
+**Public accessibility wording (approved for launch):**
+> Designed with accessibility features; independent PDF/UA conformance is not claimed.
 
 ### When to deliver
 
@@ -220,8 +225,10 @@ Deliver PDFs **after** all of these conditions are met:
 1. Order state is `Ready for external delivery`
 2. All four PDF variants exported and SHA-256 verified
 3. All six QA items approved by a named operator
-4. Support email confirmed valid (not `.test`)
+4. Support email confirmed valid (real buyer email, not dry-run)
 5. No pending clarification or revision request
+6. Product activated (`KAI-ETSY-ANCHOR-V1` has `active=true`)
+7. Etsy listing published and live
 
 ### What to attach
 
@@ -357,13 +364,14 @@ When order volume exceeds ~50/month:
 
 ## What This SOP Explicitly Does NOT Authorize
 
-1. **Etsy listing publication** — requires separate founder approval after all gates close (listing remains draft on Etsy Seller Dashboard)
-2. **Product activation** — `KAI-ETSY-ANCHOR-V1` must remain `active=false` in `artifact_products` until separate approval
-3. **Real buyer order processing** — only `DRYRUN-*` IDs with fictional checkbox checked until all approval gates close
+1. **Etsy listing publication** — held until controlled dry-run + this SOP verification complete (listing remains draft on Etsy Seller Dashboard)
+2. **Product activation** — `KAI-ETSY-ANCHOR-V1` must remain `active=false` until dry-run + SOP verification complete
+3. **Real buyer order processing** — only validator-compliant dry-run data (`DRYRUN-*` IDs, `dryrun.anchor@example.com`, `fictional: false`) until product activated + listing published
 4. **Automated Etsy API upload or messaging** — not implemented; all delivery is manual Etsy Messages
 5. **Gifting or third-party orders** — not supported; buyer must provide own birth data with consent
-6. **Using real buyer data in dry-runs** — always use clearly fake `DRYRUN-*` IDs + fictional checkbox
+6. **Using real buyer data in dry-runs** — always use clearly fake `DRYRUN-*` IDs + non-`.test` email
 7. **Bypassing QA approval** — every order requires complete 6-item QA checklist
+8. **Using fixture patterns in production** — no `fixture-*` IDs, no `.test` emails, no `fictional: true` checkbox in manual intake (validator rejects these)
 
 ---
 
@@ -376,8 +384,15 @@ Use this checklist to verify the workflow in production before processing any re
 - [ ] Confirm `KAI-ETSY-ANCHOR-V1` product row has `active=false` in `artifact_products` table
 - [ ] Confirm Etsy listing remains unpublished (draft on Etsy Seller Dashboard)
 - [ ] Navigate to `/admin/artifacts` → page loads successfully
-- [ ] Click **"Create manual order"** → fill intake form with clearly fake `DRYRUN-*` IDs
-- [ ] Check **"Fictional"** checkbox → submit → order created in `Intake draft`
+- [ ] Click **"Create manual order"** → fill intake form with validator-compliant fake data:
+  - [ ] Shop ID: `DRYRUN-SHOP-001` (not `fixture-*`)
+  - [ ] Receipt ID: `DRYRUN-RECEIPT-001` (not `fixture-*`)
+  - [ ] Transaction ID: `DRYRUN-TX-001` (not `fixture-*`)
+  - [ ] Support email: `dryrun.anchor@example.com` (not `.test`)
+  - [ ] Display name: `Avery (dry-run)` or similar clearly fake name
+  - [ ] Birth data: Portland 1990-04-04 08:30 AM (or UNKNOWN for unknown-time test)
+  - [ ] Fictional field: **Leave unchecked** (`fictional: false` — validator requires this)
+- [ ] Submit → order created in `Intake draft`
 - [ ] Click **"Validate intake"** → state changes to `Ready to generate`
 - [ ] Click **"Generate"** → state changes through `Generating` to `QA required`
 - [ ] Verify artifact generated: 26-page report + 1-page Anchor Print visible in UI
@@ -386,14 +401,19 @@ Use this checklist to verify the workflow in production before processing any re
 - [ ] Download each of the four PDF variants (Report Letter/A4, Anchor Print Letter/A4)
 - [ ] Open each PDF → verify:
   - [ ] Selectable text, embedded fonts, readable at 100% zoom
-  - [ ] Only dry-run data (name/email contain "DRYRUN" or clearly fake)
+  - [ ] Only dry-run data (name contains "dry-run", email is `dryrun.anchor@example.com`)
   - [ ] Calculation facts, interpretive chapters, prompts, disclosures all present
   - [ ] Chart wheel, placement table, aspect grid visible
   - [ ] Anchor Print shows six themes, no private metadata in filename
 - [ ] Verify audit trail in UI → all events recorded with timestamps, actor IDs
 - [ ] **Do not send** any Etsy Messages, emails, or upload files anywhere
-- [ ] **Do not publish** Etsy listing or activate product row
-- [ ] **Do not process** real buyer orders until all approval gates close
+- [ ] **Do not publish** Etsy listing or activate product row yet
+- [ ] **Document dry-run completion** → proceed to product activation + listing publication after SOP verification
+
+**After successful dry-run:**
+- [ ] Activate product: set `active=true` on `KAI-ETSY-ANCHOR-V1` (separate approval + migration)
+- [ ] Publish Etsy listing manually via Seller Dashboard with $34 price
+- [ ] Public a11y wording: "Designed with accessibility features; independent PDF/UA conformance is not claimed."
 
 ---
 
@@ -403,23 +423,25 @@ Use this checklist to verify the workflow in production before processing any re
 - **All three artifact flags enabled** in Vercel production as of 2026-09-24
 - **Product inactive** (`KAI-ETSY-ANCHOR-V1` has `active=false` in database)
 - **Etsy listing unpublished** (draft on Etsy Seller Dashboard)
-- **Real buyer intake held** by operator discipline (fictional checkbox, fake IDs only)
-- **Listing publication** is a separate manual Etsy Seller action, not gated by a Kiaros flag
+- **Production dry-run** uses manual intake (`fictional: false`) with `DRYRUN-*` IDs + non-`.test` email (e.g., `dryrun.anchor@example.com`)
+- **Launch gates:** Jack waived external a11y + legal review 2026-09-24; proceed after controlled dry-run + this SOP pass
+- **Listing publication** is manual Etsy Seller action after dry-run verification
 - **Delivery** is manual Etsy Messages attachment after QA approval
 - **Retention** follows published Privacy/Terms schedule (30/180 days/12 months/7 years)
-- **Production dry-run** uses manual intake with `DRYRUN-*` IDs + fictional checkbox
 
 **Before first real order:**
 
-1. Close all approval gates in `docs/etsy-anchor-print-launch-approval-packet.md`:
-   - ☑ Founder offer approved (26-page report, $34, separate Anchor Print)
-   - ☐ Legal review complete
-   - ☐ Independent accessibility review complete
+1. Complete controlled dry-run with this SOP:
+   - Create manual order with `DRYRUN-*` IDs + `dryrun.anchor@example.com`
+   - Fictional field unchecked (`fictional: false`)
+   - Validate → Generate → QA (6 items) → Export → Download
+   - Verify all four PDFs locally
 2. Activate product row: set `active=true` on `KAI-ETSY-ANCHOR-V1` in `artifact_products` (separate approval + migration)
-3. Publish Etsy listing manually via Etsy Seller Dashboard (separate approval)
-4. Process first real order: uncheck "Fictional", use real Etsy receipt/transaction IDs, verify buyer consent
-5. Monitor first 5-10 orders closely for QA quality, delivery timing, buyer feedback
-6. Document any issues, iterate SOP as needed
+3. Publish Etsy listing manually via Etsy Seller Dashboard with founder-approved $34 price
+4. Public a11y wording: "Designed with accessibility features; independent PDF/UA conformance is not claimed."
+5. Process first real order: use real Etsy receipt/transaction IDs, verify buyer consent
+6. Monitor first 5-10 orders closely for QA quality, delivery timing, buyer feedback
+7. Document any issues, iterate SOP as needed
 
 ---
 
