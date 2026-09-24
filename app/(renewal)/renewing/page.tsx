@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_INTERVAL_MS = 8000;
@@ -31,6 +32,7 @@ const SLIDES = [
 
 export default function RenewingPage() {
   const router = useRouter();
+  const currentPlannerYear = getPlannerYearWithOverride();
   const hasFired = useRef(false);
 
   const [failed, setFailed] = useState(false);
@@ -141,7 +143,7 @@ export default function RenewingPage() {
       <div className="space-y-2 text-center">
         <p className="shell-kicker">New year, new blueprint</p>
         <h2 className="font-serif text-3xl text-bone">
-          Building your {new Date().getFullYear()} planner
+          Building your {currentPlannerYear} planner
         </h2>
         <p className="mx-auto max-w-sm text-sm text-bone-muted">
           This takes <strong className="text-bone/80">5–15 minutes</strong>. Your existing journal,

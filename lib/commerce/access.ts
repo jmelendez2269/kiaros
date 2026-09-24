@@ -4,7 +4,11 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 
 import { createAdminSupabase } from "@/lib/supabase/admin";
-import { resolveUserAccess, type ProductEntitlementRecord } from "./entitlements";
+import { 
+  resolveUserAccess, 
+  loadOrderSubscriptionMap,
+  type ProductEntitlementRecord 
+} from "./entitlements";
 
 /**
  * Call at the top of any write route that requires an active planner subscription.
@@ -36,7 +40,18 @@ export async function requireActivePlannerAccess(clerkUserId: string): Promise<N
     .eq("user_id", profile.id)
     .neq("status", "revoked");
 
-  const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[]);
+  // Load subscription info for entitlements
+  const orderIds = (entitlements ?? [])
+    .map(e => e.source_order_id)
+    .filter((id): id is string => !!id);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+
+  const access = resolveUserAccess(
+    (entitlements ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap
+  );
 
   if (!access.hasPlannerAccess) {
     return NextResponse.json(

@@ -5,7 +5,8 @@ import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributi
 import { CheckoutButton } from "@/components/commerce/CheckoutButton";
 import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { MoonPhaseIcon } from "@/components/shared/MoonPhaseIcon";
-import { COMMERCE_TIERS, CURRENT_PLANNER_YEAR, formatUsd } from "@/lib/commerce/config";
+import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 interface Props {
   isSignedIn: boolean;
@@ -166,6 +167,7 @@ export function PublicPricingPage({
   showCanceledMessage = false,
   canceledCheckoutAttemptId,
 }: Props) {
+  const currentPlannerYear = getPlannerYearWithOverride();
   const isFullPage = mode === "pricing";
 
   const navLinks: { href: string; label: string }[] = [
@@ -241,12 +243,12 @@ export function PublicPricingPage({
         <section className="shell-panel-hero px-7 py-10 md:px-10 md:py-12">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
             <div>
-              <p className="shell-kicker mb-4">{CURRENT_PLANNER_YEAR} Planner</p>
+              <p className="shell-kicker mb-4">{currentPlannerYear} Planner</p>
               <h1 className="shell-hero-title max-w-4xl">
                 The planets move on their own schedule. Your year should too.
               </h1>
               <p className="shell-prose-lead mt-5">
-                Your personalized {CURRENT_PLANNER_YEAR} blueprint, built from your natal chart
+                Your personalized {currentPlannerYear} blueprint, built from your natal chart
                 and this year&apos;s real planetary transits.
               </p>
               <p className="mt-4 max-w-3xl text-base leading-7 text-bone-muted">

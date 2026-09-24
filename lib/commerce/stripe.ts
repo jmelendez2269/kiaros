@@ -12,12 +12,12 @@ import {
   getTierPriceCents,
   isCommerceTierKey,
   LOYALTY_REWARD_AMOUNT_OFF_CENTS,
-  NEXT_PLANNER_YEAR,
   parseAccessPlan,
   parseCommerceTierKey,
   parseProductKind,
   type ProductKind,
 } from "@/lib/commerce/config";
+import { getNextPlannerYear } from "@/lib/commerce/planner-year";
 import { buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { BRAND } from "@/lib/brand";
@@ -469,7 +469,7 @@ async function fulfillOneTimeCheckout(params: {
         entitlement_id: null,
         delivery_email: profile.email,
         status: "pending",
-        reward_year: NEXT_PLANNER_YEAR,
+        reward_year: getNextPlannerYear(),
         amount_off_cents: LOYALTY_REWARD_AMOUNT_OFF_CENTS,
         currency: "usd",
         stripe_customer_id: getStripeId(session.customer),

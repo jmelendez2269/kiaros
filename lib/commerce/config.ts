@@ -19,6 +19,7 @@ export interface CommerceTier {
   features: string[];
   checkoutHeadline: string;
   listingMatchers: string[];
+  plannerYear: number;
 }
 
 export const LOYALTY_REWARD_AMOUNT_OFF_CENTS = 1800;
@@ -94,6 +95,22 @@ export function getCommerceTier(key: CommerceTierKey, now?: Date): CommerceTier 
     plannerYear: getPlannerYearWithOverride(now),
   };
 }
+
+/**
+ * Get all commerce tiers with planner year computed at request time
+ */
+export function getAllCommerceTiers(now?: Date): CommerceTier[] {
+  return COMMERCE_TIERS_BASE.map(base => ({
+    ...base,
+    plannerYear: getPlannerYearWithOverride(now),
+  }));
+}
+
+/**
+ * Export as COMMERCE_TIERS for backwards compatibility
+ * Note: This evaluates plannerYear at module load time for each access
+ */
+export const COMMERCE_TIERS = getAllCommerceTiers();
 
 export function formatUsd(cents: number) {
   return new Intl.NumberFormat("en-US", {

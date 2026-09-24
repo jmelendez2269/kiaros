@@ -3,6 +3,7 @@ import "server-only";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import {
   resolveUserAccess,
+  loadOrderSubscriptionMap,
   type EntitlementAccessState,
   type ProductEntitlementRecord,
 } from "@/lib/commerce/entitlements";
@@ -45,7 +46,18 @@ export async function getAccessWindow(supabaseUserId: string): Promise<AccessWin
     .eq("user_id", supabaseUserId)
     .neq("status", "revoked");
 
-  const access = resolveUserAccess((data ?? []) as ProductEntitlementRecord[]);
+  // Load subscription info
+  const orderIds = (data ?? [])
+    .map(e => e.source_order_id)
+    .filter((id): id is string => !!id);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+
+  const access = resolveUserAccess(
+    (data ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap
+  );
   // `resolveUserAccess` sorts both lists by ends_at descending.
   const chosen = access.activeEntitlements[0] ?? access.entitlements[0];
   if (!chosen) return null;

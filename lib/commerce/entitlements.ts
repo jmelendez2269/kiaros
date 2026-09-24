@@ -112,6 +112,7 @@ export function resolveUserAccess(
   entitlements: ProductEntitlementRecord[],
   asOf: Date | string = new Date(),
   samplerCredits?: number,
+  orderSubscriptionMap?: Map<string, boolean>,
 ): UserAccessSnapshot {
   const resolved = entitlements
     .map((entitlement) => resolveEntitlement(entitlement, asOf))
@@ -121,15 +122,23 @@ export function resolveUserAccess(
   const capabilities = resolveAccessCapabilities({
     asOf,
     authenticated: true,
-    entitlements: entitlements.map((entitlement) => ({
-      accessPlan: getAccessPlan(entitlement.access_plan),
-      endsAt: entitlement.ends_at,
-      oracleEnabled: entitlement.oracle_enabled,
-      plannerYear: entitlement.planner_year,
-      source: entitlement.source,
-      startsAt: entitlement.starts_at,
-      status: entitlement.status,
-    })),
+    entitlements: entitlements.map((entitlement) => {
+      // Check if this entitlement is linked to a subscription
+      const isSubscription = entitlement.source_order_id && orderSubscriptionMap
+        ? orderSubscriptionMap.get(entitlement.source_order_id) ?? false
+        : false;
+      
+      return {
+        accessPlan: getAccessPlan(entitlement.access_plan),
+        endsAt: entitlement.ends_at,
+        oracleEnabled: entitlement.oracle_enabled,
+        plannerYear: entitlement.planner_year,
+        source: entitlement.source,
+        startsAt: entitlement.starts_at,
+        status: entitlement.status,
+        isSubscription,
+      };
+    }),
     samplerCredits,
   });
 
@@ -174,4 +183,28 @@ export async function loadSamplerCredits(supabase: any, userId: string): Promise
     .maybeSingle();
 
   return data?.credits_remaining ?? 0;
+}
+
+/**
+ * Load a map of order IDs to whether they have a subscription.
+ * Used to determine if yearly entitlements are subscriptions or one-time purchases.
+ */
+export async function loadOrderSubscriptionMap(
+  supabase: any,
+  orderIds: string[]
+): Promise<Map<string, boolean>> {
+  if (orderIds.length === 0) {
+    return new Map();
+  }
+
+  const { data } = await supabase
+    .from("direct_purchase_orders")
+    .select("id, stripe_subscription_id")
+    .in("id", orderIds);
+
+  const map = new Map<string, boolean>();
+  for (const order of data ?? []) {
+    map.set(order.id, !!order.stripe_subscription_id);
+  }
+  return map;
 }

@@ -1,3 +1,5 @@
+import { getOneTimeAnnualRollsForward } from './config.ts';
+
 export type CapabilityAccessPlan = "monthly" | "yearly";
 export type CapabilityEntitlementState = "active" | "read_only" | "expired" | "revoked";
 
@@ -19,6 +21,7 @@ export interface CapabilityEntitlement {
   source?: string | null;
   startsAt: string;
   status: string;
+  isSubscription?: boolean;
 }
 
 export interface ResolveAccessCapabilitiesInput {
@@ -225,11 +228,11 @@ export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput)
     if (entitlement.accessPlan === 'monthly') {
       return true;
     }
-    // For yearly access_plan:
-    // Cannot distinguish between one-time annual purchases and annual subscriptions
-    // without joining to direct_purchase_orders table to check stripe_subscription_id.
-    // For now, all yearly entitlements from Stripe and Etsy follow the config switch.
-    const { getOneTimeAnnualRollsForward } = require('./config');
+    // Annual subscriptions (yearly with isSubscription flag) always use the window rule
+    if (entitlement.accessPlan === 'yearly' && entitlement.isSubscription === true) {
+      return true;
+    }
+    // One-time purchases and Etsy follow the config switch
     return getOneTimeAnnualRollsForward();
   };
 

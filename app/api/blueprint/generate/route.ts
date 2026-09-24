@@ -3,7 +3,11 @@ import { NextResponse, after } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
 import { requireActivePlannerAccess } from "@/lib/commerce/access";
-import { resolveUserAccess, type ProductEntitlementRecord } from "@/lib/commerce/entitlements";
+import { 
+  resolveUserAccess, 
+  loadOrderSubscriptionMap,
+  type ProductEntitlementRecord 
+} from "@/lib/commerce/entitlements";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 // Blueprint generation calls Claude with a large prompt — 5+ minutes is normal.
@@ -37,10 +41,23 @@ export async function POST(request: Request) {
     let requestedYear: number | undefined;
     try {
       const body = await request.json();
-      requestedYear = body.planYear;
+      if (body.planYear !== undefined) {
+        // Validate that planYear is an integer
+        const parsed = Number(body.planYear);
+        if (!Number.isInteger(parsed) || parsed < 2000 || parsed > 3000) {
+          return NextResponse.json(
+            { error: "planYear must be a valid year between 2000 and 3000" },
+            { status: 400 }
+          );
+        }
+        requestedYear = parsed;
+      }
     } catch {
       // No body or invalid JSON - that's fine, we'll use defaults
     }
+
+    // Use consistent asOf time for all capability checks
+    const asOf = new Date();
 
     // Load user's entitlements to determine which years they can generate
     const { data: entitlements } = await admin
@@ -49,7 +66,18 @@ export async function POST(request: Request) {
       .eq("user_id", profile.id)
       .neq("status", "revoked");
 
-    const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[]);
+    // Load subscription info
+    const orderIds = (entitlements ?? [])
+      .map(e => e.source_order_id)
+      .filter((id): id is string => !!id);
+    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+
+    const access = resolveUserAccess(
+      (entitlements ?? []) as ProductEntitlementRecord[],
+      asOf,
+      undefined,
+      subscriptionMap
+    );
     const accessibleYears = [
       ...access.capabilities.blueprintFullAccessYears,
       ...access.capabilities.blueprintWindowedAccessYears,
@@ -57,7 +85,7 @@ export async function POST(request: Request) {
 
     // Determine which year to generate
     let plan_year: number;
-    const currentPlannerYear = getPlannerYearWithOverride();
+    const currentPlannerYear = getPlannerYearWithOverride(asOf);
 
     if (requestedYear) {
       // User explicitly requested a year - validate it
@@ -72,8 +100,11 @@ export async function POST(request: Request) {
       // Default to current planner year if accessible
       plan_year = currentPlannerYear;
     } else if (accessibleYears.length > 0) {
-      // Fall back to the first accessible year
-      plan_year = accessibleYears[0];
+      // Fall back to the latest accessible year that is at or before current planner year
+      const validYears = accessibleYears.filter(y => y <= currentPlannerYear);
+      plan_year = validYears.length > 0 
+        ? Math.max(...validYears)
+        : Math.max(...accessibleYears);
     } else {
       // Shouldn't happen if requireActivePlannerAccess passed, but be safe
       plan_year = profile.plan_year ?? currentPlannerYear;
