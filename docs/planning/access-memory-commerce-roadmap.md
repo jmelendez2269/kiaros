@@ -23,13 +23,14 @@ This is the living implementation plan and canonical tracker for the work discus
 
 Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflections-memory-unwrapped-plan.md) defines monthly and quarterly period-end reports, evidence improvements, and the annual retrospective, with goals as a small optional thread. Its REF-* tasks are implemented and verified locally; migration 0047 and deployment remain pending. Question-relevant recall and source links have local implementation and tests. Existing CONSENT-* and MEM-* activation dependencies remain tracked here.
 
-## Progress snapshot — 2026-09-23
+## Progress snapshot — 2026-09-24
 
 - **Full implementation:** 17 of 32 implementation rows are `done` — **53% complete**.
 - **Including completed local work awaiting verification:** 17 of 32 implementation rows are `done` or `verification` — **53% delivered to verification**.
 - **Whole tracker, including founder decisions:** 24 of 39 rows are `done` — **62%**; 24 of 39 are `done` or `verification` — **62%**.
 - The unrelated **3/114 points** figure is not a Kairos metric and must not be used for this roadmap.
 - Updated 2026-09-23: SAMPLE-01 (paid Stelloquy sampler) completed. Production verification: PR #10 merged, deploy `dpl_9M9NTTduCAV65BHyECf3u1CC4mqL` READY, `/sampler` live walkthrough PASS. Production flag `KIAROS_RELEVANCE_MEMORY=true` confirmed. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
+- **2026-09-24: Annual subscription migration** (outside roadmap scope): Direct annual purchases switched from one-time payments to auto-renewing yearly subscriptions. Cancel-at-period-end preserves access through paid period, then transitions to read-only. Legacy one-time annual (pre-2026-09-24) and Etsy annual purchases unchanged. **Loyalty reward decision**: New annual subscribers get no separate $18 code (locked founding price is the reward); legacy one-time annual and Etsy buyers keep their $18 reward. PR #13 in review.
 
 ## Current recommendation
 
