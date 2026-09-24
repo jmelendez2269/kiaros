@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { AccessPlan } from "@/lib/commerce/config";
+import { getOneTimeAnnualRollsForward } from "@/lib/commerce/config";
 import type { Tables } from "@/types/database";
 import {
   resolveAccessCapabilities,
@@ -140,6 +141,7 @@ export function resolveUserAccess(
       };
     }),
     samplerCredits,
+    oneTimeAnnualRollsForward: getOneTimeAnnualRollsForward(),
   });
 
   return {

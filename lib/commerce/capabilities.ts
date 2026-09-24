@@ -1,4 +1,3 @@
-import { getOneTimeAnnualRollsForward } from './config.ts';
 import { getPlannerYearWithOverride } from './planner-year.ts';
 
 export type CapabilityAccessPlan = "monthly" | "yearly";
@@ -31,6 +30,7 @@ export interface ResolveAccessCapabilitiesInput {
   entitlements?: readonly CapabilityEntitlement[];
   isAdmin?: boolean;
   samplerCredits?: number;
+  oneTimeAnnualRollsForward?: boolean;
 }
 
 export interface AccessCapabilities {
@@ -261,8 +261,8 @@ export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput)
     if (entitlement.accessPlan === 'yearly' && entitlement.isSubscription === true) {
       return true;
     }
-    // One-time purchases and Etsy follow the config switch
-    return getOneTimeAnnualRollsForward();
+    // One-time purchases and Etsy follow the input parameter
+    return input.oneTimeAnnualRollsForward ?? false;
   };
 
   const fullYears = sortedYears(

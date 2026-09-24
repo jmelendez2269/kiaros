@@ -174,32 +174,30 @@ const oneTime: CapabilityEntitlement = {
   isSubscription: false,
 }
 
-process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD = 'false'
 let capsOneTime = resolveAccessCapabilities({
   asOf: '2026-12-05',
   authenticated: true,
   entitlements: [oneTime],
+  oneTimeAnnualRollsForward: false,
 })
 deepEqual(
   capsOneTime.blueprintFullAccessYears,
   [2026],
   'One-time purchase stays locked to 2026 when switch is false'
 )
-delete process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD
 
 // Test: One-time purchase WITH switch
-process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD = 'true'
 let capsOneTimeRoll = resolveAccessCapabilities({
   asOf: '2026-12-05',
   authenticated: true,
   entitlements: [oneTime],
+  oneTimeAnnualRollsForward: true,
 })
 deepEqual(
   capsOneTimeRoll.blueprintFullAccessYears,
   [2026, 2027],
   'One-time purchase rolls forward when switch is true'
 )
-delete process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD
 
 // Test: Read-only after expiry
 const expired: CapabilityEntitlement = {
