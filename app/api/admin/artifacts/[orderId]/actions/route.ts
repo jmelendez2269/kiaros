@@ -35,6 +35,7 @@ function errorResponse(error: unknown): NextResponse {
     const status = error.code === "not_found" ? 404 : error.code === "idempotency_conflict" ? 409 : 400;
     return NextResponse.json({ success: false, error: error.message }, { status });
   }
+  console.error("[admin/artifacts/actions] Unexpected error:", error);
   return NextResponse.json({ success: false, error: "Artifact action failed closed." }, { status: 500 });
 }
 

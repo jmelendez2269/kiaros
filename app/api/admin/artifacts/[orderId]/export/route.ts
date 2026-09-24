@@ -25,6 +25,7 @@ function errorResponse(error: unknown): NextResponse {
     const status = error.code === "not_found" ? 404 : 400;
     return NextResponse.json({ success: false, error: error.message }, { status });
   }
+  console.error("[admin/artifacts/export] Unexpected error:", error);
   return NextResponse.json({ success: false, error: "PDF export failed closed." }, { status: 500 });
 }
 
