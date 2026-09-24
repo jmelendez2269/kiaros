@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { CURRENT_PLANNER_YEAR } from "@/lib/commerce/config";
 import { inferTierFromEtsySignals } from "@/lib/commerce/etsy-mapping";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 import { upsertMarketplaceOrders } from "@/lib/commerce/marketplace-orders";
 
 export const runtime = "nodejs";
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         sku: parsed.data.sku ?? null,
         accessPlan: "yearly",
         productTier: tier.key,
-        plannerYear: parsed.data.planner_year ?? tier.plannerYear ?? CURRENT_PLANNER_YEAR,
+        plannerYear: parsed.data.planner_year ?? tier.plannerYear ?? getPlannerYearWithOverride(),
         oracleEnabled: tier.oracleEnabled,
         purchasedAt: normalizeDate(parsed.data.purchased_at),
         sourceMessageId: parsed.data.source_message_id ?? null,

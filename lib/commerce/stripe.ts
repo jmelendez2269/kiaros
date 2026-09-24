@@ -13,12 +13,12 @@ import {
   getTierPriceCents,
   isCommerceTierKey,
   LOYALTY_REWARD_AMOUNT_OFF_CENTS,
-  NEXT_PLANNER_YEAR,
   parseAccessPlan,
   parseCommerceTierKey,
   parseProductKind,
   type ProductKind,
 } from "@/lib/commerce/config";
+import { getNextPlannerYear } from "@/lib/commerce/planner-year";
 import { buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { BRAND } from "@/lib/brand";
@@ -145,6 +145,14 @@ export async function createLoyaltyRewardCoupon(reward: {
  * Finds a still-redeemable loyalty reward for this user against the
  * tier's planner year, so checkout can apply it automatically.
  */
+/**
+ * Pure function: determines if a loyalty reward matches the checkout tier year.
+ * Returns true when reward_year equals the tier's planner year.
+ */
+export function loyaltyRewardMatches(rewardYear: number, tierPlannerYear: number): boolean {
+  return rewardYear === tierPlannerYear;
+}
+
 export async function findRedeemableLoyaltyReward(params: {
   userProfileId: string;
   plannerYear: number;
@@ -475,7 +483,7 @@ async function fulfillOneTimeCheckout(params: {
         entitlement_id: null,
         delivery_email: profile.email,
         status: "pending",
-        reward_year: NEXT_PLANNER_YEAR,
+        reward_year: getNextPlannerYear(),
         amount_off_cents: LOYALTY_REWARD_AMOUNT_OFF_CENTS,
         currency: "usd",
         stripe_customer_id: getStripeId(session.customer),

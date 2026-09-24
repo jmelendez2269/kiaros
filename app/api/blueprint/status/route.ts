@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 export async function GET() {
   const { userId } = await auth();
@@ -20,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ status: "error" });
     }
 
-    const plan_year = profile.plan_year ?? new Date().getFullYear();
+    const plan_year = profile.plan_year ?? getPlannerYearWithOverride();
 
     const { data: blueprint, error: blueprintError } = await admin
       .from("blueprints")
@@ -50,7 +51,11 @@ export async function GET() {
         .eq("id", profile.id);
     }
 
-    return NextResponse.json({ status: blueprint.status, error: blueprint.error_message ?? null });
+    return NextResponse.json({ 
+      status: blueprint.status, 
+      error: blueprint.error_message ?? null,
+      plannerYear: getPlannerYearWithOverride()
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[status] Unexpected error:", message);

@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/brand";
+import { getCurrentPlannerYear, getNextPlannerYear, getPlannerYearWithOverride } from "./planner-year";
 
 export type CommerceTierKey = "planner" | "planner_oracle";
 export type ProductKind = CommerceTierKey | "stelloquy_sampler";
@@ -15,17 +16,26 @@ export interface CommerceTier {
   directPriceCents: number;
   etsyPriceCents: number;
   oracleEnabled: boolean;
-  plannerYear: number;
   features: string[];
   checkoutHeadline: string;
   listingMatchers: string[];
+  plannerYear: number;
 }
 
-export const CURRENT_PLANNER_YEAR = 2026;
-export const NEXT_PLANNER_YEAR = CURRENT_PLANNER_YEAR + 1;
 export const LOYALTY_REWARD_AMOUNT_OFF_CENTS = 1800;
 
-export const COMMERCE_TIERS: CommerceTier[] = [
+/**
+ * Config switch for one-time and Etsy annual entitlements.
+ * When false (default): they stay locked to their purchased plan year.
+ * When true: they follow the same windowed access rule as subscribers.
+ * 
+ * Can be overridden by env var ONE_TIME_ANNUAL_ROLLS_FORWARD=true
+ */
+export function getOneTimeAnnualRollsForward(): boolean {
+  return process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD === 'true';
+}
+
+const COMMERCE_TIERS_BASE: Omit<CommerceTier, 'plannerYear'>[] = [
   {
     key: "planner",
     name: `${BRAND.product} Planner`,
@@ -38,7 +48,6 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     directPriceCents: 14000,
     etsyPriceCents: 15600,
     oracleEnabled: false,
-    plannerYear: CURRENT_PLANNER_YEAR,
     features: [
       "Personalized blueprint, calendar, journal, and curriculum workspace",
       "Guidance that adapts to where you are now in the year",
@@ -61,7 +70,6 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     directPriceCents: 22000,
     etsyPriceCents: 24000,
     oracleEnabled: true,
-    plannerYear: CURRENT_PLANNER_YEAR,
     features: [
       `Everything in ${BRAND.product} Planner`,
       "Oracle guidance grounded in your chart, goals, current transits, and selected journal entries",
@@ -74,15 +82,39 @@ export const COMMERCE_TIERS: CommerceTier[] = [
   },
 ];
 
-export function getCommerceTier(key: CommerceTierKey) {
-  const tier = COMMERCE_TIERS.find((candidate) => candidate.key === key);
+export function getCommerceTier(key: CommerceTierKey, now?: Date): CommerceTier {
+  const base = COMMERCE_TIERS_BASE.find((candidate) => candidate.key === key);
 
-  if (!tier) {
+  if (!base) {
     throw new Error(`Unknown commerce tier: ${key}`);
   }
 
-  return tier;
+  // Add plannerYear computed at request time
+  return {
+    ...base,
+    plannerYear: getPlannerYearWithOverride(now),
+  };
 }
+
+/**
+ * Get all commerce tiers with planner year computed at request time
+ */
+export function getAllCommerceTiers(now?: Date): CommerceTier[] {
+  return COMMERCE_TIERS_BASE.map(base => ({
+    ...base,
+    plannerYear: getPlannerYearWithOverride(now),
+  }));
+}
+
+/**
+ * Export as COMMERCE_TIERS for backwards compatibility.
+ * 
+ * IMPORTANT: plannerYear is REMOVED from this constant's shape to prevent misuse.
+ * The module-level constant would freeze plannerYear at load time, which breaks
+ * Dec 1 rollover logic. Use getCommerceTier(key, now) or getAllCommerceTiers(now)
+ * when you need plannerYear.
+ */
+export const COMMERCE_TIERS: Omit<CommerceTier, 'plannerYear'>[] = COMMERCE_TIERS_BASE;
 
 export function formatUsd(cents: number) {
   return new Intl.NumberFormat("en-US", {
@@ -129,10 +161,10 @@ export function inferTierFromListingText(value: string) {
   return getCommerceTier("planner");
 }
 
-export function buildTierMetadata(tier: CommerceTier, accessPlan: AccessPlan = "yearly") {
+export function buildTierMetadata(tier: CommerceTier, accessPlan: AccessPlan = "yearly", now?: Date) {
   return {
     product_tier: tier.key,
-    planner_year: String(tier.plannerYear),
+    planner_year: String(getPlannerYearWithOverride(now)),
     oracle_enabled: String(tier.oracleEnabled),
     access_plan: accessPlan,
   };

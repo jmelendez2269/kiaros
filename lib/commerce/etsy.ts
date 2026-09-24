@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { CURRENT_PLANNER_YEAR } from "@/lib/commerce/config";
 import { inferTierFromEtsySignals } from "@/lib/commerce/etsy-mapping";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 const etsyCsvInputSchema = z.object({
   csvText: z.string().trim().min(1, "Paste the Etsy CSV export first."),
@@ -117,7 +117,7 @@ function inferPlannerYear(record: Record<string, string>) {
     }
   }
 
-  return CURRENT_PLANNER_YEAR;
+  return getPlannerYearWithOverride();
 }
 
 export function parseEtsyOrdersCsv(csvText: string): EtsyImportRecord[] {

@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import {
   resolveUserAccess,
+  loadOrderSubscriptionMap,
+  extractStripeOrderIds,
   type ProductEntitlementRecord,
 } from "@/lib/commerce/entitlements";
 
@@ -35,7 +37,16 @@ export async function POST(req: Request) {
     .eq("user_id", profile.id)
     .neq("status", "revoked");
 
-  const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[]);
+  // Load subscription info for Stripe entitlements
+  const orderIds = extractStripeOrderIds(entitlements ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile.id });
+
+  const access = resolveUserAccess(
+    (entitlements ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap
+  );
 
   // Paid customers continue into the intent/customization layers. Limited-reading
   // accounts stop after birth data so their artifact is genuinely chart-only.

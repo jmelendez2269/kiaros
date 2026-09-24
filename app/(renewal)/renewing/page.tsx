@@ -36,6 +36,7 @@ export default function RenewingPage() {
   const [failed, setFailed] = useState(false);
   const [errorDetail, setErrorDetail] = useState("");
   const [slideIndex, setSlideIndex] = useState(0);
+  const [plannerYear, setPlannerYear] = useState<number | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -52,6 +53,10 @@ export default function RenewingPage() {
         setErrorDetail((data as { error?: string }).error ?? "Rollover request failed. Please try again.");
         setFailed(true);
         return;
+      }
+      const data = await res.json();
+      if (data.plannerYear) {
+        setPlannerYear(data.plannerYear);
       }
     } catch {
       setErrorDetail("Couldn't reach the server. Check your connection and try again.");
@@ -79,6 +84,11 @@ export default function RenewingPage() {
         }
         const data = await res.json();
         console.log(`[renewing] Poll #${pollCount}: status = ${data.status}`);
+        
+        // Capture planner year from status response
+        if (data.plannerYear && !plannerYear) {
+          setPlannerYear(data.plannerYear);
+        }
 
         if (data.status === "ready" || data.status === "error") {
           clearInterval(poll);
@@ -141,7 +151,7 @@ export default function RenewingPage() {
       <div className="space-y-2 text-center">
         <p className="shell-kicker">New year, new blueprint</p>
         <h2 className="font-serif text-3xl text-bone">
-          Building your {new Date().getFullYear()} planner
+          Building your {plannerYear ?? new Date().getFullYear()} planner
         </h2>
         <p className="mx-auto max-w-sm text-sm text-bone-muted">
           This takes <strong className="text-bone/80">5–15 minutes</strong>. Your existing journal,

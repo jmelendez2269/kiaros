@@ -3,8 +3,9 @@ import { anthropic } from '@ai-sdk/anthropic'
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { buildOracleSystemPromptSegments } from '@/lib/ai/oracle-system-prompt'
 import {
   ORACLE_MONTHLY_MESSAGE_LIMIT,
@@ -156,7 +157,17 @@ export async function POST(req: Request) {
         .neq('status', 'revoked'),
     ])
 
-    const access = resolveUserAccess((entitlementsRes.data ?? []) as ProductEntitlementRecord[])
+    // Load subscription info
+    const admin = createAdminSupabase()
+    const orderIds = extractStripeOrderIds(entitlementsRes.data ?? []);
+    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profileId });
+
+    const access = resolveUserAccess(
+      (entitlementsRes.data ?? []) as ProductEntitlementRecord[],
+      undefined,
+      undefined,
+      subscriptionMap
+    )
     if (!access.hasOracleAccess) {
       return NextResponse.json(
         {
