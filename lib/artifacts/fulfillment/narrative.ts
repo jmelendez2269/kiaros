@@ -33,6 +33,21 @@ const NarrativeDraftSchema = z.object({
 
 type NarrativeDraft = z.infer<typeof NarrativeDraftSchema>;
 
+function narrowToTuple2(arr: string[]): readonly [string, string] {
+  if (arr.length !== 2) throw new AnchorPrintContractError(`Expected 2 elements, got ${arr.length}`);
+  return arr as unknown as readonly [string, string];
+}
+
+function narrowToTuple3(arr: string[]): readonly [string, string, string] {
+  if (arr.length !== 3) throw new AnchorPrintContractError(`Expected 3 elements, got ${arr.length}`);
+  return arr as unknown as readonly [string, string, string];
+}
+
+function narrowToTuple8(arr: string[]): readonly [string, string, string, string, string, string, string, string] {
+  if (arr.length !== 8) throw new AnchorPrintContractError(`Expected 8 elements, got ${arr.length}`);
+  return arr as unknown as readonly [string, string, string, string, string, string, string, string];
+}
+
 const SECTION_BRIEF: Record<AnchorReportSectionId, string> = {
   chart_signature: "Synthesize the chart's strongest element, modality, polarity, placement, and aspect patterns without flattening contradictions.",
   identity_and_vitality: "Interpret the Sun as identity, vitality, authorship, and conscious direction.",
@@ -101,7 +116,12 @@ function orderAndValidateDraft(
         throw new AnchorPrintContractError(`${section.id} cites unavailable fact: ${factId}`);
       }
     }
-    byId.set(section.id, section);
+    const narrowedSection: AnchorNarrativeSection = {
+      ...section,
+      paragraphs: narrowToTuple2(section.paragraphs),
+      keyPoints: narrowToTuple3(section.keyPoints),
+    };
+    byId.set(section.id, narrowedSection);
   }
   return ANCHOR_REPORT_SECTION_IDS.map((id) => {
     const section = byId.get(id);
@@ -133,9 +153,9 @@ export async function generateProductionAnchorNarrative(
         model: ANCHOR_NARRATIVE_MODEL,
         promptVersion: ANCHOR_NARRATIVE_PROMPT_VERSION,
         tokenUsage: { inputTokens, outputTokens, totalTokens: inputTokens + outputTokens },
-        openingLetter: response.object.openingLetter,
+        openingLetter: narrowToTuple2(response.object.openingLetter),
         sections,
-        reflectionPrompts: response.object.reflectionPrompts,
+        reflectionPrompts: narrowToTuple8(response.object.reflectionPrompts),
       };
     } catch (error) {
       lastError = NoObjectGeneratedError.isInstance(error)
