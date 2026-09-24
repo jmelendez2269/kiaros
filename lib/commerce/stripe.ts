@@ -668,8 +668,9 @@ async function fulfillSubscriptionCheckout(params: {
     .update({ status: "converted", converted_at: new Date().toISOString() })
     .eq("user_id", profile.id);
 
-  // Loyalty rewards for new annual subscriptions: policy TBD by founder.
-  // Legacy behavior preserved: one-time annual purchases (fulfillOneTimeCheckout) still create rewards.
+  // Loyalty rewards: new annual subscriptions (2026-09-24 onward) do not receive a separate $18 code;
+  // the locked founding price is their reward. Legacy one-time annual (pre-2026-09-24) and Etsy buyers
+  // still create rewards in fulfillOneTimeCheckout and Etsy activation.
 
   await redeemLoyaltyRewardFromSession(session);
 
@@ -822,14 +823,21 @@ export async function syncSubscriptionEntitlement(subscription: Stripe.Subscript
       .eq("source", "stripe")
       .eq("source_order_id", order.id);
   } else {
-    // For annual subscriptions: only update status if not revoked.
-    // The ends_at extension happens in syncInvoiceSubscription on invoice.payment_succeeded.
-    // Keep status as "active" so the capabilities resolver can transition to read-only based on date.
+    // For annual subscriptions: only set active if the subscription has been paid at least once.
+    // Statuses like "incomplete" or "incomplete_expired" (failed payment, no retry) should not grant a free year.
+    // Only force "active" for: active, past_due, canceled (after a paid period), trialing.
+    // For incomplete/incomplete_expired, use the derived status from getSubscriptionAccessStatus.
+    const hasBeenPaid =
+      subscription.status === "active" ||
+      subscription.status === "past_due" ||
+      subscription.status === "canceled" ||
+      subscription.status === "trialing";
+
     if (shouldUpdateStatus) {
       await supabase
         .from("product_entitlements")
         .update({
-          status: "active",
+          status: hasBeenPaid ? "active" : status,
         })
         .eq("source", "stripe")
         .eq("source_order_id", order.id);

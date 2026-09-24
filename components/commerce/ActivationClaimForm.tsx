@@ -246,7 +246,7 @@ export function ActivationClaimForm({ initialClaimToken, isSignedIn }: Props) {
           <p className="shell-eyebrow">Loyalty reward</p>
           <p className="mt-4 text-sm leading-7 text-bone-muted">
             After activation, we will link a loyalty reward for next year&apos;s planner to your {BRAND.product}{" "}
-            account email. The reward applies a $18 discount at your next annual checkout.
+            account email. The reward applies an $18 discount at your next annual checkout.
           </p>
         </section>
 
