@@ -79,10 +79,10 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
       );
     }
 
-    // COPY: pending Stella
+    // COPY: voice-approved 2026-09-24
     const bodyText = result.accessPlan === "monthly"
       ? `Checkout is complete. Your monthly ${BRAND.product} access is active, with the current Blueprint week plus the next four weeks available, and is linked to ${result.email}.`
-      : `Checkout is complete. Your annual access to the full canonical Blueprint is active and is linked to ${result.email}. Your founding price is locked for as long as you stay subscribed.`;
+      : `Checkout is complete. Your full Blueprint is active and linked to ${result.email}. Your plan renews yearly on your purchase date, and you can cancel anytime. Your founding price stays locked for as long as you stay subscribed.`;
     const tierText = result.tier.oracleEnabled
       ? "Your plan includes Stelloquy alongside the Planner."
       : "Your plan includes the Planner. Stelloquy requires Planner + Oracle.";
