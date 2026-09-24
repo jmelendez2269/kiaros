@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import type { AnchorNormalizedBirth } from "@/lib/artifacts/anchor-print";
+import { AnchorPrintContractError } from "@/lib/artifacts/anchor-print/contract";
 import {
   buildProductionAnchorCalculation,
   createProductionAnchorInput,
@@ -75,6 +76,17 @@ function errorResponse(error: unknown): NextResponse {
     const status = error.code === "not_found" ? 404 : error.code === "idempotency_conflict" ? 409 : 400;
     return NextResponse.json({ success: false, error: error.message }, { status });
   }
+  if (error instanceof AnchorPrintContractError) {
+    console.error("[admin/artifacts] AnchorPrintContractError:", error.message, error.stack);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Anchor artifact generation failed: contract validation error. Check server logs for details.",
+      },
+      { status: 500 },
+    );
+  }
+  console.error("[admin/artifacts] Unexpected error:", error);
   return NextResponse.json({ success: false, error: "Artifact workflow failed closed." }, { status: 500 });
 }
 
