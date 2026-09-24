@@ -20,34 +20,15 @@ const SectionSchema = z.object({
   eyebrow: z.string().min(3).max(50),
   title: z.string().min(8).max(90),
   summary: z.string().min(90).max(300),
-  paragraphs: z.tuple([
-    z.string().min(260).max(1_250),
-    z.string().min(260).max(1_250),
-  ]),
-  keyPoints: z.tuple([
-    z.string().min(30).max(220),
-    z.string().min(30).max(220),
-    z.string().min(30).max(220),
-  ]),
+  paragraphs: z.array(z.string().min(260).max(1_250)).length(2),
+  keyPoints: z.array(z.string().min(30).max(220)).length(3),
   sourceFactIds: z.array(z.string().min(1)).min(1),
 });
 
 const NarrativeDraftSchema = z.object({
-  openingLetter: z.tuple([
-    z.string().min(220).max(1_200),
-    z.string().min(220).max(1_200),
-  ]),
+  openingLetter: z.array(z.string().min(220).max(1_200)).length(2),
   sections: z.array(SectionSchema).length(ANCHOR_REPORT_SECTION_IDS.length),
-  reflectionPrompts: z.tuple([
-    z.string().min(30).max(260),
-    z.string().min(30).max(260),
-    z.string().min(30).max(260),
-    z.string().min(30).max(260),
-    z.string().min(30).max(260),
-    z.string().min(30).max(260),
-    z.string().min(30).max(260),
-    z.string().min(30).max(260),
-  ]),
+  reflectionPrompts: z.array(z.string().min(30).max(260)).length(8),
 });
 
 type NarrativeDraft = z.infer<typeof NarrativeDraftSchema>;
