@@ -1,4 +1,5 @@
 import { getOneTimeAnnualRollsForward } from './config.ts';
+import { getPlannerYearWithOverride } from './planner-year.ts';
 
 export type CapabilityAccessPlan = "monthly" | "yearly";
 export type CapabilityEntitlementState = "active" | "read_only" | "expired" | "revoked";
@@ -179,6 +180,34 @@ function getCoveredYears(
   }
   
   return Array.from(years).sort((a, b) => a - b);
+}
+
+/**
+ * Determines whether a user should be sent to the rollover flow.
+ * Returns true when:
+ * 1. User's profile plan_year is behind the current planner year
+ * 2. User has access to the current planner year (via their covered years)
+ * 
+ * This ensures:
+ * - Subscribers are sent to renew on Dec 1 (when current planner year advances)
+ * - One-time/Etsy without roll-forward are NOT sent (they don't have access to new year)
+ * - After renewing, profile.plan_year is updated so they're not sent again until next roll
+ */
+export function shouldRollOver(input: {
+  profilePlanYear: number | null;
+  coveredYears: number[];
+  asOf: Date | string;
+}): boolean {
+  const { profilePlanYear, coveredYears, asOf } = input;
+  
+  if (!profilePlanYear) {
+    return false;
+  }
+  
+  const currentPlannerYear = getPlannerYearWithOverride(typeof asOf === 'string' ? new Date(asOf) : asOf);
+  
+  // Profile is behind current planner year AND user has access to current planner year
+  return profilePlanYear < currentPlannerYear && coveredYears.includes(currentPlannerYear);
 }
 
 export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput): AccessCapabilities {

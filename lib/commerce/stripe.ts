@@ -143,6 +143,14 @@ export async function createLoyaltyRewardCoupon(reward: {
  * Finds a still-redeemable loyalty reward for this user against the
  * tier's planner year, so checkout can apply it automatically.
  */
+/**
+ * Pure function: determines if a loyalty reward matches the checkout tier year.
+ * Returns true when reward_year equals the tier's planner year.
+ */
+export function loyaltyRewardMatches(rewardYear: number, tierPlannerYear: number): boolean {
+  return rewardYear === tierPlannerYear;
+}
+
 export async function findRedeemableLoyaltyReward(params: {
   userProfileId: string;
   plannerYear: number;

@@ -10,7 +10,9 @@ import { TourOverlay } from '@/components/tour/TourOverlay'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import { ReflectionNotification } from '@/components/reflections/ReflectionNotification'
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
-import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { shouldRollOver } from '@/lib/commerce/capabilities'
+import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { getAppProfile } from '@/lib/app/get-app-profile'
 import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { ESTABLISHED_PATTERN_MIN_SAMPLE } from '@/lib/journal/pattern-discoveries'
@@ -64,7 +66,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const entitlements = entitlementsResult.data
   const initialPatternIds = (establishedPatternsResult.data ?? []).map((pattern) => pattern.id)
 
-  const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[])
+  // Load subscription info for entitlements
+  const orderIds = (entitlements ?? [])
+    .map(e => e.source_order_id)
+    .filter((id): id is string => !!id);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+
+  const access = resolveUserAccess(
+    (entitlements ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap
+  )
 
   // Drives the "quiet sky" win-back email — fire-and-forget so it never
   // slows down the page render.
@@ -72,17 +85,30 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     await admin.from('user_profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', profile.id)
   })
 
-  // If the calendar year has advanced past the user's plan_year and they still
-  // have an active entitlement (monthly sub still billing), send them to the
-  // year-rollover generation page. The check for an existing current-year blueprint
-  // prevents a redirect loop once the rollover route has created the blueprint row.
-  const currentYear = new Date().getFullYear()
-  if (access.hasPlannerAccess && profile?.plan_year && profile.plan_year < currentYear) {
+  // If the planner year has rolled (Dec 1) and the user has access to the new year,
+  // send them to the year-rollover generation page. The check for an existing
+  // current-year blueprint prevents a redirect loop once the rollover route has
+  // created the blueprint row.
+  const asOf = new Date();
+  const currentPlannerYear = getPlannerYearWithOverride(asOf);
+  const coveredYears = [
+    ...access.capabilities.blueprintFullAccessYears,
+    ...access.capabilities.blueprintWindowedAccessYears,
+  ];
+  
+  if (
+    access.hasPlannerAccess &&
+    shouldRollOver({
+      profilePlanYear: profile?.plan_year ?? null,
+      coveredYears,
+      asOf,
+    })
+  ) {
     const { data: currentYearBlueprint } = await admin
       .from('blueprints')
       .select('id')
       .eq('user_id', profile.id)
-      .eq('plan_year', currentYear)
+      .eq('plan_year', currentPlannerYear)
       .limit(1)
       .maybeSingle()
 

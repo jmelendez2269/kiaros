@@ -112,7 +112,7 @@ export function resolveUserAccess(
   entitlements: ProductEntitlementRecord[],
   asOf: Date | string = new Date(),
   samplerCredits?: number,
-  orderSubscriptionMap?: Map<string, boolean>,
+  orderSubscriptionMap: Map<string, boolean> = new Map(),
 ): UserAccessSnapshot {
   const resolved = entitlements
     .map((entitlement) => resolveEntitlement(entitlement, asOf))

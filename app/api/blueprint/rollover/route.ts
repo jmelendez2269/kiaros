@@ -109,5 +109,8 @@ export async function POST() {
     })
   );
 
-  return NextResponse.json({ blueprintId: blueprint.id });
+  return NextResponse.json({ 
+    blueprintId: blueprint.id,
+    plannerYear: currentPlannerYear
+  });
 }

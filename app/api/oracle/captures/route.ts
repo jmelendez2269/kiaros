@@ -3,8 +3,9 @@ import { NextResponse, after } from 'next/server'
 import { z } from 'zod'
 
 import { createServerSupabase } from '@/lib/supabase/server'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { tagCaptureInBackground } from '@/lib/ai/capture-topic-extractor'
-import { resolveUserAccess, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 const uiMessageSchema = z.object({
   id: z.string(),
@@ -59,7 +60,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: entitlementsError.message }, { status: 500 })
     }
 
-    const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[])
+    const admin = createAdminSupabase()
+    const orderIds = (entitlements ?? [])
+      .map(e => e.source_order_id)
+      .filter((id): id is string => !!id);
+    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+
+    const access = resolveUserAccess(
+      (entitlements ?? []) as ProductEntitlementRecord[],
+      undefined,
+      undefined,
+      subscriptionMap
+    )
     if (!access.hasOracleAccess) {
       return NextResponse.json(
         {
