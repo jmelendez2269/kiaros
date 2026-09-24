@@ -555,7 +555,9 @@ async function fulfillSubscriptionCheckout(params: {
     throw new Error("The Stripe subscription is missing its billing item.");
   }
 
-  // For annual subscriptions, use a 365-day window from purchase date.
+  // For annual subscriptions, use a 365-day window from purchase date, but take the max of that
+  // and Stripe's current_period_end to handle leap years (prevents a paying subscriber from
+  // briefly losing access the day before renewal on non-leap years).
   // For monthly subscriptions, use the Stripe subscription period dates.
   const purchasedAt = session.created
     ? new Date(session.created * 1000).toISOString()
@@ -564,17 +566,23 @@ async function fulfillSubscriptionCheckout(params: {
     accessPlan === "yearly"
       ? toISODate(purchasedAt)
       : toISODate(getUnixDate(subscriptionItem?.current_period_start ?? subscription.created));
-  const endsAt =
-    accessPlan === "yearly"
-      ? buildAnnualEntitlementRecord({
-          user_id: "",
-          source: "stripe",
-          product_tier: tier.key,
-          planner_year: tier.plannerYear,
-          oracle_enabled: tier.oracleEnabled,
-          startAt: purchasedAt,
-        }).ends_at
-      : toISODate(getUnixDate(subscriptionItem?.current_period_end));
+
+  let endsAt: string;
+  if (accessPlan === "yearly") {
+    const window365 = buildAnnualEntitlementRecord({
+      user_id: "",
+      source: "stripe",
+      product_tier: tier.key,
+      planner_year: tier.plannerYear,
+      oracle_enabled: tier.oracleEnabled,
+      startAt: purchasedAt,
+    }).ends_at;
+    const stripePeriodEnd = toISODate(getUnixDate(subscriptionItem?.current_period_end));
+    endsAt = window365 > stripePeriodEnd ? window365 : stripePeriodEnd;
+  } else {
+    endsAt = toISODate(getUnixDate(subscriptionItem?.current_period_end));
+  }
+
   const entitlementStatus = getSubscriptionAccessStatus(subscription);
 
   const { data: profile, error: profileError } = await supabase
@@ -660,37 +668,8 @@ async function fulfillSubscriptionCheckout(params: {
     .update({ status: "converted", converted_at: new Date().toISOString() })
     .eq("user_id", profile.id);
 
-  // Create loyalty reward for annual subscriptions (not monthly)
-  if (accessPlan === "yearly") {
-    const { data: reward } = await supabase
-      .from("loyalty_rewards")
-      .upsert(
-        {
-          user_id: profile.id,
-          entitlement_id: null,
-          delivery_email: profile.email,
-          status: "pending",
-          reward_year: NEXT_PLANNER_YEAR,
-          amount_off_cents: LOYALTY_REWARD_AMOUNT_OFF_CENTS,
-          currency: "usd",
-          stripe_customer_id: getStripeId(session.customer ?? subscription.customer),
-          metadata: {
-            source: "stripe",
-            stripe_checkout_session_id: session.id,
-            stripe_subscription_id: subscription.id,
-          },
-        },
-        { onConflict: "user_id,reward_year" }
-      )
-      .select("id, amount_off_cents, currency, stripe_customer_id, stripe_promotion_code_id")
-      .single();
-
-    if (reward && !reward.stripe_promotion_code_id) {
-      await createLoyaltyRewardCoupon(reward).catch((err) =>
-        console.error("[stripe] Failed to create loyalty reward coupon:", err)
-      );
-    }
-  }
+  // Loyalty rewards for new annual subscriptions: policy TBD by founder.
+  // Legacy behavior preserved: one-time annual purchases (fulfillOneTimeCheckout) still create rewards.
 
   await redeemLoyaltyRewardFromSession(session);
 
@@ -819,32 +798,42 @@ export async function syncSubscriptionEntitlement(subscription: Stripe.Subscript
     })
     .eq("id", order.id);
 
+  // Fetch current entitlement to check for non-Stripe-controlled states like "revoked"
+  const { data: currentEntitlement } = await supabase
+    .from("product_entitlements")
+    .select("status")
+    .eq("source", "stripe")
+    .eq("source_order_id", order.id)
+    .single();
+
+  // Never overwrite "revoked" or other admin-applied terminal states
+  const shouldUpdateStatus = currentEntitlement?.status !== "revoked";
+
   // For monthly subscriptions, update ends_at to the subscription period end.
-  // For annual subscriptions, extend ends_at by 365 days on renewal (detected by invoice.paid webhook).
-  // The entitlement status remains "active" until the subscription truly ends, allowing
-  // cancel_at_period_end to keep access through the paid period.
+  // For annual subscriptions, ends_at is managed separately in syncInvoiceSubscription on renewal.
   if (accessPlan === "monthly") {
     const endsAt = toISODate(getUnixDate(subscriptionItem?.current_period_end));
     await supabase
       .from("product_entitlements")
       .update({
-        status,
+        ...(shouldUpdateStatus ? { status } : {}),
         ends_at: endsAt,
       })
       .eq("source", "stripe")
       .eq("source_order_id", order.id);
   } else {
-    // For annual subscriptions: only update status, not ends_at.
+    // For annual subscriptions: only update status if not revoked.
     // The ends_at extension happens in syncInvoiceSubscription on invoice.payment_succeeded.
-    // When the subscription ends (status becomes inactive), keep the entitlement status as "active"
-    // so the capabilities resolver can transition it to read-only based on the date.
-    await supabase
-      .from("product_entitlements")
-      .update({
-        status: "active",
-      })
-      .eq("source", "stripe")
-      .eq("source_order_id", order.id);
+    // Keep status as "active" so the capabilities resolver can transition to read-only based on date.
+    if (shouldUpdateStatus) {
+      await supabase
+        .from("product_entitlements")
+        .update({
+          status: "active",
+        })
+        .eq("source", "stripe")
+        .eq("source_order_id", order.id);
+    }
   }
 
   return { synced: true, reason: null };
@@ -858,12 +847,13 @@ export async function syncInvoiceSubscription(invoice: Stripe.Invoice) {
 
   const subscription = await retrieveSubscription(subscriptionId);
 
-  // For annual subscriptions, when an invoice is successfully paid, extend the entitlement by 365 days.
+  // For annual subscriptions, when a renewal invoice is successfully paid, extend the entitlement.
+  // This must be idempotent: processing the same invoice twice must not change the result.
   if (invoice.status === "paid" && invoice.billing_reason === "subscription_cycle") {
     const supabase = createAdminSupabase();
     const { data: order } = await supabase
       .from("direct_purchase_orders")
-      .select("id, access_plan")
+      .select("id, access_plan, metadata")
       .eq("stripe_subscription_id", subscription.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -873,27 +863,61 @@ export async function syncInvoiceSubscription(invoice: Stripe.Invoice) {
       const accessPlan = parseAccessPlan(order.access_plan) ?? "monthly";
 
       if (accessPlan === "yearly") {
-        // Fetch current entitlement to get the existing ends_at
-        const { data: entitlement } = await supabase
-          .from("product_entitlements")
-          .select("ends_at")
-          .eq("source", "stripe")
-          .eq("source_order_id", order.id)
-          .single();
+        // Check if we've already processed this invoice (idempotency)
+        const orderMetadata = typeof order.metadata === "object" && order.metadata ? order.metadata : {};
+        const processedInvoices = Array.isArray(orderMetadata.processed_invoices)
+          ? orderMetadata.processed_invoices
+          : [];
 
-        if (entitlement) {
-          // Extend by 365 days from the current ends_at
-          const currentEndsAt = new Date(`${entitlement.ends_at}T00:00:00.000Z`);
-          const newEndsAt = new Date(currentEndsAt);
-          newEndsAt.setUTCDate(newEndsAt.getUTCDate() + 365);
+        if (!processedInvoices.includes(invoice.id)) {
+          const subscriptionItem = getSubscriptionItem(subscription);
 
-          await supabase
+          // Compute the new ends_at deterministically from the invoice period start + 365 days.
+          // Take the max of that and the Stripe subscription's current_period_end to handle leap years.
+          // This ensures a paying subscriber never briefly loses access the day before renewal.
+          const periodStart = invoice.lines.data[0]?.period?.start
+            ? new Date(invoice.lines.data[0].period.start * 1000)
+            : new Date();
+          const target365 = new Date(periodStart);
+          target365.setUTCDate(target365.getUTCDate() + 365);
+
+          const stripePeriodEnd = subscriptionItem?.current_period_end
+            ? new Date(subscriptionItem.current_period_end * 1000)
+            : target365;
+
+          const newEndsAt = target365 > stripePeriodEnd ? target365 : stripePeriodEnd;
+
+          // Fetch current ends_at to take the max (never reduce access window)
+          const { data: entitlement } = await supabase
             .from("product_entitlements")
-            .update({
-              ends_at: toISODate(newEndsAt),
-            })
+            .select("ends_at")
             .eq("source", "stripe")
-            .eq("source_order_id", order.id);
+            .eq("source_order_id", order.id)
+            .single();
+
+          if (entitlement) {
+            const currentEndsAt = new Date(`${entitlement.ends_at}T00:00:00.000Z`);
+            const finalEndsAt = newEndsAt > currentEndsAt ? newEndsAt : currentEndsAt;
+
+            await supabase
+              .from("product_entitlements")
+              .update({
+                ends_at: toISODate(finalEndsAt),
+              })
+              .eq("source", "stripe")
+              .eq("source_order_id", order.id);
+
+            // Mark this invoice as processed
+            await supabase
+              .from("direct_purchase_orders")
+              .update({
+                metadata: {
+                  ...orderMetadata,
+                  processed_invoices: [...processedInvoices, invoice.id],
+                },
+              })
+              .eq("id", order.id);
+          }
         }
       }
     }
