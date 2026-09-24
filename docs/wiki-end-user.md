@@ -277,9 +277,10 @@ full access, not a lesser version. Etsy annual purchases remain one-time purchas
 | Blueprint taking a while | A generation screen, up to ~10 minutes, with a retry option if it times out |
 | Trying to create content without active access | A message that an active planner subscription is required |
 
-**Loyalty rewards:** Legacy direct annual one-time purchases (before 2026-09-24) and Etsy annual purchases
-receive a loyalty reward reserved for next year's renewal. The loyalty reward policy for new annual
-subscriptions (2026-09-24 onward) is TBD.
+**Loyalty rewards:** Direct annual one-time purchases (before 2026-09-24) and Etsy annual purchases receive
+a $18 loyalty reward reserved for next year's renewal, applied automatically at checkout. New annual
+subscriptions (2026-09-24 onward) do not receive a separate loyalty code; the locked founding price for
+the life of the subscription is the reward.
 
 ---
 

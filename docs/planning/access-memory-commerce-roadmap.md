@@ -30,7 +30,7 @@ Related plan (2026-09-14): [Memory, Reflections, and Yearly Unwrapped](./reflect
 - **Whole tracker, including founder decisions:** 24 of 39 rows are `done` — **62%**; 24 of 39 are `done` or `verification` — **62%**.
 - The unrelated **3/114 points** figure is not a Kairos metric and must not be used for this roadmap.
 - Updated 2026-09-23: SAMPLE-01 (paid Stelloquy sampler) completed. Production verification: PR #10 merged, deploy `dpl_9M9NTTduCAV65BHyECf3u1CC4mqL` READY, `/sampler` live walkthrough PASS. Production flag `KIAROS_RELEVANCE_MEMORY=true` confirmed. Remaining `verification` rows: `ETSY-03`, `ETSY-05`, `ETSY-06` — all gated on legal/accessibility review and founder publication approval, not engineering.
-- **2026-09-24: Annual subscription migration** (outside roadmap scope): Direct annual purchases switched from one-time payments to auto-renewing yearly subscriptions. Cancel-at-period-end preserves access through paid period, then transitions to read-only. Legacy one-time annual (pre-2026-09-24) and Etsy annual purchases unchanged. Loyalty reward policy for new annual subscriptions TBD. PR #13 in review.
+- **2026-09-24: Annual subscription migration** (outside roadmap scope): Direct annual purchases switched from one-time payments to auto-renewing yearly subscriptions. Cancel-at-period-end preserves access through paid period, then transitions to read-only. Legacy one-time annual (pre-2026-09-24) and Etsy annual purchases unchanged. **Loyalty reward decision**: New annual subscribers get no separate $18 code (locked founding price is the reward); legacy one-time annual and Etsy buyers keep their $18 reward. PR #13 in review.
 
 ## Current recommendation
 
