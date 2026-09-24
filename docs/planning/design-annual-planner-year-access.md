@@ -1,11 +1,19 @@
 # Design Note: Annual Subscription Planner Year Access
 
-**Status:** Design proposal — not yet implemented  
+**Status:** IMPLEMENTED (PLANNER-YEAR-01)  
 **Author:** Cloud Agent  
-**Date:** 2026-09-24  
-**Context:** PR #13 (`cursor/annual-subscription-renewals-9872`) converted annual direct Planner purchases into yearly Stripe subscriptions. Each renewal extends `product_entitlements.ends_at` by 365 days but leaves `planner_year` frozen at the year of initial purchase. Result: a paid annual subscriber who bought in 2026 will never gain access to the 2027 Blueprint, even though their entitlement window extends into 2027.
+**Date:** 2026-09-24 (design), 2026-09-24 (implementation)  
+**Context:** PR #13 (`cursor/annual-subscription-renewals-9872`) converted annual direct Planner purchases into yearly Stripe subscriptions. Each renewal extends `product_entitlements.ends_at` by 364 days (not 365) but leaves `planner_year` frozen at the year of initial purchase. Result: a paid annual subscriber who bought in 2026 will never gain access to the 2027 Blueprint, even though their entitlement window extends into 2027.
 
-**CEO decision (Kai):** An ACTIVE PAID annual subscriber gets access to whichever planner year's Blueprint is current during their paid window. That's what "Covers 365 days from purchase" means. The deadline is the planner-year roll to 2027 (the `CURRENT_PLANNER_YEAR` bump in `lib/commerce/config.ts`), not first renewals.
+**CEO decision (Kai):** An ACTIVE PAID annual subscriber gets access to whichever planner year's Blueprint is current during their paid window. That's what "Covers 365 days from purchase" means (note: actual window is 364 days per `buildAnnualEntitlementWindow`). The deadline is the planner-year roll to 2027 (December 1, 2026 at 00:00 America/New_York), not first renewals.
+
+**Implementation decisions (PLANNER-YEAR-01):**
+1. **Option A approved:** Resolve access from entitlement's paid window at resolve time, not from stamped plannerYear alone
+2. **Unlock rule:** A planner year unlocks when it BECOMES the current planner year while entitlement is active. Covered years = entitlement's own plannerYear + every planner year whose roll date (Dec 1) falls inside [starts_at, ends_at]
+3. **14-day threshold DROPPED:** No minimum overlap required
+4. **One-time/Etsy switch:** `ONE_TIME_ANNUAL_ROLLS_FORWARD` config (default FALSE). When false, they stay locked to purchased year. When true, they follow window rule like subscribers
+5. **Roll date:** December 1, 00:00 America/New_York (not Jan 1)
+6. **No price change:** $140/$220 unchanged, no Stripe product/price changes
 
 ---
 
@@ -26,7 +34,7 @@ const fullYears = sortedYears(
 - Returns `blueprintFullAccessYears: number[]` — the years the user can read/write
 - `getBlueprintYearCapability(capabilities, plannerYear)` checks if a specific year is in that list
 
-**Current issue:** An entitlement created 2026-01-15 with `planner_year = 2026` and `ends_at = 2027-01-14` grants access to the 2026 Blueprint only, even though the paid window extends 14 days into 2027.
+**Current issue (FIXED in PLANNER-YEAR-01):** An entitlement created 2026-01-15 with `planner_year = 2026` and `ends_at = 2027-01-13` (364 days) grants access to the 2026 Blueprint only, even though the paid window extends 13 days into 2027.
 
 ---
 
@@ -198,10 +206,11 @@ const entitlementPayload = buildAnnualEntitlementRecord({
 - An expired annual entitlement grants read-only access to `entitlement.plannerYear`
 - The user can view their Blueprint, journal, goals, but cannot write
 
-**Year-roll issue:**
-- A user who bought 2026 annual on Jan 1, 2026 has `ends_at = 2026-12-30` (365 days)
+**Year-roll issue (FIXED in PLANNER-YEAR-01):**
+- A user who bought 2026 annual on Jan 1, 2026 has `ends_at = 2026-12-30` (364 days)
 - After Dec 30, 2026, they get read-only access to the 2026 Blueprint
 - They CANNOT read the 2027 Blueprint even in read-only mode (they never had an entitlement for 2027)
+- With PLANNER-YEAR-01: Dec 1, 2026 falls within their window, so they gain access to 2027
 
 **Product question (for Kai/Jack):** Should read-only access extend to ANY Blueprint the user generated while their entitlement was active? E.g., if the 2026 annual subscriber generated a 2027 Blueprint on Dec 15, 2026 (because their window was extended by the fix proposed here), should they retain read-only access to BOTH 2026 and 2027 Blueprints after expiry?
 
@@ -237,7 +246,8 @@ for (let year = startYear; year <= endYear; year++) {
 ```
 
 **Result:**
-- A 2026 annual entitlement with `starts_at = 2026-01-15`, `ends_at = 2027-01-14` grants access to BOTH 2026 (350 days) and 2027 (14 days)
+- A 2026 annual entitlement with `starts_at = 2026-01-15`, `ends_at = 2027-01-13` (364 days) grants access to BOTH 2026 and 2027
+- Why both? Because Dec 1, 2026 (the roll date for 2027) falls within [2026-01-15, 2027-01-13]
 - `blueprintFullAccessYears = [2026, 2027]`
 - The user can read and write both Blueprints during the overlap window
 
@@ -245,13 +255,13 @@ for (let year = startYear; year <= endYear; year++) {
 
 **Pros:**
 - No migration needed — entitlements table stays as-is
-- Handles all edge cases: late-year purchases, Etsy activations, monthly subscribers crossing year boundaries
-- Semantically correct: "365 days from purchase" means coverage of calendar years that fall within that window
+- Handles all cases: late-year purchases, Etsy activations, monthly subscribers crossing year boundaries
+- Semantically correct: "Covers 365 days from purchase" (actual 364 days) means coverage of planner years unlocked during that window
 
 **Cons:**
-- More complex capability resolution (but only ~20 lines of code)
-- Need to define "meaningful overlap" threshold (30 days? 7 days? Any overlap?)
-- A subscriber who buys on Dec 31, 2026 gets 1 day of 2026 access and 364 days of 2027 access — is that the intended behavior?
+- More complex capability resolution (but only ~60 lines of code)
+- ~~Need to define "meaningful overlap" threshold~~ **RESOLVED:** No threshold. Kai dropped the 14-day requirement.
+- A subscriber who buys on Dec 31, 2026 does NOT get 2027 access (2027's roll date Dec 1, 2026 is in the past)
 
 **Read-only access after expiry:**
 - `planner_year` becomes a list: `covered_planner_years = [2026, 2027]` (derived at read-only time)
@@ -290,10 +300,10 @@ if (newEndsAt.getFullYear() > entitlement.planner_year) {
 }
 ```
 
-**Result:**
+**Result (NOT IMPLEMENTED - Option A chosen instead):**
 - A 2026 annual subscriber who renews gets TWO entitlement rows:
-  - Row 1: `planner_year = 2026`, `source_order_id = abc123`, `ends_at = 2027-01-14`
-  - Row 2: `planner_year = 2027`, `source_order_id = abc123-2027`, `starts_at = 2027-01-01`, `ends_at = 2027-01-14`
+  - Row 1: `planner_year = 2026`, `source_order_id = abc123`, `ends_at = 2027-01-13` (364 days)
+  - Row 2: `planner_year = 2027`, `source_order_id = abc123-2027`, `starts_at = 2027-01-01`, `ends_at = 2027-01-13`
 
 **Pros:**
 - No change to `capabilities.ts` — it already collects years from all entitlement rows
@@ -407,13 +417,10 @@ function getCoveredYears(entitlement: CapabilityEntitlement): number[] {
     const overlapStart = entitlement.startsAt > yearStart ? entitlement.startsAt : yearStart;
     const overlapEnd = entitlement.endsAt < yearEnd ? entitlement.endsAt : yearEnd;
     
-    // Only grant access if the entitlement covers at least 14 days of this year
-    // (policy: a purchase made on Dec 31 should not count as "full year access")
-    const overlapMs = new Date(`${overlapEnd}T00:00:00.000Z`).getTime() 
-                    - new Date(`${overlapStart}T00:00:00.000Z`).getTime();
-    const overlapDays = Math.floor(overlapMs / (1000 * 60 * 60 * 24)) + 1;
-    
-    if (overlapDays >= 14) {
+    // PLANNER-YEAR-01: No minimum overlap threshold (Kai's decision)
+    // A year unlocks when its roll date (Dec 1) falls within the paid window
+    const rollDate = `${year}-12-01`;
+    if (rollDate >= overlapStart && rollDate <= overlapEnd) {
       years.push(year);
     }
   }
@@ -434,9 +441,7 @@ export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput)
 }
 ```
 
-**Threshold policy:** Use 14 days as the minimum overlap to grant access. This prevents edge cases like a Dec 31 purchase granting "2026 access" for 1 day. The 14-day threshold is arbitrary but conservative.
-
-**Alternative:** Use 30 days (roughly 1 month). Requires Kai/Jack product decision.
+**Threshold policy (UPDATED in PLANNER-YEAR-01):** NO minimum overlap. Kai dropped the 14-day threshold. A planner year unlocks when its roll date (Dec 1) falls within the paid window. A purchase on Dec 31, 2026 does NOT unlock 2027 because Dec 1, 2026 is already past.
 
 ---
 
@@ -515,22 +520,19 @@ If either answer is no, those decisions must be implemented BEFORE the year roll
 
 ## 4. One-Time Annual Buyers: Retroactive Coverage?
 
-**Question:** Should a one-time annual buyer who purchased on 2026-12-01 (365-day window through 2027-11-30) get access to the 2027 Blueprint starting Jan 1, 2027?
+**Question:** Should a one-time annual buyer who purchased on 2026-12-01 (364-day window through 2027-11-29) get access to the 2027 Blueprint starting Dec 1, 2026?
 
-**Option A says YES:** Their entitlement window covers 335 days of 2027, so they get 2027 access.
+**DECISION (PLANNER-YEAR-01 - Kai/Jack):** UNDECIDED for one-time/Etsy buyers. Implemented as a config switch:
+- `ONE_TIME_ANNUAL_ROLLS_FORWARD` (default FALSE)
+- When FALSE: one-time and Etsy annual purchases stay locked to their purchased plan year (current behavior)
+- When TRUE: they follow the same window rule as subscribers
 
-**Alternative product position (requires Kai/Jack decision):**
-- One-time purchases are for a SPECIFIC YEAR (2026), regardless of activation date
-- The 365-day window is for reading/writing that year's Blueprint, not for accessing future years
-- If the user wants 2027, they buy again in 2027
+**Subscribers** (direct annual Stripe subscriptions from PR #13) and **monthly subscribers** ALWAYS follow the window rule.
 
-**Implications:**
-- If "specific year" position is chosen, Option A logic must be amended to check entitlement source:
-  - `source = "stripe"` + `access_plan = "yearly"` + subscription exists → derive covered years
-  - `source = "stripe"` + no subscription → single year only (`planner_year`)
-  - `source = "etsy"` → single year only (`planner_year`)
-
-**Recommendation:** Defer to Kai/Jack, but note that the copy on the Stripe checkout and Etsy listings says "Covers 365 days from purchase," not "Access to 2026 only." If the copy implies time-based access, Option A's behavior is correct.
+**Marketing copy note:** 
+- Direct annual checkout says "Covers 365 days from purchase" (actual 364 days)
+- Etsy listings per end-user wiki say purchases "run for a full plan year" (not time-based)
+- The switch allows the product team to decide which promise to honor
 
 ---
 
@@ -548,10 +550,12 @@ If either answer is no, those decisions must be implemented BEFORE the year roll
 - On Dec 1, 2027 (after expiry), `blueprintFullAccessYears = [2026]` (read-only)
 
 **Example 2:**
-- User bought 2026 annual on Jan 1, 2026 (`ends_at = 2026-12-30`)
-- Subscription renewed automatically on Dec 30, 2026, extending `ends_at = 2027-12-29`
+- User bought 2026 annual on Jan 1, 2026 (`ends_at = 2026-12-30`, 364 days)
+- Dec 1, 2026 falls within their window, so they gain 2027 access automatically
+- Subscription renewed automatically on Dec 30, 2026, extending `ends_at = 2027-12-29` (364 more days)
 - During active window through 2027-12-29, `blueprintFullAccessYears = [2026, 2027]`
-- On Dec 30, 2027 (after expiry), `blueprintFullAccessYears = [2026, 2027]` (both read-only)
+- Dec 1, 2027 also falls within the renewed window, so they'd gain 2028 access if renewed again
+- On Dec 30, 2027 (after expiry if not renewed), `blueprintFullAccessYears = [2026, 2027]` (both read-only)
 
 **Product question (for Kai/Jack):** Is this desired behavior? Or should read-only access be limited to the "primary" year (the year purchased)?
 
@@ -630,24 +634,21 @@ If either answer is no, those decisions must be implemented BEFORE the year roll
 
 ---
 
-## 8. Open Questions for Kai/Jack
+## 8. Open Questions for Kai/Jack (RESOLVED in PLANNER-YEAR-01)
 
-1. **Minimum overlap threshold:** Should it be 14 days, 30 days, or "any overlap"? (Recommendation: 14 days)
+1. **Minimum overlap threshold:** ~~Should it be 14 days, 30 days, or "any overlap"?~~ **RESOLVED:** NO threshold. Years unlock when their roll date falls in the paid window.
 
-2. **One-time annual buyers:** Should late-2026 purchases grant 2027 access during the overlap, or is the purchase locked to 2026 regardless of activation date? (Affects copy on Stripe checkout and Etsy listings)
+2. **One-time annual buyers:** ~~Should late-2026 purchases grant 2027 access during the overlap?~~ **RESOLVED:** Config switch `ONE_TIME_ANNUAL_ROLLS_FORWARD` (default FALSE). Subscribers always follow window rule. One-time/Etsy follow the switch.
 
-3. **Etsy activation:** Same question — should a late-2026 Etsy activation grant 2027 access, or is the buyer purchasing "2026" as printed on the listing?
+3. **Etsy activation:** ~~Same question~~ **RESOLVED:** Same as #2.
 
-4. **Read-only access:** Should read-only extend to ALL years accessed while active, or only the "primary" purchase year? (Recommendation: all years)
+4. **Read-only access:** ~~Should read-only extend to ALL years accessed while active, or only the "primary" purchase year?~~ **RESOLVED:** All covered years remain readable after expiry.
 
-5. **Monthly subscribers:** Should they retain access to prior years indefinitely as long as they keep paying, or should the window slide forward after 12 months? (Recommendation: retain prior years)
+5. **Monthly subscribers:** ~~Should they retain access to prior years indefinitely?~~ **RESOLVED:** Yes. They follow the same window rule as subscribers.
 
-6. **Year-roll timing:** When should `CURRENT_PLANNER_YEAR` bump to 2027? Options:
-   - Dec 1, 2026 (6 weeks early, gives users time to generate 2027 Blueprints for planning)
-   - Jan 1, 2027 (aligned with calendar year)
-   - Kai/Jack decides based on Blueprint generation workload capacity
+6. **Year-roll timing:** ~~When should `CURRENT_PLANNER_YEAR` bump to 2027?~~ **RESOLVED:** December 1, 00:00 America/New_York. Implemented as a function, not a constant.
 
-7. **Founder pricing:** Does the locked annual price ($140 Planner, $220 Oracle) carry forward to 2027 and beyond? If yes, no action needed. If no, add a `founding_price_eligible_through` column to track eligibility end date.
+7. **Founder pricing:** ~~Does the locked annual price carry forward to 2027 and beyond?~~ **OUT OF SCOPE for PLANNER-YEAR-01.** No price changes.
 
 ---
 
@@ -668,11 +669,11 @@ If either answer is no, those decisions must be implemented BEFORE the year roll
 ### Unit tests (Jest + Supabase mocks)
 
 1. `getCoveredYears()` edge cases:
-   - Single-year window (2026-01-01 to 2026-12-30)
-   - Cross-year window (2026-12-01 to 2027-11-30)
-   - Multi-year window (2026-01-01 to 2028-12-30)
-   - Threshold boundary (2026-12-18 to 2027-01-01 = 14 days exactly)
-   - Below threshold (2026-12-19 to 2027-01-01 = 13 days)
+   - Single-year window (2026-01-01 to 2026-12-30, 364 days) → only 2026
+   - Cross-year window (2026-01-15 to 2027-01-13, 364 days) → 2026 and 2027 (Dec 1, 2026 is in window)
+   - Multi-year window (2026-01-01 to 2028-12-29, 3 annual renewals) → 2026, 2027, 2028
+   - Late purchase before roll (2026-11-15 to 2027-11-13) → 2026 and 2027 (Dec 1, 2026 is in window)
+   - Purchase after roll (2026-12-02 to 2027-11-30) → only 2027 (Dec 1, 2027 is in future)
 
 2. `resolveAccessCapabilities()` integration:
    - One active annual entitlement crossing year boundary

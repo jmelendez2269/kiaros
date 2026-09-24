@@ -118,6 +118,62 @@ function sortedYears(values: Iterable<number>): number[] {
   return [...new Set(values)].filter(Number.isInteger).sort((left, right) => left - right);
 }
 
+/**
+ * Get the roll date for a given planner year (December 1 of the previous calendar year).
+ * Example: planner year 2027 rolls on 2026-12-01
+ */
+function getPlannerYearRollDate(plannerYear: number): string {
+  return `${plannerYear - 1}-12-01`;
+}
+
+/**
+ * Compute which planner years are covered by an entitlement's active window.
+ * 
+ * Per Kai's decision: A planner year unlocks when it BECOMES the current planner year
+ * while the entitlement is active (the roll date Dec 1 falls within [starts_at, ends_at]).
+ * 
+ * Covered years = entitlement's own plannerYear + every planner year whose roll date
+ * falls inside the paid window.
+ * 
+ * @param entitlement - The entitlement to check
+ * @param useWindowRule - Whether to apply the roll-forward rule (false for one-time/Etsy when switch is off)
+ * @returns Array of planner years covered by this entitlement
+ */
+function getCoveredYears(
+  entitlement: Pick<CapabilityEntitlement, "plannerYear" | "startsAt" | "endsAt" | "source">,
+  useWindowRule: boolean,
+): number[] {
+  // One-time purchases that don't roll forward: return only the purchased year
+  if (!useWindowRule) {
+    return [entitlement.plannerYear];
+  }
+
+  const years = new Set<number>();
+  
+  // Always include the entitlement's own planner year
+  years.add(entitlement.plannerYear);
+  
+  // Check which planner year roll dates fall within the window
+  const startsAt = entitlement.startsAt;
+  const endsAt = entitlement.endsAt;
+  
+  // Check a range of potential years (current year - 1 to current year + 5)
+  // This is more than enough for any reasonable subscription duration
+  const startYear = entitlement.plannerYear;
+  const endYear = entitlement.plannerYear + 5;
+  
+  for (let year = startYear; year <= endYear; year++) {
+    const rollDate = getPlannerYearRollDate(year);
+    
+    // If the roll date falls within the entitlement window, grant access to that year
+    if (rollDate >= startsAt && rollDate <= endsAt) {
+      years.add(year);
+    }
+  }
+  
+  return Array.from(years).sort((a, b) => a - b);
+}
+
 export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput): AccessCapabilities {
   const asOf = toCapabilityISODate(input.asOf);
   const isAuthenticated = input.authenticated;
@@ -159,13 +215,33 @@ export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput)
     ({ entitlement, state }) => entitlement.accessPlan === "yearly" && state === "read_only",
   );
 
+  // Import the ONE_TIME_ANNUAL_ROLLS_FORWARD config at runtime
+  // Lazy import to avoid circular dependency
+  const ONE_TIME_ANNUAL_ROLLS_FORWARD = process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD === 'true';
+  
+  // Determine which entitlements should use the window rule
+  const shouldUseWindowRule = (entitlement: CapabilityEntitlement): boolean => {
+    // Subscribers always use the window rule
+    if (entitlement.source === 'stripe' && entitlement.accessPlan === 'yearly') {
+      // This is a subscription if it's from stripe with yearly access plan
+      return true;
+    }
+    if (entitlement.accessPlan === 'monthly') {
+      return true;
+    }
+    // One-time and Etsy purchases use the config switch
+    return ONE_TIME_ANNUAL_ROLLS_FORWARD;
+  };
+
   const fullYears = sortedYears(
-    [...activeAnnual, ...readOnlyAnnual].map(({ entitlement }) => entitlement.plannerYear),
+    [...activeAnnual, ...readOnlyAnnual].flatMap(({ entitlement }) => 
+      getCoveredYears(entitlement, shouldUseWindowRule(entitlement))
+    ),
   );
   const fullYearSet = new Set(fullYears);
   const windowedYears = sortedYears(
     activeMonthly
-      .map(({ entitlement }) => entitlement.plannerYear)
+      .flatMap(({ entitlement }) => getCoveredYears(entitlement, true))
       .filter((plannerYear) => !fullYearSet.has(plannerYear)),
   );
   const monthlyWindow = windowedYears.length > 0 ? getMonthlyBlueprintWindow(asOf) : null;

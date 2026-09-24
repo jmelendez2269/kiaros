@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/brand";
+import { getCurrentPlannerYear, getNextPlannerYear, getPlannerYearWithOverride } from "./planner-year";
 
 export type CommerceTierKey = "planner" | "planner_oracle";
 export type ProductKind = CommerceTierKey | "stelloquy_sampler";
@@ -21,9 +22,27 @@ export interface CommerceTier {
   listingMatchers: string[];
 }
 
-export const CURRENT_PLANNER_YEAR = 2026;
-export const NEXT_PLANNER_YEAR = CURRENT_PLANNER_YEAR + 1;
+/**
+ * @deprecated Use getPlannerYearWithOverride() instead. This constant is frozen at build time.
+ */
+export const CURRENT_PLANNER_YEAR = getPlannerYearWithOverride();
+
+/**
+ * @deprecated Use getNextPlannerYear() instead. This constant is frozen at build time.
+ */
+export const NEXT_PLANNER_YEAR = getNextPlannerYear();
+
 export const LOYALTY_REWARD_AMOUNT_OFF_CENTS = 1800;
+
+/**
+ * Config switch for one-time and Etsy annual entitlements.
+ * When false (default): they stay locked to their purchased plan year.
+ * When true: they follow the same windowed access rule as subscribers.
+ * 
+ * Can be overridden by env var ONE_TIME_ANNUAL_ROLLS_FORWARD=true
+ */
+export const ONE_TIME_ANNUAL_ROLLS_FORWARD = 
+  process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD === 'true' ? true : false;
 
 export const COMMERCE_TIERS: CommerceTier[] = [
   {
@@ -38,7 +57,7 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     directPriceCents: 14000,
     etsyPriceCents: 15600,
     oracleEnabled: false,
-    plannerYear: CURRENT_PLANNER_YEAR,
+    plannerYear: getPlannerYearWithOverride(),
     features: [
       "Personalized blueprint, calendar, journal, and curriculum workspace",
       "Guidance that adapts to where you are now in the year",
@@ -61,7 +80,7 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     directPriceCents: 22000,
     etsyPriceCents: 24000,
     oracleEnabled: true,
-    plannerYear: CURRENT_PLANNER_YEAR,
+    plannerYear: getPlannerYearWithOverride(),
     features: [
       `Everything in ${BRAND.product} Planner`,
       "Oracle guidance grounded in your chart, goals, current transits, and selected journal entries",

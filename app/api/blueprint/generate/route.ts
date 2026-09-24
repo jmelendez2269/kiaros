@@ -3,12 +3,14 @@ import { NextResponse, after } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
 import { requireActivePlannerAccess } from "@/lib/commerce/access";
+import { resolveUserAccess, type ProductEntitlementRecord } from "@/lib/commerce/entitlements";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 // Blueprint generation calls Claude with a large prompt — 5+ minutes is normal.
 // after() runs within this window, so it must be large enough for the full AI call.
 export const maxDuration = 300;
 
-export async function POST() {
+export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const accessError = await requireActivePlannerAccess(userId);
@@ -31,7 +33,51 @@ export async function POST() {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    const plan_year = profile.plan_year ?? new Date().getFullYear();
+    // Parse optional planYear from request body
+    let requestedYear: number | undefined;
+    try {
+      const body = await request.json();
+      requestedYear = body.planYear;
+    } catch {
+      // No body or invalid JSON - that's fine, we'll use defaults
+    }
+
+    // Load user's entitlements to determine which years they can generate
+    const { data: entitlements } = await admin
+      .from("product_entitlements")
+      .select("id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan")
+      .eq("user_id", profile.id)
+      .neq("status", "revoked");
+
+    const access = resolveUserAccess((entitlements ?? []) as ProductEntitlementRecord[]);
+    const accessibleYears = [
+      ...access.capabilities.blueprintFullAccessYears,
+      ...access.capabilities.blueprintWindowedAccessYears,
+    ];
+
+    // Determine which year to generate
+    let plan_year: number;
+    const currentPlannerYear = getPlannerYearWithOverride();
+
+    if (requestedYear) {
+      // User explicitly requested a year - validate it
+      if (!accessibleYears.includes(requestedYear)) {
+        return NextResponse.json(
+          { error: `You don't have access to generate a blueprint for ${requestedYear}` },
+          { status: 403 }
+        );
+      }
+      plan_year = requestedYear;
+    } else if (accessibleYears.includes(currentPlannerYear)) {
+      // Default to current planner year if accessible
+      plan_year = currentPlannerYear;
+    } else if (accessibleYears.length > 0) {
+      // Fall back to the first accessible year
+      plan_year = accessibleYears[0];
+    } else {
+      // Shouldn't happen if requireActivePlannerAccess passed, but be safe
+      plan_year = profile.plan_year ?? currentPlannerYear;
+    }
 
     const { data: existing } = await admin
       .from("blueprints")
