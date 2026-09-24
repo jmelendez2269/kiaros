@@ -57,6 +57,18 @@ Admin submitted manual intake for Anchor artifact dry-run at `https://kairosplan
 ### Primary Cause
 `AnchorPrintContractError` was **not handled** in the route's `errorResponse()` function.
 
+### Investigated Alternative: `artifact_products.active = false`
+**Finding:** The product exists in production with `active=false` (set in migration 0045, never changed to `true` in migration 0046).
+
+**Why not the root cause:**
+- The route flow is: validate → calculate → **generate narrative** → create RPC input → call `artifact_create_manual_order`
+- Narrative generation throws `AnchorPrintContractError` **before** the Supabase RPC is called
+- The RPC checks if the product EXISTS (lines 161-166) but does NOT check `active` flag
+- Even with `active=false`, the RPC would find the product and proceed (if reached)
+- The 500 error happens during narrative generation, so the RPC is never invoked
+
+**Optional enhancement (out of scope):** Add `AND active = true` to the RPC product lookup if product gating is desired.
+
 **Error Flow (Before Fix):**
 ```typescript
 // app/api/admin/artifacts/route.ts
