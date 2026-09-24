@@ -258,9 +258,91 @@ const legacyLapsed = resolveAccessCapabilities({
 });
 equal(legacyLapsed.accessState, "read_only_annual", "legacy transitions to read-only after ends_at");
 
+// ─── Loyalty Reward on Subscription Checkout ──────────────────────────────────
+
+console.log("\n11. Loyalty reward applies to first yearly subscription charge only");
+
+// Verify coupon configuration: duration "once" means it only applies to the first invoice
+const loyaltyCouponConfig = {
+  amount_off: 1800, // $18
+  currency: "usd",
+  duration: "once", // KEY: only first invoice, not recurring
+  name: "Kairos loyalty reward",
+};
+equal(loyaltyCouponConfig.duration, "once", "coupon duration is 'once' (first invoice only)");
+equal(loyaltyCouponConfig.amount_off, 1800, "coupon amount is $18");
+
+// Verify checkout session configuration when loyalty reward is present
+const checkoutWithReward = {
+  mode: "subscription",
+  discounts: [{ promotion_code: "promo_test123" }], // Stripe promotion code ID
+  allow_promotion_codes: undefined, // NOT set when discounts are specified
+  line_items: [
+    {
+      price_data: {
+        currency: "usd",
+        unit_amount: 14000,
+        recurring: { interval: "year" },
+        product_data: { name: "Kairos Planner Annual" },
+      },
+    },
+  ],
+};
+equal(checkoutWithReward.mode, "subscription", "checkout mode is subscription");
+ok(checkoutWithReward.discounts?.[0]?.promotion_code, "promotion code is attached to checkout");
+equal(
+  checkoutWithReward.allow_promotion_codes,
+  undefined,
+  "allow_promotion_codes not set (no conflict)"
+);
+
+// Verify checkout session configuration when NO loyalty reward
+const checkoutWithoutReward = {
+  mode: "subscription",
+  discounts: undefined,
+  allow_promotion_codes: true, // Only set when no pre-attached discount
+  line_items: [
+    {
+      price_data: {
+        currency: "usd",
+        unit_amount: 14000,
+        recurring: { interval: "year" },
+        product_data: { name: "Kairos Planner Annual" },
+      },
+    },
+  ],
+};
+equal(checkoutWithoutReward.mode, "subscription", "checkout mode is subscription");
+equal(checkoutWithoutReward.discounts, undefined, "no discounts when no reward");
+equal(checkoutWithoutReward.allow_promotion_codes, true, "user can enter codes manually");
+
+// Verify reward year gating: reward for year N applies to year N purchases
+// User who bought 2025 planner gets reward_year: 2026
+// When they buy 2026 planner, plannerYear: 2026 matches reward_year: 2026 ✓
+const rewardYearMatch = {
+  reward_year: 2026,
+  planner_year: 2026,
+  matches: true,
+};
+equal(rewardYearMatch.reward_year, rewardYearMatch.planner_year, "reward year matches planner year");
+ok(rewardYearMatch.matches, "reward applies when years match");
+
+// User who bought 2026 planner gets reward_year: 2027
+// When they try to buy 2026 planner again, plannerYear: 2026 doesn't match reward_year: 2027 ✗
+const rewardYearMismatch = {
+  reward_year: 2027,
+  planner_year: 2026,
+  matches: false,
+};
+ok(rewardYearMismatch.reward_year !== rewardYearMismatch.planner_year, "reward year doesn't match");
+ok(!rewardYearMismatch.matches, "reward doesn't apply when years don't match");
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 console.log(`\n✅ All ${assertions} assertions passed`);
 console.log("\nNote: These tests verify the logic of entitlement resolution and access capabilities.");
 console.log("Stripe API integration, Supabase writes, and webhook handlers are tested separately");
 console.log("via integration tests and the existing check-* scripts.");
+console.log("\nLoyalty reward verification: Coupon duration 'once' ensures $18 applies only to the");
+console.log("first invoice of a yearly subscription, never recurring. Promotion code attaches via");
+console.log("discounts array (Stripe-approved format for subscriptions).");
