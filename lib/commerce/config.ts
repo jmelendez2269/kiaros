@@ -16,21 +16,10 @@ export interface CommerceTier {
   directPriceCents: number;
   etsyPriceCents: number;
   oracleEnabled: boolean;
-  plannerYear: number;
   features: string[];
   checkoutHeadline: string;
   listingMatchers: string[];
 }
-
-/**
- * @deprecated Use getPlannerYearWithOverride() instead. This constant is frozen at build time.
- */
-export const CURRENT_PLANNER_YEAR = getPlannerYearWithOverride();
-
-/**
- * @deprecated Use getNextPlannerYear() instead. This constant is frozen at build time.
- */
-export const NEXT_PLANNER_YEAR = getNextPlannerYear();
 
 export const LOYALTY_REWARD_AMOUNT_OFF_CENTS = 1800;
 
@@ -41,10 +30,11 @@ export const LOYALTY_REWARD_AMOUNT_OFF_CENTS = 1800;
  * 
  * Can be overridden by env var ONE_TIME_ANNUAL_ROLLS_FORWARD=true
  */
-export const ONE_TIME_ANNUAL_ROLLS_FORWARD = 
-  process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD === 'true' ? true : false;
+export function getOneTimeAnnualRollsForward(): boolean {
+  return process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD === 'true';
+}
 
-export const COMMERCE_TIERS: CommerceTier[] = [
+const COMMERCE_TIERS_BASE: Omit<CommerceTier, 'plannerYear'>[] = [
   {
     key: "planner",
     name: `${BRAND.product} Planner`,
@@ -57,7 +47,6 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     directPriceCents: 14000,
     etsyPriceCents: 15600,
     oracleEnabled: false,
-    plannerYear: getPlannerYearWithOverride(),
     features: [
       "Personalized blueprint, calendar, journal, and curriculum workspace",
       "Guidance that adapts to where you are now in the year",
@@ -80,7 +69,6 @@ export const COMMERCE_TIERS: CommerceTier[] = [
     directPriceCents: 22000,
     etsyPriceCents: 24000,
     oracleEnabled: true,
-    plannerYear: getPlannerYearWithOverride(),
     features: [
       `Everything in ${BRAND.product} Planner`,
       "Oracle guidance grounded in your chart, goals, current transits, and selected journal entries",
@@ -93,14 +81,18 @@ export const COMMERCE_TIERS: CommerceTier[] = [
   },
 ];
 
-export function getCommerceTier(key: CommerceTierKey) {
-  const tier = COMMERCE_TIERS.find((candidate) => candidate.key === key);
+export function getCommerceTier(key: CommerceTierKey, now?: Date): CommerceTier {
+  const base = COMMERCE_TIERS_BASE.find((candidate) => candidate.key === key);
 
-  if (!tier) {
+  if (!base) {
     throw new Error(`Unknown commerce tier: ${key}`);
   }
 
-  return tier;
+  // Add plannerYear computed at request time
+  return {
+    ...base,
+    plannerYear: getPlannerYearWithOverride(now),
+  };
 }
 
 export function formatUsd(cents: number) {
@@ -148,10 +140,10 @@ export function inferTierFromListingText(value: string) {
   return getCommerceTier("planner");
 }
 
-export function buildTierMetadata(tier: CommerceTier, accessPlan: AccessPlan = "yearly") {
+export function buildTierMetadata(tier: CommerceTier, accessPlan: AccessPlan = "yearly", now?: Date) {
   return {
     product_tier: tier.key,
-    planner_year: String(tier.plannerYear),
+    planner_year: String(getPlannerYearWithOverride(now)),
     oracle_enabled: String(tier.oracleEnabled),
     access_plan: accessPlan,
   };

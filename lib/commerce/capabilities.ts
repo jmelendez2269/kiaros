@@ -130,18 +130,20 @@ function getPlannerYearRollDate(plannerYear: number): string {
  * Compute which planner years are covered by an entitlement's active window.
  * 
  * Per Kai's decision: A planner year unlocks when it BECOMES the current planner year
- * while the entitlement is active (the roll date Dec 1 falls within [starts_at, ends_at]).
+ * while the entitlement is active. The roll date must be <= asOf (has actually happened).
  * 
  * Covered years = entitlement's own plannerYear + every planner year whose roll date
- * falls inside the paid window.
+ * falls inside the paid window AND has already occurred (rollDate <= asOf).
  * 
  * @param entitlement - The entitlement to check
  * @param useWindowRule - Whether to apply the roll-forward rule (false for one-time/Etsy when switch is off)
+ * @param asOf - The date to check against (only grant years whose roll date has passed)
  * @returns Array of planner years covered by this entitlement
  */
 function getCoveredYears(
   entitlement: Pick<CapabilityEntitlement, "plannerYear" | "startsAt" | "endsAt" | "source">,
   useWindowRule: boolean,
+  asOf: string,
 ): number[] {
   // One-time purchases that don't roll forward: return only the purchased year
   if (!useWindowRule) {
@@ -153,7 +155,7 @@ function getCoveredYears(
   // Always include the entitlement's own planner year
   years.add(entitlement.plannerYear);
   
-  // Check which planner year roll dates fall within the window
+  // Check which planner year roll dates fall within the window AND have occurred
   const startsAt = entitlement.startsAt;
   const endsAt = entitlement.endsAt;
   
@@ -165,8 +167,10 @@ function getCoveredYears(
   for (let year = startYear; year <= endYear; year++) {
     const rollDate = getPlannerYearRollDate(year);
     
-    // If the roll date falls within the entitlement window, grant access to that year
-    if (rollDate >= startsAt && rollDate <= endsAt) {
+    // Grant access only if:
+    // 1. Roll date falls within the entitlement window
+    // 2. Roll date has actually occurred (rollDate <= asOf)
+    if (rollDate >= startsAt && rollDate <= endsAt && rollDate <= asOf) {
       years.add(year);
     }
   }
@@ -215,33 +219,29 @@ export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput)
     ({ entitlement, state }) => entitlement.accessPlan === "yearly" && state === "read_only",
   );
 
-  // Import the ONE_TIME_ANNUAL_ROLLS_FORWARD config at runtime
-  // Lazy import to avoid circular dependency
-  const ONE_TIME_ANNUAL_ROLLS_FORWARD = process.env.ONE_TIME_ANNUAL_ROLLS_FORWARD === 'true';
-  
   // Determine which entitlements should use the window rule
   const shouldUseWindowRule = (entitlement: CapabilityEntitlement): boolean => {
-    // Subscribers always use the window rule
-    if (entitlement.source === 'stripe' && entitlement.accessPlan === 'yearly') {
-      // This is a subscription if it's from stripe with yearly access plan
-      return true;
-    }
+    // Monthly subscriptions always use the window rule
     if (entitlement.accessPlan === 'monthly') {
       return true;
     }
-    // One-time and Etsy purchases use the config switch
-    return ONE_TIME_ANNUAL_ROLLS_FORWARD;
+    // For yearly access_plan:
+    // Cannot distinguish between one-time annual purchases and annual subscriptions
+    // without joining to direct_purchase_orders table to check stripe_subscription_id.
+    // For now, all yearly entitlements from Stripe and Etsy follow the config switch.
+    const { getOneTimeAnnualRollsForward } = require('./config');
+    return getOneTimeAnnualRollsForward();
   };
 
   const fullYears = sortedYears(
     [...activeAnnual, ...readOnlyAnnual].flatMap(({ entitlement }) => 
-      getCoveredYears(entitlement, shouldUseWindowRule(entitlement))
+      getCoveredYears(entitlement, shouldUseWindowRule(entitlement), asOf)
     ),
   );
   const fullYearSet = new Set(fullYears);
   const windowedYears = sortedYears(
     activeMonthly
-      .flatMap(({ entitlement }) => getCoveredYears(entitlement, true))
+      .flatMap(({ entitlement }) => getCoveredYears(entitlement, true, asOf))
       .filter((plannerYear) => !fullYearSet.has(plannerYear)),
   );
   const monthlyWindow = windowedYears.length > 0 ? getMonthlyBlueprintWindow(asOf) : null;

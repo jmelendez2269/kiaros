@@ -46,7 +46,7 @@ export function getCurrentPlannerYear(now: Date = new Date()): number {
  * @returns The next planner year (current + 1)
  */
 export function getNextPlannerYear(now: Date = new Date()): number {
-  return getCurrentPlannerYear(now) + 1;
+  return getPlannerYearWithOverride(now) + 1;
 }
 
 /**
