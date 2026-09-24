@@ -124,10 +124,11 @@ export function resolveUserAccess(
     asOf,
     authenticated: true,
     entitlements: entitlements.map((entitlement) => {
-      // Check if this entitlement is linked to a subscription
-      const isSubscription = entitlement.source_order_id && orderSubscriptionMap
-        ? orderSubscriptionMap.get(entitlement.source_order_id) ?? false
-        : false;
+      // Check if this entitlement is linked to a subscription (only for Stripe orders)
+      const isSubscription =
+        entitlement.source === "stripe" && entitlement.source_order_id && orderSubscriptionMap
+          ? orderSubscriptionMap.get(entitlement.source_order_id) ?? false
+          : false;
       
       return {
         accessPlan: getAccessPlan(entitlement.access_plan),
@@ -188,21 +189,47 @@ export async function loadSamplerCredits(supabase: any, userId: string): Promise
 }
 
 /**
+ * Pure helper: extracts direct Stripe checkout order IDs from entitlements.
+ * Only returns IDs for entitlements with source="stripe", since Etsy and manual
+ * order IDs may not be valid direct_purchase_orders UUIDs.
+ */
+export function extractStripeOrderIds(
+  entitlements: readonly { source?: string | null; source_order_id?: string | null }[]
+): string[] {
+  return entitlements
+    .filter((e) => e.source === "stripe" && !!e.source_order_id)
+    .map((e) => e.source_order_id as string);
+}
+
+/**
  * Load a map of order IDs to whether they have a subscription.
  * Used to determine if yearly entitlements are subscriptions or one-time purchases.
+ * Only queries order IDs from direct Stripe checkout (source="stripe").
+ * Logs errors instead of silently returning empty Map.
  */
 export async function loadOrderSubscriptionMap(
   supabase: any,
-  orderIds: string[]
+  orderIds: string[],
+  context?: { userId?: string }
 ): Promise<Map<string, boolean>> {
   if (orderIds.length === 0) {
     return new Map();
   }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("direct_purchase_orders")
     .select("id, stripe_subscription_id")
     .in("id", orderIds);
+
+  if (error) {
+    console.error("[loadOrderSubscriptionMap] Query failed:", {
+      error: error.message,
+      code: error.code,
+      userId: context?.userId,
+      orderIdCount: orderIds.length,
+    });
+    return new Map();
+  }
 
   const map = new Map<string, boolean>();
   for (const order of data ?? []) {

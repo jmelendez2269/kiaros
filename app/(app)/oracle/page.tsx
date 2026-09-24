@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 import { OracleChat } from '@/components/oracle/OracleChat'
-import { resolveUserAccess, loadOrderSubscriptionMap, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { BRAND } from '@/lib/brand'
@@ -77,10 +77,8 @@ export default async function OraclePage() {
 
   // Load subscription info
   const admin = createAdminSupabase()
-  const orderIds = (entitlements ?? [])
-    .map(e => e.source_order_id)
-    .filter((id): id is string => !!id);
-  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+  const orderIds = extractStripeOrderIds(entitlements ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile?.id });
 
   const access = resolveUserAccess(
     (entitlements ?? []) as ProductEntitlementRecord[],

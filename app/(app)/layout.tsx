@@ -10,7 +10,7 @@ import { TourOverlay } from '@/components/tour/TourOverlay'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import { ReflectionNotification } from '@/components/reflections/ReflectionNotification'
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
-import { resolveUserAccess, loadOrderSubscriptionMap, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { shouldRollOver } from '@/lib/commerce/capabilities'
 import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { getAppProfile } from '@/lib/app/get-app-profile'
@@ -66,11 +66,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const entitlements = entitlementsResult.data
   const initialPatternIds = (establishedPatternsResult.data ?? []).map((pattern) => pattern.id)
 
-  // Load subscription info for entitlements
-  const orderIds = (entitlements ?? [])
-    .map(e => e.source_order_id)
-    .filter((id): id is string => !!id);
-  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+  // Load subscription info for Stripe entitlements
+  const orderIds = extractStripeOrderIds(entitlements ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile.id });
 
   const access = resolveUserAccess(
     (entitlements ?? []) as ProductEntitlementRecord[],

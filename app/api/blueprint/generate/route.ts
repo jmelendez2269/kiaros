@@ -6,6 +6,7 @@ import { requireActivePlannerAccess } from "@/lib/commerce/access";
 import { 
   resolveUserAccess, 
   loadOrderSubscriptionMap,
+  extractStripeOrderIds,
   type ProductEntitlementRecord 
 } from "@/lib/commerce/entitlements";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
@@ -66,11 +67,9 @@ export async function POST(request: Request) {
       .eq("user_id", profile.id)
       .neq("status", "revoked");
 
-    // Load subscription info
-    const orderIds = (entitlements ?? [])
-      .map(e => e.source_order_id)
-      .filter((id): id is string => !!id);
-    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+    // Load subscription info for Stripe entitlements
+    const orderIds = extractStripeOrderIds(entitlements ?? []);
+    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile.id });
 
     const access = resolveUserAccess(
       (entitlements ?? []) as ProductEntitlementRecord[],

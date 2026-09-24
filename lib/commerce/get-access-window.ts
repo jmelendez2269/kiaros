@@ -4,6 +4,7 @@ import { createAdminSupabase } from "@/lib/supabase/admin";
 import {
   resolveUserAccess,
   loadOrderSubscriptionMap,
+  extractStripeOrderIds,
   type EntitlementAccessState,
   type ProductEntitlementRecord,
 } from "@/lib/commerce/entitlements";
@@ -46,11 +47,9 @@ export async function getAccessWindow(supabaseUserId: string): Promise<AccessWin
     .eq("user_id", supabaseUserId)
     .neq("status", "revoked");
 
-  // Load subscription info
-  const orderIds = (data ?? [])
-    .map(e => e.source_order_id)
-    .filter((id): id is string => !!id);
-  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+  // Load subscription info for Stripe entitlements
+  const orderIds = extractStripeOrderIds(data ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: supabaseUserId });
 
   const access = resolveUserAccess(
     (data ?? []) as ProductEntitlementRecord[],

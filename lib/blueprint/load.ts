@@ -14,6 +14,7 @@ import {
 import {
   resolveUserAccess,
   loadOrderSubscriptionMap,
+  extractStripeOrderIds,
   type ProductEntitlementRecord,
 } from '@/lib/commerce/entitlements'
 import {
@@ -165,10 +166,8 @@ async function loadBlueprintForYearUncached(
       console.error('[blueprint-load] Entitlement query failed:', entitlementResult.error.message)
       return null
     }
-    const orderIds = (entitlementResult.data ?? [])
-      .map(e => e.source_order_id)
-      .filter((id): id is string => !!id);
-    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+    const orderIds = extractStripeOrderIds(entitlementResult.data ?? []);
+    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: supabaseUserId });
     
     const capabilities = resolveUserAccess(
       (entitlementResult.data ?? []) as ProductEntitlementRecord[],

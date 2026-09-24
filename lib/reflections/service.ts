@@ -1,7 +1,7 @@
 import 'server-only'
 import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
-import { resolveUserAccess, loadOrderSubscriptionMap, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { assertClosed, type ReflectionPeriod } from './periods'
 import { preferences, feedback } from './repository'
 import { loadEvidence } from './load-evidence'
@@ -12,10 +12,8 @@ export async function hasReflectionAccess(userId: string): Promise<boolean> {
   const { data, error } = await admin.from('product_entitlements').select('*').eq('user_id', userId).neq('status', 'revoked')
   if (error) throw new Error('Access could not be verified')
   
-  const orderIds = (data ?? [])
-    .map(e => e.source_order_id)
-    .filter((id): id is string => !!id);
-  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+  const orderIds = extractStripeOrderIds(data ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId });
   
   return resolveUserAccess(
     (data ?? []) as ProductEntitlementRecord[],

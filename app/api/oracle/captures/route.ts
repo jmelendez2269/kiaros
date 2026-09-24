@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { tagCaptureInBackground } from '@/lib/ai/capture-topic-extractor'
-import { resolveUserAccess, loadOrderSubscriptionMap, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 
 const uiMessageSchema = z.object({
   id: z.string(),
@@ -61,10 +61,8 @@ export async function POST(req: Request) {
     }
 
     const admin = createAdminSupabase()
-    const orderIds = (entitlements ?? [])
-      .map(e => e.source_order_id)
-      .filter((id): id is string => !!id);
-    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+    const orderIds = extractStripeOrderIds(entitlements ?? []);
+    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile.id });
 
     const access = resolveUserAccess(
       (entitlements ?? []) as ProductEntitlementRecord[],

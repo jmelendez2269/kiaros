@@ -107,10 +107,14 @@ export function getAllCommerceTiers(now?: Date): CommerceTier[] {
 }
 
 /**
- * Export as COMMERCE_TIERS for backwards compatibility
- * Note: This evaluates plannerYear at module load time for each access
+ * Export as COMMERCE_TIERS for backwards compatibility.
+ * 
+ * IMPORTANT: plannerYear is REMOVED from this constant's shape to prevent misuse.
+ * The module-level constant would freeze plannerYear at load time, which breaks
+ * Dec 1 rollover logic. Use getCommerceTier(key, now) or getAllCommerceTiers(now)
+ * when you need plannerYear.
  */
-export const COMMERCE_TIERS = getAllCommerceTiers();
+export const COMMERCE_TIERS: Omit<CommerceTier, 'plannerYear'>[] = COMMERCE_TIERS_BASE;
 
 export function formatUsd(cents: number) {
   return new Intl.NumberFormat("en-US", {

@@ -18,6 +18,15 @@ import {
 } from '../lib/commerce/capabilities.ts'
 import { getCommerceTier } from '../lib/commerce/config.ts'
 
+// Local implementation of extractStripeOrderIds for testing
+function extractStripeOrderIds(
+  entitlements: readonly { source?: string | null; source_order_id?: string | null }[]
+): string[] {
+  return entitlements
+    .filter((e) => e.source === 'stripe' && !!e.source_order_id)
+    .map((e) => e.source_order_id as string)
+}
+
 // Pure loyalty matching function (matches implementation in stripe.ts)
 function loyaltyRewardMatches(rewardYear: number, tierPlannerYear: number): boolean {
   return rewardYear === tierPlannerYear
@@ -34,6 +43,31 @@ function deepEqual<T>(actual: T, expected: T, message: string): void {
   assert.deepEqual(actual, expected, message)
   assertions += 1
 }
+
+// Test extractStripeOrderIds
+console.log('Testing extractStripeOrderIds...')
+
+// Test: only extract Stripe order IDs
+const entitlements = [
+  { source: 'stripe', source_order_id: 'order_123' },
+  { source: 'etsy', source_order_id: 'etsy_456' },
+  { source: 'manual', source_order_id: 'manual_789' },
+  { source: 'stripe', source_order_id: 'order_abc' },
+  { source: 'stripe', source_order_id: null },
+  { source: null, source_order_id: 'orphan_xyz' },
+]
+const stripeIds = extractStripeOrderIds(entitlements)
+deepEqual(stripeIds, ['order_123', 'order_abc'], 'Should extract only Stripe order IDs')
+
+// Test: empty array
+deepEqual(extractStripeOrderIds([]), [], 'Empty array should return empty array')
+
+// Test: no Stripe orders
+const noStripe = [
+  { source: 'etsy', source_order_id: 'etsy_1' },
+  { source: 'manual', source_order_id: 'manual_2' },
+]
+deepEqual(extractStripeOrderIds(noStripe), [], 'No Stripe orders should return empty array')
 
 // Test getCurrentPlannerYear
 console.log('Testing planner year calculation...')

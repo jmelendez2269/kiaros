@@ -3,7 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { resolveUserAccess, loadOrderSubscriptionMap, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { buildOracleSystemPromptSegments } from '@/lib/ai/oracle-system-prompt'
@@ -159,10 +159,8 @@ export async function POST(req: Request) {
 
     // Load subscription info
     const admin = createAdminSupabase()
-    const orderIds = (entitlementsRes.data ?? [])
-      .map(e => e.source_order_id)
-      .filter((id): id is string => !!id);
-    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds);
+    const orderIds = extractStripeOrderIds(entitlementsRes.data ?? []);
+    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profileId });
 
     const access = resolveUserAccess(
       (entitlementsRes.data ?? []) as ProductEntitlementRecord[],
