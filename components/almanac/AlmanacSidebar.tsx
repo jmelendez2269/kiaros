@@ -87,6 +87,7 @@ const NAV: ReadonlyArray<{
     href: '/journal',
     collapsible: true,
     subItems: [
+      { label: 'Tracker', href: '/tracker', hint: 'daily rhythm · consistency' },
       { label: 'Patterns', href: '/insights/map', hint: 'entries · captures · mind map' },
     ],
   },
@@ -137,6 +138,7 @@ function isSectionActive(key: NavKey, pathname: string, view: string | null = nu
   }
   return (
     pathname.startsWith('/journal') ||
+    pathname.startsWith('/tracker') ||
     pathname.startsWith('/insights')
   )
 }
