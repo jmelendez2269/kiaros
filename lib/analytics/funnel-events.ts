@@ -66,6 +66,7 @@ export interface FunnelEventInput {
   source?: string | null;
   medium?: string | null;
   campaign?: string | null;
+  content?: string | null;
   referrer_host?: string | null;
   entry_path?: string | null;
   experiment_key?: string | null;
@@ -88,6 +89,7 @@ export interface FunnelEventRecord {
   source: string | null;
   medium: string | null;
   campaign: string | null;
+  content: string | null;
   referrer_host: string | null;
   entry_path: string | null;
   experiment_key: string | null;
@@ -124,6 +126,7 @@ const TOP_LEVEL_KEYS = new Set([
   "source",
   "medium",
   "campaign",
+  "content",
   "referrer_host",
   "entry_path",
   "experiment_key",
@@ -345,6 +348,7 @@ export function validateFunnelEvent(
       source: dimension(input.source, "source", 80, SAFE_TOKEN_PATTERN, true),
       medium: dimension(input.medium, "medium", 80, SAFE_TOKEN_PATTERN, true),
       campaign: dimension(input.campaign, "campaign", 120, SAFE_CAMPAIGN_PATTERN),
+      content: dimension(input.content, "content", 200, SAFE_CAMPAIGN_PATTERN),
       referrer_host: referrerHost(input.referrer_host),
       entry_path: entryPath(input.entry_path),
       experiment_key: dimension(input.experiment_key, "experiment_key", 80),

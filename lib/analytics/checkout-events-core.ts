@@ -30,6 +30,7 @@ type CheckoutStartedRecord = Pick<
   | "source"
   | "medium"
   | "campaign"
+  | "content"
   | "referrer_host"
   | "entry_path"
   | "experiment_key"
@@ -49,6 +50,7 @@ const METADATA_KEYS = {
   source: "kiaros_source",
   medium: "kiaros_medium",
   campaign: "kiaros_campaign",
+  content: "kiaros_content",
   referrerHost: "kiaros_referrer_host",
   entryPath: "kiaros_entry_path",
   experimentKey: "kiaros_experiment_key",
@@ -87,6 +89,7 @@ function contextFields(context: CheckoutFunnelContext | null) {
     source: context?.source ?? null,
     medium: context?.medium ?? null,
     campaign: context?.campaign ?? null,
+    content: context?.content ?? null,
     referrer_host: context?.referrer_host ?? null,
     entry_path: context?.entry_path ?? null,
     experiment_key: context?.experiment_key ?? null,
@@ -124,6 +127,7 @@ export function buildCheckoutAnalyticsMetadata(
     [METADATA_KEYS.source, context.source],
     [METADATA_KEYS.medium, context.medium],
     [METADATA_KEYS.campaign, context.campaign],
+    [METADATA_KEYS.content, context.content],
     [METADATA_KEYS.referrerHost, context.referrer_host],
     [METADATA_KEYS.entryPath, context.entry_path],
     [METADATA_KEYS.experimentKey, context.experiment_key],
@@ -152,6 +156,7 @@ export function checkoutContextFromMetadata(
     source: metadata[METADATA_KEYS.source] ?? null,
     medium: metadata[METADATA_KEYS.medium] ?? null,
     campaign: metadata[METADATA_KEYS.campaign] ?? null,
+    content: metadata[METADATA_KEYS.content] ?? null,
     referrer_host: metadata[METADATA_KEYS.referrerHost] ?? null,
     entry_path: metadata[METADATA_KEYS.entryPath] ?? null,
     experiment_key: metadata[METADATA_KEYS.experimentKey] ?? null,
@@ -233,6 +238,7 @@ export function buildCheckoutCanceledEvent(params: {
     source: params.started.source,
     medium: params.started.medium,
     campaign: params.started.campaign,
+    content: params.started.content,
     referrer_host: params.started.referrer_host,
     entry_path: params.started.entry_path,
     experiment_key: params.started.experiment_key,
