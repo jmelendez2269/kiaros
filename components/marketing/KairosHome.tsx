@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StarField } from "@/components/almanac/StarField";
 import { EphemerisWheel } from "@/components/almanac/EphemerisWheel";
 import { Divider } from "@/components/almanac/Divider";
+import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
 import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 import { BRAND } from "@/lib/brand";
@@ -57,6 +58,7 @@ const INSTRUMENTS: Array<{
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
   { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
   { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. Patterns surface on their own, over time." },
+  { glyph: "◐", name: "Daily Tracker", body: "A 90-day consistency grid with lunar-stamped logs. Track habits, energy, and intention across the quarter." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
   {
     glyph: "⬡",
@@ -552,6 +554,7 @@ export function KairosHome({ isSignedIn }: Props) {
   const currentPlannerYear = getPlannerYearWithOverride();
   return (
     <div className="bg-almanac-bg text-almanac-ink">
+      <FunnelAttributionCapture />
       <NavBar />
       <Hero />
       <InstrumentPanel />
