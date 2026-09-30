@@ -1,5 +1,11 @@
 import { getPlannerYearWithOverride } from './planner-year.ts';
 
+/**
+ * Entitlements purchased on or after this date (in America/New_York) are eligible
+ * for the full-year access extension when their paid period ends in Oct-Dec.
+ */
+const ANNUAL_FULL_YEAR_ACCESS_CUTOFF = '2026-10-01';
+
 export type CapabilityAccessPlan = "monthly" | "yearly";
 export type CapabilityEntitlementState = "active" | "read_only" | "expired" | "revoked";
 
@@ -22,6 +28,7 @@ export interface CapabilityEntitlement {
   startsAt: string;
   status: string;
   isSubscription?: boolean;
+  fullAccessThrough?: string;
 }
 
 export interface ResolveAccessCapabilitiesInput {
@@ -97,8 +104,61 @@ export function getMonthlyBlueprintWindow(asOf: Date | string): {
   return { start, end: addCapabilityDays(start, 34) };
 }
 
+/**
+ * Get the end of day (23:59:59) for a given date in America/New_York timezone.
+ * Returns ISO 8601 string with timezone offset.
+ */
+function getEndOfDayET(isoDate: string): string {
+  // Parse the date and create a date object in ET timezone
+  const [year, month, day] = isoDate.split('-').map(Number);
+  // Create a date string that when parsed in ET will be the end of that day
+  // We use 23:59:59 on that date in ET
+  const etDate = new Date(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T23:59:59-05:00`);
+  return etDate.toISOString();
+}
+
+/**
+ * Compute the full access end date for eligible yearly subscriptions.
+ * For yearly subscriptions purchased on/after 2026-10-01, if ends_at falls in Oct-Dec,
+ * extend full access through Dec 31 23:59:59 ET of that same calendar year.
+ */
+function computeFullAccessThrough(entitlement: Pick<CapabilityEntitlement, "accessPlan" | "endsAt" | "startsAt" | "isSubscription">): string {
+  const endsAt = toCapabilityISODate(entitlement.endsAt);
+  
+  // Only apply to yearly subscriptions
+  if (entitlement.accessPlan !== 'yearly' || !entitlement.isSubscription) {
+    return endsAt;
+  }
+  
+  // Only apply to entitlements purchased on/after the cutoff
+  const startsAt = toCapabilityISODate(entitlement.startsAt);
+  if (startsAt < ANNUAL_FULL_YEAR_ACCESS_CUTOFF) {
+    return endsAt;
+  }
+  
+  // Parse ends_at in America/New_York timezone to determine if it falls in Oct-Dec
+  const endsAtDate = new Date(`${endsAt}T12:00:00Z`); // Use noon UTC to avoid timezone edge cases
+  const etFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  
+  const parts = etFormatter.formatToParts(endsAtDate);
+  const year = parseInt(parts.find(p => p.type === 'year')!.value);
+  const month = parseInt(parts.find(p => p.type === 'month')!.value);
+  
+  // If ends_at falls in Oct (10), Nov (11), or Dec (12), extend to Dec 31 of that year
+  if (month >= 10 && month <= 12) {
+    return `${year}-12-31`;
+  }
+  
+  return endsAt;
+}
+
 export function resolveCapabilityEntitlementState(
-  entitlement: Pick<CapabilityEntitlement, "accessPlan" | "endsAt" | "startsAt" | "status">,
+  entitlement: Pick<CapabilityEntitlement, "accessPlan" | "endsAt" | "startsAt" | "status" | "isSubscription" | "fullAccessThrough">,
   asOf: Date | string,
 ): CapabilityEntitlementState {
   if (entitlement.status === "revoked") return "revoked";
@@ -106,10 +166,13 @@ export function resolveCapabilityEntitlementState(
   const today = toCapabilityISODate(asOf);
   const startsAt = toCapabilityISODate(entitlement.startsAt);
   const endsAt = toCapabilityISODate(entitlement.endsAt);
+  const fullAccessThrough = entitlement.fullAccessThrough 
+    ? toCapabilityISODate(entitlement.fullAccessThrough)
+    : computeFullAccessThrough(entitlement);
 
   if (startsAt > endsAt) return "expired";
-  if (entitlement.status === "active" && today >= startsAt && today <= endsAt) return "active";
-  if (today > endsAt && entitlement.accessPlan === "yearly") return "read_only";
+  if (entitlement.status === "active" && today >= startsAt && today <= fullAccessThrough) return "active";
+  if (today > fullAccessThrough && entitlement.accessPlan === "yearly") return "read_only";
   return "expired";
 }
 
@@ -239,10 +302,13 @@ export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput)
   }
 
   const resolved = isAuthenticated
-    ? (input.entitlements ?? []).map((entitlement) => ({
-        entitlement,
-        state: resolveCapabilityEntitlementState(entitlement, asOf),
-      }))
+    ? (input.entitlements ?? []).map((entitlement) => {
+        const fullAccessThrough = computeFullAccessThrough(entitlement);
+        return {
+          entitlement: { ...entitlement, fullAccessThrough },
+          state: resolveCapabilityEntitlementState({ ...entitlement, fullAccessThrough }, asOf),
+        };
+      })
     : [];
   const active = resolved.filter(({ state }) => state === "active");
   const activeAnnual = active.filter(({ entitlement }) => entitlement.accessPlan === "yearly");
