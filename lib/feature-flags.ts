@@ -45,3 +45,8 @@ export function isEtsyArtifactRealIntakeEnabled(): boolean {
 export function isMetaCapiEnabled(): boolean {
   return enabled(process.env.KIAROS_META_CAPI);
 }
+
+/** Retention lifecycle emails (week-ahead / quiet-sky cron). Off unless exactly `true`. */
+export function isRetentionEmailsEnabled(): boolean {
+  return process.env.KIAROS_RETENTION_EMAILS_ENABLED === "true";
+}
