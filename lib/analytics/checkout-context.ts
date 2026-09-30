@@ -9,7 +9,6 @@ import { validateFunnelEvent } from "./funnel-events.ts";
 export interface CheckoutFunnelContext extends FunnelAttribution {
   anonymous_id: string;
   session_id: string;
-  content: string | null;
 }
 
 export type CheckoutFunnelContextValidationResult =
@@ -49,6 +48,8 @@ const CONTEXT_KEYS = new Set([
   "experiment_variant",
 ]);
 
+const SAFE_CAMPAIGN_PATTERN = /^[a-z0-9][a-z0-9 ._:+~-]*$/i;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -57,11 +58,11 @@ function validateContent(value: unknown): string | null {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
-  if (trimmed.length === 0 || trimmed.length > 120) return null;
+  if (trimmed.length > 200) return null;
   if (/^https?:\/\//i.test(trimmed) || trimmed.includes("?") || trimmed.includes("#")) {
     return null;
   }
-  if (!/^[a-z0-9][a-z0-9 ._:+~-]*$/i.test(trimmed)) return null;
+  if (!SAFE_CAMPAIGN_PATTERN.test(trimmed)) return null;
   return trimmed;
 }
 
@@ -70,6 +71,7 @@ function attributionFromContext(context: CheckoutFunnelContext): FunnelAttributi
     source: context.source,
     medium: context.medium,
     campaign: context.campaign,
+    content: context.content,
     referrer_host: context.referrer_host,
     entry_path: context.entry_path,
     experiment_key: context.experiment_key,
@@ -108,8 +110,14 @@ export function validateCheckoutFunnelContext(
     context: {
       anonymous_id: validation.event.anonymous_id,
       session_id: validation.event.session_id,
+      source: validation.event.source,
+      medium: validation.event.medium,
+      campaign: validation.event.campaign,
       content: validateContent(rawContent),
-      ...attributionFromContext(validation.event as unknown as CheckoutFunnelContext),
+      referrer_host: validation.event.referrer_host,
+      entry_path: validation.event.entry_path,
+      experiment_key: validation.event.experiment_key,
+      experiment_variant: validation.event.experiment_variant,
     },
   };
 }
@@ -162,7 +170,6 @@ export function captureCheckoutFunnelContext(
   const context: CheckoutFunnelContext = {
     anonymous_id: stored?.context.anonymous_id ?? createId(),
     session_id: !stored || rotateSession ? createId() : stored.context.session_id,
-    content: stored?.context.content ?? null,
     ...attribution,
   };
 

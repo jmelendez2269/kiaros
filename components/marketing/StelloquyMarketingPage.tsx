@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { StarField } from "@/components/almanac/StarField";
+import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
 import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { StelloquyOrb } from "@/components/oracle/StelloquyOrb";
 import { BRAND } from "@/lib/brand";
@@ -761,6 +762,7 @@ export function StelloquyMarketingPage({ isSignedIn }: Props) {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-almanac-bg font-almanac-body text-almanac-ink">
+      <FunnelAttributionCapture />
       <MarketingHeader isSignedIn={isSignedIn} />
 
       <main>

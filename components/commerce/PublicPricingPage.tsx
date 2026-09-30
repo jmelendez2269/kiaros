@@ -1092,12 +1092,12 @@ export function PublicPricingPage({
                     <p className="text-sm font-medium text-leather-200">
                       Full canonical Blueprint · Save {formatUsd(annualSavings)} per year
                     </p>
-                    {/* COPY: voice-approved 2026-09-24 */}
+                    {/* COPY: voice-approved 2026-09-30 */}
                     <p className="mt-2 text-xs leading-5 text-leather-200/80">
-                      Renews yearly. Cancel anytime.
+                      Founding-member price, yours for as long as you stay subscribed.
                     </p>
                     <p className="text-xs leading-5 text-leather-200/80">
-                      Covers 365 days from purchase.
+                      Renews yearly on your purchase date. Cancel anytime.
                     </p>
                   </div>
                 </div>

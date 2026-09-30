@@ -2,6 +2,7 @@ export interface FunnelAttribution {
   source: string | null;
   medium: string | null;
   campaign: string | null;
+  content: string | null;
   referrer_host: string | null;
   entry_path: string | null;
   experiment_key: string | null;
@@ -40,6 +41,7 @@ export function parseFunnelAttribution(
     source: boundedQueryValue(url, "utm_source", 80)?.toLowerCase() ?? null,
     medium: boundedQueryValue(url, "utm_medium", 80)?.toLowerCase() ?? null,
     campaign: boundedQueryValue(url, "utm_campaign", 120),
+    content: boundedQueryValue(url, "utm_content", 200),
     referrer_host: safeReferrerHost(referrer),
     entry_path: path,
     experiment_key: boundedQueryValue(url, "experiment", 80),
@@ -56,6 +58,7 @@ export function preserveFirstTouchAttribution(
     source: original.source ?? incoming.source,
     medium: original.medium ?? incoming.medium,
     campaign: original.campaign ?? incoming.campaign,
+    content: original.content ?? incoming.content,
     referrer_host: original.referrer_host ?? incoming.referrer_host,
     entry_path: original.entry_path ?? incoming.entry_path,
     experiment_key: original.experiment_key ?? incoming.experiment_key,
