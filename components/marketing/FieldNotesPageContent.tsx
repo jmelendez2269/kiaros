@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { FieldNotesKitSubscribeForm } from "@/components/marketing/FieldNotesKitSubscribeForm";
-import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
 import { StarField } from "@/components/almanac/StarField";
 import { BRAND } from "@/lib/brand";
 import type { FieldNotesUtmFieldKey } from "@/lib/marketing/field-notes-utm";
@@ -135,7 +134,6 @@ export function FieldNotesPageContent({ joined, initialUtm }: Props) {
         </div>
       </main>
 
-      <FieldNotesFooterSignup variant="almanac" />
       <AlmanacMarketingFooter />
     </div>
   );
