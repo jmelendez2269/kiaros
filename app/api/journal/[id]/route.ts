@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { after, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
-import { requireActivePlannerAccess, userMayUseOraclePatterns } from '@/lib/commerce/access'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
 import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 import {
   journalConsentCompatibilityInputSchema,
@@ -124,7 +124,7 @@ export async function PATCH(
     const shouldRefreshPatterns =
       contentChanged && (!consentV2Enabled || data.include_in_insights)
 
-    if (shouldRefreshPatterns && (await userMayUseOraclePatterns(existing.user_id))) {
+    if (shouldRefreshPatterns) {
       const [aspectsResult, skyResult] = await Promise.all([
         supabase
           .from('journal_entry_aspects')

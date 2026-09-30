@@ -7,23 +7,12 @@ export const PATTERNS_UPGRADE_COPY = {
   primaryCta: 'See Planner + Oracle',
 } as const
 
-export function PatternsUpgradeState({
-  hasReadOnlyPlannerAccess,
-}: {
-  hasReadOnlyPlannerAccess: boolean
-}) {
+export function PatternsUpgradeState() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <section className="shell-panel-hero w-full p-8 md:p-10">
         <h1 className="shell-hero-title max-w-3xl">{PATTERNS_UPGRADE_COPY.title}</h1>
         <p className="shell-prose-lead mt-4 max-w-3xl">{PATTERNS_UPGRADE_COPY.lead}</p>
-
-        {hasReadOnlyPlannerAccess ? (
-          <p className="mt-6 rounded-[1rem] border border-leather-500/25 bg-leather-500/10 px-4 py-3 text-sm leading-6 text-bone-muted">
-            Your previous annual planner remains readable, but Patterns require active Planner + Oracle
-            access.
-          </p>
-        ) : null}
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link

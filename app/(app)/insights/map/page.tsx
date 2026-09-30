@@ -60,7 +60,7 @@ export default async function PatternsPage() {
   const isAppAdmin = clerkUser?.publicMetadata?.isAdmin === true
 
   if (!isAppAdmin && !access.hasOracleAccess) {
-    return <PatternsUpgradeState hasReadOnlyPlannerAccess={access.hasReadOnlyPlannerAccess} />
+    return <PatternsUpgradeState />
   }
 
   let includedEntriesCountQuery = supabase
