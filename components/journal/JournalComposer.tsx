@@ -7,7 +7,7 @@ import { BRAND } from '@/lib/brand'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries'
 import { JournalConsentControls } from '@/components/journal/JournalConsentControls'
-import type { JournalConsentState } from '@/lib/journal/consent'
+import { journalConsentSaveMessage, type JournalConsentState } from '@/lib/journal/consent'
 
 type RecentJournalEntry = {
   id: string
@@ -216,15 +216,7 @@ export function JournalComposer({
       if (initialEntry) {
         setSavedMessage('Changes saved.')
       } else if (consentV2Enabled) {
-        const enabledUses = [
-          consent.include_in_insights ? 'Patterns' : null,
-          consent.include_in_stelloquy ? 'Stelloquy recall' : null,
-        ].filter(Boolean)
-        setSavedMessage(
-          enabledUses.length > 0
-            ? `Saved with permission for ${enabledUses.join(' and ')}. You can change this from journal history.`
-            : 'Saved privately. This entry is not available to Patterns or Stelloquy recall.',
-        )
+        setSavedMessage(journalConsentSaveMessage(consent))
       } else {
         setSavedMessage(
           legacyOracleMemory

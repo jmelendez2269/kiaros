@@ -90,3 +90,19 @@ export function normalizeJournalConsent(
 export function privateJournalConsentInput(): JournalConsentInput {
   return { ...PRIVATE_JOURNAL_CONSENT }
 }
+
+/** User-facing confirmation after saving journal consent (composer or history). */
+export function journalConsentSaveMessage(
+  state: Pick<JournalConsentState, 'include_in_insights' | 'include_in_stelloquy'>,
+): string {
+  if (state.include_in_insights && state.include_in_stelloquy) {
+    return 'Saved. Kairos can draw on this entry, and Stelloquy can recall it. You can change this from journal history.'
+  }
+  if (state.include_in_insights) {
+    return 'Saved. Kairos can draw on this entry. You can change this from journal history.'
+  }
+  if (state.include_in_stelloquy) {
+    return 'Saved. Stelloquy can recall this entry. You can change this from journal history.'
+  }
+  return "Saved to your journal. Kairos won't draw on this entry, and Stelloquy won't recall it."
+}

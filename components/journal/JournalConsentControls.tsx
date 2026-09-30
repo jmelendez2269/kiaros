@@ -58,7 +58,7 @@ export function JournalConsentControls({
           <span>
             <span className="block text-sm font-medium text-bone">Let Kairos draw on this entry</span>
             <span className="mt-1 block text-xs leading-5 text-bone-muted">
-              Allows this entry to shape your private pattern insights.
+              Allows Reflections, Quarterly Reviews, and month briefs to use this entry, plus pattern insights on Planner + Oracle.
             </span>
           </span>
         </label>

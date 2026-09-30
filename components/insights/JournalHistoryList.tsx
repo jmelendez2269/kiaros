@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { JournalConsentControls } from '@/components/journal/JournalConsentControls'
-import type { JournalConsentState } from '@/lib/journal/consent'
+import { journalConsentSaveMessage, type JournalConsentState } from '@/lib/journal/consent'
 
 export type RecentJournalEntry = {
   id: string
@@ -99,7 +99,7 @@ function JournalHistoryCard({
 
       setConsent(payload.consent)
       setSavedConsent(payload.consent)
-      setSavedMessage('Permissions updated.')
+      setSavedMessage(journalConsentSaveMessage(payload.consent))
       setIsEditing(false)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Failed to update journal permissions')
@@ -118,7 +118,7 @@ function JournalHistoryCard({
         <div className="flex flex-wrap items-center justify-end gap-2">
           {skyLabel ? <span className="channel-sky channel-pill">{skyLabel}</span> : null}
           {(consentV2Enabled ? savedConsent.include_in_insights : false) ? (
-            <span className="channel-ai channel-pill">In Patterns</span>
+            <span className="channel-ai channel-pill">Included</span>
           ) : null}
           {(consentV2Enabled ? savedConsent.include_in_stelloquy : entry.oracle_memory) ? (
             <span className="channel-memory channel-pill">Stelloquy recall</span>
