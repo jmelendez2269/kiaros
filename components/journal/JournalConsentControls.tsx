@@ -56,7 +56,7 @@ export function JournalConsentControls({
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-moss-300 focus:ring-moss-400"
           />
           <span>
-            <span className="block text-sm font-medium text-bone">Include in Patterns</span>
+            <span className="block text-sm font-medium text-bone">Let Kairos draw on this entry</span>
             <span className="mt-1 block text-xs leading-5 text-bone-muted">
               Allows this entry to shape your private pattern insights.
             </span>
