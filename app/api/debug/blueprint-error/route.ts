@@ -1,8 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { guardDebugRoute } from "@/lib/debug/guard";
 
 export async function GET() {
+  const guardResponse = await guardDebugRoute();
+  if (guardResponse) return guardResponse;
+
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
