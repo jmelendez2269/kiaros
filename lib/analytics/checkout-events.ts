@@ -47,7 +47,7 @@ export async function recordCheckoutCanceled(params: {
   const { data: started, error } = await supabase
     .from("first_party_funnel_events")
     .select(
-      "anonymous_id, user_id, session_id, source, medium, campaign, referrer_host, entry_path, experiment_key, experiment_variant, product_tier, access_plan, stripe_checkout_session_id, stripe_order_id, metadata",
+      "anonymous_id, user_id, session_id, source, medium, campaign, content, referrer_host, entry_path, experiment_key, experiment_variant, product_tier, access_plan, stripe_checkout_session_id, stripe_order_id, metadata",
     )
     .eq("event_id", checkoutAttemptEventId(params.attemptId, "started"))
     .eq("event_name", "checkout_started")
