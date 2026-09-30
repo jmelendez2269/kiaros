@@ -7,11 +7,39 @@
  * Covered years are still computed from the real [starts_at, ends_at] window.
  */
 
+// Mock server-only module before any imports
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+require.cache[require.resolve('server-only')] = {
+  id: 'server-only',
+  exports: {},
+  loaded: true,
+  children: [],
+  paths: [],
+  filename: 'server-only',
+} as any;
+
 import {
   resolveAccessCapabilities,
   resolveCapabilityEntitlementState,
   type CapabilityEntitlement,
 } from '../lib/commerce/capabilities';
+
+// Type for ProductEntitlementRecord without importing server-only module
+type ProductEntitlementRecord = {
+  id: string;
+  user_id: string;
+  source?: string | null;
+  source_order_id?: string | null;
+  product_tier: string;
+  planner_year: number;
+  oracle_enabled: boolean;
+  starts_at: string;
+  ends_at: string;
+  status: string;
+  created_at: string;
+  access_plan?: string | null;
+};
 
 interface TestCase {
   name: string;
@@ -479,5 +507,209 @@ function runEntitlementStateTests() {
   }
 }
 
-runTests();
-runEntitlementStateTests();
+async function runUserAccessIntegrationTests() {
+  console.log('='.repeat(80));
+  console.log('USER ACCESS INTEGRATION TESTS');
+  console.log('='.repeat(80));
+  console.log();
+  console.log('Testing resolveUserAccess with orderSubscriptionMap to verify');
+  console.log('entitlement-level accessState matches capabilities.accessState.');
+  console.log();
+  console.log('='.repeat(80));
+  console.log();
+
+  // Dynamic import to avoid server-only issues
+  const { resolveUserAccess } = await import('../lib/commerce/entitlements');
+
+  let totalTests = 0;
+  let passedTests = 0;
+  let failedTests = 0;
+
+  // Case (a): Oct 5, 2026 yearly-sub buyer, cancelled (ends 2027-10-05)
+  // On 2027-11-15: should be active with full capabilities
+  {
+    totalTests++;
+    const entitlement: ProductEntitlementRecord = {
+      id: 'test-1',
+      user_id: 'test-user',
+      source: 'stripe',
+      source_order_id: 'order-oct-sub',
+      product_tier: 'planner_annual',
+      planner_year: 2026,
+      oracle_enabled: true,
+      starts_at: '2026-10-05',
+      ends_at: '2027-10-05',
+      status: 'active',
+      created_at: '2026-10-05T00:00:00Z',
+      access_plan: 'yearly',
+    };
+
+    const subscriptionMap = new Map([['order-oct-sub', true]]);
+    const access = resolveUserAccess([entitlement], '2027-11-15', undefined, subscriptionMap);
+
+    const hasActiveEntitlement = access.activeEntitlements.length === 1;
+    const entitlementStateMatch = access.activeEntitlements[0]?.accessState === 'active';
+    const capabilitiesMatch = access.capabilities.accessState === 'active_annual';
+    const statesAgree = entitlementStateMatch && capabilitiesMatch;
+
+    const passed = hasActiveEntitlement && statesAgree;
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Case (a) Oct 5, 2026 yearly-sub, 2027-11-15: active entitlement + active_annual capabilities`);
+    } else {
+      failedTests++;
+      console.log(`✗ Case (a) Oct 5, 2026 yearly-sub, 2027-11-15: FAILED`);
+    }
+    console.log(`  activeEntitlements.length: ${access.activeEntitlements.length} (expected: 1) ${hasActiveEntitlement ? '✓' : '✗'}`);
+    console.log(`  activeEntitlements[0].accessState: ${access.activeEntitlements[0]?.accessState ?? 'none'} (expected: active) ${entitlementStateMatch ? '✓' : '✗'}`);
+    console.log(`  capabilities.accessState: ${access.capabilities.accessState} (expected: active_annual) ${capabilitiesMatch ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  // Case (a) on 2028-01-01: should NOT be active
+  {
+    totalTests++;
+    const entitlement: ProductEntitlementRecord = {
+      id: 'test-1',
+      user_id: 'test-user',
+      source: 'stripe',
+      source_order_id: 'order-oct-sub',
+      product_tier: 'planner_annual',
+      planner_year: 2026,
+      oracle_enabled: true,
+      starts_at: '2026-10-05',
+      ends_at: '2027-10-05',
+      status: 'active',
+      created_at: '2026-10-05T00:00:00Z',
+      access_plan: 'yearly',
+    };
+
+    const subscriptionMap = new Map([['order-oct-sub', true]]);
+    const access = resolveUserAccess([entitlement], '2028-01-01', undefined, subscriptionMap);
+
+    const noActiveEntitlement = access.activeEntitlements.length === 0;
+    const entitlementStateMatch = access.entitlements[0]?.accessState === 'read_only';
+    const capabilitiesMatch = access.capabilities.accessState === 'read_only_annual';
+    const statesAgree = entitlementStateMatch && capabilitiesMatch;
+
+    const passed = noActiveEntitlement && statesAgree;
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Case (a) Oct 5, 2026 yearly-sub, 2028-01-01: NOT active, read_only entitlement + read_only_annual capabilities`);
+    } else {
+      failedTests++;
+      console.log(`✗ Case (a) Oct 5, 2026 yearly-sub, 2028-01-01: FAILED`);
+    }
+    console.log(`  activeEntitlements.length: ${access.activeEntitlements.length} (expected: 0) ${noActiveEntitlement ? '✓' : '✗'}`);
+    console.log(`  entitlements[0].accessState: ${access.entitlements[0]?.accessState ?? 'none'} (expected: read_only) ${entitlementStateMatch ? '✓' : '✗'}`);
+    console.log(`  capabilities.accessState: ${access.capabilities.accessState} (expected: read_only_annual) ${capabilitiesMatch ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  // Case (b): Same entitlement but NOT a subscription (one-time annual)
+  // On 2027-11-15: should NOT be extended
+  {
+    totalTests++;
+    const entitlement: ProductEntitlementRecord = {
+      id: 'test-2',
+      user_id: 'test-user',
+      source: 'stripe',
+      source_order_id: 'order-oct-onetime',
+      product_tier: 'planner_annual',
+      planner_year: 2026,
+      oracle_enabled: true,
+      starts_at: '2026-10-05',
+      ends_at: '2027-10-05',
+      status: 'active',
+      created_at: '2026-10-05T00:00:00Z',
+      access_plan: 'yearly',
+    };
+
+    // Map entry is false - this is NOT a subscription
+    const subscriptionMap = new Map([['order-oct-onetime', false]]);
+    const access = resolveUserAccess([entitlement], '2027-11-15', undefined, subscriptionMap);
+
+    const noActiveEntitlement = access.activeEntitlements.length === 0;
+    const entitlementStateMatch = access.entitlements[0]?.accessState === 'read_only';
+    const capabilitiesMatch = access.capabilities.accessState === 'read_only_annual';
+    const statesAgree = entitlementStateMatch && capabilitiesMatch;
+
+    const passed = noActiveEntitlement && statesAgree;
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Case (b) Oct 5, 2026 one-time annual, 2027-11-15: NOT extended, read_only entitlement + read_only_annual capabilities`);
+    } else {
+      failedTests++;
+      console.log(`✗ Case (b) Oct 5, 2026 one-time annual, 2027-11-15: FAILED`);
+    }
+    console.log(`  activeEntitlements.length: ${access.activeEntitlements.length} (expected: 0) ${noActiveEntitlement ? '✓' : '✗'}`);
+    console.log(`  entitlements[0].accessState: ${access.entitlements[0]?.accessState ?? 'none'} (expected: read_only) ${entitlementStateMatch ? '✓' : '✗'}`);
+    console.log(`  capabilities.accessState: ${access.capabilities.accessState} (expected: read_only_annual) ${capabilitiesMatch ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  // Case (c): Mar 10, 2027 yearly-sub buyer, cancelled (ends 2028-03-10)
+  // On 2028-03-11: should NOT be active (no extension for March end date)
+  {
+    totalTests++;
+    const entitlement: ProductEntitlementRecord = {
+      id: 'test-3',
+      user_id: 'test-user',
+      source: 'stripe',
+      source_order_id: 'order-mar-sub',
+      product_tier: 'planner_annual',
+      planner_year: 2027,
+      oracle_enabled: true,
+      starts_at: '2027-03-10',
+      ends_at: '2028-03-10',
+      status: 'active',
+      created_at: '2027-03-10T00:00:00Z',
+      access_plan: 'yearly',
+    };
+
+    const subscriptionMap = new Map([['order-mar-sub', true]]);
+    const access = resolveUserAccess([entitlement], '2028-03-11', undefined, subscriptionMap);
+
+    const noActiveEntitlement = access.activeEntitlements.length === 0;
+    const entitlementStateMatch = access.entitlements[0]?.accessState === 'read_only';
+    const capabilitiesMatch = access.capabilities.accessState === 'read_only_annual';
+    const statesAgree = entitlementStateMatch && capabilitiesMatch;
+
+    const passed = noActiveEntitlement && statesAgree;
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Case (c) Mar 10, 2027 yearly-sub, 2028-03-11: NOT active (no extension), read_only entitlement + read_only_annual capabilities`);
+    } else {
+      failedTests++;
+      console.log(`✗ Case (c) Mar 10, 2027 yearly-sub, 2028-03-11: FAILED`);
+    }
+    console.log(`  activeEntitlements.length: ${access.activeEntitlements.length} (expected: 0) ${noActiveEntitlement ? '✓' : '✗'}`);
+    console.log(`  entitlements[0].accessState: ${access.entitlements[0]?.accessState ?? 'none'} (expected: read_only) ${entitlementStateMatch ? '✓' : '✗'}`);
+    console.log(`  capabilities.accessState: ${access.capabilities.accessState} (expected: read_only_annual) ${capabilitiesMatch ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  console.log(`${'='.repeat(80)}`);
+  console.log(`USER ACCESS INTEGRATION TESTS SUMMARY: ${passedTests}/${totalTests} tests passed`);
+  if (failedTests > 0) {
+    console.log(`${failedTests} tests FAILED`);
+  }
+  console.log(`${'='.repeat(80)}`);
+  console.log();
+
+  if (failedTests > 0) {
+    process.exit(1);
+  }
+}
+
+async function main() {
+  runTests();
+  runEntitlementStateTests();
+  await runUserAccessIntegrationTests();
+}
+
+main();
