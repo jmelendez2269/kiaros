@@ -5,9 +5,11 @@ import {
   resolveUserAccess,
   loadOrderSubscriptionMap,
   extractStripeOrderIds,
+  getAccessPlan,
   type EntitlementAccessState,
   type ProductEntitlementRecord,
 } from "@/lib/commerce/entitlements";
+import { computeFullAccessThrough } from "@/lib/commerce/capabilities";
 import type { AccessPlan } from "@/lib/commerce/config";
 
 const MS_PER_DAY = 86_400_000;
@@ -15,6 +17,8 @@ const MS_PER_DAY = 86_400_000;
 export interface AccessWindow {
   /** ISO date (YYYY-MM-DD) the purchased window runs through. */
   endsAt: string;
+  /** ISO date (YYYY-MM-DD) full access extends through (may be later than endsAt for eligible annual subs). */
+  fullAccessThrough: string;
   accessPlan: AccessPlan;
   state: EntitlementAccessState;
   /** Whole days from today to `endsAt`. Negative once the window has passed. */
@@ -61,8 +65,22 @@ export async function getAccessWindow(supabaseUserId: string): Promise<AccessWin
   const chosen = access.activeEntitlements[0] ?? access.entitlements[0];
   if (!chosen) return null;
 
+  // Compute fullAccessThrough for the chosen entitlement
+  const isSubscription =
+    chosen.source === "stripe" && chosen.source_order_id && subscriptionMap
+      ? subscriptionMap.get(chosen.source_order_id) ?? false
+      : false;
+  
+  const fullAccessThrough = computeFullAccessThrough({
+    accessPlan: getAccessPlan(chosen.access_plan),
+    endsAt: chosen.ends_at,
+    startsAt: chosen.starts_at,
+    isSubscription,
+  });
+
   return {
     endsAt: chosen.ends_at,
+    fullAccessThrough,
     accessPlan: chosen.accessPlan,
     state: chosen.accessState,
     daysRemaining: daysUntil(chosen.ends_at),

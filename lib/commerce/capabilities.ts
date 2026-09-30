@@ -105,24 +105,11 @@ export function getMonthlyBlueprintWindow(asOf: Date | string): {
 }
 
 /**
- * Get the end of day (23:59:59) for a given date in America/New_York timezone.
- * Returns ISO 8601 string with timezone offset.
- */
-function getEndOfDayET(isoDate: string): string {
-  // Parse the date and create a date object in ET timezone
-  const [year, month, day] = isoDate.split('-').map(Number);
-  // Create a date string that when parsed in ET will be the end of that day
-  // We use 23:59:59 on that date in ET
-  const etDate = new Date(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T23:59:59-05:00`);
-  return etDate.toISOString();
-}
-
-/**
  * Compute the full access end date for eligible yearly subscriptions.
  * For yearly subscriptions purchased on/after 2026-10-01, if ends_at falls in Oct-Dec,
  * extend full access through Dec 31 23:59:59 ET of that same calendar year.
  */
-function computeFullAccessThrough(entitlement: Pick<CapabilityEntitlement, "accessPlan" | "endsAt" | "startsAt" | "isSubscription">): string {
+export function computeFullAccessThrough(entitlement: Pick<CapabilityEntitlement, "accessPlan" | "endsAt" | "startsAt" | "isSubscription">): string {
   const endsAt = toCapabilityISODate(entitlement.endsAt);
   
   // Only apply to yearly subscriptions

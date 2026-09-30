@@ -7,7 +7,11 @@
  * Covered years are still computed from the real [starts_at, ends_at] window.
  */
 
-import { resolveAccessCapabilities, type CapabilityEntitlement } from '../lib/commerce/capabilities';
+import {
+  resolveAccessCapabilities,
+  resolveCapabilityEntitlementState,
+  type CapabilityEntitlement,
+} from '../lib/commerce/capabilities';
 
 interface TestCase {
   name: string;
@@ -332,4 +336,148 @@ function runTests() {
   }
 }
 
+function runEntitlementStateTests() {
+  console.log('='.repeat(80));
+  console.log('ENTITLEMENT-LEVEL STATE TESTS');
+  console.log('='.repeat(80));
+  console.log();
+  console.log('Testing that resolveCapabilityEntitlementState matches capabilities for');
+  console.log('subscription vs non-subscription entitlements.');
+  console.log();
+  console.log('='.repeat(80));
+  console.log();
+
+  let totalTests = 0;
+  let passedTests = 0;
+  let failedTests = 0;
+
+  // Test case (a) on 2027-11-15 - subscription should be active
+  {
+    totalTests++;
+    const entitlement: CapabilityEntitlement = {
+      accessPlan: 'yearly',
+      startsAt: '2026-10-10',
+      endsAt: '2027-10-10',
+      plannerYear: 2026,
+      oracleEnabled: true,
+      status: 'active',
+      isSubscription: true,
+    };
+
+    const state = resolveCapabilityEntitlementState(entitlement, '2027-11-15');
+    const passed = state === 'active';
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Case (a) 2027-11-15 (subscription): entitlement state='active'`);
+    } else {
+      failedTests++;
+      console.log(`✗ Case (a) 2027-11-15 (subscription): FAILED`);
+    }
+    console.log(`  State: ${state} (expected: active) ${passed ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  // Test case (a) on 2028-01-01 - subscription should be read_only
+  {
+    totalTests++;
+    const entitlement: CapabilityEntitlement = {
+      accessPlan: 'yearly',
+      startsAt: '2026-10-10',
+      endsAt: '2027-10-10',
+      plannerYear: 2026,
+      oracleEnabled: true,
+      status: 'active',
+      isSubscription: true,
+    };
+
+    const state = resolveCapabilityEntitlementState(entitlement, '2028-01-01');
+    const passed = state === 'read_only';
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Case (a) 2028-01-01 (subscription): entitlement state='read_only'`);
+    } else {
+      failedTests++;
+      console.log(`✗ Case (a) 2028-01-01 (subscription): FAILED`);
+    }
+    console.log(`  State: ${state} (expected: read_only) ${passed ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  // Test yearly entitlement NOT a subscription - should be read_only on 2027-10-11
+  {
+    totalTests++;
+    const entitlement: CapabilityEntitlement = {
+      accessPlan: 'yearly',
+      startsAt: '2026-10-10',
+      endsAt: '2027-10-10',
+      plannerYear: 2026,
+      oracleEnabled: true,
+      status: 'active',
+      isSubscription: false,
+    };
+
+    const state = resolveCapabilityEntitlementState(entitlement, '2027-10-11');
+    const passed = state === 'read_only';
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Yearly NOT subscription (2027-10-11): entitlement state='read_only' (NO extension)`);
+    } else {
+      failedTests++;
+      console.log(`✗ Yearly NOT subscription (2027-10-11): FAILED`);
+    }
+    console.log(`  State: ${state} (expected: read_only) ${passed ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  // Test that capabilities and entitlement state agree for active subscription
+  {
+    totalTests++;
+    const entitlement: CapabilityEntitlement = {
+      accessPlan: 'yearly',
+      startsAt: '2026-10-10',
+      endsAt: '2027-10-10',
+      plannerYear: 2026,
+      oracleEnabled: true,
+      status: 'active',
+      isSubscription: true,
+    };
+
+    const state = resolveCapabilityEntitlementState(entitlement, '2027-11-15');
+    const capabilities = resolveAccessCapabilities({
+      asOf: '2027-11-15',
+      authenticated: true,
+      entitlements: [entitlement],
+    });
+
+    const passed = state === 'active' && capabilities.accessState === 'active_annual';
+
+    if (passed) {
+      passedTests++;
+      console.log(`✓ Subscription on 2027-11-15: entitlement state and capabilities both active`);
+    } else {
+      failedTests++;
+      console.log(`✗ Subscription on 2027-11-15: entitlement state and capabilities mismatch`);
+    }
+    console.log(`  Entitlement state: ${state} (expected: active) ${state === 'active' ? '✓' : '✗'}`);
+    console.log(`  Capabilities state: ${capabilities.accessState} (expected: active_annual) ${capabilities.accessState === 'active_annual' ? '✓' : '✗'}`);
+    console.log();
+  }
+
+  console.log(`${'='.repeat(80)}`);
+  console.log(`ENTITLEMENT STATE TESTS SUMMARY: ${passedTests}/${totalTests} tests passed`);
+  if (failedTests > 0) {
+    console.log(`${failedTests} tests FAILED`);
+  }
+  console.log(`${'='.repeat(80)}`);
+  console.log();
+
+  if (failedTests > 0) {
+    process.exit(1);
+  }
+}
+
 runTests();
+runEntitlementStateTests();
