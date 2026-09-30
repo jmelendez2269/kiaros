@@ -48,7 +48,7 @@ const CONTEXT_LAYERS = [
   {
     label: "The life in motion",
     detail:
-      "Active life areas, curriculum, tracker notes, planned work, and reviews add present-tense context.",
+      "Active life areas, curriculum, planned work, and reviews add present-tense context.",
     Icon: Layers3,
     tone: "text-almanac-sage",
   },
@@ -480,7 +480,7 @@ function ComparisonSection() {
               Core Planner · no Stelloquy generation
             </p>
             <ul className="mt-7 space-y-5 text-sm leading-6 text-almanac-ink-dim">
-              <li>Your Blueprint, calendar, journal, and tracker remain the core planning workspace.</li>
+              <li>Your Blueprint, calendar, and journal remain the core planning workspace.</li>
               <li>Planner guidance is available without opening an AI conversation.</li>
               <li>Stelloquy questions and captures require an active Planner + Oracle plan.</li>
               <li>You can add the conversation layer whenever you want deeper dialogue.</li>
