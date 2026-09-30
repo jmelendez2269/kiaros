@@ -30,7 +30,6 @@ type CheckoutStartedRecord = Pick<
   | "source"
   | "medium"
   | "campaign"
-  | "content"
   | "referrer_host"
   | "entry_path"
   | "experiment_key"
@@ -238,7 +237,6 @@ export function buildCheckoutCanceledEvent(params: {
     source: params.started.source,
     medium: params.started.medium,
     campaign: params.started.campaign,
-    content: params.started.content,
     referrer_host: params.started.referrer_host,
     entry_path: params.started.entry_path,
     experiment_key: params.started.experiment_key,

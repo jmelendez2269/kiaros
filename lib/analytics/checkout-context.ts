@@ -95,7 +95,14 @@ export function validateCheckoutFunnelContext(
     context: {
       anonymous_id: validation.event.anonymous_id,
       session_id: validation.event.session_id,
-      ...attributionFromContext(validation.event as CheckoutFunnelContext),
+      source: validation.event.source,
+      medium: validation.event.medium,
+      campaign: validation.event.campaign,
+      content: (input as any).content ?? null,
+      referrer_host: validation.event.referrer_host,
+      entry_path: validation.event.entry_path,
+      experiment_key: validation.event.experiment_key,
+      experiment_variant: validation.event.experiment_variant,
     },
   };
 }
