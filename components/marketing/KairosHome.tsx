@@ -58,7 +58,6 @@ const INSTRUMENTS: Array<{
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
   { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
   { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. Patterns surface on their own, over time." },
-  { glyph: "◐", name: "Daily Tracker", body: "A 90-day consistency grid with lunar-stamped logs. Track habits, energy, and intention across the quarter." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
   {
     glyph: "⬡",
@@ -207,7 +206,7 @@ function InstrumentPanel() {
       <div className="mx-auto max-w-6xl px-5 md:px-8">
         <div className="max-w-2xl">
           <p className="font-almanac-mono text-[0.72rem] uppercase tracking-[0.28em] text-almanac-copper-hi">
-            Ten instruments. One living system.
+            Nine instruments. One living system.
           </p>
           <h2 className="mt-4 font-almanac-serif text-4xl italic text-almanac-ink md:text-5xl">
             Everything reads from the same sky.
