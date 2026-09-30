@@ -24,22 +24,7 @@ import {
   resolveCapabilityEntitlementState,
   type CapabilityEntitlement,
 } from '../lib/commerce/capabilities';
-
-// Type for ProductEntitlementRecord without importing server-only module
-type ProductEntitlementRecord = {
-  id: string;
-  user_id: string;
-  source?: string | null;
-  source_order_id?: string | null;
-  product_tier: string;
-  planner_year: number;
-  oracle_enabled: boolean;
-  starts_at: string;
-  ends_at: string;
-  status: string;
-  created_at: string;
-  access_plan?: string | null;
-};
+import type { ProductEntitlementRecord } from '../lib/commerce/entitlements';
 
 interface TestCase {
   name: string;
