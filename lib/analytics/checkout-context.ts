@@ -48,8 +48,22 @@ const CONTEXT_KEYS = new Set([
   "experiment_variant",
 ]);
 
+const SAFE_CAMPAIGN_PATTERN = /^[a-z0-9][a-z0-9 ._:+~-]*$/i;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validateContent(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length > 200) return null;
+  if (/^https?:\/\//i.test(trimmed) || trimmed.includes("?") || trimmed.includes("#")) {
+    return null;
+  }
+  if (!SAFE_CAMPAIGN_PATTERN.test(trimmed)) return null;
+  return trimmed;
 }
 
 function attributionFromContext(context: CheckoutFunnelContext): FunnelAttribution {
@@ -98,7 +112,7 @@ export function validateCheckoutFunnelContext(
       source: validation.event.source,
       medium: validation.event.medium,
       campaign: validation.event.campaign,
-      content: (input as any).content ?? null,
+      content: validateContent(input.content),
       referrer_host: validation.event.referrer_host,
       entry_path: validation.event.entry_path,
       experiment_key: validation.event.experiment_key,
