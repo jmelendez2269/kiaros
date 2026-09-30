@@ -754,8 +754,9 @@ export function PublicPricingPage({
                   lane is active.
                 </p>
                 <p>
-                  On new moon and full moon days, the journal opens in ritual mode — a quieter
-                  format for reflection rather than output. The distinction is made for you.
+                  Any journal entry can be a Ritual entry, a slower format meant for reflection.
+                  Tick it whenever you want it, on a new moon, a full moon, or any ordinary day.
+                  Open the journal from a prompt and it starts ticked.
                 </p>
                 <p>
                   You choose which journal entries become part of the Oracle&apos;s memory. When
@@ -948,6 +949,13 @@ export function PublicPricingPage({
                 <p className="shell-eyebrow">{card.eyebrow}</p>
                 <p className="mt-2 text-lg font-semibold text-bone">{card.title}</p>
                 <p className="mt-3 text-sm leading-7 text-bone-muted">{card.body}</p>
+                {card.title === "Quarterly Reviews" ? (
+                  <p className="mt-3 text-sm leading-7 text-bone-muted">
+                    Ritual entries, Quarterly Reviews, Reflections, and Yearly Unwrapped come with
+                    every paid plan, Planner or Planner + Oracle, monthly or yearly. Yearly Unwrapped
+                    looks back on a year once it has ended.
+                  </p>
+                ) : null}
               </div>
             ))}
           </div>
