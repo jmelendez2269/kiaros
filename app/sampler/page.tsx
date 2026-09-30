@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { StelloquyOrb } from "@/components/oracle/StelloquyOrb";
+import { ShellSiteFooter } from "@/components/marketing/ShellSiteFooter";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -156,6 +157,7 @@ export default async function SamplerPage() {
           </div>
         </div>
       </div>
+      <ShellSiteFooter />
     </div>
   );
 }

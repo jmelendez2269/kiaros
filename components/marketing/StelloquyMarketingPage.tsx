@@ -14,6 +14,7 @@ import {
 
 import { StarField } from "@/components/almanac/StarField";
 import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
+import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
 import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { StelloquyOrb } from "@/components/oracle/StelloquyOrb";
 import { BRAND } from "@/lib/brand";
@@ -835,6 +836,7 @@ export function StelloquyMarketingPage({ isSignedIn }: Props) {
         <UpgradeSection isSignedIn={isSignedIn} />
       </main>
 
+      <FieldNotesFooterSignup variant="almanac" />
       <MarketingFooter />
     </div>
   );

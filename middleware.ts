@@ -1,23 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/stelloquy(.*)",
-  "/pricing(.*)",
-  "/activate(.*)",
-  "/contact(.*)",
-  "/privacy(.*)",
-  "/terms(.*)",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/api/commerce/etsy-ingest",
-  "/api/commerce/(.*)",
-  "/api/activate/(.*)",
-  "/api/webhooks/(.*)",
-  "/api/cron/(.*)",
-  "/api/email/(.*)",
-]);
+import { PUBLIC_ROUTE_PATTERNS } from "@/lib/marketing/public-routes";
+
+const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return;

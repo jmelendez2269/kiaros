@@ -1,5 +1,7 @@
 import { Mail } from "lucide-react";
 
+import { ShellSiteFooter } from "@/components/marketing/ShellSiteFooter";
+
 const CONTACT_EMAILS = [
   {
     label: "Support",
@@ -25,6 +27,7 @@ export const metadata = {
 
 export default function ContactPage() {
   return (
+    <>
     <div className="page-wrapper">
       <div className="container py-12 md:py-16">
         <section className="shell-panel-hero p-8 md:p-10">
@@ -54,5 +57,7 @@ export default function ContactPage() {
         </section>
       </div>
     </div>
+    <ShellSiteFooter />
+    </>
   );
 }
