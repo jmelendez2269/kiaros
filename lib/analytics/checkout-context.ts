@@ -49,6 +49,21 @@ const CONTEXT_KEYS = new Set([
 ]);
 
 const SAFE_CAMPAIGN_PATTERN = /^[a-z0-9][a-z0-9 ._:+~-]*$/i;
+const SAFE_TOKEN_PATTERN = /^[a-z0-9._:+~-]*$/i;
+
+function normalizeSourceOrMedium(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim().toLowerCase();
+  const collapsed = trimmed.replace(/\s+/g, "_");
+  const cleaned = collapsed
+    .split("")
+    .filter((char, index) => {
+      if (index === 0) return /[a-z0-9]/i.test(char);
+      return SAFE_TOKEN_PATTERN.test(char);
+    })
+    .join("");
+  return cleaned || null;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -130,7 +145,15 @@ function loadStoredContext(storage: FunnelContextStorage | null | undefined): St
     if (!isRecord(parsed) || parsed.version !== 1 || typeof parsed.session_started_at !== "string") {
       return null;
     }
-    const validation = validateCheckoutFunnelContext(parsed.context);
+    let validation = validateCheckoutFunnelContext(parsed.context);
+    if (!validation.success && isRecord(parsed.context)) {
+      const normalized = {
+        ...parsed.context,
+        source: normalizeSourceOrMedium(parsed.context.source as string | null),
+        medium: normalizeSourceOrMedium(parsed.context.medium as string | null),
+      };
+      validation = validateCheckoutFunnelContext(normalized);
+    }
     if (!validation.success) return null;
     return {
       version: 1,
