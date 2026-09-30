@@ -84,16 +84,6 @@ export async function loadQuarterlyReviewPromptBundle(
   const admin = createAdminSupabase()
   const { start, end } = quarterDateRange(planYear, quarter)
   const prior = priorQuarterCoords(planYear, quarter)
-  let journalEntriesQuery = admin
-    .from('journal_entries')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userProfileId)
-    .gte('entry_date', start)
-    .lte('entry_date', end)
-
-  if (isJournalConsentV2Enabled()) {
-    journalEntriesQuery = journalEntriesQuery.eq('include_in_insights', true)
-  }
 
   const [
     profileRes,
@@ -126,7 +116,13 @@ export async function loadQuarterlyReviewPromptBundle(
       .eq('user_id', userProfileId)
       .gte('log_date', start)
       .lte('log_date', end),
-    journalEntriesQuery,
+    admin
+      .from('journal_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userProfileId)
+      .eq('include_in_insights', true)
+      .gte('entry_date', start)
+      .lte('entry_date', end),
     admin
       .from('oracle_captures')
       .select('id', { count: 'exact', head: true })
