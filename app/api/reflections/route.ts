@@ -7,6 +7,7 @@ import { preferences, reports, feedback, intentions } from '@/lib/reflections/re
 import { feedbackSchema } from '@/lib/reflections/report-schema'
 import { periodFor, validTimezone } from '@/lib/reflections/periods'
 import { generateReflection } from '@/lib/reflections/service'
+import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 const schema = z.discriminatedUnion('action', [
@@ -35,8 +36,33 @@ export async function GET(request: Request) {
       if (result.error) throw new Error('Notifications unavailable')
       return NextResponse.json({ available: Boolean(result.data?.length) }, { headers })
     }
-    const [settings, saved, responses, accepted] = await Promise.all([preferences(userId), reports(userId), feedback(userId), intentions(userId)])
-    return NextResponse.json({ settings, reports: saved, feedback: responses, intentions: accepted }, { headers })
+    const consentV2Enabled = isJournalConsentV2Enabled()
+    let includedCountQuery = createAdminSupabase()
+      .from('journal_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    if (consentV2Enabled) {
+      includedCountQuery = includedCountQuery.eq('include_in_insights', true)
+    }
+    
+    const [settings, saved, responses, accepted, includedCountRes] = await Promise.all([
+      preferences(userId), 
+      reports(userId), 
+      feedback(userId), 
+      intentions(userId),
+      includedCountQuery
+    ])
+    
+    const includedEntriesCount = includedCountRes.error ? 0 : includedCountRes.count ?? 0
+    
+    return NextResponse.json({ 
+      settings, 
+      reports: saved, 
+      feedback: responses, 
+      intentions: accepted,
+      consentV2Enabled,
+      includedEntriesCount
+    }, { headers })
   } catch {
     return NextResponse.json({ error: 'Reflections are temporarily unavailable. Please try again shortly.' }, { status: 503, headers })
   }
