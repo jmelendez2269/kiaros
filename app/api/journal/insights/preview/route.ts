@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getUserProfileId } from '@/lib/ai/usage'
+import { requireOracleAccess } from '@/lib/commerce/access'
 import {
   VOICE_PRESETS,
   resolveVoicePrompt,
@@ -28,6 +29,9 @@ export async function POST(req: Request) {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const denied = await requireOracleAccess(userId)
+    if (denied) return denied
 
     const body = (await req.json().catch(() => ({}))) as RequestBody
     const voicePrompt = pickVoicePrompt(body) ?? resolveVoicePrompt(null)

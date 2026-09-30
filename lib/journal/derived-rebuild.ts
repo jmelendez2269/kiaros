@@ -2,6 +2,7 @@ import 'server-only'
 
 import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
 import type { PatternRefreshTarget } from '@/lib/journal/intelligence'
+import { userMayUseOraclePatterns } from '@/lib/commerce/access'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 
 const ENTRY_BATCH_SIZE = 200
@@ -49,6 +50,8 @@ export async function invalidateJournalDerivedContent(userProfileId: string): Pr
  * same boundary at the database layer.
  */
 export async function rebuildJournalDerivedContent(userProfileId: string): Promise<void> {
+  if (!(await userMayUseOraclePatterns(userProfileId))) return
+
   const admin = createAdminSupabase()
   const { data: entries, error: entriesError } = await admin
     .from('journal_entries')

@@ -61,3 +61,89 @@ export async function requireActivePlannerAccess(clerkUserId: string): Promise<N
 
   return null;
 }
+
+const ENTITLEMENT_SELECT =
+  "id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan";
+
+/**
+ * Whether the Supabase user profile may use Patterns / Stelloquy pattern APIs.
+ * Mirrors `access.hasOracleAccess` from `resolveUserAccess` (planner_oracle tier or oracle_enabled).
+ */
+export async function hasOracleAccessForProfile(userProfileId: string): Promise<boolean> {
+  const admin = createAdminSupabase();
+
+  const { data: entitlements } = await admin
+    .from("product_entitlements")
+    .select(ENTITLEMENT_SELECT)
+    .eq("user_id", userProfileId)
+    .neq("status", "revoked");
+
+  const orderIds = extractStripeOrderIds(entitlements ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: userProfileId });
+
+  const access = resolveUserAccess(
+    (entitlements ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap,
+  );
+
+  return access.hasOracleAccess;
+}
+
+/**
+ * Admin metadata bypass (same as `requireActivePlannerAccess` and app layout Stelloquy gate).
+ */
+export async function userMayUseOraclePatterns(userProfileId: string): Promise<boolean> {
+  const clerkUser = await currentUser();
+  if (clerkUser?.publicMetadata?.isAdmin === true) return true;
+  return hasOracleAccessForProfile(userProfileId);
+}
+
+/**
+ * Call at the top of Patterns read/write API routes. Returns 403 when the user lacks Oracle access.
+ */
+export async function requireOracleAccess(clerkUserId: string): Promise<NextResponse | null> {
+  const clerkUser = await currentUser();
+  if (clerkUser?.publicMetadata?.isAdmin === true) return null;
+
+  const admin = createAdminSupabase();
+
+  const { data: profile } = await admin
+    .from("user_profiles")
+    .select("id")
+    .eq("clerk_user_id", clerkUserId)
+    .maybeSingle();
+
+  if (!profile) {
+    return NextResponse.json({ error: "Profile not found." }, { status: 404 });
+  }
+
+  const { data: entitlements } = await admin
+    .from("product_entitlements")
+    .select(ENTITLEMENT_SELECT)
+    .eq("user_id", profile.id)
+    .neq("status", "revoked");
+
+  const orderIds = extractStripeOrderIds(entitlements ?? []);
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile.id });
+
+  const access = resolveUserAccess(
+    (entitlements ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap,
+  );
+
+  if (!access.hasOracleAccess) {
+    return NextResponse.json(
+      {
+        error: "oracle_upgrade_required",
+        message: "Patterns are available with an active Planner + Oracle entitlement.",
+      },
+      { status: 403 },
+    );
+  }
+
+  return null;
+}

@@ -18,6 +18,7 @@ import {
   getPatternRefreshTargets,
   humanizeLunarPhase,
 } from '@/lib/journal/intelligence'
+import { userMayUseOraclePatterns } from '@/lib/commerce/access'
 import { createServerSupabase } from '@/lib/supabase/server'
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Database, Json, Tables, TablesInsert } from '@/types/database'
@@ -188,6 +189,8 @@ export async function createJournalEntry(
 
     const shouldRefreshPatterns = !consentV2Enabled || consent.state.include_in_insights
     if (!shouldRefreshPatterns) return { success: true, data }
+
+    if (!(await userMayUseOraclePatterns(profile.id))) return { success: true, data }
 
     const refreshTargets = getPatternRefreshTargets(ephemerisDay)
     await Promise.all(

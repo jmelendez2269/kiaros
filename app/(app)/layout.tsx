@@ -138,7 +138,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <StelloquyProvider hasOracleAccess={isAppAdmin || access.hasOracleAccess}>
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
-          <AlmanacSidebar />
+          <AlmanacSidebar hasOracleAccess={isAppAdmin || access.hasOracleAccess} />
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
             <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
               <div className="mx-auto w-full max-w-[1480px]">
@@ -214,7 +214,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           })}
         />
         <TourOverlay />
-        <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
+        {isAppAdmin || access.hasOracleAccess ? (
+          <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
+        ) : null}
         <FeedbackButton />
       </div>
     </StelloquyProvider>

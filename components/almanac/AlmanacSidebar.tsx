@@ -100,6 +100,17 @@ const NAV: ReadonlyArray<{
   },
 ]
 
+function navForOracleAccess(hasOracleAccess: boolean) {
+  if (hasOracleAccess) return NAV
+  return NAV.map((item) => {
+    if (item.key !== 'journal' || !item.subItems) return item
+    return {
+      ...item,
+      subItems: item.subItems.filter((sub) => sub.href !== '/insights/map'),
+    }
+  })
+}
+
 function splitSubHref(href: string): { pathname: string; hash: string } {
   const [pathAndQuery, hash = ''] = href.split('#')
   const [pathname] = pathAndQuery.split('?')
@@ -200,10 +211,12 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
 }
 
 function NavRow({
+  navItems,
   pathname,
   collapsed,
   onNavigate,
 }: {
+  navItems: typeof NAV
   pathname: string
   collapsed: boolean
   onNavigate?: () => void
@@ -237,7 +250,7 @@ function NavRow({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {NAV.map((n) => {
+      {navItems.map((n) => {
         const isActive = isSectionActive(n.key, pathname, view)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =
@@ -425,11 +438,13 @@ function NavRow({
 }
 
 function SidebarBody({
+  navItems,
   pathname,
   collapsed,
   onToggleDesktop,
   onNavigate,
 }: {
+  navItems: typeof NAV
   pathname: string
   collapsed: boolean
   onToggleDesktop?: () => void
@@ -492,6 +507,7 @@ function SidebarBody({
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: collapsed ? 0 : 2 }}>
           <NavRow
+            navItems={navItems}
             pathname={pathname}
             collapsed={collapsed}
             onNavigate={onNavigate}
@@ -571,7 +587,8 @@ function SidebarBody({
   )
 }
 
-export function AlmanacSidebar() {
+export function AlmanacSidebar({ hasOracleAccess }: { hasOracleAccess: boolean }) {
+  const navItems = navForOracleAccess(hasOracleAccess)
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -613,6 +630,7 @@ export function AlmanacSidebar() {
         style={{ background: K.bg2 }}
       >
         <SidebarBody
+          navItems={navItems}
           pathname={pathname}
           collapsed={collapsed}
           onToggleDesktop={() => setCollapsed((c) => !c)}
@@ -677,6 +695,7 @@ export function AlmanacSidebar() {
             }}
           >
             <SidebarBody
+              navItems={navItems}
               pathname={pathname}
               collapsed={false}
               onNavigate={() => setMobileOpen(false)}

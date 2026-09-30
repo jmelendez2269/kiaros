@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+import { requireOracleAccess } from '@/lib/commerce/access'
 import { createServerSupabase } from '@/lib/supabase/server'
 
 export type CaptureTopicKind = 'theme' | 'natal_aspect' | 'transit_aspect' | 'hd_element' | 'mood'
@@ -40,6 +41,9 @@ export async function GET() {
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const denied = await requireOracleAccess(userId)
+  if (denied) return denied
 
   const supabase = await createServerSupabase()
 

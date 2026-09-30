@@ -467,24 +467,26 @@ export function JournalComposer({
         </div>
       </section>
 
-      <Link
-        href="/insights/map"
-        className="channel-ai channel-card group flex items-center gap-4 px-5 py-4"
-      >
-        <span aria-hidden="true" className="channel-dot" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-bone">Patterns {BRAND.product} has noticed</p>
-          <p className="mt-0.5 text-xs leading-6 text-bone-muted">
-            Recurring moons and transits, saved conversations, and the living mind map.
-          </p>
-        </div>
-        <span
-          aria-hidden="true"
-          className="text-base text-leather-200 transition-transform group-hover:translate-x-0.5"
+      {hasOracleAccess ? (
+        <Link
+          href="/insights/map"
+          className="channel-ai channel-card group flex items-center gap-4 px-5 py-4"
         >
-          →
-        </span>
-      </Link>
+          <span aria-hidden="true" className="channel-dot" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-bone">Patterns {BRAND.product} has noticed</p>
+            <p className="mt-0.5 text-xs leading-6 text-bone-muted">
+              Recurring moons and transits, saved conversations, and the living mind map.
+            </p>
+          </div>
+          <span
+            aria-hidden="true"
+            className="text-base text-leather-200 transition-transform group-hover:translate-x-0.5"
+          >
+            →
+          </span>
+        </Link>
+      ) : null}
     </div>
   )
 }
