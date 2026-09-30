@@ -1,4 +1,13 @@
 import Link from 'next/link'
+import { currentUser } from '@clerk/nextjs/server'
+import { PatternsUpgradeState } from '@/components/insights/PatternsUpgradeState'
+import {
+  resolveUserAccess,
+  loadOrderSubscriptionMap,
+  extractStripeOrderIds,
+  type ProductEntitlementRecord,
+} from '@/lib/commerce/entitlements'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { CaptureGraph } from '@/components/insights/CaptureGraph'
 import {
@@ -23,6 +32,36 @@ export const metadata = {
 export default async function PatternsPage() {
   const supabase = await createServerSupabase()
   const consentV2Enabled = isJournalConsentV2Enabled()
+
+  const { data: profile } = await supabase.from('user_profiles').select('id').maybeSingle()
+
+  const { data: entitlements } = profile?.id
+    ? await supabase
+        .from('product_entitlements')
+        .select(
+          'id, user_id, source, source_order_id, product_tier, planner_year, oracle_enabled, starts_at, ends_at, status, created_at, access_plan',
+        )
+        .eq('user_id', profile.id)
+        .neq('status', 'revoked')
+    : { data: [] }
+
+  const admin = createAdminSupabase()
+  const orderIds = extractStripeOrderIds(entitlements ?? [])
+  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile?.id })
+
+  const access = resolveUserAccess(
+    (entitlements ?? []) as ProductEntitlementRecord[],
+    undefined,
+    undefined,
+    subscriptionMap,
+  )
+
+  const clerkUser = await currentUser()
+  const isAppAdmin = clerkUser?.publicMetadata?.isAdmin === true
+
+  if (!isAppAdmin && !access.hasOracleAccess) {
+    return <PatternsUpgradeState />
+  }
 
   let includedEntriesCountQuery = supabase
     .from('journal_entries')
@@ -64,7 +103,7 @@ export default async function PatternsPage() {
   const includedEntriesCount = includedCountRes.error ? 0 : includedCountRes.count ?? 0
   const recentEntries = (entriesRes.data ?? []) as RecentJournalEntry[]
   const oracleCaptures = (oracleCapturesRes.data ?? []) as OracleCaptureRow[]
-  
+
   const showEmptyState = consentV2Enabled && includedEntriesCount === 0
 
   const evidenceEntryIds = Array.from(

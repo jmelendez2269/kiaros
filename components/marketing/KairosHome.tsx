@@ -57,7 +57,7 @@ const INSTRUMENTS: Array<{
   { glyph: "☉", name: "Blueprint", body: "Your full year, generated once from your chart — 52 weeks, 12 months, 4 quarters." },
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
   { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
-  { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. Patterns surface on their own, over time." },
+  { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. On Planner + Oracle, patterns grow from the entries you choose to include." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
   {
     glyph: "⬡",

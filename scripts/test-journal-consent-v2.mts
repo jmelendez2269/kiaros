@@ -8,6 +8,7 @@
 
 import assert from 'node:assert/strict'
 import {
+  journalConsentSaveMessage,
   normalizeJournalConsent,
   privateJournalConsentInput,
   type JournalConsentInput,
@@ -267,6 +268,31 @@ assert.equal(
 console.log('✓ Permission change detection works correctly\n')
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TEST 11: Consent save confirmation copy
+// ─────────────────────────────────────────────────────────────────────────────
+
+console.log('Test 11: Consent save confirmation copy')
+
+assert.equal(
+  journalConsentSaveMessage({ include_in_insights: true, include_in_stelloquy: false }),
+  'Saved. Kairos can draw on this entry. You can change this from journal history.',
+)
+assert.equal(
+  journalConsentSaveMessage({ include_in_insights: false, include_in_stelloquy: true }),
+  'Saved. Stelloquy can recall this entry. You can change this from journal history.',
+)
+assert.equal(
+  journalConsentSaveMessage({ include_in_insights: true, include_in_stelloquy: true }),
+  'Saved. Kairos can draw on this entry, and Stelloquy can recall it. You can change this from journal history.',
+)
+assert.equal(
+  journalConsentSaveMessage({ include_in_insights: false, include_in_stelloquy: false }),
+  "Saved to your journal. Kairos won't draw on this entry, and Stelloquy won't recall it.",
+)
+
+console.log('✓ Consent save confirmation copy is correct\n')
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Summary
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -283,6 +309,7 @@ Coverage summary:
 - ✓ Month brief generator prior brief exclusion
 - ✓ Empty state count logic
 - ✓ Permission change detection for rebuild
+- ✓ Consent save confirmation copy
 
 Run with: npm run test:consent
 `)

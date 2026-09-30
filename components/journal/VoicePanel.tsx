@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PenLine } from 'lucide-react'
 import { BRAND } from '@/lib/brand'
+import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 
 // Mirrors VOICE_PRESETS keys in lib/ai/journal-insight-synthesis.ts.
 // Kept in sync by hand; if presets change there, update here.
@@ -47,6 +48,7 @@ function deriveInitialSelection(label: string | null, isCustom: boolean): Preset
  * without threading server props through it.
  */
 export function VoicePanel() {
+  const { hasOracleAccess } = useStelloquy()
   const [selection, setSelection] = useState<PresetKey | 'custom'>('grounded')
   const [customPrompt, setCustomPrompt] = useState('')
   const [hasAnyPatterns, setHasAnyPatterns] = useState(false)
@@ -59,6 +61,11 @@ export function VoicePanel() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!hasOracleAccess) {
+      setLoading(false)
+      return
+    }
+
     let cancelled = false
 
     async function load() {
@@ -95,7 +102,9 @@ export function VoicePanel() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [hasOracleAccess])
+
+  if (!hasOracleAccess) return null
 
   function buildPayload(): { voiceKey?: PresetKey; voicePrompt?: string; voiceLabel?: string } {
     if (selection === 'custom') {

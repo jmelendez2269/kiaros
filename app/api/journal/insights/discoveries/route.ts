@@ -5,6 +5,7 @@ import {
   ESTABLISHED_PATTERN_MIN_SAMPLE,
   type PatternDiscovery,
 } from '@/lib/journal/pattern-discoveries'
+import { requireOracleAccess } from '@/lib/commerce/access'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 
 type DiscoveryResponse =
@@ -22,6 +23,9 @@ export async function GET(): Promise<NextResponse<DiscoveryResponse>> {
         { status: 401 },
       )
     }
+
+    const denied = await requireOracleAccess(userId)
+    if (denied) return denied as NextResponse<DiscoveryResponse>
 
     const profileId = await getUserProfileId(userId)
     if (!profileId) {

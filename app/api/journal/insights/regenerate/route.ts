@@ -1,5 +1,6 @@
 import { NextResponse, after } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { requireOracleAccess } from '@/lib/commerce/access'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { getUserProfileId } from '@/lib/ai/usage'
 import {
@@ -17,6 +18,9 @@ export async function POST() {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const denied = await requireOracleAccess(userId)
+    if (denied) return denied
 
     const profileId = await getUserProfileId(userId)
     if (!profileId) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
