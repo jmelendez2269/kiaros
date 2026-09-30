@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflections/report-schema'
 import { latestClosed, periodLabel, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
-type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[] }
+import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number }
 type Passage = { text: string; sources: string[] }
 const inputClass = 'w-full rounded-lg border border-white/20 bg-transparent p-3 text-bone focus:outline-none focus:ring-2 focus:ring-amber-200/60'
 const buttonClass = 'rounded-lg border border-white/20 px-4 py-2 text-sm transition hover:bg-white/10 disabled:cursor-wait disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4'
@@ -76,6 +77,7 @@ export function ReflectionsHub({ initialKind = 'month' }: { initialKind?: Period
     } catch { setError('Your card could not be downloaded. Please try again.') }
     finally { URL.revokeObjectURL(svgUrl) }
   }
+  const showEmptyState = data?.consentV2Enabled && data?.includedEntriesCount === 0
   const content = report?.content
   return <div className="mx-auto max-w-5xl space-y-8 px-5 py-10 text-bone sm:px-8">
     <header className="max-w-2xl space-y-3">
@@ -84,6 +86,7 @@ export function ReflectionsHub({ initialKind = 'month' }: { initialKind?: Period
       <p className="leading-relaxed text-bone-muted">The moments, changes, and quiet discoveries that made this time yours. A gentle direction for what comes next.</p>
       <Link href="/year?view=review" className="inline-block text-sm underline underline-offset-4">Write your own quarterly reflection</Link>
     </header>
+    {showEmptyState && <ConsentEmptyState variant="reflections" />}
     <nav aria-label="Reflection periods" className="flex flex-wrap gap-2">
       {(['month', 'quarter', 'year'] as const).map(k => <button key={k} type="button" aria-pressed={kind === k} onClick={() => changeKind(k)}
         className={buttonClass + (kind === k ? ' bg-amber-100/10 text-amber-100' : '')}>{k === 'month' ? 'Monthly' : k === 'quarter' ? 'Quarterly' : 'Yearly Unwrapped'}</button>)}
@@ -116,8 +119,8 @@ export function ReflectionsHub({ initialKind = 'month' }: { initialKind?: Period
       {filtered.length > 0 && <label className="block space-y-2"><span className="text-sm">Reflection history</span><select className={inputClass} value={report?.id ?? ''} onChange={e => { setSelectedId(e.target.value); setShareOpen(false) }}>
         {filtered.map(r => <option key={r.id} value={r.id} className="bg-zinc-900">{periodLabel({ kind: r.kind, start: r.period_start, end: r.period_end, timezone: r.timezone })} · {r.status}</option>)}
       </select></label>}
-      {!report && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">Choose a completed period above. We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
-      {report && <article className="space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
+      {!showEmptyState && !report && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">Choose a completed period above. We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
+      {!showEmptyState && report && <article className="space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
         <header><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'Your lived year' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
           {report.analysis && <p className="mt-3 text-sm text-bone-muted">Based on {report.analysis.observedDays} recorded days across {report.analysis.totalDays} calendar days. Unrecorded days are unknown.</p>}
           {report.generated_at && <p className="mt-1 text-xs text-bone-muted">Prepared {new Date(report.generated_at).toLocaleDateString()} · Private</p>}

@@ -13,6 +13,7 @@ import { InsightsPollingShell } from '@/components/journal/InsightsPollingShell'
 import { DEFAULT_VOICE_KEY, VOICE_PRESETS } from '@/lib/ai/journal-insight-synthesis'
 import { BRAND } from '@/lib/brand'
 import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
+import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 
 export const metadata = {
   title: `Patterns — ${BRAND.product}`,
@@ -23,7 +24,14 @@ export default async function PatternsPage() {
   const supabase = await createServerSupabase()
   const consentV2Enabled = isJournalConsentV2Enabled()
 
-  const [patternsRes, entryCountRes, settingsRes, entriesRes, oracleCapturesRes] = await Promise.all([
+  let includedEntriesCountQuery = supabase
+    .from('journal_entries')
+    .select('id', { count: 'exact', head: true })
+  if (consentV2Enabled) {
+    includedEntriesCountQuery = includedEntriesCountQuery.eq('include_in_insights', true)
+  }
+
+  const [patternsRes, entryCountRes, includedCountRes, settingsRes, entriesRes, oracleCapturesRes] = await Promise.all([
     supabase
       .from('user_pattern_insights')
       .select(
@@ -32,6 +40,7 @@ export default async function PatternsPage() {
       .order('sample_size', { ascending: false })
       .order('last_seen', { ascending: false }),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
+    includedEntriesCountQuery,
     supabase
       .from('user_settings')
       .select('journal_insight_voice, journal_insight_voice_label')
@@ -52,8 +61,11 @@ export default async function PatternsPage() {
   const patterns = (patternsRes.data ?? []) as PatternRow[]
   const settingsRow = settingsRes.data
   const journalEntriesCount = entryCountRes.error ? 0 : entryCountRes.count ?? 0
+  const includedEntriesCount = includedCountRes.error ? 0 : includedCountRes.count ?? 0
   const recentEntries = (entriesRes.data ?? []) as RecentJournalEntry[]
   const oracleCaptures = (oracleCapturesRes.data ?? []) as OracleCaptureRow[]
+  
+  const showEmptyState = consentV2Enabled && includedEntriesCount === 0
 
   const evidenceEntryIds = Array.from(
     new Set(patterns.flatMap((p) => parseEvidence(p.evidence).map((e) => e.entry_id))),
@@ -108,12 +120,16 @@ export default async function PatternsPage() {
             captures: oracleCaptures.length,
           }}
           patterns={
-            <PatternInsights
-              patterns={patterns}
-              bodyByEntryId={bodyByEntryId}
-              journalEntriesCount={journalEntriesCount}
-              voiceLabel={savedVoiceLabel}
-            />
+            showEmptyState ? (
+              <ConsentEmptyState variant="patterns" />
+            ) : (
+              <PatternInsights
+                patterns={patterns}
+                bodyByEntryId={bodyByEntryId}
+                journalEntriesCount={journalEntriesCount}
+                voiceLabel={savedVoiceLabel}
+              />
+            )
           }
           map={
             <section className="space-y-4">
