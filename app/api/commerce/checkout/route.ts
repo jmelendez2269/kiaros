@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Choose a valid product first." }, { status: 400 });
   }
   if (checkoutContext && !checkoutContext.success) {
-    return NextResponse.json({ error: "Checkout attribution is invalid." }, { status: 400 });
+    console.warn("[checkout] Invalid attribution, continuing without:", checkoutContext.error);
   }
 
   const supabase = createAdminSupabase();

@@ -91,10 +91,11 @@ export function validateCheckoutFunnelContext(
     return { success: false, error: `Unexpected checkout attribution field: ${unexpected}.` };
   }
 
+  const { content: rawContent, ...rest } = input;
   const validation = validateFunnelEvent({
     event_id: "checkout_context",
     event_name: "checkout_started",
-    ...input,
+    ...rest,
   });
   if (!validation.success) return validation;
   if (!validation.event.anonymous_id || !validation.event.session_id) {
@@ -112,7 +113,7 @@ export function validateCheckoutFunnelContext(
       source: validation.event.source,
       medium: validation.event.medium,
       campaign: validation.event.campaign,
-      content: validateContent(input.content),
+      content: validateContent(rawContent),
       referrer_host: validation.event.referrer_host,
       entry_path: validation.event.entry_path,
       experiment_key: validation.event.experiment_key,
