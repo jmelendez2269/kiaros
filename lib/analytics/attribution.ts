@@ -11,6 +11,22 @@ export interface FunnelAttribution {
 
 export const FUNNEL_SESSION_MAX_AGE_MS = 30 * 60 * 1000;
 
+const SAFE_TOKEN_PATTERN = /^[a-z0-9._:+~-]*$/i;
+
+function normalizeSourceOrMedium(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim().toLowerCase();
+  const collapsed = trimmed.replace(/\s+/g, "_");
+  const cleaned = collapsed
+    .split("")
+    .filter((char, index) => {
+      if (index === 0) return /[a-z0-9]/i.test(char);
+      return SAFE_TOKEN_PATTERN.test(char);
+    })
+    .join("");
+  return cleaned || null;
+}
+
 function boundedQueryValue(url: URL, key: string, maximumLength: number): string | null {
   const value = url.searchParams.get(key)?.trim() ?? "";
   if (!value || value.length > maximumLength) return null;
@@ -38,8 +54,8 @@ export function parseFunnelAttribution(
     : null;
 
   return {
-    source: boundedQueryValue(url, "utm_source", 80)?.toLowerCase() ?? null,
-    medium: boundedQueryValue(url, "utm_medium", 80)?.toLowerCase() ?? null,
+    source: normalizeSourceOrMedium(boundedQueryValue(url, "utm_source", 80)),
+    medium: normalizeSourceOrMedium(boundedQueryValue(url, "utm_medium", 80)),
     campaign: boundedQueryValue(url, "utm_campaign", 120),
     content: boundedQueryValue(url, "utm_content", 200),
     referrer_host: safeReferrerHost(referrer),

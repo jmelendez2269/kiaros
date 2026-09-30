@@ -60,16 +60,11 @@ export default async function PatternsPage() {
   )
   const bodyByEntryId = new Map<string, string>()
   if (evidenceEntryIds.length > 0) {
-    let entryBodiesQuery = supabase
+    const { data: entryBodies } = await supabase
       .from('journal_entries')
       .select('id, body')
       .in('id', evidenceEntryIds)
-
-    if (consentV2Enabled) {
-      entryBodiesQuery = entryBodiesQuery.eq('include_in_insights', true)
-    }
-
-    const { data: entryBodies } = await entryBodiesQuery
+      .eq('include_in_insights', true)
     for (const row of entryBodies ?? []) {
       const id = row.id as unknown as string | null
       const body = (row.body as unknown as string | null) ?? null

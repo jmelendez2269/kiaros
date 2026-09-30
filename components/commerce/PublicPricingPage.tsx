@@ -90,7 +90,7 @@ const DEMO_LANES = [
     kicker: "Primary lane",
     percent: "60%",
     value: "Creative Projects",
-    body: "This is the workstream your blueprint asks you to protect first. In this window, Saturn's structural backing and Jupiter's expansive reach are active simultaneously — a combination that appears rarely. What you build here is built to last and built to grow.",
+    body: "This is the workstream the blueprint suggests protecting first. Saturn's structure and Jupiter's reach overlap in this window, which doesn't happen often. It's a good season to build something you want to keep.",
     tone: "border-leather-500/35 bg-gradient-to-br from-leather-500/12 to-stone-900",
     Icon: Orbit,
   },
@@ -257,9 +257,9 @@ export function PublicPricingPage({
                 useful to keep to myself.
               </p>
               <p className="mt-4 max-w-3xl text-base leading-7 text-bone-muted">
-                Whether you approach astrology as a meaningful system or simply as a structured
-                framework for reflection, the outcome is the same: a plan that&apos;s actually
-                built around you — not your sun sign. Around you.
+                You might read astrology as a meaningful system, or simply as a structure for
+                reflection. Either way, your plan is built from your whole chart, not just your
+                sun sign.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
@@ -283,7 +283,7 @@ export function PublicPricingPage({
                 <p className="mt-2 text-lg font-semibold text-bone">A full natal chart. Not a horoscope.</p>
                 <p className="mt-3 text-sm leading-7 text-bone-muted">
                   Your sun sign is one placement among ten. Kairos uses all of them — synthesized
-                  with real ephemeris data into a year-long blueprint that is specifically yours.
+                  with real ephemeris data into a year-long blueprint built from your chart.
                 </p>
               </div>
               <div className="shell-panel-soft p-5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
@@ -291,8 +291,8 @@ export function PublicPricingPage({
                 <p className="mt-2 text-lg font-semibold text-bone">Real data. Real cycles.</p>
                 <p className="mt-3 text-sm leading-7 text-bone-muted">
                   Saturn returns at approximately 29 years. Jupiter orbits every 12. The moon
-                  cycles every 29.5 days. These aren&apos;t metaphors — they&apos;re measurable,
-                  and Kairos maps them to your year.
+                  cycles every 29.5 days. Those cycles are measurable, and Kairos maps them to your
+                  year.
                 </p>
               </div>
             </div>
@@ -308,16 +308,16 @@ export function PublicPricingPage({
             </h2>
             <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
               <p>
-                The planets have been marking time longer than we have. Their positions at the
-                moment of your birth set a pattern of cycles that continues to unfold across your
-                life. Those cycles are different for every person, which means the best time for
-                expansion, for rest, for visibility, for withdrawal — all of it varies by who you
-                are and when you were born.
+                The planets have been marking time longer than we have. Astrology reads the sky at
+                your birth as a pattern of cycles that keeps unfolding across your life, and that
+                pattern is different for everyone. Kairos uses it to ask which seasons might suit
+                expansion or rest, visibility or withdrawal. It&apos;s a pattern to reflect with, not a
+                forecast.
               </p>
               <p>
-                In an era where everyone is telling you to push constantly, Kairos exists to offer
-                a different read: one that distinguishes the seasons in your life, honors the ones
-                that ask for rest, and names the ones that are genuinely yours for movement.
+                So much of planning tells you to push all the time. Kairos offers a different read.
+                It helps you tell the seasons of your life apart, make room for the ones that call
+                for rest, and notice the ones that feel right for movement.
               </p>
             </div>
           </article>
@@ -334,9 +334,8 @@ export function PublicPricingPage({
                 none of them knew anything about me specifically.
               </p>
               <p>
-                Kairos knows your chart, your actual transits, your goals in your own words, and
-                the season of life you&apos;re in. The blueprint it generates is the thing I
-                wished existed. I built it and then realized I had to share it.
+                Kairos holds your chart, your transits, your goals in your own words, and the
+                season of life you&apos;re in. The blueprint it makes is the planner I wished I&apos;d had.
               </p>
             </div>
           </article>
@@ -350,9 +349,8 @@ export function PublicPricingPage({
           </h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
             Most planners ask for your goals and ignore your timing. Most astrology apps read your
-            chart and ignore your goals. Kairos feeds both to the same synthesis layer, so the
-            output reflects the intersection of who you actually are and what the year is actually
-            offering.
+            chart and ignore your goals. Kairos feeds both to the same synthesis layer, so your
+            plan reads your chart and your goals together.
           </p>
 
           <div className="mt-8 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -367,21 +365,21 @@ export function PublicPricingPage({
               {
                 step: "02",
                 title: "Your year → live transits",
-                body: "Kairos calculates the actual planetary positions for every day of your year. Where is Saturn right now relative to your natal Venus? When does Jupiter cross your Moon? These transit windows become the timing architecture of your blueprint.",
+                body: "Kairos calculates the planetary positions for every day of your year. Where is Saturn right now relative to your natal Venus? When does Jupiter cross your Moon? These transit windows shape the timing of your blueprint.",
                 accent: "text-plum-300",
                 border: "border-plum-400/25",
               },
               {
                 step: "03",
                 title: "Your answers → layered intent",
-                body: "Your onboarding answers — your goals in your own words, what you want to release, what you're studying, how your energy cycles — aren't decorative. They become the second load-bearing layer the engine reads alongside your chart.",
+                body: "Your onboarding answers — your goals in your own words, what you want to release, what you're studying, how your energy cycles — matter as much as your chart. The engine reads them side by side.",
                 accent: "text-moss-300",
                 border: "border-moss-500/25",
               },
               {
                 step: "04",
                 title: "Synthesis → your blueprint",
-                body: "An AI reads your chart and your answers together — not separately. The result is a structured blueprint: 52 weeks, 12 months, 4 quarters, named activation windows, named rest periods, and a year theme that is about you specifically, not your sign.",
+                body: "An AI reads your chart and your answers together. The result is a structured blueprint: 52 weeks, 12 months, 4 quarters, named activation windows, named rest periods, and a year theme drawn from your chart and your own words.",
                 accent: "text-ember-300",
                 border: "border-ember-400/25",
               },
@@ -416,11 +414,11 @@ export function PublicPricingPage({
               <p className="shell-eyebrow mb-3">What the engine understands from those answers</p>
               <ul className="space-y-2">
                 {[
-                  "Which life areas your energy is genuinely behind this year",
-                  "The gap between what you want and what your chart is offering — and where they align",
+                  "Which life areas you have the most energy for this year",
+                  "The gap between what you want and what your chart suggests, and where they line up",
                   "How to pace 52 weeks around your real energy rhythm, not a generic Monday–Sunday default",
                   "What kind of language to use in your weekly intentions — your voice, your priorities",
-                  "When to schedule activation windows versus when your chart is asking for rest",
+                  "When to plan activation windows, and when to leave room for rest",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm leading-7 text-bone-muted">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-moss-300/60" />
@@ -438,7 +436,7 @@ export function PublicPricingPage({
             <div className="max-w-3xl">
               <p className="shell-kicker mb-3">Full demo planner</p>
               <h2 className="shell-section-title">
-                This is what your actual dashboard looks like.
+                This is what your dashboard looks like.
               </h2>
               <p className="mt-4 text-sm leading-7 text-bone-muted">
                 Every element below is pulled from a fictional person&apos;s real natal chart and
@@ -486,7 +484,7 @@ export function PublicPricingPage({
                 <p className="mt-3 text-base leading-7 text-bone-muted">
                   The Year of Deliberate Expression — Saturn's trine to your Midheaven opens the
                   year with structural clarity, and Jupiter's conjunction to your natal Moon brings
-                  an expansive second quarter unlike anything in the last 12 years.
+                  an expansive second quarter, a transit that comes around about every 12 years.
                 </p>
               </div>
 
@@ -625,8 +623,8 @@ export function PublicPricingPage({
             <div className="space-y-5 border-t border-border/50 px-6 pb-7 pt-5">
               <p className="shell-prose max-w-3xl">
                 Jupiter&apos;s conjunction to your natal Moon (Cancer) makes this the most
-                emotionally generative quarter of 2026. What you begin here has room to grow in
-                ways that slower seasons simply cannot offer. The creative work of Q1 now finds
+                emotionally generative quarter of 2026. What you begin here may have more room to
+                grow than it would in a slower season. The creative work of Q1 now finds
                 its audience. Relationships deepen or clarify. The risk is expansion without
                 ground — Saturn&apos;s trine to your Midheaven is still active and provides the
                 structural counterweight.
@@ -745,7 +743,7 @@ export function PublicPricingPage({
             <div>
               <p className="shell-kicker mb-3">The journal</p>
               <h2 className="shell-section-title">
-                You never have to think of a prompt. The app already knows what to ask.
+                You never have to come up with a prompt. Each one is written for the moment you&apos;re in.
               </h2>
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
@@ -795,7 +793,7 @@ export function PublicPricingPage({
             <div>
               <p className="shell-kicker mb-3">The Oracle</p>
               <h2 className="shell-section-title">
-                Not a chatbot. A conversation grounded in your specific data.
+                A conversation grounded in your chart, your goals, and your journal.
               </h2>
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
@@ -835,8 +833,8 @@ export function PublicPricingPage({
                   ))}
                 </ul>
                 <p>
-                  The result is a conversation that doesn&apos;t need you to explain your
-                  situation from scratch. It already knows. You just ask.
+                  So you don&apos;t have to explain your situation from scratch each time. You can
+                  just ask.
                 </p>
                 <Link
                   href="/stelloquy"
@@ -930,7 +928,7 @@ export function PublicPricingPage({
               {
                 eyebrow: "Your own words, reflected back with real timing",
                 title: "Quarterly Reviews",
-                body: "At the end of each quarter, tell Kairos your wins, challenges, and pivots. It writes back a short reflection grounded in what you actually said and what your sky actually did.",
+                body: "At the end of each quarter, tell Kairos your wins, challenges, and pivots. It writes back a short reflection grounded in what you said and what the sky did that quarter.",
               },
               {
                 eyebrow: "A short read for where you are, each month",
@@ -1023,7 +1021,7 @@ export function PublicPricingPage({
               </h2>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-bone-muted">
                 Monthly access includes your current Blueprint week plus the next four weeks.
-                Annual access unlocks the full canonical Blueprint. Stelloquy is included only
+                Annual access unlocks the full Blueprint. Stelloquy is included only
                 with Planner + Oracle, whichever direct billing cadence you choose.
               </p>
             </div>
@@ -1090,7 +1088,7 @@ export function PublicPricingPage({
                       {formatUsd(tier.annualPriceCents)}
                     </p>
                     <p className="text-sm font-medium text-leather-200">
-                      Full canonical Blueprint · Save {formatUsd(annualSavings)} per year
+                      Full Blueprint · Save {formatUsd(annualSavings)} per year
                     </p>
                     {/* COPY: voice-approved 2026-09-30 */}
                     <p className="mt-2 text-xs leading-5 text-leather-200/80">
@@ -1169,8 +1167,7 @@ export function PublicPricingPage({
               {
                 step: "3",
                 title: "Your blueprint generates",
-                // COPY: time-bound, refresh Jan 1 with the full-year line
-                body: "Kairos runs your natal chart and calculates your transits for the rest of 2026, then for 2027 when it opens Dec 1. Monthly shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full canonical Blueprint.",
+                body: "Kairos runs your natal chart and calculates your transits for the rest of 2026, then for 2027 when it opens Dec 1. Monthly shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full Blueprint.",
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex gap-4">
@@ -1212,7 +1209,7 @@ export function PublicPricingPage({
               <div className="mt-5 space-y-4 text-sm leading-7 text-bone-muted">
                 <p>
                   Monthly keeps the initial commitment smaller and shows the current Blueprint
-                  week plus the next four weeks. Annual unlocks that same canonical Blueprint for
+                  week plus the next four weeks. Annual unlocks that same full Blueprint for
                   the full year and remains the best value.
                 </p>
                 <p>
@@ -1230,7 +1227,7 @@ export function PublicPricingPage({
               <ul className="mt-5 space-y-2 text-sm leading-7 text-bone-muted">
                 {[
                   "Monthly: current Blueprint week plus the next four weeks",
-                  "Annual: full canonical Blueprint and best value",
+                  "Annual: full Blueprint and best value",
                   "Immediate, secure checkout through Kairos",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2">

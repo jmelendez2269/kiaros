@@ -164,7 +164,7 @@ export async function synthesizeInsight(opts: {
 }): Promise<string> {
   const { userProfileId, pattern, voicePrompt } = opts
 
-  if (isJournalConsentV2Enabled() && pattern.entries.length === 0) {
+  if (pattern.entries.length === 0) {
     throw new Error('No consented journal evidence is available for synthesis')
   }
 
@@ -264,16 +264,11 @@ async function loadEntriesForPattern(
 
   if (entryIds.length === 0) return []
 
-  let entriesQuery = admin
+  const { data: entries } = await admin
     .from('journal_entries')
     .select('id, entry_date, title, body')
     .in('id', entryIds)
-
-  if (isJournalConsentV2Enabled()) {
-    entriesQuery = entriesQuery.eq('include_in_insights', true)
-  }
-
-  const { data: entries } = await entriesQuery
+    .eq('include_in_insights', true)
 
   // Re-sort to match entryIds order (most recent first).
   const byId = new Map((entries ?? []).map((e) => [e.id as unknown as string, e]))
@@ -322,7 +317,7 @@ export async function synthesizePreview(opts: {
     ENTRIES_PER_SYNTHESIS,
   )
 
-  if (isJournalConsentV2Enabled() && entries.length === 0) return null
+  if (entries.length === 0) return null
 
   const text = await synthesizeInsight({
     userProfileId,
@@ -396,7 +391,7 @@ export async function regenerateAllForUser(opts: {
           patternKey,
           ENTRIES_PER_SYNTHESIS,
         )
-        if (isJournalConsentV2Enabled() && entries.length === 0) {
+        if (entries.length === 0) {
           await admin
             .from('user_pattern_insights')
             .delete()
@@ -489,7 +484,7 @@ export async function resyncPatternSynthesisForTargets(opts: {
           ENTRIES_PER_SYNTHESIS,
         )
 
-        if (isJournalConsentV2Enabled() && entries.length === 0) {
+        if (entries.length === 0) {
           await admin
             .from('user_pattern_insights')
             .delete()
