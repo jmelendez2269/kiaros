@@ -41,13 +41,43 @@ function testFormMarkup(): void {
   assert.match(formSource, /method="post"/);
   assert.match(formSource, /name="email_address"/);
   assert.doesNotMatch(formSource, /fetch\(/);
-  assert.match(formSource, /Subscribe to Field Notes/);
+  assert.match(formSource, />\s*Subscribe\s*</);
+}
+
+function testCopy(): void {
+  const footerSource = readFileSync(
+    join(root, "components/marketing/FieldNotesFooterSignup.tsx"),
+    "utf8",
+  );
+  assert.match(footerSource, /Field Notes, Jack&apos;s email newsletter\./);
+
+  const pageSource = readFileSync(
+    join(root, "components/marketing/FieldNotesPageContent.tsx"),
+    "utf8",
+  );
+  assert.match(
+    pageSource,
+    /Jack&apos;s email newsletter, with essays on timing and rest and notes from building/,
+  );
+  assert.match(pageSource, /Check your inbox to confirm\./);
+  assert.match(pageSource, /Read a recent one/);
+  assert.doesNotMatch(pageSource, /Want a look first/);
+  assert.doesNotMatch(pageSource, /in his own words/i);
+  assert.doesNotMatch(pageSource, /FieldNotesFooterSignup/);
+
+  const metaSource = readFileSync(join(root, "app/field-notes/page.tsx"), "utf8");
+  assert.match(
+    metaSource,
+    /Field Notes is Jack's email newsletter, with essays on timing and rest and notes from building Kairos\./,
+  );
+  assert.match(metaSource, /Field Notes: Jack's email newsletter \| Kairos/);
 }
 
 function run(): void {
   testFormConfig();
   testPublicRoutes();
   testFormMarkup();
+  testCopy();
   console.log("check-field-notes-signup: passed");
 }
 

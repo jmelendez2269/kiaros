@@ -18,8 +18,7 @@ export function FieldNotesFooterSignup({ variant }: Props) {
             id="field-notes-footer-heading"
             className="max-w-md text-sm leading-6 text-almanac-ink-dim"
           >
-            Field Notes is Jack&apos;s email newsletter. Essays and product notes, sent as
-            they&apos;re written.
+            Field Notes, Jack&apos;s email newsletter.
           </p>
           <div className="w-full md:max-w-md">
             <FieldNotesKitSubscribeForm layout="inline" variant="almanac" />
@@ -39,8 +38,7 @@ export function FieldNotesFooterSignup({ variant }: Props) {
           id="field-notes-footer-heading"
           className="max-w-md text-sm leading-6 text-bone-muted"
         >
-          Field Notes is Jack&apos;s email newsletter. Essays and product notes, sent as
-          they&apos;re written.
+          Field Notes, Jack&apos;s email newsletter.
         </p>
         <div className="w-full md:max-w-md">
           <FieldNotesKitSubscribeForm layout="inline" variant="shell" />

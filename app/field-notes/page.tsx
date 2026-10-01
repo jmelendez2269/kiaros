@@ -6,7 +6,7 @@ import { fieldNotesUtmFromSearchParams } from "@/lib/marketing/field-notes-utm";
 export const metadata: Metadata = {
   title: "Field Notes: Jack's email newsletter | Kairos",
   description:
-    "Field Notes is Jack's email newsletter. Essays and product notes on timing, rest, and building Kairos in public, sent as they're written.",
+    "Field Notes is Jack's email newsletter, with essays on timing and rest and notes from building Kairos.",
   alternates: {
     canonical: "https://www.kairosplanner.xyz/field-notes",
   },
