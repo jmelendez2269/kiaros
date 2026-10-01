@@ -5,6 +5,7 @@ import { Divider } from "@/components/almanac/Divider";
 import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
 import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
+import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
 import { BRAND } from "@/lib/brand";
 
 interface Props {
@@ -561,6 +562,7 @@ export function KairosHome({ isSignedIn }: Props) {
       <OracleDeepDive />
       <Manifesto />
       <PricingTeaser isSignedIn={isSignedIn} />
+      <FieldNotesFooterSignup variant="almanac" />
       <MarketingFooter />
     </div>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LegalDocument, type LegalNavigationItem } from "@/components/legal/LegalDocument";
+import { ShellSiteFooter } from "@/components/marketing/ShellSiteFooter";
 
 const PRIVACY_EMAIL = "privacy@kairosplanner.xyz";
 const SUPPORT_EMAIL = "support@kairosplanner.xyz";
@@ -27,6 +28,7 @@ const navigation = [
 
 export default function PrivacyPage() {
   return (
+    <>
     <LegalDocument
       effectiveDate={EFFECTIVE_DATE}
       eyebrow="Privacy"
@@ -176,5 +178,7 @@ export default function PrivacyPage() {
         </p>
       </section>
     </LegalDocument>
+    <ShellSiteFooter />
+    </>
   );
 }
