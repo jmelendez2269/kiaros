@@ -119,6 +119,7 @@ export default async function BlueprintPage() {
         blueprint={loaded.blueprint}
         planYear={loaded.planYear}
         accessEndsAt={accessWindow?.endsAt ?? null}
+        fullAccessThrough={accessWindow?.fullAccessThrough ?? null}
         accessState={accessWindow?.state ?? null}
         capability={loaded.access}
       />

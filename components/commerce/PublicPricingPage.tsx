@@ -1105,6 +1105,13 @@ export function PublicPricingPage({
                     <p className="text-xs leading-5 text-leather-200/80">
                       Renews yearly on your purchase date. Cancel anytime.
                     </p>
+                    {/* COPY: voice-approved 2026-09-30, swap (b) on Dec 1, pull (a) on Jan 1 */}
+                    <p className="text-xs leading-5 text-leather-200/80">
+                      Join now and you get the rest of 2026, plus all of 2027.
+                    </p>
+                    <p className="text-xs leading-5 text-leather-200/80">
+                      Your 2027 Blueprint opens Dec 1, and we'll invite you to generate it then.
+                    </p>
                   </div>
                 </div>
 
@@ -1168,7 +1175,7 @@ export function PublicPricingPage({
               {
                 step: "3",
                 title: "Your blueprint generates",
-                body: "Kairos runs your natal chart and calculates your 2026 transits. Monthly shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full Blueprint.",
+                body: "Kairos runs your natal chart and calculates your transits for the rest of 2026, then for 2027 when it opens Dec 1. Monthly shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full Blueprint.",
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex gap-4">

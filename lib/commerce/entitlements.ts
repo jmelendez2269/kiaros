@@ -73,6 +73,7 @@ export function buildAnnualEntitlementWindow(startAt: Date | string = new Date()
 export function resolveEntitlementAccessState(
   entitlement: Pick<ProductEntitlementRow, "status" | "starts_at" | "ends_at"> & {
     access_plan?: string | null;
+    isSubscription?: boolean;
   },
   asOf: Date | string = new Date()
 ): EntitlementAccessState {
@@ -83,13 +84,14 @@ export function resolveEntitlementAccessState(
       endsAt: entitlement.ends_at,
       startsAt: entitlement.starts_at,
       status: entitlement.status,
+      isSubscription: entitlement.isSubscription,
     },
     asOf,
   );
 }
 
 export function resolveEntitlement(
-  entitlement: ProductEntitlementRecord,
+  entitlement: ProductEntitlementRecord & { isSubscription?: boolean },
   asOf: Date | string = new Date(),
 ): ResolvedEntitlement {
   const accessPlan = getAccessPlan(entitlement.access_plan);
@@ -103,6 +105,7 @@ export function resolveEntitlement(
         starts_at: entitlement.starts_at,
         ends_at: entitlement.ends_at,
         access_plan: accessPlan,
+        isSubscription: entitlement.isSubscription,
       },
       asOf,
     ),
@@ -115,32 +118,36 @@ export function resolveUserAccess(
   samplerCredits?: number,
   orderSubscriptionMap: Map<string, boolean> = new Map(),
 ): UserAccessSnapshot {
-  const resolved = entitlements
+  // Compute isSubscription once per entitlement
+  const entitlementsWithSubscriptionFlag = entitlements.map((entitlement) => {
+    const isSubscription =
+      entitlement.source === "stripe" && entitlement.source_order_id && orderSubscriptionMap
+        ? orderSubscriptionMap.get(entitlement.source_order_id) ?? false
+        : false;
+    return { ...entitlement, isSubscription };
+  });
+
+  const resolved = entitlementsWithSubscriptionFlag
     .map((entitlement) => resolveEntitlement(entitlement, asOf))
     .sort((left, right) => right.ends_at.localeCompare(left.ends_at));
 
-  const activeEntitlements = resolved.filter((entitlement) => entitlement.accessState === "active");
+  const activeEntitlements = resolved
+    .filter((entitlement) => entitlement.accessState === "active")
+    .sort((left, right) => right.ends_at.localeCompare(left.ends_at));
+
   const capabilities = resolveAccessCapabilities({
     asOf,
     authenticated: true,
-    entitlements: entitlements.map((entitlement) => {
-      // Check if this entitlement is linked to a subscription (only for Stripe orders)
-      const isSubscription =
-        entitlement.source === "stripe" && entitlement.source_order_id && orderSubscriptionMap
-          ? orderSubscriptionMap.get(entitlement.source_order_id) ?? false
-          : false;
-      
-      return {
-        accessPlan: getAccessPlan(entitlement.access_plan),
-        endsAt: entitlement.ends_at,
-        oracleEnabled: entitlement.oracle_enabled,
-        plannerYear: entitlement.planner_year,
-        source: entitlement.source,
-        startsAt: entitlement.starts_at,
-        status: entitlement.status,
-        isSubscription,
-      };
-    }),
+    entitlements: entitlementsWithSubscriptionFlag.map((entitlement) => ({
+      accessPlan: getAccessPlan(entitlement.access_plan),
+      endsAt: entitlement.ends_at,
+      oracleEnabled: entitlement.oracle_enabled,
+      plannerYear: entitlement.planner_year,
+      source: entitlement.source,
+      startsAt: entitlement.starts_at,
+      status: entitlement.status,
+      isSubscription: entitlement.isSubscription,
+    })),
     samplerCredits,
     oneTimeAnnualRollsForward: getOneTimeAnnualRollsForward(),
   });

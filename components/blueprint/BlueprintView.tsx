@@ -15,6 +15,8 @@ interface BlueprintViewProps {
   planYear: number
   /** ISO date the user's purchased window runs through; null when never entitled. */
   accessEndsAt?: string | null
+  /** ISO date full access extends through (may be later than accessEndsAt for eligible annual subs); null when never entitled. */
+  fullAccessThrough?: string | null
   accessState?: 'active' | 'read_only' | 'expired' | 'revoked' | null
   /** ACCESS-02 server-enforced scope. Null/'full' renders unchanged. */
   capability?: BlueprintYearCapability | null
@@ -43,6 +45,7 @@ export function BlueprintView({
   blueprint,
   planYear,
   accessEndsAt = null,
+  fullAccessThrough = null,
   accessState = null,
   capability = null,
 }: BlueprintViewProps) {
@@ -77,7 +80,7 @@ export function BlueprintView({
               {accessState === 'active' ? (
                 <>
                   Your planner year runs through{' '}
-                  <span className="text-bone">{longDate(accessEndsAt)}</span>.
+                  <span className="text-bone">{longDate(fullAccessThrough && fullAccessThrough > accessEndsAt ? fullAccessThrough : accessEndsAt)}</span>.
                 </>
               ) : (
                 <>
