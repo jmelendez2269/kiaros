@@ -62,7 +62,7 @@ export function FieldNotesKitSubscribeForm({
           />
         </label>
         <button type="submit" className={`${buttonClass} w-full shrink-0 sm:w-auto`}>
-          Join Field Notes
+          Subscribe to Field Notes
         </button>
       </div>
     </form>

@@ -90,16 +90,16 @@ export function FieldNotesPageContent({ joined, initialUtm }: Props) {
 
         <div className="relative mx-auto max-w-2xl px-5 py-14 md:px-8 md:py-20">
           <h1 className="font-almanac-display text-4xl tracking-[0.06em] text-almanac-ink md:text-5xl">
-            Field Notes
+            Field Notes, an email newsletter from Jack
           </h1>
           <p className="mt-6 text-base leading-7 text-almanac-ink-dim">
-            Field Notes is where Jack writes in his own words. Some are essays about timing, rest,
-            and paying attention to the seasons of a life. Some are plain notes on building Kairos and
-            the rest of Project Parallax in public.
+            Field Notes is Jack&apos;s email newsletter, written in his own words. Some issues are
+            essays about timing, rest, and paying attention to the seasons of a life. Some are plain
+            notes on building Kairos and the rest of Project Parallax in public.
           </p>
           <p className="mt-4 text-base leading-7 text-almanac-ink-dim">
-            They arrive as they&apos;re written, with no schedule to keep up with. You can
-            unsubscribe anytime.
+            Each one lands in your inbox when it&apos;s written, with no schedule to keep up with.
+            You can unsubscribe anytime.
           </p>
 
           {joined ? (
@@ -107,7 +107,8 @@ export function FieldNotesPageContent({ joined, initialUtm }: Props) {
               className="mt-8 rounded-2xl border border-almanac-line-hi bg-[rgba(112,75,210,0.12)] px-5 py-4 text-sm leading-7 text-almanac-starlight"
               role="status"
             >
-              Check your inbox to confirm, and Field Notes will arrive as they&apos;re written.
+              Check your inbox to confirm, and Field Notes will arrive by email as they&apos;re
+              written.
             </p>
           ) : null}
 
@@ -127,7 +128,7 @@ export function FieldNotesPageContent({ joined, initialUtm }: Props) {
               href="https://projectparallax.xyz/blog"
               className="text-almanac-copper-hi underline decoration-almanac-line-hi underline-offset-4 transition-colors hover:text-almanac-starlight"
             >
-              Read one on the blog
+              Read a recent one
             </a>
             .
           </p>

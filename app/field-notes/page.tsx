@@ -4,9 +4,9 @@ import { FieldNotesPageContent } from "@/components/marketing/FieldNotesPageCont
 import { fieldNotesUtmFromSearchParams } from "@/lib/marketing/field-notes-utm";
 
 export const metadata: Metadata = {
-  title: "Field Notes from Jack | Kairos",
+  title: "Field Notes: Jack's email newsletter | Kairos",
   description:
-    "Essays and product notes from Jack on timing, rest, and building Kairos in public, sent as they're written.",
+    "Field Notes is Jack's email newsletter. Essays and product notes on timing, rest, and building Kairos in public, sent as they're written.",
   alternates: {
     canonical: "https://www.kairosplanner.xyz/field-notes",
   },

@@ -41,6 +41,7 @@ function testFormMarkup(): void {
   assert.match(formSource, /method="post"/);
   assert.match(formSource, /name="email_address"/);
   assert.doesNotMatch(formSource, /fetch\(/);
+  assert.match(formSource, /Subscribe to Field Notes/);
 }
 
 function run(): void {
