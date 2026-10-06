@@ -19,6 +19,7 @@
     "test:reflections:integration": "node scripts/run-reflections-integration.mjs",
     "test:reflections:ai": "node scripts/check-reflections-ai.mjs",
     "test:consent": "npx tsx scripts/test-journal-consent-v2.mts",
+    "test:oracle-journal-recall": "npx tsx scripts/test-oracle-journal-recall.mts",
     "test:field-notes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-field-notes-signup.mts",
     "test:e2e": "playwright test"
   },
