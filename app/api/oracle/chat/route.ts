@@ -16,6 +16,7 @@ import {
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
 import { recallJournalMemories } from '@/lib/journal/memory-retrieval'
+import { resolveOracleJournalEntriesForPrompt } from '@/lib/journal/oracle-journal-recall'
 import { isJournalConsentV2Enabled, isRelevanceMemoryEnabled } from '@/lib/feature-flags'
 import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
 
@@ -70,7 +71,16 @@ export async function POST(req: Request) {
     const today = new Date().toISOString().slice(0, 10)
     const currentYear = new Date().getFullYear()
     const latestQuestion = [...messages].reverse().find(m => m.role === 'user')?.parts.filter(p => p.type === 'text').map(p => p.text).join(' ') ?? ''
-    const recalledMemories = isRelevanceMemoryEnabled() ? await recallJournalMemories(profileId, latestQuestion) : null
+    const relevanceMemoryEnabled = isRelevanceMemoryEnabled()
+    let recalledMemories: Awaited<ReturnType<typeof recallJournalMemories>> | null = null
+    if (relevanceMemoryEnabled) {
+      try {
+        recalledMemories = await recallJournalMemories(profileId, latestQuestion)
+      } catch (recallError) {
+        console.error('[oracle-chat] Journal relevance recall failed; using recent allowed entries:', recallError)
+        recalledMemories = null
+      }
+    }
     const journalRecallColumn = isJournalConsentV2Enabled()
       ? 'include_in_stelloquy'
       : 'oracle_memory'
@@ -178,6 +188,12 @@ export async function POST(req: Request) {
       )
     }
 
+    const { entries: oracleJournalEntries, relevanceSources } = resolveOracleJournalEntriesForPrompt(
+      relevanceMemoryEnabled,
+      recalledMemories,
+      journalEntriesRes.data,
+    )
+
     const { cached, dynamic } = buildOracleSystemPromptSegments({
       profile: profileRes.data,
       ephemeris: (ephemerisRes.data?.data as unknown as YearEphemeris) ?? null,
@@ -217,10 +233,7 @@ export async function POST(req: Request) {
         Tables<'daily_logs'>,
         'log_date' | 'energy_level' | 'mood_tag' | 'notes'
       >[],
-      journalEntries: (recalledMemories ?? journalEntriesRes.data ?? []) as Pick<
-        Tables<'journal_entries'>,
-        'entry_date' | 'title' | 'body' | 'mood_tag' | 'is_ritual'
-      >[],
+      journalEntries: oracleJournalEntries,
       oracleCaptures: (oracleCapturesRes.data ?? []) as Pick<
         Tables<'oracle_captures'>,
         'captured_text' | 'source_role' | 'include_in_insights' | 'include_in_planner' | 'created_at'
@@ -299,7 +312,13 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse({
       originalMessages: messages,
-      headers: recalledMemories ? { 'X-Kairos-Memory-Sources': encodeURIComponent(JSON.stringify(recalledMemories.map(e => ({ id: e.id, date: e.entry_date, title: e.title })))) } : undefined,
+      headers: relevanceSources
+        ? {
+            'X-Kairos-Memory-Sources': encodeURIComponent(
+              JSON.stringify(relevanceSources.map((e) => ({ id: e.id, date: e.entry_date, title: e.title }))),
+            ),
+          }
+        : undefined,
       onError: (error) => {
         const message = getErrorMessage(error)
         console.error('[oracle-chat] Stream error:', error)
