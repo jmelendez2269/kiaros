@@ -40,11 +40,13 @@ export function JournalMemoryModePrompt({ hasOracleAccess, onComplete }: Props) 
       })
       if (!response.ok) {
         const payload = (await response.json()) as { error?: string }
-        throw new Error(payload.error || 'Could not save your choice')
+        throw new Error(payload.error || journalMemoryCopy.errors.couldNotSaveChoice)
       }
       onComplete()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not save your choice')
+      setError(
+        caught instanceof Error ? caught.message : journalMemoryCopy.errors.couldNotSaveChoice,
+      )
     } finally {
       setIsSaving(false)
     }
@@ -59,10 +61,10 @@ export function JournalMemoryModePrompt({ hasOracleAccess, onComplete }: Props) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'dismiss' }),
       })
-      if (!response.ok) throw new Error('Could not save your choice')
+      if (!response.ok) throw new Error(journalMemoryCopy.errors.couldNotSaveChoice)
       onComplete()
     } catch {
-      setError('Could not save your choice')
+      setError(journalMemoryCopy.errors.couldNotSaveChoice)
     } finally {
       setIsSaving(false)
     }
@@ -100,7 +102,7 @@ export function JournalMemoryModePrompt({ hasOracleAccess, onComplete }: Props) 
             }
             className="min-h-11 rounded-xl border border-moss-400/50 bg-moss-500/25 px-4 py-2.5 text-sm font-medium text-bone disabled:opacity-50"
           >
-            {isSaving ? 'Saving…' : pastCopy.done}
+            {isSaving ? journalMemoryCopy.ui.settingsSaving : pastCopy.done}
           </button>
         </div>
       </div>
@@ -151,7 +153,7 @@ export function JournalMemoryModePrompt({ hasOracleAccess, onComplete }: Props) 
         onClick={dismiss}
         className="mt-4 text-xs text-bone-muted underline-offset-2 hover:text-bone hover:underline disabled:opacity-50"
       >
-        Not now — keep choosing per entry
+        {journalMemoryCopy.ui.promptDismiss}
       </button>
     </div>
   )

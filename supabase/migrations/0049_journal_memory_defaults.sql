@@ -1,5 +1,9 @@
 BEGIN;
 
+-- Stopped writing oracle_memory on insert; this trigger overwrote include_in_stelloquy from oracle_memory.
+DROP TRIGGER IF EXISTS trg_journal_stelloquy_consent_compat ON public.journal_entries;
+DROP FUNCTION IF EXISTS public.sync_journal_stelloquy_consent_compat();
+
 ALTER TABLE public.user_settings
   ADD COLUMN journal_memory_mode TEXT
     CHECK (journal_memory_mode IS NULL OR journal_memory_mode IN ('use_entries', 'choose_each')),
@@ -131,6 +135,9 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.bulk_apply_journal_entry_consent(UUID, BOOLEAN, BOOLEAN, UUID[], UUID[]) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.bulk_apply_journal_entry_consent(UUID, BOOLEAN, BOOLEAN, UUID[], UUID[])
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.bulk_apply_journal_entry_consent(UUID, BOOLEAN, BOOLEAN, UUID[], UUID[])
+TO service_role;
 
 COMMIT;

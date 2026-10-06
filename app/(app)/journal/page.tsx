@@ -1,12 +1,7 @@
-import { createAdminSupabase } from '@/lib/supabase/admin'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { JournalComposer } from '@/components/journal/JournalComposer'
-import {
-  loadOrderSubscriptionMap,
-  extractStripeOrderIds,
-  resolveUserAccess,
-  type ProductEntitlementRecord,
-} from '@/lib/commerce/entitlements'
+import { memberHasOracleAccess } from '@/lib/commerce/member-oracle-access'
+import type { ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { loadJournalMemorySettings } from '@/lib/journal/load-memory-settings'
 import { resolveNewEntryConsent } from '@/lib/journal/memory-defaults'
@@ -62,18 +57,10 @@ export default async function JournalPage({
       .from('product_entitlements')
       .select('*')
       .eq('user_id', profileRes.data.id)
-    const admin = createAdminSupabase()
-    const orderIds = extractStripeOrderIds((entitlements ?? []) as ProductEntitlementRecord[])
-    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, {
-      userId: profileRes.data.id,
-    })
-    const access = resolveUserAccess(
+    hasOracleAccess = await memberHasOracleAccess(
+      profileRes.data.id,
       (entitlements ?? []) as ProductEntitlementRecord[],
-      new Date().toISOString().slice(0, 10),
-      undefined,
-      subscriptionMap,
     )
-    hasOracleAccess = access.hasOracleAccess
     initialNewEntryConsent = resolveNewEntryConsent(memorySettings, hasOracleAccess, undefined)
   }
 

@@ -68,8 +68,7 @@ export function normalizeJournalConsent(
     v2Enabled &&
     input.include_in_stelloquy === undefined &&
     input.oracle_memory !== undefined
-  const includeInStelloquy =
-    input.include_in_stelloquy ?? (v2Enabled ? input.oracle_memory : undefined) ?? false
+  const includeInStelloquy = input.include_in_stelloquy ?? input.oracle_memory ?? false
 
   if (!v2Enabled) {
     return {

@@ -51,7 +51,11 @@ export async function applyPastEntriesConsentBulk(params: {
   })
 
   if (toUpdate.length === 0) {
-    await insertBulkAuditEvent(admin, userProfileId, 0)
+    await insertBulkAuditEvent(admin, userProfileId, {
+      entriesUpdated: 0,
+      stelloquyApplied: false,
+      insightsApplied: false,
+    })
     return { updatedCount: 0, insightsTouched: false }
   }
 
@@ -80,7 +84,19 @@ export async function applyPastEntriesConsentBulk(params: {
 
   const updatedCount = typeof rpcResult.data === 'number' ? rpcResult.data : toUpdate.length
 
-  await insertBulkAuditEvent(admin, userProfileId, updatedCount)
+  const stelloquyApplied =
+    hasOracleAccess &&
+    targets.include_in_stelloquy &&
+    toUpdate.some(
+      (entry) =>
+        !skipStelloquy.has(entry.id) && !entry.include_in_stelloquy,
+    )
+
+  await insertBulkAuditEvent(admin, userProfileId, {
+    entriesUpdated: updatedCount,
+    stelloquyApplied,
+    insightsApplied: insightsWillChange,
+  })
 
   if (insightsWillChange) {
     await rebuildJournalDerivedContent(userProfileId)
@@ -92,7 +108,11 @@ export async function applyPastEntriesConsentBulk(params: {
 async function insertBulkAuditEvent(
   admin: SupabaseClient<Database>,
   userProfileId: string,
-  entriesUpdated: number,
+  summary: {
+    entriesUpdated: number
+    insightsApplied: boolean
+    stelloquyApplied: boolean
+  },
 ) {
   const { error } = await admin.from('journal_entry_consent_audit').insert({
     journal_entry_id: null,
@@ -102,8 +122,8 @@ async function insertBulkAuditEvent(
     previous_include_in_stelloquy: null,
     previous_memory_pinned: null,
     previous_memory_importance: null,
-    current_include_in_insights: entriesUpdated > 0,
-    current_include_in_stelloquy: entriesUpdated > 0,
+    current_include_in_insights: summary.insightsApplied,
+    current_include_in_stelloquy: summary.stelloquyApplied,
     current_memory_pinned: false,
     current_memory_importance: null,
     change_source: 'bulk_past_entries_include',

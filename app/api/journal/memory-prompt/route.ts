@@ -2,15 +2,13 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
-import {
-  loadOrderSubscriptionMap,
-  extractStripeOrderIds,
-  resolveUserAccess,
-  type ProductEntitlementRecord,
-} from '@/lib/commerce/entitlements'
+import { memberHasOracleAccess } from '@/lib/commerce/member-oracle-access'
+import type { ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { journalMemoryCopy } from '@/lib/copy/journal-memory'
 import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { loadJournalMemorySettings } from '@/lib/journal/load-memory-settings'
 import {
+  effectiveJournalMemoryMode,
   STRICT_CHOOSE_EACH_DEFAULTS,
   USE_ENTRIES_PRESET_DEFAULTS,
 } from '@/lib/journal/memory-defaults'
@@ -29,7 +27,7 @@ export async function POST(req: Request) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!isMemoryDefaultsEnabled() || !isJournalConsentV2Enabled()) {
-    return NextResponse.json({ error: 'Not available' }, { status: 404 })
+    return NextResponse.json({ error: journalMemoryCopy.errors.notAvailable }, { status: 404 })
   }
 
   const accessError = await requireActivePlannerAccess(userId)
@@ -37,15 +35,12 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? 'Invalid request' },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: journalMemoryCopy.errors.invalidRequest }, { status: 400 })
   }
 
   const supabase = await createServerSupabase()
   const { data: profile } = await supabase.from('user_profiles').select('id').maybeSingle()
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  if (!profile) return NextResponse.json({ error: journalMemoryCopy.errors.profileNotFound }, { status: 404 })
 
   const admin = createAdminSupabase()
   const now = new Date().toISOString()
@@ -54,14 +49,12 @@ export async function POST(req: Request) {
     .from('product_entitlements')
     .select('*')
     .eq('user_id', profile.id)
-  const orderIds = extractStripeOrderIds((entitlements ?? []) as ProductEntitlementRecord[])
-  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profile.id })
-  const access = resolveUserAccess(
+  const hasOracleAccess = await memberHasOracleAccess(
+    profile.id,
     (entitlements ?? []) as ProductEntitlementRecord[],
-    new Date().toISOString().slice(0, 10),
-    undefined,
-    subscriptionMap,
   )
+
+  const existingSettings = await loadJournalMemorySettings(supabase, profile.id)
 
   if (parsed.data.action === 'dismiss') {
     await admin.from('user_settings').upsert(
@@ -77,7 +70,14 @@ export async function POST(req: Request) {
 
   const mode = parsed.data.journal_memory_mode
   if (!mode) {
-    return NextResponse.json({ error: 'journal_memory_mode is required' }, { status: 400 })
+    return NextResponse.json({ error: journalMemoryCopy.errors.memoryModeRequired }, { status: 400 })
+  }
+
+  if (parsed.data.include_past_entries && existingSettings.past_entries_included_at) {
+    return NextResponse.json(
+      { error: journalMemoryCopy.errors.pastEntriesAlreadyIncluded },
+      { status: 400 },
+    )
   }
 
   const defaults =
@@ -113,11 +113,18 @@ export async function POST(req: Request) {
   const settings = await loadJournalMemorySettings(supabase, profile.id)
 
   if (mode === 'use_entries' && parsed.data.include_past_entries) {
+    if (effectiveJournalMemoryMode(settings.journal_memory_mode) !== 'use_entries') {
+      return NextResponse.json(
+        { error: journalMemoryCopy.errors.pastEntriesNotAvailable },
+        { status: 400 },
+      )
+    }
+
     await applyPastEntriesConsentBulk({
       admin,
       userProfileId: profile.id,
       settings,
-      hasOracleAccess: access.hasOracleAccess,
+      hasOracleAccess,
     })
     await admin
       .from('user_settings')

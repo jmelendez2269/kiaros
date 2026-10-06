@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { after, NextResponse } from 'next/server'
-import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
+import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { applyMemoryImportanceHeuristicIfNeeded } from '@/lib/journal/consent-persist'
 import { journalConsentStateSchema } from '@/lib/journal/consent'
 import {
@@ -41,11 +41,14 @@ export async function PATCH(
   }
   if (!existing) return NextResponse.json({ error: 'Journal entry not found' }, { status: 404 })
 
-  const consent = applyMemoryImportanceHeuristicIfNeeded(parsed.data, {
-    body: existing.body,
-    isRitual: existing.is_ritual ?? false,
-    hadManualImportance: existing.memory_importance !== null,
-  })
+  const consent =
+    isMemoryDefaultsEnabled() && isJournalConsentV2Enabled()
+      ? applyMemoryImportanceHeuristicIfNeeded(parsed.data, {
+          body: existing.body,
+          isRitual: existing.is_ritual ?? false,
+          hadManualImportance: existing.memory_importance !== null,
+        })
+      : parsed.data
 
   const insightsPermissionChanged =
     existing.include_in_insights !== consent.include_in_insights
