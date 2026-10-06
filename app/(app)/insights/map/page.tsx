@@ -211,7 +211,10 @@ export default async function PatternsPage() {
                   future Stelloquy context — and saved threads can be reopened to read the whole conversation.
                 </p>
               </header>
-              <CaptureHistoryList captures={oracleCaptures} />
+              <CaptureHistoryList
+                captures={oracleCaptures}
+                memoryDefaultsEnabled={memoryDefaultsEnabled}
+              />
             </section>
           }
         />

@@ -31,7 +31,7 @@ export function JournalMemorySettingsPanel() {
           setHasOracleAccess(Boolean(data.hasOracleAccess))
         }
       } catch {
-        if (!cancelled) setError('Could not load journal memory settings.')
+        if (!cancelled) setError(journalMemoryCopy.errors.couldNotLoadSettings)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -58,12 +58,14 @@ export function JournalMemorySettingsPanel() {
         body: JSON.stringify(patch),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not save settings')
+      if (!res.ok) throw new Error(data.error || journalMemoryCopy.errors.couldNotSaveSettings)
       setSettings(data.settings)
       setSaved(true)
       setIncludePast(false)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not save settings')
+      setError(
+        caught instanceof Error ? caught.message : journalMemoryCopy.errors.couldNotSaveSettings,
+      )
     } finally {
       setSaving(false)
     }
@@ -199,13 +201,15 @@ export function JournalMemorySettingsPanel() {
             onClick={() => savePatch({ include_past_entries: true })}
             className="mt-3 min-h-10 rounded-xl border border-moss-400/50 bg-moss-500/20 px-4 py-2 text-sm text-bone disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Apply to past entries
+            {journalMemoryCopy.ui.applyPastEntries}
           </button>
         </div>
       ) : null}
 
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
-      {saved ? <p className="text-sm text-moss-200">Saved.</p> : null}
+      {saved ? (
+        <p className="text-sm text-moss-200">{journalMemoryCopy.ui.settingsSaved}</p>
+      ) : null}
     </section>
   )
 }

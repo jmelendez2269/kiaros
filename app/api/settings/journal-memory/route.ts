@@ -2,12 +2,9 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
-import {
-  loadOrderSubscriptionMap,
-  extractStripeOrderIds,
-  resolveUserAccess,
-  type ProductEntitlementRecord,
-} from '@/lib/commerce/entitlements'
+import { memberHasOracleAccess } from '@/lib/commerce/member-oracle-access'
+import type { ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { journalMemoryCopy } from '@/lib/copy/journal-memory'
 import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { loadJournalMemorySettings } from '@/lib/journal/load-memory-settings'
 import {
@@ -26,25 +23,6 @@ const patchSchema = z.object({
   include_past_entries: z.boolean().optional(),
 })
 
-async function resolveHasOracleAccess(userId: string, profileId: string): Promise<boolean> {
-  const supabase = await createServerSupabase()
-  const { data: entitlements } = await supabase
-    .from('product_entitlements')
-    .select('*')
-    .eq('user_id', profileId)
-
-  const admin = createAdminSupabase()
-  const orderIds = extractStripeOrderIds((entitlements ?? []) as ProductEntitlementRecord[])
-  const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, { userId: profileId })
-  const access = resolveUserAccess(
-    (entitlements ?? []) as ProductEntitlementRecord[],
-    new Date().toISOString().slice(0, 10),
-    undefined,
-    subscriptionMap,
-  )
-  return access.hasOracleAccess
-}
-
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -58,10 +36,19 @@ export async function GET() {
 
   const supabase = await createServerSupabase()
   const { data: profile } = await supabase.from('user_profiles').select('id').maybeSingle()
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  if (!profile) {
+    return NextResponse.json({ error: journalMemoryCopy.errors.profileNotFound }, { status: 404 })
+  }
 
   const settings = await loadJournalMemorySettings(supabase, profile.id)
-  const hasOracleAccess = await resolveHasOracleAccess(userId, profile.id)
+  const { data: entitlements } = await supabase
+    .from('product_entitlements')
+    .select('*')
+    .eq('user_id', profile.id)
+  const hasOracleAccess = await memberHasOracleAccess(
+    profile.id,
+    (entitlements ?? []) as ProductEntitlementRecord[],
+  )
 
   return NextResponse.json({
     enabled: true,
@@ -75,7 +62,7 @@ export async function PATCH(req: Request) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!isMemoryDefaultsEnabled() || !isJournalConsentV2Enabled()) {
-    return NextResponse.json({ error: 'Not available' }, { status: 404 })
+    return NextResponse.json({ error: journalMemoryCopy.errors.notAvailable }, { status: 404 })
   }
 
   const accessError = await requireActivePlannerAccess(userId)
@@ -84,17 +71,25 @@ export async function PATCH(req: Request) {
   const parsed = patchSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? 'Invalid request' },
+      { error: journalMemoryCopy.errors.invalidRequest },
       { status: 400 },
     )
   }
 
   const supabase = await createServerSupabase()
   const { data: profile } = await supabase.from('user_profiles').select('id').maybeSingle()
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  if (!profile) return NextResponse.json({ error: journalMemoryCopy.errors.profileNotFound }, { status: 404 })
+
+  const { data: entitlements } = await supabase
+    .from('product_entitlements')
+    .select('*')
+    .eq('user_id', profile.id)
 
   const existing = await loadJournalMemorySettings(supabase, profile.id)
-  const hasOracleAccess = await resolveHasOracleAccess(userId, profile.id)
+  const hasOracleAccess = await memberHasOracleAccess(
+    profile.id,
+    (entitlements ?? []) as ProductEntitlementRecord[],
+  )
 
   let mode: JournalMemoryMode | null = existing.journal_memory_mode
   if (parsed.data.journal_memory_mode !== undefined) {
@@ -135,7 +130,7 @@ export async function PATCH(req: Request) {
     onConflict: 'user_id',
   })
   if (upsertError) {
-    return NextResponse.json({ error: 'Failed to save journal memory settings' }, { status: 500 })
+    return NextResponse.json({ error: journalMemoryCopy.errors.couldNotSaveSettings }, { status: 500 })
   }
 
   if (parsed.data.journal_memory_mode !== undefined && mode !== null) {
@@ -159,10 +154,16 @@ export async function PATCH(req: Request) {
 
   if (parsed.data.include_past_entries) {
     if (updatedSettings.past_entries_included_at) {
-      return NextResponse.json({ error: 'Past entries were already included' }, { status: 400 })
+      return NextResponse.json(
+        { error: journalMemoryCopy.errors.pastEntriesAlreadyIncluded },
+        { status: 400 },
+      )
     }
     if (effectiveMode(updatedSettings) !== 'use_entries') {
-      return NextResponse.json({ error: 'Past entries apply only in use_entries mode' }, { status: 400 })
+      return NextResponse.json(
+        { error: journalMemoryCopy.errors.pastEntriesNotAvailable },
+        { status: 400 },
+      )
     }
 
     await applyPastEntriesConsentBulk({

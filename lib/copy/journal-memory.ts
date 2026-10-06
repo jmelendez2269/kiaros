@@ -78,6 +78,23 @@ export const journalMemoryCopy = {
     fieldsetIntro:
       'Saving keeps the entry in your private journal. Each permission below is separate and can be changed later.',
   },
+  errors: {
+    couldNotSaveChoice: 'Could not save your choice.',
+    couldNotSaveSettings: 'Could not save settings.',
+    couldNotLoadSettings: 'Could not load journal memory settings.',
+    pastEntriesAlreadyIncluded: 'Past entries were already included.',
+    pastEntriesNotAvailable: 'Past entries can only be included when new entries start included.',
+    invalidRequest: 'Invalid request.',
+    profileNotFound: 'Profile not found.',
+    notAvailable: 'Not available.',
+    memoryModeRequired: 'Please choose how new entries should start.',
+  },
+  ui: {
+    promptDismiss: 'Not now — keep choosing per entry',
+    settingsSaved: 'Saved.',
+    settingsSaving: 'Saving…',
+    applyPastEntries: 'Apply to past entries',
+  },
   capture: {
     rowHelper:
       'Save this for later, for Stelloquy to remember, to shape your Planner, or both.',

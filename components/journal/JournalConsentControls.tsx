@@ -125,22 +125,20 @@ export function JournalConsentControls({
           </span>
         </label>
 
-        {hasOracleAccess ? (
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/65 bg-stone-950/55 p-3.5 transition-colors hover:border-plum-400/35">
-            <input
-              type="checkbox"
-              checked={value.include_in_stelloquy}
-              onChange={(event) => setRecallAllowed(event.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
-            />
-            <span>
-              <span className="block text-sm font-medium text-bone">Let Stelloquy recall it</span>
-              <span className="mt-1 block text-xs leading-5 text-bone-muted">
-                Allows future conversations to retrieve relevant excerpts from this entry.
-              </span>
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/65 bg-stone-950/55 p-3.5 transition-colors hover:border-plum-400/35">
+          <input
+            type="checkbox"
+            checked={value.include_in_stelloquy}
+            onChange={(event) => setRecallAllowed(event.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
+          />
+          <span>
+            <span className="block text-sm font-medium text-bone">Let Stelloquy recall it</span>
+            <span className="mt-1 block text-xs leading-5 text-bone-muted">
+              Allows future conversations to retrieve relevant excerpts from this entry.
             </span>
-          </label>
-        ) : null}
+          </span>
+        </label>
       </div>
 
       {value.include_in_stelloquy ? (

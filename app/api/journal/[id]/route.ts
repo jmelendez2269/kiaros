@@ -3,7 +3,7 @@ import { after, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
-import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
+import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { applyMemoryImportanceHeuristicIfNeeded } from '@/lib/journal/consent-persist'
 import {
   journalConsentCompatibilityInputSchema,
@@ -80,13 +80,14 @@ export async function PATCH(
   if (!existing) return NextResponse.json({ error: 'Journal entry not found' }, { status: 404 })
 
   const normalized = normalizeJournalConsent(parsed.data, consentV2Enabled)
-  const consentState = consentV2Enabled
-    ? applyMemoryImportanceHeuristicIfNeeded(normalized.state, {
-        body: parsed.data.body,
-        isRitual: parsed.data.is_ritual,
-        hadManualImportance: existing.memory_importance !== null,
-      })
-    : normalized.state
+  const consentState =
+    consentV2Enabled && isMemoryDefaultsEnabled()
+      ? applyMemoryImportanceHeuristicIfNeeded(normalized.state, {
+          body: parsed.data.body,
+          isRitual: parsed.data.is_ritual,
+          hadManualImportance: existing.memory_importance !== null,
+        })
+      : normalized.state
   const insightsPermissionChanged =
     consentV2Enabled && existing.include_in_insights !== consentState.include_in_insights
 
@@ -108,7 +109,10 @@ export async function PATCH(
     ...(normalized.persistV2Fields
       ? consentState
       : normalized.persistStelloquyRecall
-        ? { include_in_stelloquy: consentState.include_in_stelloquy }
+        ? {
+            include_in_stelloquy: consentState.include_in_stelloquy,
+            oracle_memory: normalized.oracleMemory,
+          }
         : {}),
   }
 

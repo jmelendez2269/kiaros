@@ -3,12 +3,8 @@ import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { after } from 'next/server'
 import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
-import {
-  loadOrderSubscriptionMap,
-  extractStripeOrderIds,
-  resolveUserAccess,
-  type ProductEntitlementRecord,
-} from '@/lib/commerce/entitlements'
+import { memberHasOracleAccess } from '@/lib/commerce/member-oracle-access'
+import type { ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { applyMemoryImportanceHeuristicIfNeeded } from '@/lib/journal/consent-persist'
 import { loadJournalMemorySettings } from '@/lib/journal/load-memory-settings'
@@ -27,7 +23,6 @@ import {
   getPatternRefreshTargets,
   humanizeLunarPhase,
 } from '@/lib/journal/intelligence'
-import { createAdminSupabase } from '@/lib/supabase/admin'
 import { createServerSupabase } from '@/lib/supabase/server'
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Database, Json, Tables, TablesInsert } from '@/types/database'
@@ -106,27 +101,22 @@ export async function createJournalEntry(
       .from('product_entitlements')
       .select('*')
       .eq('user_id', profile.id)
-    const admin = createAdminSupabase()
-    const orderIds = extractStripeOrderIds((entitlements ?? []) as ProductEntitlementRecord[])
-    const subscriptionMap = await loadOrderSubscriptionMap(admin, orderIds, {
-      userId: profile.id,
-    })
-    const access = resolveUserAccess(
+    const hasOracle = await memberHasOracleAccess(
+      profile.id,
       (entitlements ?? []) as ProductEntitlementRecord[],
-      input.entryDate,
-      undefined,
-      subscriptionMap,
     )
-    const merged = resolveNewEntryConsent(memorySettings, access.hasOracleAccess, input.consent)
+    const merged = resolveNewEntryConsent(memorySettings, hasOracle, input.consent)
     resolvedConsentInput = merged
   }
 
   const consent = normalizeJournalConsent(resolvedConsentInput, consentV2Enabled)
-  const consentState = applyMemoryImportanceHeuristicIfNeeded(consent.state, {
-    body: input.body,
-    isRitual: input.isRitual ?? false,
-    hadManualImportance: false,
-  })
+  const consentState = memoryDefaultsEnabled
+    ? applyMemoryImportanceHeuristicIfNeeded(consent.state, {
+        body: input.body,
+        isRitual: input.isRitual ?? false,
+        hadManualImportance: false,
+      })
+    : consent.state
 
   const entryYear = Number(input.entryDate.slice(0, 4))
   const { data: cachedEphemeris } = await supabase
@@ -175,7 +165,11 @@ export async function createJournalEntry(
   const entryInsert: TablesInsert<'journal_entries'> | JournalEntryV2Insert = consent.persistV2Fields
     ? { ...baseInsert, ...consentState }
     : consent.persistStelloquyRecall
-      ? { ...baseInsert, include_in_stelloquy: consentState.include_in_stelloquy }
+      ? {
+          ...baseInsert,
+          include_in_stelloquy: consentState.include_in_stelloquy,
+          oracle_memory: consent.oracleMemory,
+        }
       : baseInsert
 
   const { data, error } = await supabase

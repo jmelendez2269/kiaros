@@ -70,21 +70,23 @@ console.log('✓ Explicit consent fields are honored\n')
 // TEST 3: Flag OFF - legacy oracle_memory behavior unchanged
 // ─────────────────────────────────────────────────────────────────────────────
 
-console.log('Test 3: Flag OFF - Stelloquy recall via include_in_stelloquy (oracle_memory retired)')
+console.log('Test 3: Flag OFF - Stelloquy recall via include_in_stelloquy and legacy oracle_memory')
 
 const stelloquyOn = normalizeJournalConsent({ include_in_stelloquy: true }, false)
 assert.equal(stelloquyOn.state.include_in_stelloquy, true, 'include_in_stelloquy=true should be honored with flag OFF')
 assert.equal(stelloquyOn.persistStelloquyRecall, true, 'Stelloquy recall column should be persisted with flag OFF')
 assert.equal(stelloquyOn.persistV2Fields, false, 'V2 fields should NOT be persisted with flag OFF')
+assert.equal(stelloquyOn.oracleMemory, true, 'oracle_memory dual-write should mirror Stelloquy recall with flag OFF')
 
-const retiredOracleInput = normalizeJournalConsent({ oracle_memory: true }, false)
+const legacyOracleInput = normalizeJournalConsent({ oracle_memory: true }, false)
 assert.equal(
-  retiredOracleInput.state.include_in_stelloquy,
-  false,
-  'oracle_memory input is no longer read when v2 is off',
+  legacyOracleInput.state.include_in_stelloquy,
+  true,
+  'oracle_memory input should still grant Stelloquy recall when v2 is off',
 )
+assert.equal(legacyOracleInput.oracleMemory, true, 'oracle_memory should be written when v2 is off')
 
-console.log('✓ Flag OFF persists include_in_stelloquy without oracle_memory\n')
+console.log('✓ Flag OFF persists include_in_stelloquy and honors oracle_memory like main\n')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEST 4: Stelloquy compatibility fallback (flag ON)

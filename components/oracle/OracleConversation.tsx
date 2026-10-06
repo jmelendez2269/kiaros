@@ -9,8 +9,7 @@ import { OracleInput } from './OracleInput'
 import { StelloquyOrb, type OrbState } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
 import { consumeOraclePreseed } from '@/lib/oracle/preseed'
-import { journalMemoryCopy } from '@/lib/copy/journal-memory'
-import { CAPTURE_OPTIONS as THREAD_OPTIONS, type CaptureMode as ThreadCaptureMode } from '@/lib/oracle/capture-options'
+import { buildCaptureOptions, capturePanelCopy, type CaptureMode as ThreadCaptureMode } from '@/lib/oracle/capture-options'
 
 const ROLE_LABEL: Record<string, string> = {
   user: 'YOU',
@@ -40,8 +39,6 @@ function formatThread(messages: UIMessage[]): string {
     })
     .join('\n\n---\n\n')
 }
-
-const captureCopy = journalMemoryCopy.capture
 
 const SUGGESTED_PROMPTS = [
   'What should I focus on this week?',
@@ -99,7 +96,12 @@ export function OracleConversation({
   const [savingThread, setSavingThread] = useState(false)
   const [threadSavedMode, setThreadSavedMode] = useState<ThreadCaptureMode | null>(null)
   const [threadError, setThreadError] = useState<string | null>(null)
-  const { preseedNonce } = useStelloquy()
+  const { preseedNonce, memoryDefaultsCaptureEnabled } = useStelloquy()
+  const captureCopy = capturePanelCopy(memoryDefaultsCaptureEnabled)
+  const threadOptions = useMemo(
+    () => buildCaptureOptions(memoryDefaultsCaptureEnabled),
+    [memoryDefaultsCaptureEnabled],
+  )
   // Tracks the highest preseed nonce we've already consumed. Initialised to
   // -1 so the initial mount (nonce starts at 0) still fires the effect once
   // for cross-page deep links that wrote a preseed before this component
@@ -152,7 +154,7 @@ export function OracleConversation({
     setThreadSavedMode(null)
   }
 
-  async function saveThread(option: (typeof THREAD_OPTIONS)[number]) {
+  async function saveThread(option: ReturnType<typeof buildCaptureOptions>[number]) {
     if (savingThread || messages.length === 0) return
     const formatted = formatThread(messages)
     const truncated = formatted.length > THREAD_MAX_CHARS
@@ -347,7 +349,7 @@ export function OracleConversation({
                 {formatThread(messages).length > THREAD_MAX_CHARS ? ' Will be truncated at 20,000 characters.' : ''}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {THREAD_OPTIONS.map((option) => (
+                {threadOptions.map((option) => (
                   <button
                     key={option.mode}
                     type="button"

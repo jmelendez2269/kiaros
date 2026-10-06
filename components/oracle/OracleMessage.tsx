@@ -1,11 +1,11 @@
 'use client'
 
 import { BookmarkPlus, Check, MessageSquarePlus, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { UIMessage } from 'ai'
-import { journalMemoryCopy } from '@/lib/copy/journal-memory'
-import { CAPTURE_OPTIONS, type CaptureMode } from '@/lib/oracle/capture-options'
+import { buildCaptureOptions, capturePanelCopy, type CaptureMode } from '@/lib/oracle/capture-options'
 import { StelloquyOrb } from './StelloquyOrb'
+import { useStelloquy } from './StelloquyProvider'
 
 interface Props {
   message: UIMessage
@@ -32,8 +32,6 @@ function extractText(message: UIMessage): string {
   return typeof content === 'string' ? content : ''
 }
 
-const captureCopy = journalMemoryCopy.capture
-
 function truncate(value: string, max = 800) {
   const normalized = value.replace(/\s+/g, ' ').trim()
   return normalized.length <= max ? normalized : `${normalized.slice(0, max - 1)}...`
@@ -52,6 +50,12 @@ function getHighlightedText(container: HTMLDivElement | null, fullText: string):
 }
 
 export function OracleMessage({ message, precedingUserText, onCapture }: Props) {
+  const { memoryDefaultsCaptureEnabled } = useStelloquy()
+  const captureCopy = capturePanelCopy(memoryDefaultsCaptureEnabled)
+  const captureOptions = useMemo(
+    () => buildCaptureOptions(memoryDefaultsCaptureEnabled),
+    [memoryDefaultsCaptureEnabled],
+  )
   const isUser = message.role === 'user'
   const text = extractText(message)
   const textRef = useRef<HTMLDivElement>(null)
@@ -87,7 +91,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
     setSavedKind(null)
   }
 
-  async function saveCapture(option: (typeof CAPTURE_OPTIONS)[number]) {
+  async function saveCapture(option: (typeof captureOptions)[number]) {
     if (!onCapture || !selectedText || isSaving) return
 
     setIsSaving(true)
@@ -112,7 +116,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
     }
   }
 
-  async function saveExchange(option: (typeof CAPTURE_OPTIONS)[number]) {
+  async function saveExchange(option: (typeof captureOptions)[number]) {
     if (!onCapture || isSaving) return
 
     setIsSaving(true)
@@ -180,7 +184,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
                   </div>
                   <p className="mt-2 line-clamp-3 text-xs leading-5 text-bone">"{truncate(selectedText, 180)}"</p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {CAPTURE_OPTIONS.map((option) => (
+                    {captureOptions.map((option) => (
                       <button
                         key={option.mode}
                         type="button"
@@ -267,7 +271,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
                   </p>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {CAPTURE_OPTIONS.map((option) => (
+                  {captureOptions.map((option) => (
                     <button
                       key={option.mode}
                       type="button"
@@ -297,7 +301,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
                 </div>
                 <p className="mt-2 line-clamp-3 text-xs leading-5 text-bone">"{truncate(selectedText, 180)}"</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {CAPTURE_OPTIONS.map((option) => (
+                  {captureOptions.map((option) => (
                     <button
                       key={option.mode}
                       type="button"
