@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { UIMessage } from 'ai'
 import { MessagesSquare } from 'lucide-react'
+import { journalMemoryCopy } from '@/lib/copy/journal-memory'
 import { ThreadViewer } from '@/components/oracle/ThreadViewer'
 
 export type OracleCaptureRow = {
@@ -39,7 +40,9 @@ export function CaptureHistoryList({ captures }: { captures: OracleCaptureRow[] 
                   })}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {capture.include_in_insights ? <span className="channel-pill">Insights</span> : null}
+                  {capture.include_in_insights ? (
+                    <span className="channel-pill">{journalMemoryCopy.capture.remember}</span>
+                  ) : null}
                   {capture.include_in_planner ? <span className="channel-pill">Planner</span> : null}
                   {!capture.include_in_insights && !capture.include_in_planner ? (
                     <span className="shell-pill">Saved</span>

@@ -3,6 +3,8 @@
 import { BookmarkPlus, Check, MessageSquarePlus, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { UIMessage } from 'ai'
+import { journalMemoryCopy } from '@/lib/copy/journal-memory'
+import { CAPTURE_OPTIONS, type CaptureMode } from '@/lib/oracle/capture-options'
 import { StelloquyOrb } from './StelloquyOrb'
 
 interface Props {
@@ -30,14 +32,7 @@ function extractText(message: UIMessage): string {
   return typeof content === 'string' ? content : ''
 }
 
-type CaptureMode = 'save' | 'insights' | 'planner' | 'both'
-
-const CAPTURE_OPTIONS: Array<{ mode: CaptureMode; label: string; insights: boolean; planner: boolean }> = [
-  { mode: 'save', label: 'Just save', insights: false, planner: false },
-  { mode: 'insights', label: 'Insights', insights: true, planner: false },
-  { mode: 'planner', label: 'Planner', insights: false, planner: true },
-  { mode: 'both', label: 'Both', insights: true, planner: true },
-]
+const captureCopy = journalMemoryCopy.capture
 
 function truncate(value: string, max = 800) {
   const normalized = value.replace(/\s+/g, ' ').trim()
@@ -173,7 +168,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
               {showCapturePanel ? (
                 <div className="w-full max-w-md rounded-xl border border-border/80 bg-stone-950 px-3 py-3 shadow-glow">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="text-xs leading-5 text-bone-muted">Save highlighted text for later, insights, planner context, or both.</p>
+                    <p className="text-xs leading-5 text-bone-muted">{captureCopy.rowHelper}</p>
                     <button
                       type="button"
                       onClick={() => setShowCapturePanel(false)}
@@ -191,6 +186,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
                         type="button"
                         disabled={isSaving}
                         onClick={() => saveCapture(option)}
+                        title={option.title}
                         className="rounded-lg border border-leather-400/35 bg-leather-500/16 px-3 py-1.5 text-xs font-medium text-bone transition-colors hover:bg-leather-500/24 disabled:opacity-50"
                       >
                         {option.label}
@@ -252,7 +248,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
             {showExchangePanel ? (
               <div className="w-full max-w-md rounded-xl border border-border/80 bg-stone-950 px-3 py-3 shadow-glow">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-xs leading-5 text-bone-muted">Save your prompt and Stelloquy&apos;s full reply together — for later, insights, planner context, or both.</p>
+                  <p className="text-xs leading-5 text-bone-muted">{captureCopy.exchangeHelper}</p>
                   <button
                     type="button"
                     onClick={() => setShowExchangePanel(false)}
@@ -277,6 +273,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
                       type="button"
                       disabled={isSaving}
                       onClick={() => saveExchange(option)}
+                      title={option.title}
                       className="rounded-lg border border-leather-400/35 bg-leather-500/16 px-3 py-1.5 text-xs font-medium text-bone transition-colors hover:bg-leather-500/24 disabled:opacity-50"
                     >
                       {option.label}
@@ -288,7 +285,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
             {showCapturePanel ? (
               <div className="w-full max-w-md rounded-xl border border-border/80 bg-stone-950 px-3 py-3 shadow-glow">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-xs leading-5 text-bone-muted">Save highlighted text for later, insights, planner context, or both.</p>
+                  <p className="text-xs leading-5 text-bone-muted">{captureCopy.rowHelper}</p>
                   <button
                     type="button"
                     onClick={() => setShowCapturePanel(false)}

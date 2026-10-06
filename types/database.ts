@@ -1211,7 +1211,7 @@ export type Database = {
           current_memory_pinned: boolean
           event_type: string
           id: string
-          journal_entry_id: string
+          journal_entry_id: string | null
           previous_include_in_insights: boolean | null
           previous_include_in_stelloquy: boolean | null
           previous_memory_importance: number | null
@@ -1227,7 +1227,7 @@ export type Database = {
           current_memory_pinned: boolean
           event_type: string
           id?: string
-          journal_entry_id: string
+          journal_entry_id?: string | null
           previous_include_in_insights?: boolean | null
           previous_include_in_stelloquy?: boolean | null
           previous_memory_importance?: number | null
@@ -2206,12 +2206,17 @@ export type Database = {
       user_settings: {
         Row: {
           created_at: string
+          default_include_in_insights: boolean | null
+          default_include_in_stelloquy: boolean | null
           journal_insight_voice: string | null
           journal_insight_voice_label: string | null
           journal_insight_voice_updated_at: string | null
+          journal_memory_mode: string | null
           jupiter_season_read: string | null
           jupiter_season_read_at: string | null
           jupiter_season_signature: string | null
+          memory_mode_prompted_at: string | null
+          past_entries_included_at: string | null
           season_read: string | null
           season_read_at: string | null
           season_read_signature: string | null
@@ -2220,12 +2225,17 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_include_in_insights?: boolean | null
+          default_include_in_stelloquy?: boolean | null
           journal_insight_voice?: string | null
           journal_insight_voice_label?: string | null
           journal_insight_voice_updated_at?: string | null
+          journal_memory_mode?: string | null
           jupiter_season_read?: string | null
           jupiter_season_read_at?: string | null
           jupiter_season_signature?: string | null
+          memory_mode_prompted_at?: string | null
+          past_entries_included_at?: string | null
           season_read?: string | null
           season_read_at?: string | null
           season_read_signature?: string | null
@@ -2234,12 +2244,17 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_include_in_insights?: boolean | null
+          default_include_in_stelloquy?: boolean | null
           journal_insight_voice?: string | null
           journal_insight_voice_label?: string | null
           journal_insight_voice_updated_at?: string | null
+          journal_memory_mode?: string | null
           jupiter_season_read?: string | null
           jupiter_season_read_at?: string | null
           jupiter_season_signature?: string | null
+          memory_mode_prompted_at?: string | null
+          past_entries_included_at?: string | null
           season_read?: string | null
           season_read_at?: string | null
           season_read_signature?: string | null
@@ -2288,6 +2303,16 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      bulk_apply_journal_entry_consent: {
+        Args: {
+          p_user_id: string
+          p_set_insights: boolean
+          p_set_stelloquy: boolean
+          p_skip_insights_entry_ids: string[]
+          p_skip_stelloquy_entry_ids: string[]
+        }
+        Returns: number
       }
     }
     Enums: {
