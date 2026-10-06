@@ -16,6 +16,7 @@ import {
   entryIdsWithManualStelloquyChange,
 } from '../lib/journal/consent-manual-changes.ts'
 import { normalizeJournalConsent } from '../lib/journal/consent.ts'
+import { journalMemoryCopy } from '../lib/copy/journal-memory.ts'
 import { readFile } from 'node:fs/promises'
 
 console.log('=== Journal memory defaults tests ===\n')
@@ -207,5 +208,23 @@ assert.match(
 assert.match(migration049, /DROP FUNCTION IF EXISTS public\.sync_journal_stelloquy_consent_compat\(\)/)
 // Without the 0039 trigger, include_in_stelloquy from the app is not overwritten by oracle_memory=false.
 assert.doesNotMatch(migration049, /CREATE TRIGGER trg_journal_stelloquy_consent_compat/)
+
+assert.equal(
+  journalMemoryCopy.errors.couldNotIncludePastEntries,
+  "We couldn't include your past entries. Please try again.",
+)
+
+const memoryPromptRoute = await readFile(
+  new URL('../app/api/journal/memory-prompt/route.ts', import.meta.url),
+  'utf8',
+)
+const settingsRoute = await readFile(
+  new URL('../app/api/settings/journal-memory/route.ts', import.meta.url),
+  'utf8',
+)
+assert.match(memoryPromptRoute, /couldNotIncludePastEntries/)
+assert.match(settingsRoute, /couldNotIncludePastEntries/)
+assert.match(memoryPromptRoute, /applyPastEntriesConsentBulk/)
+assert.match(settingsRoute, /applyPastEntriesConsentBulk/)
 
 console.log('✓ All journal memory defaults tests passed')

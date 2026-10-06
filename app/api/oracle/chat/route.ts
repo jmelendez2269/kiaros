@@ -16,13 +16,8 @@ import {
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
 import { recallJournalMemories } from '@/lib/journal/memory-retrieval'
-<<<<<<< HEAD
-import { resolveOracleJournalEntriesForPrompt } from '@/lib/journal/oracle-journal-recall'
-import { isRelevanceMemoryEnabled } from '@/lib/feature-flags'
-=======
 import { isRelevanceMemoryEnabled } from '@/lib/feature-flags'
 import { resolveOracleJournalEntriesForPrompt } from '@/lib/journal/oracle-journal-recall'
->>>>>>> 24da2a7 (fix(journal): address PR #38 review blockers for memory defaults)
 import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
 
 export const maxDuration = 60
@@ -236,14 +231,7 @@ export async function POST(req: Request) {
         Tables<'daily_logs'>,
         'log_date' | 'energy_level' | 'mood_tag' | 'notes'
       >[],
-<<<<<<< HEAD
       journalEntries: oracleJournalEntries,
-=======
-      journalEntries: oracleJournalEntries as Pick<
-        Tables<'journal_entries'>,
-        'entry_date' | 'title' | 'body' | 'mood_tag' | 'is_ritual'
-      >[],
->>>>>>> 24da2a7 (fix(journal): address PR #38 review blockers for memory defaults)
       oracleCaptures: (oracleCapturesRes.data ?? []) as Pick<
         Tables<'oracle_captures'>,
         'captured_text' | 'source_role' | 'include_in_insights' | 'include_in_planner' | 'created_at'
@@ -325,13 +313,7 @@ export async function POST(req: Request) {
       headers: relevanceSources
         ? {
             'X-Kairos-Memory-Sources': encodeURIComponent(
-<<<<<<< HEAD
               JSON.stringify(relevanceSources.map((e) => ({ id: e.id, date: e.entry_date, title: e.title }))),
-=======
-              JSON.stringify(
-                relevanceSources.map((e) => ({ id: e.id, date: e.entry_date, title: e.title })),
-              ),
->>>>>>> 24da2a7 (fix(journal): address PR #38 review blockers for memory defaults)
             ),
           }
         : undefined,

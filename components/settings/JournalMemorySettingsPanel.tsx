@@ -25,7 +25,20 @@ export function JournalMemorySettingsPanel() {
     async function load() {
       try {
         const res = await fetch('/api/settings/journal-memory', { cache: 'no-store' })
-        const data = await res.json()
+        const data = (await res.json().catch(() => ({}))) as {
+          enabled?: boolean
+          settings?: JournalMemorySettings
+          hasOracleAccess?: boolean
+          error?: string
+        }
+        if (!cancelled && !res.ok) {
+          setError(
+            typeof data.error === 'string'
+              ? data.error
+              : journalMemoryCopy.errors.couldNotLoadSettings,
+          )
+          return
+        }
         if (!cancelled && data.enabled && data.settings) {
           setSettings(data.settings)
           setHasOracleAccess(Boolean(data.hasOracleAccess))
@@ -57,8 +70,20 @@ export function JournalMemorySettingsPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || journalMemoryCopy.errors.couldNotSaveSettings)
+      const data = (await res.json().catch(() => ({}))) as {
+        settings?: JournalMemorySettings
+        error?: string
+      }
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === 'string'
+            ? data.error
+            : journalMemoryCopy.errors.couldNotSaveSettings,
+        )
+      }
+      if (!data.settings) {
+        throw new Error(journalMemoryCopy.errors.couldNotSaveSettings)
+      }
       setSettings(data.settings)
       setSaved(true)
       setIncludePast(false)
@@ -175,7 +200,7 @@ export function JournalMemorySettingsPanel() {
         onClick={() => setShowHowThisWorks((open) => !open)}
         className="text-xs text-bone-muted underline-offset-2 hover:text-bone hover:underline"
       >
-        How this works
+        {settingsCopy.howThisWorksToggle}
       </button>
       {showHowThisWorks ? (
         <p className="text-xs leading-6 text-bone-muted">{settingsCopy.howThisWorks}</p>

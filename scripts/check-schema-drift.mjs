@@ -27,7 +27,13 @@ const MIGRATIONS_DIR = path.join(process.cwd(), 'supabase', 'migrations')
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-const TYPES_PATH = path.join(process.cwd(), 'types', 'database.ts')
+
+if (!url || !key) {
+  console.error(
+    'check-schema-drift: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.'
+  )
+  process.exit(2)
+}
 
 /** Strip line and block comments so commented-out DDL is not parsed as real. */
 function stripComments(sql) {
@@ -91,53 +97,8 @@ function probe(pathAndQuery) {
   })
 }
 
-/** When CI has no Supabase secrets, ensure generated types mention migration columns. */
-async function staticTypesCheck({ fileCount, tables, columns }) {
-  const typesText = await readFile(TYPES_PATH, 'utf8')
-  const missingColumns = []
-
-  const typedTables = [...tables].filter((table) => typesText.includes(`${table}: {`))
-
-  for (const entry of [...columns].sort()) {
-    const [table, column] = entry.split('.')
-    if (!typedTables.includes(table)) continue
-    const tableBlock = typesText.match(
-      new RegExp(`${table}:\\s*\\{[\\s\\S]*?\\n\\s*Row:\\s*\\{([\\s\\S]*?)\\n\\s*\\}`, 'm'),
-    )
-    if (!tableBlock || !tableBlock[1].includes(`${column}:`)) missingColumns.push(entry)
-  }
-
-  const checked = `${typedTables.length} typed tables (${tables.size} in migrations) and ${columns.size} column declarations from ${fileCount} migration files`
-
-  if (missingColumns.length === 0) {
-    console.log(
-      `check-schema-drift: OK (static) — ${checked} reflected in types/database.ts.`,
-    )
-    console.log(
-      'check-schema-drift: live probe skipped — set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in CI for production schema verification.',
-    )
-    return
-  }
-
-  console.error(
-    'check-schema-drift: FAILED (static) — types/database.ts is behind migrations in this repo.\n',
-  )
-  if (missingColumns.length) {
-    console.error('Missing columns in types:')
-    for (const c of missingColumns) console.error(`  - ${c}`)
-  }
-  console.error(`\nChecked ${checked} against ${TYPES_PATH}.`)
-  console.error('Regenerate types after applying migrations, or add the missing declarations.')
-  process.exit(1)
-}
-
 async function main() {
   const { fileCount, tables, columns } = await parseMigrations()
-
-  if (!url || !key) {
-    await staticTypesCheck({ fileCount, tables, columns })
-    return
-  }
 
   const missingTables = []
   const missingColumns = []
