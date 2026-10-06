@@ -54,6 +54,7 @@ export const journalMemoryCopy = {
       label: 'Stelloquy recalls new entries',
       helper: 'New entries start available for Stelloquy to bring up in conversation.',
     },
+    howThisWorksToggle: 'How this works',
     howThisWorks:
       'An included entry\'s full text feeds Reflections, and Patterns on Planner + Oracle. Quarterly Reviews only count included entries. Month briefs and your Blueprint only see patterns, never the entries themselves. On Planner + Oracle, Stelloquy can see pattern summaries, including the titles and dates of the entries behind them, even for entries you haven\'t set for recall.',
   },
@@ -88,6 +89,8 @@ export const journalMemoryCopy = {
     profileNotFound: 'Profile not found.',
     notAvailable: 'Not available.',
     memoryModeRequired: 'Please choose how new entries should start.',
+    couldNotIncludePastEntries:
+      "We couldn't include your past entries. Please try again.",
   },
   ui: {
     promptDismiss: 'Not now',
