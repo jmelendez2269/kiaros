@@ -79,10 +79,10 @@ export const journalMemoryCopy = {
       'Saving keeps the entry in your private journal. Each permission below is separate and can be changed later.',
   },
   errors: {
-    couldNotSaveChoice: 'Could not save your choice.',
-    couldNotSaveSettings: 'Could not save settings.',
-    couldNotLoadSettings: 'Could not load journal memory settings.',
-    pastEntriesAlreadyIncluded: 'Past entries were already included.',
+    couldNotSaveChoice: "We couldn't save your choice. Please try again.",
+    couldNotSaveSettings: "We couldn't save your settings. Please try again.",
+    couldNotLoadSettings: "We couldn't load these settings. Please refresh the page.",
+    pastEntriesAlreadyIncluded: 'Your past entries are already included.',
     pastEntriesNotAvailable: 'Past entries can only be included when new entries start included.',
     invalidRequest: 'Invalid request.',
     profileNotFound: 'Profile not found.',
@@ -90,25 +90,26 @@ export const journalMemoryCopy = {
     memoryModeRequired: 'Please choose how new entries should start.',
   },
   ui: {
-    promptDismiss: 'Not now — keep choosing per entry',
+    promptDismiss: 'Not now',
     settingsSaved: 'Saved.',
     settingsSaving: 'Saving…',
-    applyPastEntries: 'Apply to past entries',
+    applyPastEntries: 'Include past entries',
   },
   capture: {
     rowHelper:
       'Save this for later, for Stelloquy to remember, to shape your Planner, or both.',
     exchangeHelper:
-      "Save your prompt and Stelloquy's full reply together — for later, for Stelloquy to remember, to shape your Planner, or both.",
+      "Save your prompt and Stelloquy's full reply together. Keep it for later, for Stelloquy to remember, to shape your Planner, or both.",
     threadHelper:
-      'Save the entire conversation — every prompt and reply — for later, for Stelloquy to remember, to shape your Planner, or both.',
+      'Save the whole conversation. Keep it for later, for Stelloquy to remember, to shape your Planner, or both.',
     justSave: 'Just save',
     remember: 'Remember',
     rememberHelper:
       'Stelloquy can bring this up in future chats, and Reflections can use it.',
     planner: 'Planner',
-    plannerHelper: 'Adds this capture to planner context for month briefs and your Blueprint.',
+    plannerHelper: 'Lets this shape future month briefs and your Blueprint.',
     both: 'Both',
-    bothHelper: 'Remembers for Stelloquy and Reflections, and adds planner context.',
+    bothHelper:
+      'Stelloquy can remember it, Reflections can use it, and it can shape your Planner.',
   },
 } as const
