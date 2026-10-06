@@ -35,8 +35,11 @@ export type JournalConsentState = {
 
 export type JournalConsentWritePlan = {
   state: JournalConsentState
+  /** @deprecated Phase-out: do not write `oracle_memory`; kept for tests during migration. */
   oracleMemory: boolean
   persistV2Fields: boolean
+  /** When consent v2 is off, still persist Stelloquy recall on `include_in_stelloquy`. */
+  persistStelloquyRecall: boolean
   usedLegacyStelloquyFallback: boolean
 }
 
@@ -61,18 +64,25 @@ export function normalizeJournalConsent(
 ): JournalConsentWritePlan {
   const input = journalConsentCompatibilityInputSchema.parse(rawInput)
 
+  const usedLegacyStelloquyFallback =
+    v2Enabled &&
+    input.include_in_stelloquy === undefined &&
+    input.oracle_memory !== undefined
+  const includeInStelloquy =
+    input.include_in_stelloquy ?? (v2Enabled ? input.oracle_memory : undefined) ?? false
+
   if (!v2Enabled) {
     return {
-      state: { ...PRIVATE_JOURNAL_CONSENT },
-      oracleMemory: input.oracle_memory ?? false,
+      state: {
+        ...PRIVATE_JOURNAL_CONSENT,
+        include_in_stelloquy: includeInStelloquy,
+      },
+      oracleMemory: includeInStelloquy,
       persistV2Fields: false,
+      persistStelloquyRecall: true,
       usedLegacyStelloquyFallback: false,
     }
   }
-
-  const usedLegacyStelloquyFallback =
-    input.include_in_stelloquy === undefined && input.oracle_memory !== undefined
-  const includeInStelloquy = input.include_in_stelloquy ?? input.oracle_memory ?? false
 
   return {
     state: {
@@ -83,6 +93,7 @@ export function normalizeJournalConsent(
     },
     oracleMemory: includeInStelloquy,
     persistV2Fields: true,
+    persistStelloquyRecall: true,
     usedLegacyStelloquyFallback,
   }
 }

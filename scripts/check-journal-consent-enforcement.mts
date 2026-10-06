@@ -49,13 +49,13 @@ assert.match(cleanupSql, /UPDATE public\.quarterly_reviews SET ai_summary = NULL
 assert.doesNotMatch(cleanupSql, /(?:DELETE FROM|UPDATE) public\.journal_entries/)
 assert.doesNotMatch(cleanupSql, /(?:DELETE FROM|UPDATE) public\.blueprints/)
 
-assert.match(entryService, /shouldRefreshPatterns = !consentV2Enabled \|\| consent\.state\.include_in_insights/)
+assert.match(entryService, /shouldRefreshPatterns = !consentV2Enabled \|\| consentState\.include_in_insights/)
 assert.match(entryService, /if \(!shouldRefreshPatterns\) return \{ success: true, data \}/)
-assert.match(synthesis, /entriesQuery = entriesQuery\.eq\('include_in_insights', true\)/)
+assert.match(synthesis, /\.eq\('include_in_insights', true\)/)
 assert.match(synthesis, /No consented journal evidence is available for synthesis/)
-assert.match(oracleChat, /\? 'include_in_stelloquy'[\s\S]*: 'oracle_memory'/)
+assert.match(oracleChat, /journalRecallColumn = 'include_in_stelloquy'/)
 assert.match(monthBrief, /!isJournalConsentV2Enabled\(\) && priorBriefRes\.data\?\.brief_text/)
-assert.match(quarterlyReview, /journalEntriesQuery = journalEntriesQuery\.eq\('include_in_insights', true\)/)
+assert.match(quarterlyReview, /\.eq\('include_in_insights', true\)/)
 
 assert.match(rebuild, /\.eq\('include_in_insights', true\)/)
 assert.match(rebuild, /\.delete\(\)\.eq\('user_id', userProfileId\)/)

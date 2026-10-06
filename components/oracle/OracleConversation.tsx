@@ -9,6 +9,8 @@ import { OracleInput } from './OracleInput'
 import { StelloquyOrb, type OrbState } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
 import { consumeOraclePreseed } from '@/lib/oracle/preseed'
+import { journalMemoryCopy } from '@/lib/copy/journal-memory'
+import { CAPTURE_OPTIONS as THREAD_OPTIONS, type CaptureMode as ThreadCaptureMode } from '@/lib/oracle/capture-options'
 
 const ROLE_LABEL: Record<string, string> = {
   user: 'YOU',
@@ -39,13 +41,7 @@ function formatThread(messages: UIMessage[]): string {
     .join('\n\n---\n\n')
 }
 
-type ThreadCaptureMode = 'save' | 'insights' | 'planner' | 'both'
-const THREAD_OPTIONS: Array<{ mode: ThreadCaptureMode; label: string; insights: boolean; planner: boolean }> = [
-  { mode: 'save', label: 'Just save', insights: false, planner: false },
-  { mode: 'insights', label: 'Insights', insights: true, planner: false },
-  { mode: 'planner', label: 'Planner', insights: false, planner: true },
-  { mode: 'both', label: 'Both', insights: true, planner: true },
-]
+const captureCopy = journalMemoryCopy.capture
 
 const SUGGESTED_PROMPTS = [
   'What should I focus on this week?',
@@ -335,7 +331,7 @@ export function OracleConversation({
             <div className="w-full max-w-md rounded-xl border border-border/80 bg-stone-950 px-3 py-3 shadow-glow">
               <div className="flex items-start justify-between gap-3">
                 <p className="text-xs leading-5 text-bone-muted">
-                  Save the entire conversation — every prompt and reply — for later, insights, planner context, or both.
+                  {captureCopy.threadHelper}
                 </p>
                 <button
                   type="button"
@@ -357,6 +353,7 @@ export function OracleConversation({
                     type="button"
                     disabled={savingThread}
                     onClick={() => saveThread(option)}
+                    title={option.title}
                     className="rounded-lg border border-leather-400/35 bg-leather-500/16 px-3 py-1.5 text-xs font-medium text-bone transition-colors hover:bg-leather-500/24 disabled:opacity-50"
                   >
                     {option.label}
