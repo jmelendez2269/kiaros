@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { CalendarDays, MessageCircle, Palette, Sparkles, UserRound } from "lucide-react";
 import { ThemePicker } from "@/components/shared/ThemePicker";
 import { VoicePanel } from "@/components/journal/VoicePanel";
+import { JournalMemorySettingsPanel } from "@/components/settings/JournalMemorySettingsPanel";
 import { THEMES, type ThemeId } from "@/lib/constants";
 import { startTour } from "@/lib/tour/config";
 import { TRADITION_HOUSE_DEFAULTS, type HouseSystem, type Tradition } from "@/types/blueprint";
@@ -451,6 +452,8 @@ export default function SettingsPage() {
       </section>
 
       <VoicePanel />
+
+      <JournalMemorySettingsPanel />
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <section className="shell-panel px-6 py-6 md:px-8">

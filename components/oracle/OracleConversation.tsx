@@ -9,6 +9,7 @@ import { OracleInput } from './OracleInput'
 import { StelloquyOrb, type OrbState } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
 import { consumeOraclePreseed } from '@/lib/oracle/preseed'
+import { buildCaptureOptions, capturePanelCopy, type CaptureMode as ThreadCaptureMode } from '@/lib/oracle/capture-options'
 
 const ROLE_LABEL: Record<string, string> = {
   user: 'YOU',
@@ -38,14 +39,6 @@ function formatThread(messages: UIMessage[]): string {
     })
     .join('\n\n---\n\n')
 }
-
-type ThreadCaptureMode = 'save' | 'insights' | 'planner' | 'both'
-const THREAD_OPTIONS: Array<{ mode: ThreadCaptureMode; label: string; insights: boolean; planner: boolean }> = [
-  { mode: 'save', label: 'Just save', insights: false, planner: false },
-  { mode: 'insights', label: 'Insights', insights: true, planner: false },
-  { mode: 'planner', label: 'Planner', insights: false, planner: true },
-  { mode: 'both', label: 'Both', insights: true, planner: true },
-]
 
 const SUGGESTED_PROMPTS = [
   'What should I focus on this week?',
@@ -103,7 +96,12 @@ export function OracleConversation({
   const [savingThread, setSavingThread] = useState(false)
   const [threadSavedMode, setThreadSavedMode] = useState<ThreadCaptureMode | null>(null)
   const [threadError, setThreadError] = useState<string | null>(null)
-  const { preseedNonce } = useStelloquy()
+  const { preseedNonce, memoryDefaultsCaptureEnabled } = useStelloquy()
+  const captureCopy = capturePanelCopy(memoryDefaultsCaptureEnabled)
+  const threadOptions = useMemo(
+    () => buildCaptureOptions(memoryDefaultsCaptureEnabled),
+    [memoryDefaultsCaptureEnabled],
+  )
   // Tracks the highest preseed nonce we've already consumed. Initialised to
   // -1 so the initial mount (nonce starts at 0) still fires the effect once
   // for cross-page deep links that wrote a preseed before this component
@@ -156,7 +154,7 @@ export function OracleConversation({
     setThreadSavedMode(null)
   }
 
-  async function saveThread(option: (typeof THREAD_OPTIONS)[number]) {
+  async function saveThread(option: ReturnType<typeof buildCaptureOptions>[number]) {
     if (savingThread || messages.length === 0) return
     const formatted = formatThread(messages)
     const truncated = formatted.length > THREAD_MAX_CHARS
@@ -335,7 +333,7 @@ export function OracleConversation({
             <div className="w-full max-w-md rounded-xl border border-border/80 bg-stone-950 px-3 py-3 shadow-glow">
               <div className="flex items-start justify-between gap-3">
                 <p className="text-xs leading-5 text-bone-muted">
-                  Save the entire conversation — every prompt and reply — for later, insights, planner context, or both.
+                  {captureCopy.threadHelper}
                 </p>
                 <button
                   type="button"
@@ -351,12 +349,13 @@ export function OracleConversation({
                 {formatThread(messages).length > THREAD_MAX_CHARS ? ' Will be truncated at 20,000 characters.' : ''}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {THREAD_OPTIONS.map((option) => (
+                {threadOptions.map((option) => (
                   <button
                     key={option.mode}
                     type="button"
                     disabled={savingThread}
                     onClick={() => saveThread(option)}
+                    title={option.title}
                     className="rounded-lg border border-leather-400/35 bg-leather-500/16 px-3 py-1.5 text-xs font-medium text-bone transition-colors hover:bg-leather-500/24 disabled:opacity-50"
                   >
                     {option.label}

@@ -16,8 +16,8 @@ import {
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
 import { recallJournalMemories } from '@/lib/journal/memory-retrieval'
+import { isRelevanceMemoryEnabled } from '@/lib/feature-flags'
 import { resolveOracleJournalEntriesForPrompt } from '@/lib/journal/oracle-journal-recall'
-import { isJournalConsentV2Enabled, isRelevanceMemoryEnabled } from '@/lib/feature-flags'
 import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
 
 export const maxDuration = 60
@@ -81,9 +81,7 @@ export async function POST(req: Request) {
         recalledMemories = null
       }
     }
-    const journalRecallColumn = isJournalConsentV2Enabled()
-      ? 'include_in_stelloquy'
-      : 'oracle_memory'
+    const journalRecallColumn = 'include_in_stelloquy'
 
     const [
       profileRes,

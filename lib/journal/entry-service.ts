@@ -3,7 +3,12 @@ import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { after } from 'next/server'
 import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
-import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
+import { memberHasOracleAccess } from '@/lib/commerce/member-oracle-access'
+import type { ProductEntitlementRecord } from '@/lib/commerce/entitlements'
+import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
+import { applyMemoryImportanceHeuristicIfNeeded } from '@/lib/journal/consent-persist'
+import { loadJournalMemorySettings } from '@/lib/journal/load-memory-settings'
+import { resolveNewEntryConsent } from '@/lib/journal/memory-defaults'
 import {
   normalizeJournalConsent,
   type JournalConsentCompatibilityInput,
@@ -78,10 +83,7 @@ export async function createJournalEntry(
   input: CreateJournalEntryInput,
 ): Promise<CreateJournalEntryResult> {
   const consentV2Enabled = isJournalConsentV2Enabled()
-  const consent = normalizeJournalConsent(
-    input.consent ?? {},
-    consentV2Enabled,
-  )
+  const memoryDefaultsEnabled = isMemoryDefaultsEnabled() && consentV2Enabled
   const supabase: SupabaseClient<Database> = await createServerSupabase()
 
   const { data: profile, error: profileError } = await supabase
@@ -91,6 +93,30 @@ export async function createJournalEntry(
 
   if (profileError) return failure('profile_read_failed', profileError.message)
   if (!profile) return failure('profile_not_found', 'User profile not found')
+
+  let resolvedConsentInput = input.consent ?? {}
+  if (memoryDefaultsEnabled) {
+    const memorySettings = await loadJournalMemorySettings(supabase, profile.id)
+    const { data: entitlements } = await supabase
+      .from('product_entitlements')
+      .select('*')
+      .eq('user_id', profile.id)
+    const hasOracle = await memberHasOracleAccess(
+      profile.id,
+      (entitlements ?? []) as ProductEntitlementRecord[],
+    )
+    const merged = resolveNewEntryConsent(memorySettings, hasOracle, input.consent)
+    resolvedConsentInput = merged
+  }
+
+  const consent = normalizeJournalConsent(resolvedConsentInput, consentV2Enabled)
+  const consentState = memoryDefaultsEnabled
+    ? applyMemoryImportanceHeuristicIfNeeded(consent.state, {
+        body: input.body,
+        isRitual: input.isRitual ?? false,
+        hadManualImportance: false,
+      })
+    : consent.state
 
   const entryYear = Number(input.entryDate.slice(0, 4))
   const { data: cachedEphemeris } = await supabase
@@ -130,7 +156,6 @@ export async function createJournalEntry(
     body: input.body,
     entry_date: input.entryDate,
     is_ritual: input.isRitual ?? false,
-    oracle_memory: consent.oracleMemory,
     lunar_phase: ephemerisDay ? humanizeLunarPhase(ephemerisDay.moon.lunarPhase) : null,
     lunar_sign: ephemerisDay?.moon.sign ?? null,
     cycle_phase: cyclePhase,
@@ -138,8 +163,14 @@ export async function createJournalEntry(
   }
 
   const entryInsert: TablesInsert<'journal_entries'> | JournalEntryV2Insert = consent.persistV2Fields
-    ? { ...baseInsert, ...consent.state }
-    : baseInsert
+    ? { ...baseInsert, ...consentState }
+    : consent.persistStelloquyRecall
+      ? {
+          ...baseInsert,
+          include_in_stelloquy: consentState.include_in_stelloquy,
+          oracle_memory: consent.oracleMemory,
+        }
+      : baseInsert
 
   const { data, error } = await supabase
     .from('journal_entries')
@@ -186,7 +217,7 @@ export async function createJournalEntry(
       }
     }
 
-    const shouldRefreshPatterns = !consentV2Enabled || consent.state.include_in_insights
+    const shouldRefreshPatterns = !consentV2Enabled || consentState.include_in_insights
     if (!shouldRefreshPatterns) return { success: true, data }
 
     const refreshTargets = getPatternRefreshTargets(ephemerisDay)

@@ -21,7 +21,7 @@ import { InsightsTabs } from '@/components/insights/InsightsTabs'
 import { InsightsPollingShell } from '@/components/journal/InsightsPollingShell'
 import { DEFAULT_VOICE_KEY, VOICE_PRESETS } from '@/lib/ai/journal-insight-synthesis'
 import { BRAND } from '@/lib/brand'
-import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
+import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 
 export const metadata = {
@@ -32,6 +32,7 @@ export const metadata = {
 export default async function PatternsPage() {
   const supabase = await createServerSupabase()
   const consentV2Enabled = isJournalConsentV2Enabled()
+  const memoryDefaultsEnabled = isMemoryDefaultsEnabled() && consentV2Enabled
 
   const { data: profile } = await supabase.from('user_profiles').select('id').maybeSingle()
 
@@ -196,6 +197,8 @@ export default async function PatternsPage() {
               <JournalHistoryList
                 entries={recentEntries}
                 consentV2Enabled={consentV2Enabled}
+                hasOracleAccess={isAppAdmin || access.hasOracleAccess}
+                simplifiedMemoryUi={memoryDefaultsEnabled}
               />
             </section>
           }
@@ -208,7 +211,10 @@ export default async function PatternsPage() {
                   future Stelloquy context — and saved threads can be reopened to read the whole conversation.
                 </p>
               </header>
-              <CaptureHistoryList captures={oracleCaptures} />
+              <CaptureHistoryList
+                captures={oracleCaptures}
+                memoryDefaultsEnabled={memoryDefaultsEnabled}
+              />
             </section>
           }
         />

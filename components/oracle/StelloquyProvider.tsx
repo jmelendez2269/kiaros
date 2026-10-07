@@ -23,6 +23,8 @@ interface StelloquyContextValue {
   /** Entitlement — true for Planner+Oracle subscribers. Components use this
    *  to decide between the conversation drawer and the paid upgrade state. */
   hasOracleAccess: boolean
+  /** When true, Stelloquy capture buttons use the journal memory redesign copy. */
+  memoryDefaultsCaptureEnabled: boolean
 }
 
 const StelloquyContext = createContext<StelloquyContextValue | null>(null)
@@ -30,9 +32,14 @@ const StelloquyContext = createContext<StelloquyContextValue | null>(null)
 interface Props {
   children: ReactNode
   hasOracleAccess: boolean
+  memoryDefaultsCaptureEnabled?: boolean
 }
 
-export function StelloquyProvider({ children, hasOracleAccess }: Props) {
+export function StelloquyProvider({
+  children,
+  hasOracleAccess,
+  memoryDefaultsCaptureEnabled = false,
+}: Props) {
   const [open, setOpen] = useState(false)
   const [preseedNonce, setPreseedNonce] = useState(0)
 
@@ -46,8 +53,26 @@ export function StelloquyProvider({ children, hasOracleAccess }: Props) {
   }, [])
 
   const value = useMemo<StelloquyContextValue>(
-    () => ({ open, openDrawer, closeDrawer, toggleDrawer, openWith, preseedNonce, hasOracleAccess }),
-    [open, openDrawer, closeDrawer, toggleDrawer, openWith, preseedNonce, hasOracleAccess],
+    () => ({
+      open,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
+      openWith,
+      preseedNonce,
+      hasOracleAccess,
+      memoryDefaultsCaptureEnabled,
+    }),
+    [
+      open,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
+      openWith,
+      preseedNonce,
+      hasOracleAccess,
+      memoryDefaultsCaptureEnabled,
+    ],
   )
 
   return <StelloquyContext.Provider value={value}>{children}</StelloquyContext.Provider>

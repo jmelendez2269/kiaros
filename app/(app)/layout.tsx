@@ -16,6 +16,7 @@ import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { getAppProfile } from '@/lib/app/get-app-profile'
 import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { ESTABLISHED_PATTERN_MIN_SAMPLE } from '@/lib/journal/pattern-discoveries'
+import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
@@ -133,9 +134,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // entitlements exist but none are active/read-only → lapsed monthly sub or other expired state
   const showLapsedBanner = !isAppAdmin && !entitlementsUnknown && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length > 0
   const showNoAccessBanner = !isAppAdmin && !entitlementsUnknown && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length === 0
+  const memoryDefaultsCaptureEnabled =
+    isMemoryDefaultsEnabled() && isJournalConsentV2Enabled()
 
   return (
-    <StelloquyProvider hasOracleAccess={isAppAdmin || access.hasOracleAccess}>
+    <StelloquyProvider
+      hasOracleAccess={isAppAdmin || access.hasOracleAccess}
+      memoryDefaultsCaptureEnabled={memoryDefaultsCaptureEnabled}
+    >
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
           <AlmanacSidebar hasOracleAccess={isAppAdmin || access.hasOracleAccess} />

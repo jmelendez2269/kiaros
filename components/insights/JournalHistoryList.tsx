@@ -56,9 +56,13 @@ function sameConsent(left: JournalConsentState, right: JournalConsentState) {
 function JournalHistoryCard({
   entry,
   consentV2Enabled,
+  hasOracleAccess,
+  simplifiedMemoryUi,
 }: {
   entry: RecentJournalEntry
   consentV2Enabled: boolean
+  hasOracleAccess: boolean
+  simplifiedMemoryUi: boolean
 }) {
   const initialConsent = consentFromEntry(entry)
   const [consent, setConsent] = useState<JournalConsentState>(initialConsent)
@@ -120,10 +124,10 @@ function JournalHistoryCard({
           {(consentV2Enabled ? savedConsent.include_in_insights : false) ? (
             <span className="channel-ai channel-pill">Included</span>
           ) : null}
-          {(consentV2Enabled ? savedConsent.include_in_stelloquy : entry.oracle_memory) ? (
+          {(consentV2Enabled ? savedConsent.include_in_stelloquy : entry.include_in_stelloquy) ? (
             <span className="channel-memory channel-pill">Stelloquy recall</span>
           ) : null}
-          {consentV2Enabled && savedConsent.memory_pinned ? (
+          {consentV2Enabled && !simplifiedMemoryUi && savedConsent.memory_pinned ? (
             <span className="channel-memory channel-pill">Always remember</span>
           ) : null}
           {entry.is_ritual ? <span className="channel-pill">Ritual</span> : null}
@@ -141,6 +145,8 @@ function JournalHistoryCard({
                 onChange={setConsent}
                 disabled={isSaving}
                 compact
+                hasOracleAccess={hasOracleAccess}
+                simplifiedMemoryUi={simplifiedMemoryUi}
               />
               <div className="flex flex-wrap gap-2">
                 <button
@@ -193,9 +199,13 @@ function JournalHistoryCard({
 export function JournalHistoryList({
   entries,
   consentV2Enabled,
+  hasOracleAccess,
+  simplifiedMemoryUi = false,
 }: {
   entries: RecentJournalEntry[]
   consentV2Enabled: boolean
+  hasOracleAccess: boolean
+  simplifiedMemoryUi?: boolean
 }) {
   return (
     <div className="channel-mine mt-5 space-y-3">
@@ -205,6 +215,8 @@ export function JournalHistoryList({
             key={entry.id}
             entry={entry}
             consentV2Enabled={consentV2Enabled}
+            hasOracleAccess={hasOracleAccess}
+            simplifiedMemoryUi={simplifiedMemoryUi}
           />
         ))
       ) : (
