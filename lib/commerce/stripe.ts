@@ -20,6 +20,7 @@ import {
 } from "@/lib/commerce/config";
 import { getNextPlannerYear } from "@/lib/commerce/planner-year";
 import { buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
+import { buildSubscriptionCancelMetadata } from "@/lib/commerce/subscription-cancel-metadata";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { BRAND } from "@/lib/brand";
 import { sendMetaPurchaseEvent } from "@/lib/analytics/meta-capi";
@@ -802,7 +803,10 @@ export async function syncSubscriptionEntitlement(subscription: Stripe.Subscript
       metadata: {
         ...(typeof order.metadata === "object" && order.metadata ? order.metadata : {}),
         subscription_status: subscription.status,
-        cancel_at_period_end: subscription.cancel_at_period_end,
+        ...buildSubscriptionCancelMetadata({
+          cancel_at_period_end: subscription.cancel_at_period_end,
+          cancel_at: subscription.cancel_at,
+        }),
       },
     })
     .eq("id", order.id);
