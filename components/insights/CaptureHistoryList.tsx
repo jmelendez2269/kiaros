@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { UIMessage } from 'ai'
 import { MessagesSquare } from 'lucide-react'
+import { journalMemoryCopy } from '@/lib/copy/journal-memory'
 import { ThreadViewer } from '@/components/oracle/ThreadViewer'
 
 export type OracleCaptureRow = {
@@ -20,7 +21,13 @@ function truncate(value: string, max = 220) {
   return value.length <= max ? value : `${value.slice(0, max - 1)}...`
 }
 
-export function CaptureHistoryList({ captures }: { captures: OracleCaptureRow[] }) {
+export function CaptureHistoryList({
+  captures,
+  memoryDefaultsEnabled = false,
+}: {
+  captures: OracleCaptureRow[]
+  memoryDefaultsEnabled?: boolean
+}) {
   const [viewing, setViewing] = useState<OracleCaptureRow | null>(null)
 
   return (
@@ -39,7 +46,13 @@ export function CaptureHistoryList({ captures }: { captures: OracleCaptureRow[] 
                   })}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {capture.include_in_insights ? <span className="channel-pill">Insights</span> : null}
+                  {capture.include_in_insights ? (
+                    <span className="channel-pill">
+                      {memoryDefaultsEnabled
+                        ? journalMemoryCopy.capture.remember
+                        : 'Insights'}
+                    </span>
+                  ) : null}
                   {capture.include_in_planner ? <span className="channel-pill">Planner</span> : null}
                   {!capture.include_in_insights && !capture.include_in_planner ? (
                     <span className="shell-pill">Saved</span>

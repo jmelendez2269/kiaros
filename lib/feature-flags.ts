@@ -10,6 +10,10 @@ export function isJournalConsentV2Enabled(): boolean {
   return enabled(process.env.KIAROS_JOURNAL_CONSENT_V2);
 }
 
+export function isMemoryDefaultsEnabled(): boolean {
+  return enabled(process.env.KIAROS_MEMORY_DEFAULTS);
+}
+
 export function isFunnelEventsEnabled(): boolean {
   return enabled(process.env.KIAROS_FUNNEL_EVENTS);
 }

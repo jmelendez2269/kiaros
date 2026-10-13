@@ -7,6 +7,7 @@ import { BRAND } from '@/lib/brand'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries'
 import { JournalConsentControls } from '@/components/journal/JournalConsentControls'
+import { JournalMemoryModePrompt } from '@/components/journal/JournalMemoryModePrompt'
 import { journalConsentSaveMessage, type JournalConsentState } from '@/lib/journal/consent'
 
 type RecentJournalEntry = {
@@ -52,6 +53,10 @@ interface JournalComposerProps {
   oracleMemoryCount: number
   blueprintYear: number | null
   consentV2Enabled: boolean
+  memoryDefaultsEnabled?: boolean
+  showMemoryPrompt?: boolean
+  initialNewEntryConsent?: JournalConsentState
+  hasOracleAccess?: boolean
 }
 
 const PRIVATE_CONSENT: JournalConsentState = {
@@ -85,6 +90,10 @@ export function JournalComposer({
   oracleMemoryCount,
   blueprintYear,
   consentV2Enabled,
+  memoryDefaultsEnabled = false,
+  showMemoryPrompt = false,
+  initialNewEntryConsent,
+  hasOracleAccess: hasOracleAccessProp = false,
 }: JournalComposerProps) {
   const isEditing = Boolean(initialEntry)
   const [entryCount, setEntryCount] = useState(journalEntriesCount)
@@ -98,7 +107,7 @@ export function JournalComposer({
   )
   const [isRitual, setIsRitual] = useState(initialEntry?.is_ritual ?? Boolean(initialPrompt))
   const [legacyOracleMemory, setLegacyOracleMemory] = useState(
-    initialEntry?.oracle_memory ?? false,
+    initialEntry?.include_in_stelloquy ?? initialEntry?.oracle_memory ?? false,
   )
   const [consent, setConsent] = useState<JournalConsentState>(
     initialEntry
@@ -108,19 +117,19 @@ export function JournalComposer({
           memory_pinned: initialEntry.memory_pinned,
           memory_importance: initialEntry.memory_importance,
         }
-      : { ...PRIVATE_CONSENT },
+      : (initialNewEntryConsent ?? { ...PRIVATE_CONSENT }),
   )
   const [savedMemoryIncluded, setSavedMemoryIncluded] = useState(
-    consentV2Enabled
-      ? (initialEntry?.include_in_stelloquy ?? false)
-      : (initialEntry?.oracle_memory ?? false),
+    initialEntry?.include_in_stelloquy ?? initialEntry?.oracle_memory ?? false,
   )
+  const [memoryPromptOpen, setMemoryPromptOpen] = useState(showMemoryPrompt)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [lastSavedEntry, setLastSavedEntry] = useState<{ title: string | null; body: string } | null>(null)
   const router = useRouter()
-  const { openDrawer, openWith, hasOracleAccess } = useStelloquy()
+  const { openDrawer, openWith, hasOracleAccess: hasOracleAccessContext } = useStelloquy()
+  const hasOracleAccess = hasOracleAccessProp || hasOracleAccessContext
 
   function handleOpenStelloquy() {
     if (hasOracleAccess) {
@@ -170,9 +179,7 @@ export function JournalComposer({
           body,
           ...(!initialEntry ? { entry_date: entryDate } : {}),
           is_ritual: isRitual,
-          ...(consentV2Enabled
-            ? { ...consent, oracle_memory: consent.include_in_stelloquy }
-            : { oracle_memory: legacyOracleMemory }),
+          ...(consentV2Enabled ? consent : { include_in_stelloquy: legacyOracleMemory }),
           ...(!initialEntry
             ? {
                 transit_context:
@@ -200,9 +207,7 @@ export function JournalComposer({
 
       window.dispatchEvent(new Event(PATTERN_DISCOVERY_CHECK_EVENT))
 
-      const isNowInMemory = consentV2Enabled
-        ? payload.include_in_stelloquy
-        : Boolean(payload.oracle_memory)
+      const isNowInMemory = Boolean(payload.include_in_stelloquy)
       if (initialEntry) {
         if (isNowInMemory !== savedMemoryIncluded) {
           setMemoryCount((current) => current + (isNowInMemory ? 1 : -1))
@@ -230,7 +235,7 @@ export function JournalComposer({
         setTitle(initialPrompt ? truncate(initialPrompt, 120) : '')
         setIsRitual(Boolean(initialPrompt))
         setLegacyOracleMemory(false)
-        setConsent({ ...PRIVATE_CONSENT })
+        setConsent(initialNewEntryConsent ?? { ...PRIVATE_CONSENT })
       }
       router.refresh()
     } catch (err) {
@@ -242,6 +247,15 @@ export function JournalComposer({
 
   return (
     <div className="space-y-6">
+      {memoryDefaultsEnabled && memoryPromptOpen && !initialEntry ? (
+        <JournalMemoryModePrompt
+          hasOracleAccess={hasOracleAccess}
+          onComplete={() => {
+            setMemoryPromptOpen(false)
+            router.refresh()
+          }}
+        />
+      ) : null}
       <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="max-w-2xl">
           <p className="channel-mine channel-kicker mb-2.5">Journal</p>
@@ -405,6 +419,8 @@ export function JournalComposer({
               value={consent}
               onChange={setConsent}
               disabled={isSaving}
+              hasOracleAccess={hasOracleAccess}
+              simplifiedMemoryUi={memoryDefaultsEnabled}
             />
           ) : null}
 
