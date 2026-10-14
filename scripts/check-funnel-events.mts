@@ -107,7 +107,12 @@ const stripeEventId = validateFunnelEvent({ ...validInput, event_id: "stripe:evt
 assert.equal(stripeEventId.success, true, "server events may use a stable provider idempotency key");
 
 const publicEventNames = FUNNEL_EVENT_NAMES.filter(isPublicFunnelEventName);
-assert.deepEqual(publicEventNames, ["pricing_viewed", "tier_selected", "preview_viewed"]);
+assert.deepEqual(publicEventNames, [
+  "pricing_viewed",
+  "tier_selected",
+  "preview_viewed",
+  "field_notes_submit",
+]);
 const trustedServerEventNames = FUNNEL_EVENT_NAMES.filter((eventName) => !isPublicFunnelEventName(eventName));
 assert.deepEqual(trustedServerEventNames, [
   "preview_started",
@@ -123,6 +128,7 @@ assert.deepEqual(trustedServerEventNames, [
   "sampler_credit_used",
   "paid_upgrade_completed",
 ]);
+assert.equal(isPublicFunnelEventName("field_notes_submit"), true);
 for (const trustedEventName of [
   "checkout_completed",
   "blueprint_ready",
@@ -154,6 +160,7 @@ assert.deepEqual(parsedAttribution, {
   source: "newsletter",
   medium: "email",
   campaign: "August launch",
+  content: null,
   referrer_host: "example.com",
   entry_path: "/pricing",
   experiment_key: "pricing-path",
@@ -178,6 +185,23 @@ assert.equal(firstTouch.source, "newsletter");
 assert.equal(firstTouch.experiment_variant, "reading-first");
 assert.equal(shouldRotateFunnelSession("2026-08-06T17:45:00.000Z", new Date("2026-08-06T18:00:00.000Z")), false);
 assert.equal(shouldRotateFunnelSession("2026-08-06T17:29:59.000Z", new Date("2026-08-06T18:00:00.000Z")), true);
+
+const fieldNotesSubmit = validateFunnelEvent({
+  event_id: "field_notes_submit:abc",
+  event_name: "field_notes_submit",
+  anonymous_id: ANONYMOUS_ID,
+  source: "home_hero",
+});
+assert.equal(fieldNotesSubmit.success, true);
+assert.match(
+  validationError({
+    event_id: "field_notes_submit:bad",
+    event_name: "field_notes_submit",
+    anonymous_id: ANONYMOUS_ID,
+    source: "unknown_surface",
+  }),
+  /signup surface/,
+);
 
 class InMemoryAdapter implements FunnelEventDatabaseAdapter {
   readonly events = new Map<string, FunnelEventRecord>();

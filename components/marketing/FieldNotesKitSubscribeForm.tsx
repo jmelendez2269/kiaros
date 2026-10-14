@@ -1,3 +1,6 @@
+"use client";
+
+import { recordFieldNotesSubmitAttempt } from "@/lib/analytics/field-notes-submit";
 import { getKitFieldNotesSubscribeActionUrl } from "@/lib/marketing/kit-field-notes";
 import {
   fieldNotesInitialUtm,
@@ -43,11 +46,16 @@ export function FieldNotesKitSubscribeForm({
   const inputClass = inputClassByVariant[variant];
   const buttonClass = buttonClassByVariant[variant];
 
+  const handleSubmit = () => {
+    if (source) recordFieldNotesSubmitAttempt(source);
+  };
+
   return (
     <form
       action={getKitFieldNotesSubscribeActionUrl()}
       method="post"
       className={className}
+      onSubmit={handleSubmit}
     >
       <FieldNotesUtmHiddenInputs initialFromServer={mergedUtm} />
       <div

@@ -1,12 +1,26 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { FunnelMetrics, MetricsDateRange } from "@/lib/analytics/metrics";
+import { FIELD_NOTES_SIGNUP_SOURCES } from "@/lib/marketing/field-notes-source";
+import type {
+  FieldNotesSignupMetrics,
+  FunnelMetrics,
+  MetricsDateRange,
+} from "@/lib/analytics/metrics";
 
 interface MetricsViewProps {
   metrics: FunnelMetrics;
+  fieldNotesSignups: FieldNotesSignupMetrics;
   dateRange: MetricsDateRange;
 }
+
+const FIELD_NOTES_SOURCE_LABELS: Record<(typeof FIELD_NOTES_SIGNUP_SOURCES)[number], string> = {
+  home_hero: "Home hero",
+  home_footer: "Home footer",
+  pricing: "Pricing",
+  sampler_success: "Sampler success",
+  onboarding: "Onboarding",
+};
 
 function formatPercent(rate: number): string {
   return `${(rate * 100).toFixed(1)}%`;
@@ -43,7 +57,29 @@ function DataRow({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-export function MetricsView({ metrics, dateRange }: MetricsViewProps) {
+function FieldNotesSignupTable({
+  title,
+  counts,
+}: {
+  title: string;
+  counts: FieldNotesSignupMetrics["last7Days"];
+}) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground">{title}</div>
+      <DataRow label="Total submit attempts" value={counts.total} />
+      {FIELD_NOTES_SIGNUP_SOURCES.map((source) => (
+        <DataRow
+          key={source}
+          label={FIELD_NOTES_SOURCE_LABELS[source]}
+          value={counts.bySource[source]}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function MetricsView({ metrics, fieldNotesSignups, dateRange }: MetricsViewProps) {
   const router = useRouter();
 
   const handleDateChange = (start: string, end: string) => {
@@ -90,6 +126,16 @@ export function MetricsView({ metrics, dateRange }: MetricsViewProps) {
           </div>
         </div>
       </div>
+
+      <MetricCard
+        title="Field Notes signups by source"
+        definition="Client-side submit attempts on the Kit Field Notes form (`field_notes_submit` in first_party_funnel_events). Counts are not confirmed Kit subscribers (double opt-in). Rolling UTC windows from now."
+      >
+        <div className="grid gap-6 sm:grid-cols-2">
+          <FieldNotesSignupTable title="Last 7 days" counts={fieldNotesSignups.last7Days} />
+          <FieldNotesSignupTable title="Last 30 days" counts={fieldNotesSignups.last30Days} />
+        </div>
+      </MetricCard>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Metric 1: Revenue per pricing visitor */}

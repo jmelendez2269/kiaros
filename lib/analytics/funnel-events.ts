@@ -14,6 +14,7 @@ export const FUNNEL_EVENT_NAMES = [
   "sampler_purchased",
   "sampler_credit_used",
   "paid_upgrade_completed",
+  "field_notes_submit",
 ] as const;
 
 export type FunnelEventName = (typeof FUNNEL_EVENT_NAMES)[number];
@@ -22,6 +23,7 @@ export const PUBLIC_FUNNEL_EVENT_NAMES = [
   "pricing_viewed",
   "tier_selected",
   "preview_viewed",
+  "field_notes_submit",
 ] as const satisfies readonly FunnelEventName[];
 
 const PUBLIC_EVENT_NAMES = new Set<FunnelEventName>(PUBLIC_FUNNEL_EVENT_NAMES);
@@ -103,6 +105,14 @@ export interface FunnelEventRecord {
 export type FunnelEventValidationResult =
   | { success: true; event: FunnelEventRecord }
   | { success: false; error: string };
+
+const FIELD_NOTES_SUBMIT_SOURCES = new Set([
+  "home_hero",
+  "home_footer",
+  "pricing",
+  "sampler_success",
+  "onboarding",
+]);
 
 const EVENT_NAMES = new Set<string>(FUNNEL_EVENT_NAMES);
 const PRODUCT_TIERS = new Set<string>(FUNNEL_PRODUCT_TIERS);
@@ -359,6 +369,18 @@ export function validateFunnelEvent(
       converted_entitlement_id: uuid(input.converted_entitlement_id, "converted_entitlement_id"),
       metadata: parseMetadata(input.metadata),
     };
+
+    if (event.event_name === "field_notes_submit") {
+      if (!event.source || !FIELD_NOTES_SUBMIT_SOURCES.has(event.source)) {
+        return {
+          success: false,
+          error: "source must be a Field Notes signup surface.",
+        };
+      }
+      if (event.user_id) {
+        return { success: false, error: "field_notes_submit must not include user_id." };
+      }
+    }
 
     return { success: true, event };
   } catch (error) {
