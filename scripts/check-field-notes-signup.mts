@@ -44,7 +44,8 @@ function testFormMarkup(): void {
   assert.match(formSource, /getKitFieldNotesSubscribeActionUrl\(\)/);
   assert.match(formSource, /method="post"/);
   assert.match(formSource, /name="email_address"/);
-  assert.doesNotMatch(formSource, /fetch\(/);
+  assert.match(formSource, /recordFieldNotesSubmitAttempt/);
+  assert.match(formSource, /onSubmit=\{handleSubmit\}/);
   assert.match(formSource, />\s*Subscribe\s*</);
   assert.match(formSource, /source\?: FieldNotesSignupSource/);
   assert.match(formSource, /fieldNotesInitialUtm/);
@@ -106,6 +107,12 @@ function testSurfaceSources(): void {
   assert.match(onboardingSource, /field_notes_subscribe/);
   assert.match(onboardingSource, /FIELD_NOTES_ONBOARDING_OPT_IN/);
   assert.match(onboardingSource, /source: "onboarding"/);
+
+  const kitSubscribeSource = readFileSync(
+    join(root, "lib/marketing/subscribe-field-notes-kit.ts"),
+    "utf8",
+  );
+  assert.match(kitSubscribeSource, /recordFieldNotesSubmitAttempt/);
 
   const sourceLib = readFileSync(join(root, "lib/marketing/field-notes-source.ts"), "utf8");
   assert.match(sourceLib, /"home_hero"/);

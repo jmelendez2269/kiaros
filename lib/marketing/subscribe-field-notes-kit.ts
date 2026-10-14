@@ -1,3 +1,4 @@
+import { recordFieldNotesSubmitAttempt } from "@/lib/analytics/field-notes-submit";
 import { getKitFieldNotesSubscribeActionUrl } from "@/lib/marketing/kit-field-notes";
 import {
   fieldNotesUtmForSignupSource,
@@ -21,6 +22,8 @@ export async function subscribeFieldNotesKit(options: {
   for (const [key, value] of Object.entries(utm)) {
     if (value) params.set(`fields[${key}]`, value);
   }
+
+  recordFieldNotesSubmitAttempt(options.source);
 
   try {
     await fetch(getKitFieldNotesSubscribeActionUrl(), {

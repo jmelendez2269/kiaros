@@ -1,5 +1,5 @@
 import { createAdminSupabase } from "@/lib/supabase/admin";
-import { calculateFunnelMetrics } from "@/lib/analytics/metrics";
+import { calculateFieldNotesSignupMetrics, calculateFunnelMetrics } from "@/lib/analytics/metrics";
 import { MetricsView } from "@/components/admin/MetricsView";
 
 /**
@@ -34,14 +34,18 @@ export default async function MetricsAdminPage({
   })();
 
   const supabase = createAdminSupabase();
-  const metrics = await calculateFunnelMetrics(supabase, {
-    start: startDate,
-    end: endDate,
-  });
+  const [metrics, fieldNotesSignups] = await Promise.all([
+    calculateFunnelMetrics(supabase, {
+      start: startDate,
+      end: endDate,
+    }),
+    calculateFieldNotesSignupMetrics(supabase),
+  ]);
 
   return (
     <MetricsView
       metrics={metrics}
+      fieldNotesSignups={fieldNotesSignups}
       dateRange={{ start: startDate, end: endDate }}
     />
   );

@@ -20,8 +20,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "user_id is assigned by the server." }, { status: 400 });
   }
 
+  const recordBody =
+    typeof body === "object" && body !== null && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : null;
+  const eventName =
+    typeof recordBody?.event_name === "string" ? recordBody.event_name : null;
+  const skipAuthenticatedIdentity = eventName === "field_notes_submit";
+
   const { userId: clerkUserId } = await auth();
-  const userId = clerkUserId ? await resolveFunnelUserId(clerkUserId) : null;
+  const userId =
+    skipAuthenticatedIdentity || !clerkUserId ? null : await resolveFunnelUserId(clerkUserId);
   const validation = validateFunnelEvent(
     typeof body === "object" && body !== null && !Array.isArray(body)
       ? { ...body, user_id: userId }

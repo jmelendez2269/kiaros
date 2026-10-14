@@ -2,6 +2,11 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  FIELD_NOTES_SIGNUP_SOURCES,
+  type FieldNotesSignupSource,
+} from "@/lib/marketing/field-notes-source";
+
 /**
  * Admin funnel/retention metric calculations.
  * 
@@ -12,6 +17,75 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export interface MetricsDateRange {
   start: string; // ISO date string
   end: string;   // ISO date string
+}
+
+export interface FieldNotesSignupPeriodCounts {
+  total: number;
+  bySource: Record<FieldNotesSignupSource, number>;
+}
+
+export interface FieldNotesSignupMetrics {
+  last7Days: FieldNotesSignupPeriodCounts;
+  last30Days: FieldNotesSignupPeriodCounts;
+}
+
+function emptyFieldNotesSignupCounts(): FieldNotesSignupPeriodCounts {
+  const bySource = {} as Record<FieldNotesSignupSource, number>;
+  for (const source of FIELD_NOTES_SIGNUP_SOURCES) {
+    bySource[source] = 0;
+  }
+  return { total: 0, bySource };
+}
+
+export function aggregateFieldNotesSubmitRows(
+  rows: ReadonlyArray<{ source: string | null; occurred_at: string }>,
+  windowStart: Date,
+  windowEnd: Date,
+): FieldNotesSignupPeriodCounts {
+  const counts = emptyFieldNotesSignupCounts();
+  const startMs = windowStart.getTime();
+  const endMs = windowEnd.getTime();
+
+  for (const row of rows) {
+    const occurredMs = Date.parse(row.occurred_at);
+    if (Number.isNaN(occurredMs) || occurredMs < startMs || occurredMs > endMs) continue;
+    if (!row.source || !FIELD_NOTES_SIGNUP_SOURCES.includes(row.source as FieldNotesSignupSource)) {
+      continue;
+    }
+    const source = row.source as FieldNotesSignupSource;
+    counts.bySource[source] += 1;
+    counts.total += 1;
+  }
+
+  return counts;
+}
+
+/**
+ * Field Notes Kit form submit attempts (`field_notes_submit`), fixed 7- and 30-day UTC windows.
+ */
+export async function calculateFieldNotesSignupMetrics(
+  supabase: SupabaseClient,
+  now: Date = new Date(),
+): Promise<FieldNotesSignupMetrics> {
+  const windowEnd = now;
+  const thirtyDaysStart = new Date(now);
+  thirtyDaysStart.setUTCDate(thirtyDaysStart.getUTCDate() - 30);
+  const sevenDaysStart = new Date(now);
+  sevenDaysStart.setUTCDate(sevenDaysStart.getUTCDate() - 7);
+
+  const { data } = await supabase
+    .from("first_party_funnel_events")
+    .select("source, occurred_at")
+    .eq("event_name", "field_notes_submit")
+    .gte("occurred_at", thirtyDaysStart.toISOString())
+    .lte("occurred_at", windowEnd.toISOString());
+
+  const rows = data ?? [];
+
+  return {
+    last7Days: aggregateFieldNotesSubmitRows(rows, sevenDaysStart, windowEnd),
+    last30Days: aggregateFieldNotesSubmitRows(rows, thirtyDaysStart, windowEnd),
+  };
 }
 
 export interface FunnelMetrics {
