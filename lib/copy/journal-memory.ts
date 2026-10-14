@@ -30,7 +30,7 @@ export const journalMemoryCopy = {
   },
   pastEntries: {
     heading: "What about entries you've already written?",
-    checkbox: 'Include my past entries too',
+    checkbox: "Also include entries I've already written",
     helper:
       "This uses the same settings as new entries for anything you haven't set yourself. Entries you've already switched by hand stay as you left them.",
     done: 'Done',

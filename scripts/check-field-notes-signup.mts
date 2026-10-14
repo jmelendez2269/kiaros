@@ -7,6 +7,10 @@ import {
   KIT_FIELD_NOTES_FORM_ID,
   getKitFieldNotesSubscribeActionUrl,
 } from "../lib/marketing/kit-field-notes.ts";
+import {
+  FIELD_NOTES_FOOTER_TAGLINE,
+  FIELD_NOTES_NEWSLETTER_BODY,
+} from "../lib/marketing/field-notes-copy.ts";
 import { PUBLIC_ROUTE_PATTERNS } from "../lib/marketing/public-routes.ts";
 
 const root = join(fileURLToPath(new URL(".", import.meta.url)), "..");
@@ -42,6 +46,8 @@ function testFormMarkup(): void {
   assert.match(formSource, /name="email_address"/);
   assert.doesNotMatch(formSource, /fetch\(/);
   assert.match(formSource, />\s*Subscribe\s*</);
+  assert.match(formSource, /source\?: FieldNotesSignupSource/);
+  assert.match(formSource, /fieldNotesInitialUtm/);
 }
 
 function testCopy(): void {
@@ -49,15 +55,20 @@ function testCopy(): void {
     join(root, "components/marketing/FieldNotesFooterSignup.tsx"),
     "utf8",
   );
-  assert.match(footerSource, /Field Notes, Jack&apos;s email newsletter\./);
+  assert.match(footerSource, /FIELD_NOTES_HOME_FOOTER_FRAMING/);
+  assert.equal(
+    FIELD_NOTES_FOOTER_TAGLINE,
+    "Field Notes, Jack's email newsletter.",
+  );
 
   const pageSource = readFileSync(
     join(root, "components/marketing/FieldNotesPageContent.tsx"),
     "utf8",
   );
+  assert.match(pageSource, /FIELD_NOTES_NEWSLETTER_BODY/);
   assert.match(
-    pageSource,
-    /Jack&apos;s email newsletter, with essays on timing and rest and notes from building/,
+    FIELD_NOTES_NEWSLETTER_BODY,
+    /Jack's email newsletter, with essays on timing and rest and notes from building/,
   );
   assert.match(pageSource, /Check your inbox to confirm\./);
   assert.match(pageSource, /Read a recent one/);
@@ -73,11 +84,44 @@ function testCopy(): void {
   assert.match(metaSource, /Field Notes: Jack's email newsletter \| Kairos/);
 }
 
+function testSurfaceSources(): void {
+  const homeSource = readFileSync(join(root, "components/marketing/KairosHome.tsx"), "utf8");
+  assert.match(homeSource, /FieldNotesHeroSignup source="home_hero"/);
+  assert.match(homeSource, /FieldNotesFooterSignup variant="almanac" source="home_footer"/);
+
+  const pricingSource = readFileSync(
+    join(root, "components/commerce/PublicPricingPage.tsx"),
+    "utf8",
+  );
+  assert.match(pricingSource, /FieldNotesPricingSignup/);
+  assert.match(pricingSource, /FieldNotesFooterSignup variant="shell" source="pricing"/);
+
+  const samplerSource = readFileSync(join(root, "app/purchase/success/page.tsx"), "utf8");
+  assert.match(samplerSource, /FieldNotesSamplerSuccessSignup/);
+
+  const onboardingSource = readFileSync(
+    join(root, "app/(onboarding)/onboarding/page.tsx"),
+    "utf8",
+  );
+  assert.match(onboardingSource, /field_notes_subscribe/);
+  assert.match(onboardingSource, /FIELD_NOTES_ONBOARDING_OPT_IN/);
+  assert.match(onboardingSource, /source: "onboarding"/);
+
+  const sourceLib = readFileSync(join(root, "lib/marketing/field-notes-source.ts"), "utf8");
+  assert.match(sourceLib, /"home_hero"/);
+  assert.match(sourceLib, /"home_footer"/);
+  assert.match(sourceLib, /"pricing"/);
+  assert.match(sourceLib, /"sampler_success"/);
+  assert.match(sourceLib, /"onboarding"/);
+  assert.match(sourceLib, /utm_content: source/);
+}
+
 function run(): void {
   testFormConfig();
   testPublicRoutes();
   testFormMarkup();
   testCopy();
+  testSurfaceSources();
   console.log("check-field-notes-signup: passed");
 }
 

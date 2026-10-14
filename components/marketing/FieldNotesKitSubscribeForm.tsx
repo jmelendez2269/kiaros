@@ -1,4 +1,8 @@
 import { getKitFieldNotesSubscribeActionUrl } from "@/lib/marketing/kit-field-notes";
+import {
+  fieldNotesInitialUtm,
+  type FieldNotesSignupSource,
+} from "@/lib/marketing/field-notes-source";
 import type { FieldNotesUtmFieldKey } from "@/lib/marketing/field-notes-utm";
 
 import { FieldNotesUtmHiddenInputs } from "./FieldNotesUtmHiddenInputs";
@@ -10,6 +14,7 @@ interface Props {
   variant?: VisualVariant;
   className?: string;
   initialUtm?: Partial<Record<FieldNotesUtmFieldKey, string>>;
+  source?: FieldNotesSignupSource;
 }
 
 const inputClassByVariant: Record<VisualVariant, string> = {
@@ -31,7 +36,9 @@ export function FieldNotesKitSubscribeForm({
   variant = "shell",
   className = "",
   initialUtm,
+  source,
 }: Props) {
+  const mergedUtm = fieldNotesInitialUtm(source, initialUtm);
   const isStacked = layout === "stacked";
   const inputClass = inputClassByVariant[variant];
   const buttonClass = buttonClassByVariant[variant];
@@ -42,7 +49,7 @@ export function FieldNotesKitSubscribeForm({
       method="post"
       className={className}
     >
-      <FieldNotesUtmHiddenInputs initialFromServer={initialUtm} />
+      <FieldNotesUtmHiddenInputs initialFromServer={mergedUtm} />
       <div
         className={
           isStacked

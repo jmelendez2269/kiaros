@@ -3,6 +3,7 @@ import { Activity, Brain, Orbit } from "lucide-react";
 
 import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
 import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
+import { FieldNotesPricingSignup } from "@/components/marketing/FieldNotesPricingSignup";
 import { CheckoutButton } from "@/components/commerce/CheckoutButton";
 import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { MoonPhaseIcon } from "@/components/shared/MoonPhaseIcon";
@@ -1158,6 +1159,8 @@ export function PublicPricingPage({
           })}
         </section>
 
+        {isFullPage ? <FieldNotesPricingSignup /> : null}
+
         {/* ── How it works steps ───────────────────────────────────────────── */}
         <section className="mt-5 shell-panel p-6 md:p-7">
           <p className="shell-kicker mb-3">What happens next</p>
@@ -1267,7 +1270,7 @@ export function PublicPricingPage({
         )}
       </div>
 
-      <FieldNotesFooterSignup variant="shell" />
+      <FieldNotesFooterSignup variant="shell" source="pricing" />
 
       <footer className="mt-10 border-t border-border/50 bg-stone-950/40">
         <div className="container flex flex-col gap-6 py-8 md:flex-row md:items-start md:justify-between">
