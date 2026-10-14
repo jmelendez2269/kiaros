@@ -55,8 +55,11 @@ function testCopy(): void {
     join(root, "components/marketing/FieldNotesFooterSignup.tsx"),
     "utf8",
   );
-  assert.match(footerSource, /FIELD_NOTES_FOOTER_TAGLINE/);
-  assert.equal(FIELD_NOTES_FOOTER_TAGLINE, "Field Notes, Jack's email newsletter.");
+  assert.match(footerSource, /FIELD_NOTES_HOME_FOOTER_FRAMING/);
+  assert.equal(
+    FIELD_NOTES_FOOTER_TAGLINE,
+    "Field Notes, Jack's email newsletter.",
+  );
 
   const pageSource = readFileSync(
     join(root, "components/marketing/FieldNotesPageContent.tsx"),
@@ -90,6 +93,7 @@ function testSurfaceSources(): void {
     join(root, "components/commerce/PublicPricingPage.tsx"),
     "utf8",
   );
+  assert.match(pricingSource, /FieldNotesPricingSignup/);
   assert.match(pricingSource, /FieldNotesFooterSignup variant="shell" source="pricing"/);
 
   const samplerSource = readFileSync(join(root, "app/purchase/success/page.tsx"), "utf8");
@@ -100,6 +104,7 @@ function testSurfaceSources(): void {
     "utf8",
   );
   assert.match(onboardingSource, /field_notes_subscribe/);
+  assert.match(onboardingSource, /FIELD_NOTES_ONBOARDING_OPT_IN/);
   assert.match(onboardingSource, /source: "onboarding"/);
 
   const sourceLib = readFileSync(join(root, "lib/marketing/field-notes-source.ts"), "utf8");

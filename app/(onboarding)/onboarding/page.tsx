@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { BRAND } from "@/lib/brand";
-import { FIELD_NOTES_FOOTER_TAGLINE } from "@/lib/marketing/field-notes-copy";
+import { FIELD_NOTES_ONBOARDING_OPT_IN } from "@/lib/marketing/field-notes-copy";
 import { subscribeFieldNotesKit } from "@/lib/marketing/subscribe-field-notes-kit";
 
 const STORAGE_KEY = "kiaros_onboarding_step1";
@@ -360,7 +360,7 @@ export default function OnboardingBirthPage() {
             {...register("field_notes_subscribe")}
             className="mt-0.5 rounded"
           />
-          <span>{FIELD_NOTES_FOOTER_TAGLINE}</span>
+          <span>{FIELD_NOTES_ONBOARDING_OPT_IN}</span>
         </label>
 
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}

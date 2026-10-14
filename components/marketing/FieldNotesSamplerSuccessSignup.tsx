@@ -1,6 +1,6 @@
 import {
   FIELD_NOTES_NEWSLETTER_BODY,
-  FIELD_NOTES_NEWSLETTER_HEADLINE,
+  FIELD_NOTES_SAMPLER_SUCCESS_FRAMING,
 } from "@/lib/marketing/field-notes-copy";
 
 import { FieldNotesKitSubscribeForm } from "./FieldNotesKitSubscribeForm";
@@ -12,7 +12,7 @@ export function FieldNotesSamplerSuccessSignup() {
       className="mt-8 border-t border-border/60 pt-8"
     >
       <h2 id="field-notes-sampler-success-heading" className="shell-section-title text-2xl">
-        {FIELD_NOTES_NEWSLETTER_HEADLINE}
+        {FIELD_NOTES_SAMPLER_SUCCESS_FRAMING}
       </h2>
       <p className="mt-3 text-sm leading-7 text-bone-muted">{FIELD_NOTES_NEWSLETTER_BODY}</p>
       <div className="mt-5 max-w-md">

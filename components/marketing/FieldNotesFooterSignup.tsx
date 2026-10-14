@@ -1,4 +1,7 @@
-import { FIELD_NOTES_FOOTER_TAGLINE } from "@/lib/marketing/field-notes-copy";
+import {
+  FIELD_NOTES_FOOTER_TAGLINE,
+  FIELD_NOTES_HOME_FOOTER_FRAMING,
+} from "@/lib/marketing/field-notes-copy";
 import type { FieldNotesSignupSource } from "@/lib/marketing/field-notes-source";
 
 import { FieldNotesKitSubscribeForm } from "./FieldNotesKitSubscribeForm";
@@ -8,9 +11,14 @@ type Variant = "almanac" | "shell";
 interface Props {
   variant: Variant;
   source?: FieldNotesSignupSource;
+  /** Surface framing line; defaults to /field-notes footer tagline. */
+  framing?: string;
 }
 
-export function FieldNotesFooterSignup({ variant, source }: Props) {
+export function FieldNotesFooterSignup({ variant, source, framing }: Props) {
+  const framingLine =
+    framing ??
+    (variant === "almanac" ? FIELD_NOTES_HOME_FOOTER_FRAMING : FIELD_NOTES_FOOTER_TAGLINE);
   if (variant === "almanac") {
     return (
       <section
@@ -22,7 +30,7 @@ export function FieldNotesFooterSignup({ variant, source }: Props) {
             id="field-notes-footer-heading"
             className="max-w-md text-sm leading-6 text-almanac-ink-dim"
           >
-            {FIELD_NOTES_FOOTER_TAGLINE}
+            {framingLine}
           </p>
           <div className="w-full md:max-w-md">
             <FieldNotesKitSubscribeForm layout="inline" variant="almanac" source={source} />
@@ -42,7 +50,7 @@ export function FieldNotesFooterSignup({ variant, source }: Props) {
           id="field-notes-footer-heading"
           className="max-w-md text-sm leading-6 text-bone-muted"
         >
-          {FIELD_NOTES_FOOTER_TAGLINE}
+          {framingLine}
         </p>
         <div className="w-full md:max-w-md">
           <FieldNotesKitSubscribeForm layout="inline" variant="shell" source={source} />
