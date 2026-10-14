@@ -1267,7 +1267,7 @@ export function PublicPricingPage({
         )}
       </div>
 
-      <FieldNotesFooterSignup variant="shell" />
+      <FieldNotesFooterSignup variant="shell" source="pricing" />
 
       <footer className="mt-10 border-t border-border/50 bg-stone-950/40">
         <div className="container flex flex-col gap-6 py-8 md:flex-row md:items-start md:justify-between">

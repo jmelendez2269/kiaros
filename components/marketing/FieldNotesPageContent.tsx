@@ -3,6 +3,10 @@ import Link from "next/link";
 import { FieldNotesKitSubscribeForm } from "@/components/marketing/FieldNotesKitSubscribeForm";
 import { StarField } from "@/components/almanac/StarField";
 import { BRAND } from "@/lib/brand";
+import {
+  FIELD_NOTES_NEWSLETTER_BODY,
+  FIELD_NOTES_NEWSLETTER_HEADLINE,
+} from "@/lib/marketing/field-notes-copy";
 import type { FieldNotesUtmFieldKey } from "@/lib/marketing/field-notes-utm";
 
 interface Props {
@@ -90,11 +94,10 @@ export function FieldNotesPageContent({ joined, initialUtm }: Props) {
 
         <div className="relative mx-auto max-w-2xl px-5 py-14 md:px-8 md:py-20">
           <h1 className="font-almanac-display text-4xl tracking-[0.06em] text-almanac-ink md:text-5xl">
-            Field Notes
+            {FIELD_NOTES_NEWSLETTER_HEADLINE}
           </h1>
           <p className="mt-6 text-base leading-7 text-almanac-ink-dim">
-            Jack&apos;s email newsletter, with essays on timing and rest and notes from building
-            Kairos. Sent as they&apos;re written. Unsubscribe anytime.
+            {FIELD_NOTES_NEWSLETTER_BODY}
           </p>
 
           {joined ? (

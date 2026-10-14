@@ -1,11 +1,14 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { BRAND } from "@/lib/brand";
+import { FIELD_NOTES_FOOTER_TAGLINE } from "@/lib/marketing/field-notes-copy";
+import { subscribeFieldNotesKit } from "@/lib/marketing/subscribe-field-notes-kit";
 
 const STORAGE_KEY = "kiaros_onboarding_step1";
 
@@ -21,6 +24,7 @@ const schema = z.object({
   birth_lng: z.number(),
   birth_tz: z.string().optional(),
   marketing_consent: z.boolean().default(false),
+  field_notes_subscribe: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -43,6 +47,7 @@ interface NominatimResult {
 }
 
 export default function OnboardingBirthPage() {
+  const { user } = useUser();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NominatimResult[]>([]);
@@ -60,7 +65,11 @@ export default function OnboardingBirthPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { birth_time_unknown: false, marketing_consent: false },
+    defaultValues: {
+      birth_time_unknown: false,
+      marketing_consent: false,
+      field_notes_subscribe: false,
+    },
   });
 
   const birthTimeUnknown = watch("birth_time_unknown");
@@ -168,6 +177,13 @@ export default function OnboardingBirthPage() {
     if (!res.ok) {
       setSaveError("Something went wrong saving your details. Please try again.");
       return;
+    }
+
+    if (values.field_notes_subscribe) {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      if (email) {
+        await subscribeFieldNotesKit({ email, source: "onboarding" });
+      }
     }
 
     const nextRes = await fetch("/api/onboarding/complete", {
@@ -336,6 +352,15 @@ export default function OnboardingBirthPage() {
             Send me marketing emails and product updates from Project Parallax, {BRAND.product}&apos;s
             studio.
           </span>
+        </label>
+
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-bone-muted">
+          <input
+            type="checkbox"
+            {...register("field_notes_subscribe")}
+            className="mt-0.5 rounded"
+          />
+          <span>{FIELD_NOTES_FOOTER_TAGLINE}</span>
         </label>
 
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}

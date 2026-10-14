@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { FieldNotesSamplerSuccessSignup } from "@/components/marketing/FieldNotesSamplerSuccessSignup";
 import { finalizeCheckoutSession } from "@/lib/commerce/stripe";
 import { BRAND } from "@/lib/brand";
 
@@ -73,6 +74,7 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
                   View upgrade options
                 </Link>
               </div>
+              <FieldNotesSamplerSuccessSignup />
             </div>
           </div>
         </div>

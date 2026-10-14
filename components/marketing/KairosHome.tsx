@@ -6,6 +6,7 @@ import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributi
 import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
+import { FieldNotesHeroSignup } from "@/components/marketing/FieldNotesHeroSignup";
 import { BRAND } from "@/lib/brand";
 
 interface Props {
@@ -178,6 +179,7 @@ function Hero() {
               Meet Stelloquy &rarr;
             </Link>
           </div>
+          <FieldNotesHeroSignup source="home_hero" />
         </div>
 
         <div
@@ -562,7 +564,7 @@ export function KairosHome({ isSignedIn }: Props) {
       <OracleDeepDive />
       <Manifesto />
       <PricingTeaser isSignedIn={isSignedIn} />
-      <FieldNotesFooterSignup variant="almanac" />
+      <FieldNotesFooterSignup variant="almanac" source="home_footer" />
       <MarketingFooter />
     </div>
   );
