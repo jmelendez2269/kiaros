@@ -1,6 +1,7 @@
 import type { AspectType, NatalChart, PlanetPosition, QuarterBlueprint, WeekBlueprint, YearEphemeris } from '@/types/blueprint'
 import type { Json, Tables } from '@/types/database'
 import { parseStoredHumanDesign } from '@/lib/human-design'
+import { parsePatternInsightEvidence } from '@/lib/journal/stelloquy-pattern-context'
 import { BRAND } from '@/lib/brand'
 
 export interface AreaGoalForPrompt {
@@ -651,13 +652,12 @@ function buildLayer5(ctx: OraclePromptContext): string {
     lines.push('\nRecognized journal patterns:')
     ctx.patternInsights.forEach((pattern) => {
       const label = formatPatternLabel(pattern.pattern_type, pattern.pattern_key)
+      const evidenceRows = parsePatternInsightEvidence(pattern.evidence)
       const parts = [
         `${label}`,
-        `${pattern.sample_size} entries`,
+        `${evidenceRows.length} entries`,
         'entry count is evidence volume, not statistical certainty',
       ]
-      if (pattern.first_seen && pattern.last_seen) parts.push(`${pattern.first_seen} to ${pattern.last_seen}`)
-      parts.push(pattern.summary)
 
       const evidence = summarizeEvidence(pattern.evidence)
       if (evidence) parts.push(`evidence: ${evidence}`)

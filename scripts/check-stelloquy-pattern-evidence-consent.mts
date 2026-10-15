@@ -43,7 +43,7 @@ const allExcludedPattern: PatternInsightForStelloquyPrompt = {
 const allIncludedPattern: PatternInsightForStelloquyPrompt = {
   pattern_type: 'lunar_sign',
   pattern_key: 'Taurus',
-  sample_size: 2,
+  sample_size: 99,
   confidence: 50,
   first_seen: '2026-04-01',
   last_seen: '2026-04-02',
@@ -154,8 +154,17 @@ assert.doesNotMatch(mixedDynamic, /Mixed pattern summary must not reach Stelloqu
 assert.doesNotMatch(mixedDynamic, /Kairos-only secret title/)
 
 const keptDynamic = dynamicPromptFor(kept)
-assert.match(keptDynamic, /All-included pattern summary is allowed/)
+assert.doesNotMatch(keptDynamic, /All-included pattern summary is allowed/)
 assert.match(keptDynamic, /Stelloquy may see this title/)
+assert.match(keptDynamic, /Moon in Taurus \| 2 entries/)
+assert.doesNotMatch(keptDynamic, /99 entries/)
+
+const oraclePrompt = await readFile(
+  new URL('../lib/ai/oracle-system-prompt.ts', import.meta.url),
+  'utf8',
+)
+assert.doesNotMatch(oraclePrompt, /pattern\.summary/)
+assert.match(oraclePrompt, /parsePatternInsightEvidence\(pattern\.evidence\)/)
 
 const loader = await readFile(
   new URL('../lib/journal/load-stelloquy-pattern-insights.ts', import.meta.url),
@@ -178,5 +187,6 @@ assert.match(
 
 console.log('✓ Stelloquy pattern context is strict and fail-closed')
 console.log('  - mixed, empty, unparseable, missing-id, and all-excluded patterns dropped')
-console.log('  - all-included pattern kept with summary and evidence titles')
+console.log('  - all-included pattern kept with label, evidence titles, and consented entry count only')
+console.log('  - pattern summary and stored sample_size never reach the Oracle prompt')
 console.log('  - loader scopes by user_id and omits patterns on lookup error')
