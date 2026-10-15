@@ -16,6 +16,7 @@ import {
 import type { YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
 import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
+import { loadStelloquyPatternInsightsForPrompt } from '@/lib/journal/load-stelloquy-pattern-insights'
 
 export const maxDuration = 30
 
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
       supabase
         .from('user_pattern_insights')
         .select('pattern_type, pattern_key, sample_size, confidence, first_seen, last_seen, summary, evidence')
+        .eq('user_id', profileId)
         .order('updated_at', { ascending: false })
         .limit(8),
       supabase
@@ -133,6 +135,16 @@ export async function POST(req: Request) {
       )
     }
 
+    const patternInsightsForPrompt = await loadStelloquyPatternInsightsForPrompt(
+      supabase,
+      profileId,
+      (patternInsightsRes.data ?? []) as Pick<
+        Tables<'user_pattern_insights'>,
+        'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
+      >[],
+      'oracle-explain',
+    )
+
     const { cached, dynamic } = buildOracleSystemPromptSegments({
       profile: profileRes.data,
       ephemeris: (ephemerisRes.data?.data as unknown as YearEphemeris) ?? null,
@@ -147,10 +159,7 @@ export async function POST(req: Request) {
       dailyLogs: [],
       journalEntries: [],
       oracleCaptures: [],
-      patternInsights: (patternInsightsRes.data ?? []) as Pick<
-        Tables<'user_pattern_insights'>,
-        'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
-      >[],
+      patternInsights: patternInsightsForPrompt,
       quarterlyReviews: [],
       planItems: [],
       today,
