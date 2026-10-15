@@ -43,35 +43,20 @@ export function collectPatternEvidenceEntryIds(patterns: PatternInsightForStello
 }
 
 /**
- * Stelloquy may only see pattern evidence from journal entries the member marked
- * for recall (`include_in_stelloquy`). Patterns are built from Insights consent;
- * without this filter, Kairos-only entry titles leak into the Oracle prompt.
- *
- * Safer rule: if no evidence row survives filtering, drop the whole pattern
- * (summary text is synthesized from the same Insights pool and may paraphrase
- * entries the member excluded from Stelloquy).
+ * Stelloquy may only see patterns whose evidence list is fully Stelloquy-consented.
+ * Pattern summaries are AI-written from recent tagged entries and may not match the
+ * evidence rows; any mixed or partial consent fails closed (drop the whole pattern).
  */
 export function filterPatternInsightsForStelloquy(
   patterns: PatternInsightForStelloquyPrompt[],
   stelloquyConsentedEntryIds: ReadonlySet<string>,
 ): PatternInsightForStelloquyPrompt[] {
-  return patterns.flatMap((pattern) => {
+  return patterns.filter((pattern) => {
     const parsed = parsePatternInsightEvidence(pattern.evidence)
     if (parsed.length === 0) {
-      return [pattern]
+      return false
     }
 
-    const kept = parsed.filter((row) => stelloquyConsentedEntryIds.has(row.entry_id))
-    if (kept.length === 0) {
-      return []
-    }
-
-    const filteredEvidence: Json = kept.map((row) => ({
-      entry_id: row.entry_id,
-      entry_date: row.entry_date,
-      title: row.title,
-    }))
-
-    return [{ ...pattern, evidence: filteredEvidence }]
+    return parsed.every((row) => stelloquyConsentedEntryIds.has(row.entry_id))
   })
 }

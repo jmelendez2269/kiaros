@@ -86,6 +86,7 @@ export async function POST(req: Request) {
       supabase
         .from('user_pattern_insights')
         .select('pattern_type, pattern_key, sample_size, confidence, first_seen, last_seen, summary, evidence')
+        .eq('user_id', profileId)
         .order('updated_at', { ascending: false })
         .limit(8),
       supabase
@@ -136,10 +137,12 @@ export async function POST(req: Request) {
 
     const patternInsightsForPrompt = await loadStelloquyPatternInsightsForPrompt(
       supabase,
+      profileId,
       (patternInsightsRes.data ?? []) as Pick<
         Tables<'user_pattern_insights'>,
         'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
       >[],
+      'oracle-explain',
     )
 
     const { cached, dynamic } = buildOracleSystemPromptSegments({
