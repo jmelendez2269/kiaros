@@ -19,6 +19,7 @@ import { recallJournalMemories } from '@/lib/journal/memory-retrieval'
 import { isRelevanceMemoryEnabled } from '@/lib/feature-flags'
 import { resolveOracleJournalEntriesForPrompt } from '@/lib/journal/oracle-journal-recall'
 import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
+import { loadStelloquyPatternInsightsForPrompt } from '@/lib/journal/load-stelloquy-pattern-insights'
 
 export const maxDuration = 60
 
@@ -192,6 +193,14 @@ export async function POST(req: Request) {
       journalEntriesRes.data,
     )
 
+    const patternInsightsForPrompt = await loadStelloquyPatternInsightsForPrompt(
+      supabase,
+      (patternInsightsRes.data ?? []) as Pick<
+        Tables<'user_pattern_insights'>,
+        'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
+      >[],
+    )
+
     const { cached, dynamic } = buildOracleSystemPromptSegments({
       profile: profileRes.data,
       ephemeris: (ephemerisRes.data?.data as unknown as YearEphemeris) ?? null,
@@ -236,10 +245,7 @@ export async function POST(req: Request) {
         Tables<'oracle_captures'>,
         'captured_text' | 'source_role' | 'include_in_insights' | 'include_in_planner' | 'created_at'
       >[],
-      patternInsights: (patternInsightsRes.data ?? []) as Pick<
-        Tables<'user_pattern_insights'>,
-        'pattern_type' | 'pattern_key' | 'sample_size' | 'confidence' | 'first_seen' | 'last_seen' | 'summary' | 'evidence'
-      >[],
+      patternInsights: patternInsightsForPrompt,
       quarterlyReviews: (quarterlyReviewsRes.data ?? []) as Pick<
         Tables<'quarterly_reviews'>,
         | 'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots'

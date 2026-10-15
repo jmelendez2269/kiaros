@@ -21,6 +21,7 @@
     "test:consent": "npx tsx scripts/test-journal-consent-v2.mts",
     "test:memory-defaults": "npx tsx scripts/test-journal-memory-defaults.mts && npx tsx scripts/check-journal-memory-migration.mts",
     "test:oracle-journal-recall": "npx tsx scripts/test-oracle-journal-recall.mts",
+    "test:stelloquy-pattern-consent": "npx tsx scripts/check-stelloquy-pattern-evidence-consent.mts",
     "test:field-notes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-field-notes-signup.mts",
     "test:e2e": "playwright test"
   },

@@ -56,7 +56,7 @@ export const journalMemoryCopy = {
     },
     howThisWorksToggle: 'How this works',
     howThisWorks:
-      'An included entry\'s full text feeds Reflections, and Patterns on Planner + Oracle. Quarterly Reviews only count included entries. Month briefs and your Blueprint only see patterns, never the entries themselves. On Planner + Oracle, Stelloquy can see pattern summaries, including the titles and dates of the entries behind them, even for entries you haven\'t set for recall.',
+      'An included entry\'s full text feeds Reflections, and Patterns on Planner + Oracle. Quarterly Reviews only count included entries. Month briefs and your Blueprint only see patterns, never the entries themselves. On Planner + Oracle, Stelloquy can see pattern summaries for entries you allow for recall; Kairos-only entries stay out of Stelloquy pattern evidence.',
   },
   entryPanel: {
     kairos: {
@@ -73,7 +73,7 @@ export const journalMemoryCopy = {
       label: 'Let Stelloquy recall it',
       helper: 'Stelloquy can bring up relevant parts of this entry in future conversations.',
       patternSummaryNote:
-        "Stelloquy may still see this entry's title and date in pattern summaries.",
+        'Pattern summaries in Stelloquy only cite entries you allow for recall.',
     },
     fieldsetLegend: 'How this entry may be used',
     fieldsetIntro:
