@@ -2,12 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import type { Metadata } from "next";
 
 import { PublicPricingPage } from "@/components/commerce/PublicPricingPage";
+import { pricingMarketingMetadata } from "@/lib/marketing/public-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Pricing | Kairos",
-  description:
-    "Compare monthly and annual access for Kairos Planner and Planner + Oracle, including journal memory and sky-pattern intelligence.",
-};
+export const metadata: Metadata = pricingMarketingMetadata;
 
 interface Props {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

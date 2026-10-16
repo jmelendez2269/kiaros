@@ -1,16 +1,8 @@
-import type { Metadata } from "next";
-
 import { FieldNotesPageContent } from "@/components/marketing/FieldNotesPageContent";
 import { fieldNotesUtmFromSearchParams } from "@/lib/marketing/field-notes-utm";
+import { fieldNotesMarketingMetadata } from "@/lib/marketing/public-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Field Notes: Jack's email newsletter | Kairos",
-  description:
-    "Field Notes is Jack's email newsletter, with essays on timing and rest and notes from building Kairos.",
-  alternates: {
-    canonical: "https://www.kairosplanner.xyz/field-notes",
-  },
-};
+export const metadata = fieldNotesMarketingMetadata;
 
 interface Props {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
