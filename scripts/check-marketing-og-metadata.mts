@@ -22,6 +22,7 @@ import {
   homeMarketingMetadata,
   pricingMarketingMetadata,
 } from "../lib/marketing/public-page-metadata.ts";
+import { PUBLIC_ROUTE_PATTERNS } from "../lib/marketing/public-routes.ts";
 import { marketingCanonicalUrl } from "../lib/marketing/public-site.ts";
 
 type RouteCase = {
@@ -57,6 +58,12 @@ const routes: RouteCase[] = [
 ];
 
 let checks = 0;
+
+assert.ok(
+  PUBLIC_ROUTE_PATTERNS.includes("/opengraph-image(.*)"),
+  "PUBLIC_ROUTE_PATTERNS must include /opengraph-image(.*) for homepage link-preview crawlers",
+);
+checks += 1;
 
 for (const route of routes) {
   const og = route.metadata.openGraph;

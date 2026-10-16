@@ -1,6 +1,7 @@
 /** Clerk middleware public route patterns (keep in sync with middleware.ts). */
 export const PUBLIC_ROUTE_PATTERNS: readonly string[] = [
   "/",
+  "/opengraph-image(.*)",
   "/stelloquy(.*)",
   "/pricing(.*)",
   "/field-notes(.*)",
