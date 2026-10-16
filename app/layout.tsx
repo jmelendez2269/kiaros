@@ -12,6 +12,11 @@ import {
 } from "next/font/google";
 import { cookies } from "next/headers";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
+import {
+  HOME_MARKETING_DESCRIPTION,
+  HOME_MARKETING_TITLE,
+} from "@/lib/marketing/public-page-metadata";
+import { MARKETING_SITE_ORIGIN } from "@/lib/marketing/public-site";
 import "./globals.css";
 
 const lora = Lora({
@@ -59,9 +64,9 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Kairos — Your 2026 planner, built from your natal chart",
-  description:
-    "A personalized year-long blueprint built from your real natal chart and the actual planetary transits of your year.",
+  metadataBase: new URL(MARKETING_SITE_ORIGIN),
+  title: HOME_MARKETING_TITLE,
+  description: HOME_MARKETING_DESCRIPTION,
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
