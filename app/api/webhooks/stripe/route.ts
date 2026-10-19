@@ -45,12 +45,20 @@ export async function POST(request: Request) {
       case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
         const fulfillment = await fulfillCheckoutSession({ sessionId: session.id });
-        await recordVerifiedCheckoutCompleted({
-          session,
-          userId: fulfillment.userProfileId,
-          convertedEntitlementId: fulfillment.entitlementId,
-          occurredAt: new Date(event.created * 1000),
-        });
+        try {
+          await recordVerifiedCheckoutCompleted({
+            session,
+            userId: fulfillment.userProfileId,
+            convertedEntitlementId: fulfillment.entitlementId,
+            occurredAt: new Date(event.created * 1000),
+          });
+        } catch (error) {
+          console.error(
+            "[stripe-webhook] Funnel analytics failed (non-fatal):",
+            event.type,
+            error,
+          );
+        }
         break;
       }
 
