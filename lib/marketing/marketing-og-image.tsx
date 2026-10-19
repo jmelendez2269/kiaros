@@ -5,6 +5,7 @@ import { ImageResponse } from "next/og";
 
 import { BRAND } from "@/lib/brand";
 import { MARKETING_OG_IMAGE_SIZE } from "@/lib/marketing/marketing-og-image-size";
+import { ogTwoLineBlockStyle, pickOgFontSizeForTwoLines } from "@/lib/marketing/og-text-fit";
 
 export { MARKETING_OG_IMAGE_SIZE };
 
@@ -17,9 +18,15 @@ const SAFE_ZONE_WIDTH = 630;
 
 const PAGE_MARGIN = 120;
 const MARK_SIZE = 88;
-const HEADLINE_FONT_SIZE = 44;
-const BODY_FONT_SIZE = 30;
+const HEADLINE_LINE_HEIGHT = 1.12;
+const BODY_LINE_HEIGHT = 1.4;
 const BLOCK_GAP = 16;
+
+const HEADLINE_SIZES = [44, 40, 36] as const;
+const BODY_SIZES = [30, 28, 26, 24, 22] as const;
+
+const CINZEL_OG_FAMILY = "KiarosOgCinzel";
+const DM_SANS_OG_FAMILY = "KiarosOgDmSans";
 
 async function kairosMarkDataUrl(): Promise<string> {
   const bytes = await readFile(KAIROS_MARK_ICON_PATH);
@@ -49,13 +56,6 @@ export interface MarketingOgImageContent {
   kicker?: string;
 }
 
-const clampTwoLines = {
-  display: "-webkit-box",
-  WebkitBoxOrient: "vertical" as const,
-  WebkitLineClamp: 2,
-  overflow: "hidden",
-};
-
 export async function renderMarketingOgImage(content: MarketingOgImageContent) {
   const fontText = `${BRAND.product} ${content.title} ${content.subtitle} ${content.kicker ?? ""}`;
   const [displayFont, bodyFont, markSrc] = await Promise.all([
@@ -63,6 +63,28 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
     loadGoogleFont("DM+Sans", 400, fontText),
     kairosMarkDataUrl(),
   ]);
+
+  const [headlineFontSize, bodyFontSize] = await Promise.all([
+    pickOgFontSizeForTwoLines({
+      fontData: displayFont,
+      fontFamily: CINZEL_OG_FAMILY,
+      fontWeight: 600,
+      sizes: HEADLINE_SIZES,
+      text: content.title,
+      maxWidth: SAFE_ZONE_WIDTH,
+      letterSpacingEm: 0.02,
+    }),
+    pickOgFontSizeForTwoLines({
+      fontData: bodyFont,
+      fontFamily: DM_SANS_OG_FAMILY,
+      fontWeight: 400,
+      sizes: BODY_SIZES,
+      text: content.subtitle,
+      maxWidth: SAFE_ZONE_WIDTH,
+    }),
+  ]);
+
+  const headlineLetterSpacingPx = headlineFontSize * 0.02;
 
   const contentHeight = MARKETING_OG_IMAGE_SIZE.height - PAGE_MARGIN * 2;
 
@@ -149,11 +171,10 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
               margin: 0,
               flexShrink: 0,
               fontFamily: "Cinzel",
-              fontSize: HEADLINE_FONT_SIZE,
-              lineHeight: 1.12,
-              letterSpacing: "0.02em",
-              maxWidth: SAFE_ZONE_WIDTH,
-              ...clampTwoLines,
+              fontSize: headlineFontSize,
+              lineHeight: HEADLINE_LINE_HEIGHT,
+              letterSpacing: `${headlineLetterSpacingPx}px`,
+              ...ogTwoLineBlockStyle(headlineFontSize, HEADLINE_LINE_HEIGHT),
             }}
           >
             {content.title}
@@ -162,11 +183,10 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
             style={{
               margin: 0,
               flexShrink: 0,
-              fontSize: BODY_FONT_SIZE,
-              lineHeight: 1.4,
+              fontSize: bodyFontSize,
+              lineHeight: BODY_LINE_HEIGHT,
               color: "rgba(227, 226, 237, 0.8)",
-              maxWidth: SAFE_ZONE_WIDTH,
-              ...clampTwoLines,
+              ...ogTwoLineBlockStyle(bodyFontSize, BODY_LINE_HEIGHT),
             }}
           >
             {content.subtitle}
