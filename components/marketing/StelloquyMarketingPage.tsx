@@ -17,6 +17,7 @@ import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributi
 import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
 import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
 import { StelloquyOrb } from "@/components/oracle/StelloquyOrb";
+import { BrandMark } from "@/components/shared/BrandMark";
 import { BRAND } from "@/lib/brand";
 import { formatUsd, getCommerceTier } from "@/lib/commerce/config";
 
@@ -122,9 +123,7 @@ function MarketingHeader({ isSignedIn }: Props) {
     <header className="sticky top-0 z-40 border-b border-almanac-line-hi bg-[rgba(10,12,20,0.86)] backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3 md:px-8">
         <Link href="/" className="flex min-h-11 items-center gap-2">
-          <span className="text-lg text-almanac-copper-hi" aria-hidden>
-            &#10022;
-          </span>
+          <BrandMark size="header" />
           <span className="font-almanac-display text-lg tracking-[0.08em] text-almanac-ink">
             {BRAND.product.toUpperCase()}
           </span>
@@ -729,9 +728,7 @@ function MarketingFooter() {
     <footer className="border-t border-almanac-line py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 md:flex-row md:items-center md:justify-between md:px-8">
         <Link href="/" className="flex min-h-11 items-center gap-2">
-          <span className="text-base text-almanac-copper-hi" aria-hidden>
-            &#10022;
-          </span>
+          <BrandMark size="footer" />
           <span className="font-almanac-display text-sm tracking-[0.08em] text-almanac-ink">
             {BRAND.product.toUpperCase()}
           </span>

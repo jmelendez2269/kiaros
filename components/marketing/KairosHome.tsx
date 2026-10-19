@@ -7,6 +7,7 @@ import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
 import { FieldNotesHeroSignup } from "@/components/marketing/FieldNotesHeroSignup";
+import { BrandMark } from "@/components/shared/BrandMark";
 import { BRAND } from "@/lib/brand";
 
 interface Props {
@@ -93,7 +94,7 @@ function NavBar() {
     <header className="sticky top-0 z-30 border-b border-almanac-line-hi bg-[rgba(10,12,20,0.85)] backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 md:px-8">
         <div className="flex items-center gap-2">
-          <span className="text-lg text-almanac-copper-hi" aria-hidden>&#10022;</span>
+          <BrandMark size="header" />
           <span className="flex items-baseline gap-1.5">
             <span className="font-almanac-display text-lg tracking-[0.08em] text-almanac-ink">
               {BRAND.product.toUpperCase()}
@@ -533,7 +534,7 @@ function MarketingFooter() {
     <footer className="border-t border-almanac-line py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 md:flex-row md:items-center md:justify-between md:px-8">
         <div className="flex items-center gap-2">
-          <span className="text-base text-almanac-copper-hi" aria-hidden>&#10022;</span>
+          <BrandMark size="footer" />
           <span className="font-almanac-display text-sm tracking-[0.08em] text-almanac-ink">
             {BRAND.product.toUpperCase()}
           </span>

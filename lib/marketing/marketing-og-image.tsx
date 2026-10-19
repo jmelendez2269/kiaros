@@ -11,6 +11,19 @@ export { MARKETING_OG_IMAGE_SIZE };
 /** App icon PNG (triangle mark from public/icon.svg). Satori does not render SVG <img> reliably. */
 const KAIROS_MARK_ICON_PATH = join(process.cwd(), "public", "icon-192.png");
 
+/** Centred square crop safe zone (e.g. iMessage / WhatsApp previews). */
+const SAFE_ZONE_LEFT = 285;
+const SAFE_ZONE_WIDTH = 630;
+
+const LOGO_ROW_TOP = 120;
+const HEADLINE_TOP = 228;
+const KICKER_TOP = 188;
+/** Fixed body start so subtitle baseline matches across home, pricing, and field notes. */
+const BODY_TOP = 372;
+
+const MARK_OUTER = 88;
+const MARK_INNER = 72;
+
 async function kairosMarkDataUrl(): Promise<string> {
   const bytes = await readFile(KAIROS_MARK_ICON_PATH);
   return `data:image/png;base64,${bytes.toString("base64")}`;
@@ -47,16 +60,17 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
     kairosMarkDataUrl(),
   ]);
 
+  const titleFontSize = content.title.length > 48 ? 46 : 56;
+
   return new ImageResponse(
     (
       <div
         style={{
           width: "100%",
           height: "100%",
+          position: "relative",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "72px 80px",
+          flexDirection: "row",
           backgroundColor: "#0a0c14",
           backgroundImage:
             "radial-gradient(ellipse 70% 55% at 85% 15%, rgba(112,75,210,0.35), rgba(10,12,20,0)), radial-gradient(ellipse 45% 40% at 8% 90%, rgba(78,231,253,0.12), rgba(10,12,20,0))",
@@ -64,57 +78,114 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
           fontFamily: "DM Sans",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 40 }}>
-          <img src={markSrc} width={56} height={56} alt="" />
-          <span
+        {/* Decorative accent — outside centred text safe zone */}
+        <div
+          style={{
+            position: "absolute",
+            right: 48,
+            top: 72,
+            width: 0,
+            height: 0,
+            borderLeft: "220px solid transparent",
+            borderBottom: "380px solid rgba(112, 75, 210, 0.12)",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            left: SAFE_ZONE_LEFT,
+            top: 0,
+            width: SAFE_ZONE_WIDTH,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
             style={{
-              fontFamily: "Cinzel",
-              fontSize: 28,
-              letterSpacing: "0.12em",
-              color: "#c7b3f5",
+              position: "absolute",
+              top: LOGO_ROW_TOP,
+              left: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
             }}
           >
-            {BRAND.product.toUpperCase()}
-          </span>
-        </div>
-        {content.kicker ? (
+            <div
+              style={{
+                width: MARK_OUTER,
+                height: MARK_OUTER,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 14,
+                border: "1px solid rgba(199, 179, 245, 0.28)",
+                backgroundColor: "rgba(112, 75, 210, 0.18)",
+              }}
+            >
+              <img src={markSrc} width={MARK_INNER} height={MARK_INNER} alt="" />
+            </div>
+            <span
+              style={{
+                fontFamily: "Cinzel",
+                fontSize: 28,
+                letterSpacing: "0.12em",
+                color: "#c7b3f5",
+              }}
+            >
+              {BRAND.product.toUpperCase()}
+            </span>
+          </div>
+
+          {content.kicker ? (
+            <p
+              style={{
+                position: "absolute",
+                top: KICKER_TOP,
+                left: 0,
+                margin: 0,
+                fontSize: 18,
+                letterSpacing: "0.28em",
+                textTransform: "uppercase",
+                color: "#c7b3f5",
+              }}
+            >
+              {content.kicker}
+            </p>
+          ) : null}
+
           <p
             style={{
+              position: "absolute",
+              top: HEADLINE_TOP,
+              left: 0,
               margin: 0,
-              marginBottom: 16,
-              fontSize: 18,
-              letterSpacing: "0.28em",
-              textTransform: "uppercase",
-              color: "#a98aef",
+              fontFamily: "Cinzel",
+              fontSize: titleFontSize,
+              lineHeight: 1.08,
+              letterSpacing: "0.02em",
+              maxWidth: SAFE_ZONE_WIDTH,
             }}
           >
-            {content.kicker}
+            {content.title}
           </p>
-        ) : null}
-        <p
-          style={{
-            margin: 0,
-            fontFamily: "Cinzel",
-            fontSize: content.title.length > 48 ? 46 : 56,
-            lineHeight: 1.08,
-            letterSpacing: "0.02em",
-            maxWidth: 980,
-          }}
-        >
-          {content.title}
-        </p>
-        <p
-          style={{
-            margin: 0,
-            marginTop: 28,
-            fontSize: 26,
-            lineHeight: 1.45,
-            color: "#a4a3b1",
-            maxWidth: 920,
-          }}
-        >
-          {content.subtitle}
-        </p>
+          <p
+            style={{
+              position: "absolute",
+              top: BODY_TOP,
+              left: 0,
+              margin: 0,
+              fontSize: 30,
+              lineHeight: 1.45,
+              color: "rgba(227, 226, 237, 0.8)",
+              maxWidth: SAFE_ZONE_WIDTH,
+            }}
+          >
+            {content.subtitle}
+          </p>
+        </div>
       </div>
     ),
     {
