@@ -15,14 +15,11 @@ const KAIROS_MARK_ICON_PATH = join(process.cwd(), "public", "icon-192.png");
 const SAFE_ZONE_LEFT = 285;
 const SAFE_ZONE_WIDTH = 630;
 
-const LOGO_ROW_TOP = 120;
-const HEADLINE_TOP = 228;
-const KICKER_TOP = 188;
-/** Fixed body start so subtitle baseline matches across home, pricing, and field notes. */
-const BODY_TOP = 372;
-
-const MARK_OUTER = 88;
-const MARK_INNER = 72;
+const PAGE_MARGIN = 120;
+const MARK_SIZE = 88;
+const HEADLINE_FONT_SIZE = 44;
+const BODY_FONT_SIZE = 30;
+const BLOCK_GAP = 16;
 
 async function kairosMarkDataUrl(): Promise<string> {
   const bytes = await readFile(KAIROS_MARK_ICON_PATH);
@@ -52,6 +49,13 @@ export interface MarketingOgImageContent {
   kicker?: string;
 }
 
+const clampTwoLines = {
+  display: "-webkit-box",
+  WebkitBoxOrient: "vertical" as const,
+  WebkitLineClamp: 2,
+  overflow: "hidden",
+};
+
 export async function renderMarketingOgImage(content: MarketingOgImageContent) {
   const fontText = `${BRAND.product} ${content.title} ${content.subtitle} ${content.kicker ?? ""}`;
   const [displayFont, bodyFont, markSrc] = await Promise.all([
@@ -60,7 +64,7 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
     kairosMarkDataUrl(),
   ]);
 
-  const titleFontSize = content.title.length > 48 ? 46 : 56;
+  const contentHeight = MARKETING_OG_IMAGE_SIZE.height - PAGE_MARGIN * 2;
 
   return new ImageResponse(
     (
@@ -95,38 +99,24 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
           style={{
             position: "absolute",
             left: SAFE_ZONE_LEFT,
-            top: 0,
+            top: PAGE_MARGIN,
             width: SAFE_ZONE_WIDTH,
-            height: "100%",
+            height: contentHeight,
             display: "flex",
             flexDirection: "column",
+            gap: BLOCK_GAP,
           }}
         >
           <div
             style={{
-              position: "absolute",
-              top: LOGO_ROW_TOP,
-              left: 0,
               display: "flex",
+              flexDirection: "row",
               alignItems: "center",
               gap: 16,
+              flexShrink: 0,
             }}
           >
-            <div
-              style={{
-                width: MARK_OUTER,
-                height: MARK_OUTER,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 14,
-                border: "1px solid rgba(199, 179, 245, 0.28)",
-                backgroundColor: "rgba(112, 75, 210, 0.18)",
-              }}
-            >
-              <img src={markSrc} width={MARK_INNER} height={MARK_INNER} alt="" />
-            </div>
+            <img src={markSrc} width={MARK_SIZE} height={MARK_SIZE} alt="" />
             <span
               style={{
                 fontFamily: "Cinzel",
@@ -142,10 +132,8 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
           {content.kicker ? (
             <p
               style={{
-                position: "absolute",
-                top: KICKER_TOP,
-                left: 0,
                 margin: 0,
+                flexShrink: 0,
                 fontSize: 18,
                 letterSpacing: "0.28em",
                 textTransform: "uppercase",
@@ -158,29 +146,27 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
 
           <p
             style={{
-              position: "absolute",
-              top: HEADLINE_TOP,
-              left: 0,
               margin: 0,
+              flexShrink: 0,
               fontFamily: "Cinzel",
-              fontSize: titleFontSize,
-              lineHeight: 1.08,
+              fontSize: HEADLINE_FONT_SIZE,
+              lineHeight: 1.12,
               letterSpacing: "0.02em",
               maxWidth: SAFE_ZONE_WIDTH,
+              ...clampTwoLines,
             }}
           >
             {content.title}
           </p>
           <p
             style={{
-              position: "absolute",
-              top: BODY_TOP,
-              left: 0,
               margin: 0,
-              fontSize: 30,
-              lineHeight: 1.45,
+              flexShrink: 0,
+              fontSize: BODY_FONT_SIZE,
+              lineHeight: 1.4,
               color: "rgba(227, 226, 237, 0.8)",
               maxWidth: SAFE_ZONE_WIDTH,
+              ...clampTwoLines,
             }}
           >
             {content.subtitle}
