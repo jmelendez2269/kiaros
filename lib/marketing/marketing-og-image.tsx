@@ -1,9 +1,20 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
 import { ImageResponse } from "next/og";
 
 import { BRAND } from "@/lib/brand";
 import { MARKETING_OG_IMAGE_SIZE } from "@/lib/marketing/marketing-og-image-size";
 
 export { MARKETING_OG_IMAGE_SIZE };
+
+/** App icon PNG (triangle mark from public/icon.svg). Satori does not render SVG <img> reliably. */
+const KAIROS_MARK_ICON_PATH = join(process.cwd(), "public", "icon-192.png");
+
+async function kairosMarkDataUrl(): Promise<string> {
+  const bytes = await readFile(KAIROS_MARK_ICON_PATH);
+  return `data:image/png;base64,${bytes.toString("base64")}`;
+}
 
 async function loadGoogleFont(
   family: string,
@@ -30,9 +41,10 @@ export interface MarketingOgImageContent {
 
 export async function renderMarketingOgImage(content: MarketingOgImageContent) {
   const fontText = `${BRAND.product} ${content.title} ${content.subtitle} ${content.kicker ?? ""}`;
-  const [displayFont, bodyFont] = await Promise.all([
+  const [displayFont, bodyFont, markSrc] = await Promise.all([
     loadGoogleFont("Cinzel", 600, fontText),
     loadGoogleFont("DM+Sans", 400, fontText),
+    kairosMarkDataUrl(),
   ]);
 
   return new ImageResponse(
@@ -53,29 +65,7 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 40 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 14,
-              background: "linear-gradient(180deg, #ba97ff 0%, #7f46f3 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 40px rgba(169,138,239,0.45)",
-            }}
-          >
-            <div
-              style={{
-                width: 0,
-                height: 0,
-                borderLeft: "14px solid transparent",
-                borderRight: "14px solid transparent",
-                borderBottom: "24px solid #0a0c14",
-                marginTop: -6,
-              }}
-            />
-          </div>
+          <img src={markSrc} width={56} height={56} alt="" />
           <span
             style={{
               fontFamily: "Cinzel",
