@@ -20,6 +20,7 @@ const FIELD_NOTES_SOURCE_LABELS: Record<(typeof FIELD_NOTES_SIGNUP_SOURCES)[numb
   pricing: "Pricing",
   sampler_success: "Sampler success",
   onboarding: "Onboarding",
+  field_notes_page: "Field Notes page",
 };
 
 function formatPercent(rate: number): string {

@@ -112,6 +112,7 @@ const FIELD_NOTES_SUBMIT_SOURCES = new Set([
   "pricing",
   "sampler_success",
   "onboarding",
+  "field_notes_page",
 ]);
 
 const EVENT_NAMES = new Set<string>(FUNNEL_EVENT_NAMES);

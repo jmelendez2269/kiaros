@@ -164,6 +164,12 @@ assert.equal(completedInput.experiment_variant, "reading-first");
 const validatedStart = validateFunnelEvent(startedInput, { allowUserId: true });
 if (!validatedStart.success) throw new Error(validatedStart.error);
 assert.equal(validatedStart.success, true);
+assert.equal("content" in startedInput, false, "checkout_started must not include content");
+
+const validatedCompleted = validateFunnelEvent(completedInput, { allowUserId: true });
+if (!validatedCompleted.success) throw new Error(validatedCompleted.error);
+assert.equal(validatedCompleted.success, true);
+assert.equal("content" in completedInput, false, "checkout_completed must not include content");
 
 const adapter = new InMemoryAdapter();
 const anonymousPricingView = {
@@ -230,6 +236,11 @@ assert.ok(
   webhookRoute.indexOf("event = stripe.webhooks.constructEvent") <
     webhookRoute.indexOf("await recordVerifiedCheckoutCompleted"),
   "completion must be emitted only after Stripe signature verification",
+);
+assert.match(
+  webhookRoute,
+  /try\s*\{[\s\S]*await recordVerifiedCheckoutCompleted[\s\S]*\}\s*catch/,
+  "funnel recording failures must not fail the webhook",
 );
 assert.equal(
   successPage.includes("recordVerifiedCheckoutCompleted"),

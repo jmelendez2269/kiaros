@@ -17,4 +17,5 @@ export const PUBLIC_ROUTE_PATTERNS: readonly string[] = [
   "/api/webhooks/(.*)",
   "/api/cron/(.*)",
   "/api/email/(.*)",
+  "/api/analytics/events",
 ];

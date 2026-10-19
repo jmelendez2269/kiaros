@@ -193,6 +193,13 @@ const fieldNotesSubmit = validateFunnelEvent({
   source: "home_hero",
 });
 assert.equal(fieldNotesSubmit.success, true);
+const fieldNotesPage = validateFunnelEvent({
+  event_id: "field_notes_submit:page",
+  event_name: "field_notes_submit",
+  anonymous_id: ANONYMOUS_ID,
+  source: "field_notes_page",
+});
+assert.equal(fieldNotesPage.success, true);
 assert.match(
   validationError({
     event_id: "field_notes_submit:bad",

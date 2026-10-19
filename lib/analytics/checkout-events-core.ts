@@ -88,7 +88,6 @@ function contextFields(context: CheckoutFunnelContext | null) {
     source: context?.source ?? null,
     medium: context?.medium ?? null,
     campaign: context?.campaign ?? null,
-    content: context?.content ?? null,
     referrer_host: context?.referrer_host ?? null,
     entry_path: context?.entry_path ?? null,
     experiment_key: context?.experiment_key ?? null,
