@@ -120,7 +120,14 @@ function testSurfaceSources(): void {
   assert.match(sourceLib, /"pricing"/);
   assert.match(sourceLib, /"sampler_success"/);
   assert.match(sourceLib, /"onboarding"/);
+  assert.match(sourceLib, /"field_notes_page"/);
   assert.match(sourceLib, /utm_content: source/);
+
+  const pageSource = readFileSync(
+    join(root, "components/marketing/FieldNotesPageContent.tsx"),
+    "utf8",
+  );
+  assert.match(pageSource, /source="field_notes_page"/);
 }
 
 function run(): void {

@@ -115,6 +115,7 @@ export function FieldNotesPageContent({ joined, initialUtm }: Props) {
                 layout="stacked"
                 variant="almanac"
                 initialUtm={initialUtm}
+                source="field_notes_page"
               />
             </div>
           ) : null}

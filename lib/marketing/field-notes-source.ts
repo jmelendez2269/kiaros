@@ -9,6 +9,7 @@ export const FIELD_NOTES_SIGNUP_SOURCES = [
   "pricing",
   "sampler_success",
   "onboarding",
+  "field_notes_page",
 ] as const;
 
 export type FieldNotesSignupSource = (typeof FIELD_NOTES_SIGNUP_SOURCES)[number];

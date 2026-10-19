@@ -1,28 +1,38 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { recordFunnelEvent, resolveFunnelUserId } from "@/lib/analytics/recorder";
+import { checkAnalyticsEventsRateLimit } from "@/lib/analytics/analytics-events-rate-limit";
 import {
-  isPublicFunnelEventName,
-  validateFunnelEvent,
-} from "@/lib/analytics/funnel-events";
+  clientIpFromRequest,
+  readPublicAnalyticsEventBody,
+  validatePublicAnalyticsEventPayload,
+} from "@/lib/analytics/public-analytics-events";
+import { recordFunnelEvent, resolveFunnelUserId } from "@/lib/analytics/recorder";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const body: unknown = await request.json().catch(() => null);
-  if (
-    typeof body === "object" &&
-    body !== null &&
-    !Array.isArray(body) &&
-    Object.prototype.hasOwnProperty.call(body, "user_id")
-  ) {
-    return NextResponse.json({ error: "user_id is assigned by the server." }, { status: 400 });
+  const rateLimit = checkAnalyticsEventsRateLimit(clientIpFromRequest(request));
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
+  const bodyRead = await readPublicAnalyticsEventBody(request);
+  if (!bodyRead.success) {
+    return NextResponse.json({ error: bodyRead.error }, { status: bodyRead.status });
   }
 
   const recordBody =
-    typeof body === "object" && body !== null && !Array.isArray(body)
-      ? (body as Record<string, unknown>)
+    typeof bodyRead.parsed === "object" &&
+    bodyRead.parsed !== null &&
+    !Array.isArray(bodyRead.parsed)
+      ? (bodyRead.parsed as Record<string, unknown>)
       : null;
   const eventName =
     typeof recordBody?.event_name === "string" ? recordBody.event_name : null;
@@ -31,20 +41,10 @@ export async function POST(request: Request) {
   const { userId: clerkUserId } = await auth();
   const userId =
     skipAuthenticatedIdentity || !clerkUserId ? null : await resolveFunnelUserId(clerkUserId);
-  const validation = validateFunnelEvent(
-    typeof body === "object" && body !== null && !Array.isArray(body)
-      ? { ...body, user_id: userId }
-      : body,
-    { allowUserId: true },
-  );
+
+  const validation = validatePublicAnalyticsEventPayload(bodyRead.parsed, { userId });
   if (!validation.success) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
-  }
-  if (!isPublicFunnelEventName(validation.event.event_name)) {
-    return NextResponse.json(
-      { error: "This event may only be recorded by a trusted server route." },
-      { status: 403 },
-    );
   }
 
   const result = await recordFunnelEvent(validation.event);
