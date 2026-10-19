@@ -77,12 +77,23 @@ function testCopy(): void {
   assert.doesNotMatch(pageSource, /in his own words/i);
   assert.doesNotMatch(pageSource, /FieldNotesFooterSignup/);
 
-  const metaSource = readFileSync(join(root, "app/field-notes/page.tsx"), "utf8");
-  assert.match(
-    metaSource,
-    /Field Notes is Jack's email newsletter, with essays on timing and rest and notes from building Kairos\./,
+  const metadataSource = readFileSync(
+    join(root, "lib/marketing/public-page-metadata.ts"),
+    "utf8",
   );
-  assert.match(metaSource, /Field Notes: Jack's email newsletter \| Kairos/);
+  assert.match(metadataSource, /export const fieldNotesMarketingMetadata/);
+  assert.match(
+    metadataSource,
+    /export const FIELD_NOTES_MARKETING_DESCRIPTION =\s*\n\s*"Field Notes is Jack's email newsletter, with essays on timing and rest and notes from building Kairos\."/,
+  );
+  assert.match(
+    metadataSource,
+    /export const FIELD_NOTES_MARKETING_TITLE = "Field Notes: Jack's email newsletter \| Kairos"/,
+  );
+
+  const metaSource = readFileSync(join(root, "app/field-notes/page.tsx"), "utf8");
+  assert.match(metaSource, /fieldNotesMarketingMetadata/);
+  assert.match(metaSource, /export const metadata = fieldNotesMarketingMetadata/);
 }
 
 function testSurfaceSources(): void {
