@@ -55,6 +55,14 @@ interface Props {
 // midnight every time.
 const DEFAULT_ANCHOR_MINUTE = 7 * 60
 
+/** Tailwind `md` — calendar mobile inset scroll only below this width. */
+const CALENDAR_INSET_SCROLL_MQ = '(max-width: 767px)'
+
+function calendarUsesInsetScroll(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia(CALENDAR_INSET_SCROLL_MQ).matches
+}
+
 export function DayGrid({
   date,
   isToday,
@@ -74,6 +82,7 @@ export function DayGrid({
   // would produce a different value at hydration and trigger a mismatch.
   const [nowMinute, setNowMinute] = useState<number | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isToday) return
@@ -86,8 +95,18 @@ export function DayGrid({
   function scrollGridToMinute(targetMinute: number) {
     const grid = gridRef.current
     if (!grid) return
+    const offset = targetMinute * PX_PER_MINUTE
+
+    if (scrollMode === 'calendar' && calendarUsesInsetScroll()) {
+      const scroller = scrollContainerRef.current
+      if (scroller) {
+        scroller.scrollTo({ top: offset, behavior: 'auto' })
+        return
+      }
+    }
+
     const gridTop = grid.getBoundingClientRect().top + window.scrollY
-    window.scrollTo({ top: gridTop + targetMinute * PX_PER_MINUTE, behavior: 'auto' })
+    window.scrollTo({ top: gridTop + offset, behavior: 'auto' })
   }
 
   // Land on the relevant part of the day instead of always opening at
@@ -157,7 +176,7 @@ export function DayGrid({
     setPendingTitle('')
   }
 
-  return (
+  const gridRow = (
     <div className="flex gap-2">
       <div className="flex flex-col text-right">
         {hourMarks.map((m) => (
@@ -248,4 +267,18 @@ export function DayGrid({
       </div>
     </div>
   )
+
+  if (scrollMode === 'calendar') {
+    return (
+      <div
+        ref={scrollContainerRef}
+        className="max-h-[calc(100dvh-13rem)] overflow-y-auto overscroll-contain md:max-h-none md:overflow-visible"
+        data-calendar-day-grid-scroll
+      >
+        {gridRow}
+      </div>
+    )
+  }
+
+  return gridRow
 }

@@ -114,4 +114,12 @@ const plannerPage = readFileSync(join(root, 'app/(app)/planner/page.tsx'), 'utf8
 assert.ok(plannerPage.includes('buildCalendarDayRedirectFromPlanner'))
 console.log('✓ Planner page flag redirect\n')
 
+console.log('Calendar mobile inset scroll (calendar scrollMode only)')
+const dayGridSource = readFileSync(join(root, 'components/planner/DayGrid.tsx'), 'utf8')
+assert.ok(dayGridSource.includes('data-calendar-day-grid-scroll'))
+assert.ok(dayGridSource.includes('scrollContainerRef'))
+assert.ok(dayGridSource.includes("scrollMode === 'calendar'"))
+assert.ok(dayGridSource.includes('md:max-h-none md:overflow-visible'))
+console.log('✓ Calendar inset scroll container\n')
+
 console.log('All KIAROS_CALENDAR_DAY tests passed.')
