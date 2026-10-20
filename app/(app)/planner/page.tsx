@@ -8,19 +8,19 @@ import { getDayPlan } from '@/lib/planner/get-day-plan'
 import { getWeekPlan } from '@/lib/planner/get-week-plan'
 import { getMonthPlan } from '@/lib/planner/get-month-plan'
 import { getWeekDates, MONTH_NAMES } from '@/components/calendar/utils'
-import { DayPlanner } from '@/components/planner/DayPlanner'
 import { WeekBoard } from '@/components/planner/WeekBoard'
 import { MonthBoard } from '@/components/planner/MonthBoard'
 import { cn } from '@/lib/utils'
+import { isCalendarDayEnabled } from '@/lib/feature-flags'
+import {
+  buildCalendarDayRedirectFromPlanner,
+  parsePlannerView,
+  shouldRedirectPlannerToCalendar,
+} from '@/lib/calendar/calendar-day-routes'
+import { PlannerDayShell, addDays, formatLongDate } from '@/components/planner/PlannerDayShell'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 type View = 'day' | 'week' | 'month'
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() + days)
-  return d.toISOString().slice(0, 10)
-}
 
 /** Steps by a full calendar month, handling day-of-month overflow (Jan 31 + 1mo -> Feb 1, not Mar 3). */
 function addMonths(dateStr: string, months: number): string {
@@ -29,14 +29,6 @@ function addMonths(dateStr: string, months: number): string {
   const nextYear = Math.floor(total / 12)
   const nextMonth = (total % 12) + 1
   return `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
-}
-
-function formatLongDate(dateStr: string): string {
-  return new Date(`${dateStr}T12:00:00`).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  })
 }
 
 function formatWeekRange(weekDates: string[]): string {
@@ -51,31 +43,47 @@ export default async function PlannerPage({
 }: {
   searchParams: Promise<{ date?: string; view?: string }>
 }) {
+  const params = await searchParams
+  const plannerView = parsePlannerView(params.view)
+  if (isCalendarDayEnabled() && shouldRedirectPlannerToCalendar(plannerView)) {
+    redirect(buildCalendarDayRedirectFromPlanner(params))
+  }
+
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
-  // Shares the app layout's request-cached lookup, so the page and its layout
-  // can never reach opposite verdicts about whether this user has a profile.
   const profileResult = await getAppProfile(userId)
   if (profileResult.status === 'unavailable') return <DataUnavailable />
-
-  // Safety net only — the layout redirects first on a genuinely missing row.
   if (profileResult.status === 'missing') redirect('/onboarding')
   const profile = profileResult.profile
 
-  const params = await searchParams
   const today = todayISO()
   const date = params.date && DATE_RE.test(params.date) ? params.date : today
   const view: View = params.view === 'week' ? 'week' : params.view === 'month' ? 'month' : 'day'
 
   const weekDates = view === 'week' ? getWeekDates(date) : null
-  const monthParts = view === 'month' ? { year: Number.parseInt(date.slice(0, 4), 10), month: Number.parseInt(date.slice(5, 7), 10) } : null
+  const monthParts =
+    view === 'month' ? { year: Number.parseInt(date.slice(0, 4), 10), month: Number.parseInt(date.slice(5, 7), 10) } : null
 
   const [dayPlan, weekPlan, monthPlan] = await Promise.all([
     view === 'day' ? getDayPlan(profile.id, date) : null,
     weekDates ? getWeekPlan(profile.id, weekDates) : null,
     monthParts ? getMonthPlan(profile.id, monthParts.year, monthParts.month) : null,
   ])
+
+  if (view === 'day' && dayPlan) {
+    return (
+      <PlannerDayShell
+        basePath="/planner"
+        date={date}
+        today={today}
+        dayPlan={dayPlan}
+        kicker="Planner"
+        showViewToggles
+        activeView="day"
+      />
+    )
+  }
 
   const prevHref =
     view === 'month'
@@ -148,8 +156,6 @@ export default async function PlannerPage({
         <WeekBoard days={weekPlan.days} weekGoals={weekPlan.weekGoals} today={today} />
       ) : view === 'month' && monthPlan ? (
         <MonthBoard plan={monthPlan} today={today} />
-      ) : dayPlan ? (
-        <DayPlanner date={date} isToday={date === today} initialPlanItems={dayPlan.planItems} windows={dayPlan.windows} />
       ) : null}
     </div>
   )

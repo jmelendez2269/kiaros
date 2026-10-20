@@ -54,3 +54,8 @@ export function isMetaCapiEnabled(): boolean {
 export function isRetentionEmailsEnabled(): boolean {
   return process.env.KIAROS_RETENTION_EMAILS_ENABLED === "true";
 }
+
+/** Calendar Day view (planner day moved under /calendar). Off by default. */
+export function isCalendarDayEnabled(): boolean {
+  return enabled(process.env.KIAROS_CALENDAR_DAY);
+}
