@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 type CalendarView = 'day' | 'week'
 
 const VIEWS: { key: CalendarView; label: string }[] = [
-  { key: 'day', label: 'TODO(stella): Day' },
-  { key: 'week', label: 'TODO(stella): Week' },
+  { key: 'day', label: 'Day' },
+  { key: 'week', label: 'Week' },
 ]
 
 export function CalendarViewSwitcher({ current }: { current: CalendarView }) {

@@ -44,7 +44,7 @@ export default async function CalendarPage({
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="shell-kicker mb-1">TODO(stella): Calendar</p>
+            <p className="shell-kicker mb-1">Calendar</p>
             <h1 className="font-serif text-3xl text-bone">{rangeLabel}</h1>
           </div>
           <CalendarViewSwitcher current="week" />
@@ -59,10 +59,7 @@ export default async function CalendarPage({
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-6xl px-4 pt-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="shell-kicker mb-1">TODO(stella): Calendar</p>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-4">
           <CalendarViewSwitcher current="day" />
         </div>
       </div>
@@ -71,7 +68,7 @@ export default async function CalendarPage({
         date={date}
         today={today}
         dayPlan={dayPlan}
-        kicker="TODO(stella): Day"
+        kicker="Calendar"
         activeView="day"
         dayGridScrollMode="calendar"
       />

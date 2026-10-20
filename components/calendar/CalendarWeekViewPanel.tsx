@@ -99,7 +99,7 @@ export async function CalendarWeekViewPanel({ date }: Props) {
       <div className="space-y-6">
         {loaded ? (
           <div className="shell-panel px-6 py-8">
-            <p className="shell-kicker mb-3">TODO(stella): Calendar week</p>
+            <p className="shell-kicker mb-3">Week</p>
             <h2 className="shell-section-title">Week data is still forming</h2>
             <p className="mt-3 max-w-xl text-sm leading-7 text-bone-muted">
               Your sky map will appear here once this year&apos;s ephemeris is available.
