@@ -15,6 +15,5 @@ export default async function Image() {
   return renderMarketingOgImage({
     title: "Guides",
     subtitle: GUIDES_INDEX_META_DESCRIPTION,
-    kicker: "KAIROS",
   });
 }

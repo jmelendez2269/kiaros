@@ -3,9 +3,12 @@ import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+const guideBodyClass =
+  "text-[17px] leading-[1.7] text-[#E3E2ED]/[0.85] [&_a]:text-[#E3E2ED]/[0.85]";
+
 const components: Components = {
   h1: ({ children }) => (
-    <h1 className="font-almanac-display text-4xl tracking-[0.06em] text-almanac-ink md:text-5xl">
+    <h1 className="font-almanac-display text-4xl tracking-[0.06em] text-almanac-ink md:text-[44px] md:leading-[1.12]">
       {children}
     </h1>
   ),
@@ -17,20 +20,18 @@ const components: Components = {
   h3: ({ children }) => (
     <h3 className="mt-8 text-lg font-semibold text-almanac-ink">{children}</h3>
   ),
-  p: ({ children }) => <p className="mt-4 text-base leading-7 text-almanac-ink-dim">{children}</p>,
+  p: ({ children }) => <p className={`mt-4 ${guideBodyClass}`}>{children}</p>,
   ul: ({ children }) => (
-    <ul className="mt-4 list-disc space-y-2 pl-5 text-base leading-7 text-almanac-ink-dim">
-      {children}
-    </ul>
+    <ul className={`mt-4 list-disc space-y-2 pl-5 ${guideBodyClass}`}>{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="mt-4 list-decimal space-y-2 pl-5 text-base leading-7 text-almanac-ink-dim">
-      {children}
-    </ol>
+    <ol className={`mt-4 list-decimal space-y-2 pl-5 ${guideBodyClass}`}>{children}</ol>
   ),
   li: ({ children }) => <li>{children}</li>,
   blockquote: ({ children }) => (
-    <blockquote className="mt-6 border-l-2 border-almanac-copper-hi/60 pl-4 text-base italic leading-7 text-almanac-ink-dim">
+    <blockquote
+      className={`mt-6 border-l-2 border-almanac-copper-hi/60 pl-4 italic ${guideBodyClass}`}
+    >
       {children}
     </blockquote>
   ),

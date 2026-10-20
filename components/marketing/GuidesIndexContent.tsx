@@ -23,7 +23,7 @@ export function GuidesIndexContent({ guides }: Props) {
           />
         </div>
 
-        <div className="relative mx-auto max-w-2xl px-5 py-14 md:px-8 md:py-20">
+        <div className="relative mx-auto max-w-[720px] px-5 py-14 md:px-8 md:py-20">
           <h1 className="font-almanac-display text-4xl tracking-[0.06em] text-almanac-ink md:text-5xl">
             Guides
           </h1>
@@ -37,11 +37,19 @@ export function GuidesIndexContent({ guides }: Props) {
               <li key={guide.slug}>
                 <Link
                   href={guideCanonicalPath(guide.slug)}
-                  className="group block rounded-2xl border border-almanac-line bg-[rgba(10,12,20,0.35)] p-6 transition-colors hover:border-almanac-line-hi"
+                  className="group block rounded-2xl border border-almanac-line bg-[rgba(10,12,20,0.35)] p-6 transition-colors hover:border-almanac-kairos-hi"
                 >
-                  <h2 className="font-almanac-display text-xl tracking-[0.04em] text-almanac-ink group-hover:text-almanac-starlight">
-                    {guide.seoTitle}
-                  </h2>
+                  <div className="flex items-start justify-between gap-4">
+                    <h2 className="font-almanac-display text-xl tracking-[0.04em] text-almanac-ink group-hover:text-almanac-starlight">
+                      {guide.seoTitle}
+                    </h2>
+                    <span
+                      className="shrink-0 font-almanac-body text-lg text-almanac-kairos-hi transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    >
+                      →
+                    </span>
+                  </div>
                   <p className="mt-3 text-sm leading-7 text-almanac-ink-dim">{guide.metaDescription}</p>
                 </Link>
               </li>

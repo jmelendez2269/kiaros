@@ -56,7 +56,7 @@ const cards: CardCase[] = [
     name: "/guides",
     title: "Guides",
     subtitle: GUIDES_INDEX_META_DESCRIPTION,
-    hasKicker: true,
+    hasKicker: false,
   },
   ...getAllGuides().map((guide) => ({
     name: `/guides/${guide.slug}`,
