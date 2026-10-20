@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { FieldNotesKitSubscribeForm } from "@/components/marketing/FieldNotesKitSubscribeForm";
 import { StarField } from "@/components/almanac/StarField";
+import { BrandMark } from "@/components/shared/BrandMark";
 import { BRAND } from "@/lib/brand";
 import {
   FIELD_NOTES_NEWSLETTER_BODY,
@@ -19,7 +20,7 @@ function FieldNotesMarketingHeader() {
     <header className="sticky top-0 z-30 border-b border-almanac-line-hi bg-[rgba(10,12,20,0.85)] backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 md:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg text-almanac-copper-hi" aria-hidden>&#10022;</span>
+          <BrandMark size="header" />
           <span className="font-almanac-display text-lg tracking-[0.08em] text-almanac-ink">
             {BRAND.product.toUpperCase()}
           </span>
@@ -48,7 +49,7 @@ function AlmanacMarketingFooter() {
     <footer className="border-t border-almanac-line py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 md:flex-row md:items-center md:justify-between md:px-8">
         <Link href="/" className="flex min-h-11 items-center gap-2">
-          <span className="text-base text-almanac-copper-hi" aria-hidden>&#10022;</span>
+          <BrandMark size="footer" />
           <span className="font-almanac-display text-sm tracking-[0.08em] text-almanac-ink">
             {BRAND.product.toUpperCase()}
           </span>
