@@ -5,6 +5,7 @@ export const PUBLIC_ROUTE_PATTERNS: readonly string[] = [
   "/stelloquy(.*)",
   "/pricing(.*)",
   "/field-notes(.*)",
+  "/guides(.*)",
   "/activate(.*)",
   "/contact(.*)",
   "/privacy(.*)",

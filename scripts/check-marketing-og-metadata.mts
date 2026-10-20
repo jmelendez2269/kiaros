@@ -22,6 +22,17 @@ import {
   homeMarketingMetadata,
   pricingMarketingMetadata,
 } from "../lib/marketing/public-page-metadata.ts";
+import {
+  guideMarketingMetadata,
+  guidesIndexMarketingMetadata,
+} from "../lib/marketing/guide-page-metadata.ts";
+import {
+  getAllGuides,
+  GUIDES_INDEX_META_DESCRIPTION,
+  GUIDES_INDEX_PATH,
+  GUIDES_INDEX_SEO_TITLE,
+  guideCanonicalPath,
+} from "../lib/marketing/guides.ts";
 import { PUBLIC_ROUTE_PATTERNS } from "../lib/marketing/public-routes.ts";
 import { marketingCanonicalUrl } from "../lib/marketing/public-site.ts";
 
@@ -30,7 +41,8 @@ type RouteCase = {
   metadata: typeof homeMarketingMetadata;
   expectedTitle: string;
   expectedDescription: string;
-  canonicalPath: "/" | "/pricing" | "/field-notes";
+  canonicalPath: string;
+  ogFile: string;
 };
 
 const routes: RouteCase[] = [
@@ -40,6 +52,7 @@ const routes: RouteCase[] = [
     expectedTitle: HOME_MARKETING_TITLE,
     expectedDescription: HOME_MARKETING_DESCRIPTION,
     canonicalPath: "/",
+    ogFile: join("app", "opengraph-image.tsx"),
   },
   {
     name: "/pricing",
@@ -47,6 +60,7 @@ const routes: RouteCase[] = [
     expectedTitle: PRICING_MARKETING_TITLE,
     expectedDescription: PRICING_MARKETING_DESCRIPTION,
     canonicalPath: "/pricing",
+    ogFile: join("app", "pricing", "opengraph-image.tsx"),
   },
   {
     name: "/field-notes",
@@ -54,7 +68,27 @@ const routes: RouteCase[] = [
     expectedTitle: FIELD_NOTES_MARKETING_TITLE,
     expectedDescription: FIELD_NOTES_MARKETING_DESCRIPTION,
     canonicalPath: "/field-notes",
+    ogFile: join("app", "field-notes", "opengraph-image.tsx"),
   },
+  {
+    name: GUIDES_INDEX_PATH,
+    metadata: guidesIndexMarketingMetadata(),
+    expectedTitle: GUIDES_INDEX_SEO_TITLE,
+    expectedDescription: GUIDES_INDEX_META_DESCRIPTION,
+    canonicalPath: GUIDES_INDEX_PATH,
+    ogFile: join("app", "guides", "opengraph-image.tsx"),
+  },
+  ...getAllGuides().map((guide) => {
+    const path = guideCanonicalPath(guide.slug);
+    return {
+      name: path,
+      metadata: guideMarketingMetadata(guide),
+      expectedTitle: guide.seoTitle,
+      expectedDescription: guide.metaDescription,
+      canonicalPath: path,
+      ogFile: join("app", "guides", "[slug]", "opengraph-image.tsx"),
+    };
+  }),
 ];
 
 let checks = 0;
@@ -63,7 +97,8 @@ assert.ok(
   PUBLIC_ROUTE_PATTERNS.includes("/opengraph-image(.*)"),
   "PUBLIC_ROUTE_PATTERNS must include /opengraph-image(.*) for homepage link-preview crawlers",
 );
-checks += 1;
+assert.ok(PUBLIC_ROUTE_PATTERNS.includes("/guides(.*)"), "PUBLIC_ROUTE_PATTERNS must include /guides(.*)");
+checks += 2;
 
 for (const route of routes) {
   const og = route.metadata.openGraph;
@@ -88,13 +123,10 @@ for (const route of routes) {
   );
   checks += 1;
 
-  const ogImagePath = MARKETING_OG_IMAGE_PATHS[route.canonicalPath];
+  const ogImagePath =
+    MARKETING_OG_IMAGE_PATHS[route.canonicalPath as keyof typeof MARKETING_OG_IMAGE_PATHS];
   assert.ok(ogImagePath, `${route.name}: OG image path`);
-  const ogFile =
-    route.canonicalPath === "/"
-      ? join("app", "opengraph-image.tsx")
-      : join("app", route.canonicalPath.slice(1), "opengraph-image.tsx");
-  assert.ok(existsSync(ogFile), `${route.name}: ${ogFile} exists`);
+  assert.ok(existsSync(route.ogFile), `${route.name}: ${route.ogFile} exists`);
   checks += 1;
   assert.equal(MARKETING_OG_IMAGE_SIZE.width, 1200, `${route.name}: OG width`);
   assert.equal(MARKETING_OG_IMAGE_SIZE.height, 630, `${route.name}: OG height`);

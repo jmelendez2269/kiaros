@@ -26,6 +26,7 @@
     "test:analytics-events": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-analytics-events-route.mts",
     "test:checkout-attribution": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-checkout-attribution.mts",
     "test:marketing-og": "npx tsx scripts/check-marketing-og-metadata.mts && npx tsx scripts/check-marketing-og-typography.mts",
+    "test:guides": "npx tsx scripts/check-guide-copy-verbatim.mts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -59,6 +60,8 @@
     "react-dom": "^18.3.1",
     "react-force-graph-2d": "^1.29.1",
     "react-hook-form": "^7.51.3",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.16.0",
     "stripe": "22.0.2",
     "svix": "^1.90.0",
