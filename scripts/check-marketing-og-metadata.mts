@@ -4,8 +4,10 @@
  */
 
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+
+import { KAIROS_MARK_ICON_DATA_URL } from "../lib/marketing/kairos-mark-icon-data-url.ts";
 
 import {
   MARKETING_OG_IMAGE_PATHS,
@@ -92,6 +94,15 @@ const routes: RouteCase[] = [
 ];
 
 let checks = 0;
+
+const iconPath = join("public", "icon-192.png");
+const iconDataUrl = `data:image/png;base64,${readFileSync(iconPath).toString("base64")}`;
+assert.equal(
+  KAIROS_MARK_ICON_DATA_URL,
+  iconDataUrl,
+  "KAIROS_MARK_ICON_DATA_URL must match public/icon-192.png (regenerate kairos-mark-icon-data-url.ts if the icon changed)",
+);
+checks += 1;
 
 assert.ok(
   PUBLIC_ROUTE_PATTERNS.includes("/opengraph-image(.*)"),

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { StarField } from "@/components/almanac/StarField";
+import { GuideReadingBackdrop } from "@/components/marketing/GuideReadingBackdrop";
 import { MarketingAlmanacShell } from "@/components/marketing/MarketingAlmanacChrome";
 import { guideCanonicalPath, type GuideDocument } from "@/lib/marketing/guides";
 
@@ -12,18 +12,9 @@ export function GuidesIndexContent({ guides }: Props) {
   return (
     <MarketingAlmanacShell>
       <main className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <StarField count={72} seed={41} opacity={0.35} />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse 50% 45% at 20% 20%, rgba(112,75,210,0.18), transparent 65%)",
-            }}
-          />
-        </div>
+        <GuideReadingBackdrop seed={41} />
 
-        <div className="relative mx-auto max-w-[720px] px-5 py-14 md:px-8 md:py-20">
+        <div className="relative z-10 mx-auto max-w-[720px] px-5 py-14 md:px-8 md:py-20">
           <h1 className="font-almanac-display text-4xl tracking-[0.06em] text-almanac-ink md:text-5xl">
             Guides
           </h1>

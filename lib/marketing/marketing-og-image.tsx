@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
-
 import { ImageResponse } from "next/og";
+
+import { KAIROS_MARK_ICON_DATA_URL } from "@/lib/marketing/kairos-mark-icon-data-url";
 
 import { BRAND } from "@/lib/brand";
 import { MARKETING_OG_IMAGE_SIZE } from "@/lib/marketing/marketing-og-image-size";
@@ -14,9 +13,6 @@ import {
 
 export { MARKETING_OG_IMAGE_SIZE };
 
-/** App icon PNG (triangle mark from public/icon.svg). Satori does not render SVG <img> reliably. */
-const KAIROS_MARK_ICON_PATH = join(process.cwd(), "public", "icon-192.png");
-
 /** Centred square crop safe zone (e.g. iMessage / WhatsApp previews). */
 const SAFE_ZONE_LEFT = 285;
 
@@ -24,9 +20,8 @@ const PAGE_MARGIN = 120;
 const MARK_SIZE = 88;
 const BLOCK_GAP = 16;
 
-async function kairosMarkDataUrl(): Promise<string> {
-  const bytes = await readFile(KAIROS_MARK_ICON_PATH);
-  return `data:image/png;base64,${bytes.toString("base64")}`;
+function kairosMarkDataUrl(): string {
+  return KAIROS_MARK_ICON_DATA_URL;
 }
 
 async function loadGoogleFont(
@@ -54,10 +49,10 @@ export interface MarketingOgImageContent {
 
 export async function renderMarketingOgImage(content: MarketingOgImageContent) {
   const fontText = `${BRAND.product} ${content.title} ${content.subtitle} ${content.kicker ?? ""}`;
-  const [displayFont, bodyFont, markSrc] = await Promise.all([
+  const markSrc = kairosMarkDataUrl();
+  const [displayFont, bodyFont] = await Promise.all([
     loadGoogleFont("Cinzel", 600, fontText),
     loadGoogleFont("DM+Sans", 400, fontText),
-    kairosMarkDataUrl(),
   ]);
 
   const typography = pickMarketingOgTypography({
