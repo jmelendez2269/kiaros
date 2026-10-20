@@ -52,14 +52,15 @@ const TICKER_ITEMS = [
 ];
 
 const INSTRUMENTS: Array<{
-  glyph: string;
+  glyph?: string;
+  brandMark?: boolean;
   name: string;
   body: string;
   badge?: string;
 }> = [
   { glyph: "☉", name: "Blueprint", body: "Your full year, generated once from your chart — 52 weeks, 12 months, 4 quarters." },
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
-  { glyph: "✦", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
+  { brandMark: true, name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
   { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. On Planner + Oracle, patterns grow from the entries you choose to include." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
   {
@@ -230,9 +231,16 @@ function InstrumentPanel() {
                 borderTop: i >= 5 ? undefined : undefined,
               }}
             >
-              <span className="font-almanac-serif text-3xl text-almanac-copper transition-colors group-hover:text-almanac-copper-hi" aria-hidden>
-                {item.glyph}
-              </span>
+              {item.brandMark ? (
+                <BrandMark size="header" />
+              ) : (
+                <span
+                  className="font-almanac-serif text-3xl text-almanac-copper transition-colors group-hover:text-almanac-copper-hi"
+                  aria-hidden
+                >
+                  {item.glyph}
+                </span>
+              )}
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <h3 className="font-almanac-mono text-[0.78rem] uppercase tracking-[0.12em] text-almanac-ink">
                   {item.name}
