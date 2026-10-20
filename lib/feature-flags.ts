@@ -1,9 +1,9 @@
 import "server-only";
 
-function enabled(value: string | undefined): boolean {
-  if (!value) return false;
+import { featureFlagEnabled } from "@/lib/calendar/calendar-day-routes";
 
-  return ["1", "true", "on", "yes"].includes(value.trim().toLowerCase());
+function enabled(value: string | undefined): boolean {
+  return featureFlagEnabled(value);
 }
 
 export function isJournalConsentV2Enabled(): boolean {

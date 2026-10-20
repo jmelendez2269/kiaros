@@ -1,3 +1,7 @@
+const { featureFlagEnabled } = require('./lib/calendar/feature-flag-enabled.cjs')
+
+const calendarDayOn = featureFlagEnabled(process.env.KIAROS_CALENDAR_DAY)
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -12,7 +16,15 @@ const nextConfig = {
       // Kairos redesign — Today supersedes the dashboard. Permanent so the
       // browser remembers; tracker route folds into the Journal screen.
       { source: '/dashboard', destination: '/today', permanent: true },
-      // /calendar: when KIAROS_CALENDAR_DAY is off, app/(app)/calendar/page.tsx redirects to /year.
+      ...(!calendarDayOn
+        ? [
+            {
+              source: '/calendar',
+              destination: '/year',
+              permanent: true,
+            },
+          ]
+        : []),
       // /oracle's legacy full-page chat is superseded by the Stelloquy
       // drawer, which StelloquyProvider mounts globally across every
       // (app) route — there's no separate destination page for it, so

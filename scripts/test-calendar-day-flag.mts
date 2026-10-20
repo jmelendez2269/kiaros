@@ -4,31 +4,60 @@
 
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
   buildCalendarDayRedirectFromPlanner,
+  featureFlagEnabled,
   parsePlannerView,
+  plannerDayViewNextHref,
+  plannerDayViewPrevHref,
+  plannerDayViewTodayHref,
   shouldRedirectPlannerToCalendar,
   weekArcHref,
 } from '../lib/calendar/calendar-day-routes.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-
-function flagEnabled(value: string | undefined): boolean {
-  if (!value) return false
-  return ['1', 'true', 'on', 'yes'].includes(value.trim().toLowerCase())
-}
+const require = createRequire(import.meta.url)
+const { featureFlagEnabled: featureFlagEnabledCjs } = require('../lib/calendar/feature-flag-enabled.cjs')
 
 console.log('=== KIAROS_CALENDAR_DAY tests ===\n')
 
-console.log('Flag env parsing (mirrors lib/feature-flags.ts)')
-assert.equal(flagEnabled(undefined), false)
-assert.equal(flagEnabled(''), false)
-assert.equal(flagEnabled('false'), false)
-assert.equal(flagEnabled('true'), true)
-assert.equal(flagEnabled('on'), true)
+console.log('Flag env parsing (TS + CJS parity for next.config)')
+for (const sample of [undefined, '', 'false', 'TRUE', ' on ', 'yes', '1']) {
+  assert.equal(
+    featureFlagEnabled(sample),
+    featureFlagEnabledCjs(sample),
+    `parity mismatch for ${JSON.stringify(sample)}`
+  )
+}
+assert.equal(featureFlagEnabled(undefined), false)
+assert.equal(featureFlagEnabled('true'), true)
 console.log('✓ Flag parsing\n')
+
+console.log('next.config /calendar → /year when flag off (308, query preserved by Next)')
+const nextConfigSource = readFileSync(join(root, 'next.config.js'), 'utf8')
+assert.ok(nextConfigSource.includes("require('./lib/calendar/feature-flag-enabled.cjs')"))
+assert.ok(nextConfigSource.includes('KIAROS_CALENDAR_DAY'))
+assert.ok(nextConfigSource.includes("source: '/calendar'"))
+assert.ok(nextConfigSource.includes("destination: '/year'"))
+assert.ok(nextConfigSource.includes('permanent: true'))
+assert.ok(nextConfigSource.includes('!calendarDayOn'))
+const calendarPage = readFileSync(join(root, 'app/(app)/calendar/page.tsx'), 'utf8')
+assert.ok(!calendarPage.includes("redirect('/year')"), 'calendar page must not redirect to /year when flag off')
+console.log('✓ Static calendar redirect wiring\n')
+
+console.log('Planner day-view nav hrefs (flag off / basePath planner)')
+assert.equal(plannerDayViewTodayHref(), '/planner?view=day')
+assert.equal(plannerDayViewPrevHref('2026-06-14'), '/planner?view=day&date=2026-06-14')
+assert.equal(plannerDayViewNextHref('2026-06-16'), '/planner?view=day&date=2026-06-16')
+const shellSource = readFileSync(join(root, 'components/planner/PlannerDayShell.tsx'), 'utf8')
+assert.ok(shellSource.includes('plannerDayViewTodayHref()'))
+assert.ok(shellSource.includes('plannerDayViewPrevHref'))
+assert.ok(shellSource.includes('plannerDayViewNextHref'))
+assert.ok(!shellSource.includes('`/calendar?view=month'), 'calendar month link must not be rendered')
+console.log('✓ Planner day nav hrefs\n')
 
 console.log('Planner redirect (day view only)')
 assert.equal(shouldRedirectPlannerToCalendar(parsePlannerView(undefined)), true)
@@ -81,12 +110,8 @@ assert.ok(intentionIdx < weekArcIdx, 'TodayIntention should precede WeekArc (Dee
 assert.ok(!todaySource.includes('calendarDayEnabled={true}'), 'Today should pass flag via variable, not hard-coded on')
 console.log('✓ Today layout markers and order\n')
 
-console.log('Calendar route redirects to /year when flag off (source check)')
-const calendarPage = readFileSync(join(root, 'app/(app)/calendar/page.tsx'), 'utf8')
-assert.ok(calendarPage.includes('isCalendarDayEnabled()'))
-assert.ok(calendarPage.includes("redirect('/year')"))
 const plannerPage = readFileSync(join(root, 'app/(app)/planner/page.tsx'), 'utf8')
 assert.ok(plannerPage.includes('buildCalendarDayRedirectFromPlanner'))
-console.log('✓ Route handlers wire flag checks\n')
+console.log('✓ Planner page flag redirect\n')
 
 console.log('All KIAROS_CALENDAR_DAY tests passed.')

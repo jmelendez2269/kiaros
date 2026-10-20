@@ -2,7 +2,29 @@
  * Pure URL helpers for KIAROS_CALENDAR_DAY (unit-tested; no server-only imports).
  */
 
+export function featureFlagEnabled(value: string | undefined): boolean {
+  if (!value) return false
+  return ['1', 'true', 'on', 'yes'].includes(value.trim().toLowerCase())
+}
+
 export type PlannerView = 'day' | 'week' | 'month'
+
+/** Planner day view nav hrefs (must match main when KIAROS_CALENDAR_DAY is off). */
+export function plannerDayViewTodayHref(): string {
+  return '/planner?view=day'
+}
+
+export function plannerDayViewPrevHref(date: string): string {
+  return `/planner?view=day&date=${date}`
+}
+
+export function plannerDayViewNextHref(date: string): string {
+  return `/planner?view=day&date=${date}`
+}
+
+export function plannerDayTabHref(date: string): string {
+  return `/planner?date=${date}`
+}
 
 export function parsePlannerView(raw: string | undefined): PlannerView {
   if (raw === 'week') return 'week'

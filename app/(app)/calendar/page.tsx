@@ -4,7 +4,6 @@ import { getAppProfile } from '@/lib/app/get-app-profile'
 import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { todayISO } from '@/lib/today/get-today-context'
 import { getDayPlan } from '@/lib/planner/get-day-plan'
-import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import { PlannerDayShell } from '@/components/planner/PlannerDayShell'
 import { CalendarViewSwitcher } from '@/components/calendar/CalendarViewSwitcher'
 import { CalendarWeekViewPanel } from '@/components/calendar/CalendarWeekViewPanel'
@@ -22,10 +21,6 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ date?: string; view?: string }>
 }) {
-  if (!isCalendarDayEnabled()) {
-    redirect('/year')
-  }
-
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 

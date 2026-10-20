@@ -1,6 +1,12 @@
 import Link from 'next/link'
 import { DayPlanner } from '@/components/planner/DayPlanner'
 import type { DayPlan } from '@/lib/planner/get-day-plan'
+import {
+  plannerDayTabHref,
+  plannerDayViewNextHref,
+  plannerDayViewPrevHref,
+  plannerDayViewTodayHref,
+} from '@/lib/calendar/calendar-day-routes'
 import { cn } from '@/lib/utils'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -33,27 +39,14 @@ interface PlannerDayShellProps {
   activeView?: 'day' | 'week' | 'month'
 }
 
-function plannerDayHref(basePath: PlannerShellBasePath, date: string): string {
-  return basePath === '/calendar' ? `/calendar?view=day&date=${date}` : `/planner?date=${date}`
-}
-
 function plannerWeekHref(basePath: PlannerShellBasePath, date: string): string {
   return basePath === '/calendar'
     ? `/calendar?view=week&date=${date}`
     : `/planner?view=week&date=${date}`
 }
 
-function plannerMonthHref(basePath: PlannerShellBasePath, date: string): string {
-  return basePath === '/calendar'
-    ? `/calendar?view=month&date=${date}`
-    : `/planner?view=month&date=${date}`
-}
-
-function todayNavHref(basePath: PlannerShellBasePath, activeView: 'day' | 'week' | 'month'): string {
-  if (basePath === '/calendar') {
-    return activeView === 'day' ? '/calendar?view=day' : `/calendar?view=${activeView}`
-  }
-  return activeView === 'day' ? '/planner' : `/planner?view=${activeView}`
+function plannerMonthHref(date: string): string {
+  return `/planner?view=month&date=${date}`
 }
 
 export function PlannerDayShell({
@@ -69,11 +62,13 @@ export function PlannerDayShell({
   const prevHref =
     basePath === '/calendar'
       ? `/calendar?view=day&date=${addDays(safeDate, -1)}`
-      : `/planner?date=${addDays(safeDate, -1)}`
+      : plannerDayViewPrevHref(addDays(safeDate, -1))
   const nextHref =
     basePath === '/calendar'
       ? `/calendar?view=day&date=${addDays(safeDate, 1)}`
-      : `/planner?date=${addDays(safeDate, 1)}`
+      : plannerDayViewNextHref(addDays(safeDate, 1))
+  const todayHref =
+    basePath === '/calendar' ? '/calendar?view=day' : plannerDayViewTodayHref()
   const title = formatLongDate(safeDate)
 
   return (
@@ -91,7 +86,7 @@ export function PlannerDayShell({
             ← Prev
           </Link>
           <Link
-            href={todayNavHref(basePath, activeView)}
+            href={todayHref}
             className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone"
           >
             Today
@@ -108,7 +103,7 @@ export function PlannerDayShell({
       {showViewToggles ? (
         <div className="flex gap-2 text-xs uppercase tracking-wider">
           <Link
-            href={plannerDayHref(basePath, safeDate)}
+            href={plannerDayTabHref(safeDate)}
             className={cn(
               'rounded-full border px-3 py-1',
               activeView === 'day'
@@ -129,17 +124,19 @@ export function PlannerDayShell({
           >
             Week
           </Link>
-          <Link
-            href={plannerMonthHref(basePath, safeDate)}
-            className={cn(
-              'rounded-full border px-3 py-1',
-              activeView === 'month'
-                ? 'border-leather-400/50 bg-leather-500/20 text-bone'
-                : 'border-border/40 text-bone-muted/50 hover:text-bone-muted'
-            )}
-          >
-            Month
-          </Link>
+          {basePath === '/planner' ? (
+            <Link
+              href={plannerMonthHref(safeDate)}
+              className={cn(
+                'rounded-full border px-3 py-1',
+                activeView === 'month'
+                  ? 'border-leather-400/50 bg-leather-500/20 text-bone'
+                  : 'border-border/40 text-bone-muted/50 hover:text-bone-muted'
+              )}
+            >
+              Month
+            </Link>
+          ) : null}
         </div>
       ) : null}
 
