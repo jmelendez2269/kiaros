@@ -7,6 +7,8 @@ import { getDayPlan } from '@/lib/planner/get-day-plan'
 import { PlannerDayShell } from '@/components/planner/PlannerDayShell'
 import { CalendarViewSwitcher } from '@/components/calendar/CalendarViewSwitcher'
 import { CalendarWeekViewPanel } from '@/components/calendar/CalendarWeekViewPanel'
+import { weekRangeLabel } from '@/lib/calendar/week-range-label'
+import { clampWeekToPlanYear } from '@/lib/calendar/load-week-chart-data'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 type View = 'day' | 'week'
@@ -35,12 +37,15 @@ export default async function CalendarPage({
   const view = parseView(params.view)
 
   if (view === 'week') {
+    const planYear = new Date().getFullYear()
+    const weekDate = clampWeekToPlanYear(date, planYear)
+    const rangeLabel = weekRangeLabel(weekDate)
     return (
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="shell-kicker mb-1">TODO(stella): Calendar</p>
-            <h1 className="font-serif text-3xl text-bone">TODO(stella): Your calendar</h1>
+            <h1 className="font-serif text-3xl text-bone">{rangeLabel}</h1>
           </div>
           <CalendarViewSwitcher current="week" />
         </div>
@@ -68,6 +73,7 @@ export default async function CalendarPage({
         dayPlan={dayPlan}
         kicker="TODO(stella): Day"
         activeView="day"
+        dayGridScrollMode="calendar"
       />
     </div>
   )

@@ -129,13 +129,6 @@ export async function CalendarWeekViewPanel({ date }: Props) {
 
   const weekDates = getWeekDates(selectedDate)
   const energyByDate = buildDayCharacters(weekDates, yearEphemeris, plannerContext)
-  const first = new Date(`${weekDates[0]}T12:00:00`)
-  const last = new Date(`${weekDates[6]}T12:00:00`)
-  const rangeLabel = `${first.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} – ${last.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })}`
   const previousDate = shiftDate(selectedDate, -7)
   const nextDate = shiftDate(selectedDate, 7)
   const canGoPrevious = weekOverlapsPlanYear(previousDate, loaded.planYear)
@@ -145,13 +138,9 @@ export async function CalendarWeekViewPanel({ date }: Props) {
     <div className="space-y-6">
       {loaded.access.access === 'windowed' ? <WindowedAccessNote windowEnd={loaded.access.windowEnd} /> : null}
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="shell-kicker mb-2">TODO(stella): Calendar week</p>
-          <h2 className="font-serif text-3xl text-bone">{rangeLabel}</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-bone-muted">
-            Your week&apos;s cosmic context, goals, study sessions, and practical tasks in one place.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm leading-6 text-bone-muted">
+          Your week&apos;s cosmic context, goals, study sessions, and practical tasks in one place.
+        </p>
         <nav className="flex flex-wrap items-center gap-2" aria-label="Week navigation">
           {canGoPrevious ? (
             <Link

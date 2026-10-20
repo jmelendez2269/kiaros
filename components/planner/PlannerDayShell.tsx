@@ -37,6 +37,8 @@ interface PlannerDayShellProps {
   /** When set, show Day / Week / Month toggles (planner only). */
   showViewToggles?: boolean
   activeView?: 'day' | 'week' | 'month'
+  /** Calendar Day grid scroll anchoring (not used on /planner). */
+  dayGridScrollMode?: 'calendar'
 }
 
 function plannerWeekHref(basePath: PlannerShellBasePath, date: string): string {
@@ -57,6 +59,7 @@ export function PlannerDayShell({
   kicker,
   showViewToggles = false,
   activeView = 'day',
+  dayGridScrollMode,
 }: PlannerDayShellProps) {
   const safeDate = DATE_RE.test(date) ? date : today
   const prevHref =
@@ -145,6 +148,7 @@ export function PlannerDayShell({
         isToday={safeDate === today}
         initialPlanItems={dayPlan.planItems}
         windows={dayPlan.windows}
+        dayGridScrollMode={dayGridScrollMode}
       />
     </div>
   )

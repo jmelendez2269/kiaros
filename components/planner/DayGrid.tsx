@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import type { PlanItemRow } from '@/lib/planner/get-day-plan'
@@ -46,6 +46,8 @@ interface Props {
   onAdd: (title: string, startMinute: number) => void
   onAcceptSuggestion: (id: string) => void
   onDismissSuggestion: (id: string) => void
+  /** Calendar Day only — planner leaves this unset for main behaviour. */
+  scrollMode?: 'calendar'
 }
 
 // Default landing scroll position for days that aren't today — most plans
@@ -64,6 +66,7 @@ export function DayGrid({
   onAdd,
   onAcceptSuggestion,
   onDismissSuggestion,
+  scrollMode,
 }: Props) {
   const [pendingSlot, setPendingSlot] = useState<number | null>(null)
   const [pendingTitle, setPendingTitle] = useState('')
@@ -80,22 +83,57 @@ export function DayGrid({
     return () => clearInterval(id)
   }, [isToday])
 
+  function scrollGridToMinute(targetMinute: number) {
+    const grid = gridRef.current
+    if (!grid) return
+    const gridTop = grid.getBoundingClientRect().top + window.scrollY
+    window.scrollTo({ top: gridTop + targetMinute * PX_PER_MINUTE, behavior: 'auto' })
+  }
+
   // Land on the relevant part of the day instead of always opening at
   // midnight — a full day is 1536px tall, so without this every visit
   // starts with a long, disorienting scroll before anything useful is
   // visible. Runs once per date (keyed by `date` + `isToday` so navigating
   // between days re-anchors), after the browser has laid out the grid.
   useEffect(() => {
+    if (scrollMode === 'calendar') return
     const grid = gridRef.current
     if (!grid) return
     const targetMinute = isToday ? Math.max(0, nowMinutes() - 60) : DEFAULT_ANCHOR_MINUTE
     const raf = requestAnimationFrame(() => {
-      const gridTop = grid.getBoundingClientRect().top + window.scrollY
-      window.scrollTo({ top: gridTop + targetMinute * PX_PER_MINUTE, behavior: 'auto' })
+      scrollGridToMinute(targetMinute)
     })
     return () => cancelAnimationFrame(raf)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, isToday])
+  }, [date, isToday, scrollMode])
+
+  const firstPlacedMinute = useMemo(() => {
+    const placed = items
+      .map((item) => item.start_minute)
+      .filter((minute): minute is number => minute !== null)
+      .sort((a, b) => a - b)
+    return placed[0] ?? null
+  }, [items])
+
+  // Calendar Day sits below extra chrome; wait for layout and honour first block.
+  useLayoutEffect(() => {
+    if (scrollMode !== 'calendar') return
+    let cancelled = false
+    const targetMinute = isToday
+      ? Math.max(0, nowMinutes() - 60)
+      : firstPlacedMinute ?? DEFAULT_ANCHOR_MINUTE
+    const run = () => {
+      if (cancelled) return
+      scrollGridToMinute(targetMinute)
+    }
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(run)
+    })
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+    }
+  }, [date, isToday, scrollMode, firstPlacedMinute])
 
   const containerHeight = TOTAL_MINUTES * PX_PER_MINUTE
   const hourMarks = useMemo(() => Array.from({ length: 24 }, (_, i) => i * 60), [])
