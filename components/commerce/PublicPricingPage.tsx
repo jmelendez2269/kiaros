@@ -6,6 +6,7 @@ import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterS
 import { FieldNotesPricingSignup } from "@/components/marketing/FieldNotesPricingSignup";
 import { CheckoutButton } from "@/components/commerce/CheckoutButton";
 import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButton";
+import { BrandMark } from "@/components/shared/BrandMark";
 import { MoonPhaseIcon } from "@/components/shared/MoonPhaseIcon";
 import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
@@ -188,10 +189,7 @@ export function PublicPricingPage({
             href="/"
             className="flex items-center gap-2 font-display text-xl tracking-wide text-bone transition-colors hover:text-leather-200"
           >
-            <span
-              aria-hidden
-              className="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-br from-leather-300 to-plum-300 shadow-[0_0_12px_2px_rgba(216,180,151,0.35)]"
-            />
+            <BrandMark size="header" />
             Kairos
           </Link>
 
@@ -1276,10 +1274,7 @@ export function PublicPricingPage({
         <div className="container flex flex-col gap-6 py-8 md:flex-row md:items-start md:justify-between">
           <div className="max-w-sm">
             <Link href="/" className="flex items-center gap-2 font-display text-lg text-bone">
-              <span
-                aria-hidden
-                className="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-br from-leather-300 to-plum-300 shadow-[0_0_12px_2px_rgba(216,180,151,0.35)]"
-              />
+              <BrandMark size="footer" />
               Kairos
             </Link>
             <p className="mt-3 text-sm leading-6 text-bone-muted">
