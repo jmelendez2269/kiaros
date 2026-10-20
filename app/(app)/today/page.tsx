@@ -33,6 +33,7 @@ import { getHumanDesignWeather } from '@/lib/today/get-human-design-weather'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { DeeperToday } from '@/components/today/DeeperToday'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
+import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import type { YearEphemeris } from '@/types/blueprint'
 
 export default async function TodayPage() {
@@ -110,6 +111,7 @@ export default async function TodayPage() {
   const currentWeek = blueprintLoaded?.blueprint.weeks.find(
     (w) => w.weekNumber === context.meta.isoWeek
   ) ?? null
+  const calendarDayEnabled = isCalendarDayEnabled()
 
   return (
     <div
@@ -195,7 +197,11 @@ export default async function TodayPage() {
         <div className="grid gap-5">
           {blueprintLoaded ? (
             <Frame tone="umber" padding={20}>
-              <WeekArc weeks={blueprintLoaded.blueprint.weeks} currentWeekNumber={context.meta.isoWeek} />
+              <WeekArc
+                weeks={blueprintLoaded.blueprint.weeks}
+                currentWeekNumber={context.meta.isoWeek}
+                calendarDayEnabled={calendarDayEnabled}
+              />
             </Frame>
           ) : null}
 

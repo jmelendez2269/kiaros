@@ -22,9 +22,11 @@ interface Props {
   isToday: boolean
   initialPlanItems: PlanItemRow[]
   windows: EnergyWindow[]
+  /** Calendar Day only — unset on /planner. */
+  dayGridScrollMode?: 'calendar'
 }
 
-export function DayPlanner({ date, isToday, initialPlanItems, windows }: Props) {
+export function DayPlanner({ date, isToday, initialPlanItems, windows, dayGridScrollMode }: Props) {
   const [items, setItems] = useState<PlanItemRow[]>(initialPlanItems)
   const [suggestions, setSuggestions] = useState<PlacementSuggestion[]>([])
   const [isPlacing, setIsPlacing] = useState(false)
@@ -157,6 +159,7 @@ export function DayPlanner({ date, isToday, initialPlanItems, windows }: Props) 
           onAdd={(title, startMinute) => addItem(title, startMinute)}
           onAcceptSuggestion={acceptSuggestion}
           onDismissSuggestion={dismissSuggestion}
+          scrollMode={dayGridScrollMode}
         />
       </div>
       <UnscheduledTray

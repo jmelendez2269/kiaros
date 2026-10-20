@@ -1,10 +1,13 @@
 import Link from 'next/link'
 import { K, Kicker } from '@/components/almanac'
+import { weekArcHref } from '@/lib/calendar/calendar-day-routes'
 import type { EnergyType, WeekBlueprint } from '@/types/blueprint'
 
 interface Props {
   weeks: WeekBlueprint[]
   currentWeekNumber: number
+  /** When true, week bars link to Calendar Week instead of Year week view. */
+  calendarDayEnabled?: boolean
 }
 
 const RADIUS = 3
@@ -40,7 +43,7 @@ function rangeLabel(first: WeekBlueprint, last: WeekBlueprint): string {
   return `${start.toLocaleDateString('en-US', opts)} — ${end.toLocaleDateString('en-US', opts)}`
 }
 
-export function WeekArc({ weeks, currentWeekNumber }: Props) {
+export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }: Props) {
   const window = weeks.filter(
     (w) => w.weekNumber >= currentWeekNumber - RADIUS && w.weekNumber <= currentWeekNumber + RADIUS
   )
@@ -78,7 +81,7 @@ export function WeekArc({ weeks, currentWeekNumber }: Props) {
           return (
             <Link
               key={w.weekNumber}
-              href={`/year?view=week&date=${w.startDate}`}
+              href={weekArcHref(w.startDate, calendarDayEnabled)}
               style={{
                 flex: 1,
                 display: 'flex',
