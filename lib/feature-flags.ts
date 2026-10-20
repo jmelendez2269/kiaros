@@ -54,3 +54,8 @@ export function isMetaCapiEnabled(): boolean {
 export function isRetentionEmailsEnabled(): boolean {
   return process.env.KIAROS_RETENTION_EMAILS_ENABLED === "true";
 }
+
+/** Today page IA zones (Phase 1 restructure). Off by default. */
+export function isTodayRestructureEnabled(): boolean {
+  return enabled(process.env.KIAROS_RESTRUCTURE_TODAY);
+}
