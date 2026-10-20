@@ -41,7 +41,9 @@ export function GuidesIndexContent({ guides }: Props) {
                       →
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-7 text-almanac-ink-dim">{guide.metaDescription}</p>
+                  <p className="mt-3 text-[15px] leading-[1.7] text-[#E3E2ED]/[0.85] md:text-base">
+                    {guide.metaDescription}
+                  </p>
                 </Link>
               </li>
             ))}
