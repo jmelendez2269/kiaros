@@ -52,15 +52,14 @@ const TICKER_ITEMS = [
 ];
 
 const INSTRUMENTS: Array<{
-  glyph?: string;
-  brandMark?: boolean;
+  glyph: string;
   name: string;
   body: string;
   badge?: string;
 }> = [
   { glyph: "☉", name: "Blueprint", body: "Your full year, generated once from your chart — 52 weeks, 12 months, 4 quarters." },
   { glyph: "☽", name: "Cosmic Calendar", body: "Year, month, and week views carrying real transits, moon phases, and retrogrades." },
-  { brandMark: true, name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
+  { glyph: "triangle", name: "Stelloquy · Oracle", body: "A conversation that already knows your chart, your goals, and what you chose to carry forward." },
   { glyph: "✎", name: "Journal", body: "Every entry stamped with the sky above it. On Planner + Oracle, patterns grow from the entries you choose to include." },
   { glyph: "▤", name: "Curriculum", body: "Tell it what you're studying. It writes the weeks, then the sessions, one at a time." },
   {
@@ -205,6 +204,33 @@ function Hero() {
   );
 }
 
+const INSTRUMENT_TRIANGLE_VIEWBOX = "0 0 304 348";
+
+function InstrumentGlyph({ glyph }: { glyph: string }) {
+  const glyphClassName =
+    "font-almanac-serif text-3xl text-almanac-copper transition-colors group-hover:text-almanac-copper-hi";
+
+  if (glyph === "triangle") {
+    return (
+      <span className={`inline-block leading-none ${glyphClassName}`} aria-hidden>
+        <svg
+          viewBox={INSTRUMENT_TRIANGLE_VIEWBOX}
+          className="inline-block h-[1em] w-[1em]"
+          fill="currentColor"
+        >
+          <polygon points="152,0 0,348 304,348" />
+        </svg>
+      </span>
+    );
+  }
+
+  return (
+    <span className={glyphClassName} aria-hidden>
+      {glyph}
+    </span>
+  );
+}
+
 function InstrumentPanel() {
   return (
     <section id="instruments" className="relative border-b border-almanac-line bg-almanac-bg2/40 py-20 md:py-28">
@@ -231,16 +257,7 @@ function InstrumentPanel() {
                 borderTop: i >= 5 ? undefined : undefined,
               }}
             >
-              {item.brandMark ? (
-                <BrandMark size="header" />
-              ) : (
-                <span
-                  className="font-almanac-serif text-3xl text-almanac-copper transition-colors group-hover:text-almanac-copper-hi"
-                  aria-hidden
-                >
-                  {item.glyph}
-                </span>
-              )}
+              <InstrumentGlyph glyph={item.glyph} />
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <h3 className="font-almanac-mono text-[0.78rem] uppercase tracking-[0.12em] text-almanac-ink">
                   {item.name}
