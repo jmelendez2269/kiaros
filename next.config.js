@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  serverExternalPackages: ['@napi-rs/canvas'],
   outputFileTracingIncludes: {
     '/api/admin/artifacts/[orderId]/export': [
       './docs/assets/etsy/natal-report-tour/*.jpg',

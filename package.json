@@ -25,7 +25,7 @@
     "test:field-notes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-field-notes-signup.mts",
     "test:analytics-events": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-analytics-events-route.mts",
     "test:checkout-attribution": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-checkout-attribution.mts",
-    "test:marketing-og": "npx tsx scripts/check-marketing-og-metadata.mts",
+    "test:marketing-og": "npx tsx scripts/check-marketing-og-metadata.mts && npx tsx scripts/check-marketing-og-typography.mts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
