@@ -1,6 +1,6 @@
 export const MARKETING_OG_IMAGE_SIZE = { width: 1200, height: 630 } as const;
 
-import { GUIDE_SLUGS, GUIDES_INDEX_PATH } from "@/lib/marketing/guides";
+import { GUIDE_SLUGS, GUIDES_INDEX_PATH } from "@/lib/marketing/guides-constants";
 
 const STATIC_MARKETING_OG_IMAGE_PATHS = {
   "/": "/opengraph-image",

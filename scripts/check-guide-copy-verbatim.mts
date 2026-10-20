@@ -8,7 +8,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { guideBodyMarkdownToPlainText } from "../lib/marketing/guide-markdown-plain-text.ts";
-import { getAllGuides, GUIDE_SLUGS, type GuideSlug } from "../lib/marketing/guides.ts";
+import { loadAllGuideMarkdown } from "../lib/marketing/load-guide-markdown.ts";
+import { getAllGuides, GUIDE_SLUGS, parseGuideMarkdown } from "../lib/marketing/guides.ts";
+
+const bundledSources = loadAllGuideMarkdown();
 
 let checks = 0;
 
@@ -18,7 +21,13 @@ for (const slug of GUIDE_SLUGS) {
 
   const rawOnDisk = readFileSync(join("content", "guides", `${slug}.md`), "utf8");
   assert.equal(guide.sourceMarkdown, rawOnDisk, `${slug}: source markdown matches file on disk`);
-  checks += 1;
+  assert.equal(bundledSources[slug], rawOnDisk, `${slug}: guide source matches file on disk`);
+  assert.equal(
+    parseGuideMarkdown(bundledSources[slug], slug).bodyMarkdown,
+    guide.bodyMarkdown,
+    `${slug}: parsed source matches getAllGuides`,
+  );
+  checks += 3;
 
   const dividerIndex = rawOnDisk.indexOf("\n---\n");
   assert.notEqual(dividerIndex, -1, `${slug}: divider present`);

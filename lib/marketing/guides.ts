@@ -1,17 +1,19 @@
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { loadGuideMarkdown } from "@/lib/marketing/load-guide-markdown";
+import {
+  GUIDES_INDEX_META_DESCRIPTION,
+  GUIDES_INDEX_PATH,
+  GUIDES_INDEX_SEO_TITLE,
+  GUIDE_SLUGS,
+  type GuideSlug,
+} from "@/lib/marketing/guides-constants";
 
-const GUIDES_CONTENT_DIR = join(process.cwd(), "content", "guides");
-
-/** Stable publish order (SEO shortlist rank). */
-export const GUIDE_SLUGS = [
-  "natal-chart-year-planner",
-  "new-moon-full-moon-journaling",
-  "quarterly-review-with-timing-reflection",
-  "planning-rest-with-personal-timing",
-] as const;
-
-export type GuideSlug = (typeof GUIDE_SLUGS)[number];
+export {
+  GUIDES_INDEX_META_DESCRIPTION,
+  GUIDES_INDEX_PATH,
+  GUIDES_INDEX_SEO_TITLE,
+  GUIDE_SLUGS,
+  type GuideSlug,
+} from "@/lib/marketing/guides-constants";
 
 export interface GuideDocument {
   slug: GuideSlug;
@@ -29,7 +31,7 @@ export function isGuideSlug(value: string): value is GuideSlug {
   return GUIDE_SLUG_SET.has(value);
 }
 
-function parseGuideMarkdown(raw: string, slug: GuideSlug): GuideDocument {
+export function parseGuideMarkdown(raw: string, slug: GuideSlug): GuideDocument {
   const seoTitleMatch = /^\*\*SEO title:\*\* (.+)$/m.exec(raw);
   const metaDescriptionMatch = /^\*\*Meta description:\*\* (.+)$/m.exec(raw);
   if (!seoTitleMatch?.[1] || !metaDescriptionMatch?.[1]) {
@@ -52,28 +54,13 @@ function parseGuideMarkdown(raw: string, slug: GuideSlug): GuideDocument {
   };
 }
 
-function loadGuideFromDisk(slug: GuideSlug): GuideDocument {
-  const filePath = join(GUIDES_CONTENT_DIR, `${slug}.md`);
-  const raw = readFileSync(filePath, "utf8");
-  return parseGuideMarkdown(raw, slug);
-}
-
 let cachedGuides: GuideDocument[] | null = null;
 
 export function getAllGuides(): GuideDocument[] {
   if (cachedGuides) return cachedGuides;
 
-  const filesOnDisk = new Set(
-    readdirSync(GUIDES_CONTENT_DIR).filter((name) => name.endsWith(".md")).map((name) => name.replace(/\.md$/, "")),
-  );
+  cachedGuides = GUIDE_SLUGS.map((slug) => parseGuideMarkdown(loadGuideMarkdown(slug), slug));
 
-  for (const slug of GUIDE_SLUGS) {
-    if (!filesOnDisk.has(slug)) {
-      throw new Error(`Missing guide content file for slug: ${slug}`);
-    }
-  }
-
-  cachedGuides = GUIDE_SLUGS.map((slug) => loadGuideFromDisk(slug));
   return cachedGuides;
 }
 
@@ -85,10 +72,3 @@ export function getGuideBySlug(slug: string): GuideDocument | null {
 export function guideCanonicalPath(slug: GuideSlug): `/guides/${GuideSlug}` {
   return `/guides/${slug}`;
 }
-
-export const GUIDES_INDEX_PATH = "/guides" as const;
-
-export const GUIDES_INDEX_SEO_TITLE = "Guides | Kairos";
-
-export const GUIDES_INDEX_META_DESCRIPTION =
-  "Practical guides on planning with your natal chart, moon journaling, quarterly reviews, and naming rest in your year.";
