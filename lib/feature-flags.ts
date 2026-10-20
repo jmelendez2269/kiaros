@@ -1,9 +1,9 @@
 import "server-only";
 
-function enabled(value: string | undefined): boolean {
-  if (!value) return false;
+import { featureFlagEnabled } from "@/lib/calendar/calendar-day-routes";
 
-  return ["1", "true", "on", "yes"].includes(value.trim().toLowerCase());
+function enabled(value: string | undefined): boolean {
+  return featureFlagEnabled(value);
 }
 
 export function isJournalConsentV2Enabled(): boolean {
@@ -53,4 +53,9 @@ export function isMetaCapiEnabled(): boolean {
 /** Retention lifecycle emails (week-ahead / quiet-sky cron). Off unless exactly `true`. */
 export function isRetentionEmailsEnabled(): boolean {
   return process.env.KIAROS_RETENTION_EMAILS_ENABLED === "true";
+}
+
+/** Calendar Day view (planner day moved under /calendar). Off by default. */
+export function isCalendarDayEnabled(): boolean {
+  return enabled(process.env.KIAROS_CALENDAR_DAY);
 }

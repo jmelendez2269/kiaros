@@ -1,4 +1,7 @@
 const path = require('path')
+const { featureFlagEnabled } = require('./lib/calendar/feature-flag-enabled.cjs')
+
+const calendarDayOn = featureFlagEnabled(process.env.KIAROS_CALENDAR_DAY)
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -22,9 +25,15 @@ const nextConfig = {
       // Kairos redesign — Today supersedes the dashboard. Permanent so the
       // browser remembers; tracker route folds into the Journal screen.
       { source: '/dashboard', destination: '/today', permanent: true },
-      // /calendar consolidates into /year — CosmicCalendar moves to the new
-      // IA, leather palette preserved. Old /calendar links still resolve.
-      { source: '/calendar', destination: '/year', permanent: true },
+      ...(!calendarDayOn
+        ? [
+            {
+              source: '/calendar',
+              destination: '/year',
+              permanent: true,
+            },
+          ]
+        : []),
       // /oracle's legacy full-page chat is superseded by the Stelloquy
       // drawer, which StelloquyProvider mounts globally across every
       // (app) route — there's no separate destination page for it, so
