@@ -212,10 +212,10 @@ function InstrumentGlyph({ glyph }: { glyph: string }) {
 
   if (glyph === "triangle") {
     return (
-      <span className={`inline-block leading-none ${glyphClassName}`} aria-hidden>
+      <span className={glyphClassName} aria-hidden>
         <svg
           viewBox={INSTRUMENT_TRIANGLE_VIEWBOX}
-          className="inline-block h-[1em] w-[1em]"
+          className="inline-block h-[0.75em] w-[0.75em]"
           fill="currentColor"
         >
           <polygon points="152,0 0,348 304,348" />
@@ -248,7 +248,7 @@ function InstrumentPanel() {
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 divide-y divide-almanac-line/50 border-y border-almanac-line sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-5 lg:divide-x">
+        <div className="mt-12 grid grid-cols-1 divide-y divide-almanac-line border-y border-almanac-line sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-5 lg:divide-x">
           {INSTRUMENTS.map((item, i) => (
             <div
               key={item.name}
