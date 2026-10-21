@@ -38,8 +38,10 @@ import type { YearEphemeris } from '@/types/blueprint'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
 import {
   isMockTodayDateAllowed,
+  parseMockMoonNudgeParam,
   parseMockTodayDateParam,
   resolveTodayDateISO,
+  MOCK_MOON_NUDGE_QUERY_PARAM,
   MOCK_TODAY_QUERY_PARAM,
 } from '@/lib/today/mock-today-date'
 import { getMoonDayPhaseForLocalDate } from '@/lib/today/moon-day-phase'
@@ -76,8 +78,16 @@ export default async function TodayPage({
       : Array.isArray(params[MOCK_TODAY_QUERY_PARAM])
         ? params[MOCK_TODAY_QUERY_PARAM][0]
         : undefined
-  const mockToday =
-    isMockTodayDateAllowed() ? parseMockTodayDateParam(rawMock) : null
+  const mockAllowed = isMockTodayDateAllowed()
+  const mockToday = mockAllowed ? parseMockTodayDateParam(rawMock) : null
+  const rawMockMoonNudge =
+    typeof params[MOCK_MOON_NUDGE_QUERY_PARAM] === 'string'
+      ? params[MOCK_MOON_NUDGE_QUERY_PARAM]
+      : Array.isArray(params[MOCK_MOON_NUDGE_QUERY_PARAM])
+        ? params[MOCK_MOON_NUDGE_QUERY_PARAM][0]
+        : undefined
+  const mockMoonNudgeDone =
+    mockAllowed && parseMockMoonNudgeParam(rawMockMoonNudge) === 'done'
 
   const { data: locationProfile } = await admin
     .from('user_profiles')
@@ -156,7 +166,7 @@ export default async function TodayPage({
     ? {
         phase: moonDayPhase,
         localDate: todayDate,
-        ritualDone: (ritualTodayRes.count ?? 0) > 0,
+        ritualDone: (ritualTodayRes.count ?? 0) > 0 || mockMoonNudgeDone,
       }
     : null
 

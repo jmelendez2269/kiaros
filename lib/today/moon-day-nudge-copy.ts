@@ -21,3 +21,8 @@ export const MOON_DAY_NUDGE_COPY: Record<
     dismiss: 'Not today',
   },
 }
+
+/** First sentence only — approved when layout is tight on narrow screens. */
+export function moonDayNudgeBodyFirstSentence(body: string): string {
+  return body.split(/(?<=[.!?])\s+/)[0] ?? body
+}

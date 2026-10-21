@@ -1,12 +1,15 @@
 export const MOCK_TODAY_QUERY_PARAM = 'mockToday'
+export const MOCK_MOON_NUDGE_QUERY_PARAM = 'mockMoonNudge'
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
-/** Honoured only when mock dates are allowed (non-production). */
+/**
+ * Preview/dev mocks are honoured when VERCEL_ENV is not `production`
+ * (preview, development, or unset locally). Production deploys ignore mocks
+ * even though NODE_ENV is `production` on Vercel builds.
+ */
 export function isMockTodayDateAllowed(): boolean {
-  if (process.env.NODE_ENV === 'production') return false
-  if (process.env.VERCEL_ENV === 'production') return false
-  return true
+  return process.env.VERCEL_ENV !== 'production'
 }
 
 export function parseMockTodayDateParam(value: string | undefined): string | null {
@@ -14,6 +17,13 @@ export function parseMockTodayDateParam(value: string | undefined): string | nul
   const parsed = new Date(`${value}T12:00:00`)
   if (Number.isNaN(parsed.getTime())) return null
   return value
+}
+
+/** When allowed, `done` forces the moon-day nudge into its completed strip (no journal row). */
+export function parseMockMoonNudgeParam(value: string | undefined): 'done' | null {
+  if (!value) return null
+  const normalized = value.trim().toLowerCase()
+  return normalized === 'done' ? 'done' : null
 }
 
 export function resolveTodayDateISO(options: {

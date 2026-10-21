@@ -1,9 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import { MOON_DAY_NUDGE_COPY, type MoonDayNudgePhase } from '@/lib/today/moon-day-nudge-copy'
+import {
+  MOON_DAY_NUDGE_COPY,
+  moonDayNudgeBodyFirstSentence,
+  type MoonDayNudgePhase,
+} from '@/lib/today/moon-day-nudge-copy'
 import { isMoonDayDismissed, moonDayDismissalKey } from '@/lib/today/moon-day-phase'
 import { moonDayRitualEntryHref } from '@/lib/today/moon-day-ritual-entry-href'
 import {
@@ -23,7 +27,6 @@ export interface MoonDayRitualNudgeProps {
   phase: MoonDayNudgePhase
   localDate: string
   ritualDone: boolean
-  compactBody?: boolean
 }
 
 function PhaseGlyph({ phase }: { phase: MoonDayNudgePhase }) {
@@ -54,13 +57,9 @@ function PhaseGlyph({ phase }: { phase: MoonDayNudgePhase }) {
   )
 }
 
-export function MoonDayRitualNudge({
-  phase,
-  localDate,
-  ritualDone,
-  compactBody = false,
-}: MoonDayRitualNudgeProps) {
+export function MoonDayRitualNudge({ phase, localDate, ritualDone }: MoonDayRitualNudgeProps) {
   const copy = MOON_DAY_NUDGE_COPY[phase]
+  const bodyFirstSentence = moonDayNudgeBodyFirstSentence(copy.body)
   const dismissalKey = moonDayDismissalKey(phase, localDate)
   const [remindersEnabled, setRemindersEnabled] = useState(true)
   const [dismissed, setDismissed] = useState(false)
@@ -96,14 +95,6 @@ export function MoonDayRitualNudge({
     setDismissed(true)
     writeMoonDayDismissal(dismissalKey)
   }, [dismissalKey])
-
-  const bodyText = useMemo(() => {
-    if (compactBody) {
-      const firstSentence = copy.body.split(/(?<=[.!?])\s+/)[0] ?? copy.body
-      return firstSentence
-    }
-    return copy.body
-  }, [compactBody, copy.body])
 
   if (!hydrated || viewState === 'hidden' || viewState === 'dismissed') return null
 
@@ -159,7 +150,7 @@ export function MoonDayRitualNudge({
       `}</style>
       <div className="flex flex-wrap items-start gap-3" style={{ rowGap: 10 }}>
         <PhaseGlyph phase={phase} />
-        <div style={{ flex: '1 1 160px', minWidth: 0 }}>
+        <div className="min-w-0 flex-1 basis-[160px]">
           <p
             className="moon-day-nudge-headline"
             style={{
@@ -173,23 +164,17 @@ export function MoonDayRitualNudge({
             {copy.headline}
           </p>
           <p
-            style={{
-              margin: '4px 0 0',
-              fontSize: 14,
-              color: MUTED,
-              lineHeight: 1.4,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
+            className="mt-1 text-sm leading-snug text-[#A4A3B1] sm:hidden"
+            style={{ marginTop: 4 }}
           >
-            {bodyText}
+            {bodyFirstSentence}
+          </p>
+          <p className="mt-1 hidden text-sm leading-snug text-[#A4A3B1] sm:block" style={{ marginTop: 4 }}>
+            {copy.body}
           </p>
         </div>
         <div
-          className="moon-day-nudge-actions flex shrink-0 items-center gap-1"
-          style={{ marginLeft: 'auto' }}
+          className="moon-day-nudge-actions ml-auto flex shrink-0 items-center gap-1"
         >
           <Link
             href={moonDayRitualEntryHref(phase)}

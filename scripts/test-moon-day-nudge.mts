@@ -16,7 +16,9 @@ import {
 } from '../lib/today/moon-day-phase.ts'
 import {
   isMockTodayDateAllowed,
+  parseMockMoonNudgeParam,
   parseMockTodayDateParam,
+  MOCK_MOON_NUDGE_QUERY_PARAM,
   MOCK_TODAY_QUERY_PARAM,
 } from '../lib/today/mock-today-date.ts'
 import { resolveMoonDayNudgeViewState } from '../lib/today/moon-day-nudge-view-state.ts'
@@ -93,23 +95,34 @@ console.log('Non-moon days return null')
 assert.equal(getMoonDayPhaseForLocalDate('2026-03-15', tz), null)
 console.log('✓ Non-moon day\n')
 
-console.log('Mock today param guard')
+console.log('Mock param guard (VERCEL_ENV only)')
 const prevNode = process.env.NODE_ENV
 const prevVercel = process.env.VERCEL_ENV
 process.env.NODE_ENV = 'production'
 process.env.VERCEL_ENV = 'production'
 assert.equal(isMockTodayDateAllowed(), false)
-process.env.NODE_ENV = 'development'
+process.env.NODE_ENV = 'production'
 process.env.VERCEL_ENV = 'preview'
-assert.equal(isMockTodayDateAllowed(), true)
+assert.equal(isMockTodayDateAllowed(), true, 'Vercel preview must honour mocks despite NODE_ENV=production')
+delete process.env.VERCEL_ENV
+process.env.NODE_ENV = 'development'
+assert.equal(isMockTodayDateAllowed(), true, 'local dev without VERCEL_ENV must honour mocks')
 assert.equal(parseMockTodayDateParam('2026-01-01'), '2026-01-01')
 assert.equal(parseMockTodayDateParam('bad'), null)
+assert.equal(parseMockMoonNudgeParam('done'), 'done')
+assert.equal(parseMockMoonNudgeParam('DONE'), 'done')
+assert.equal(parseMockMoonNudgeParam('showing'), null)
 process.env.NODE_ENV = prevNode
-process.env.VERCEL_ENV = prevVercel
+if (prevVercel === undefined) delete process.env.VERCEL_ENV
+else process.env.VERCEL_ENV = prevVercel
 const todayPage = readFileSync(join(root, 'app/(app)/today/page.tsx'), 'utf8')
 assert.ok(todayPage.includes(MOCK_TODAY_QUERY_PARAM))
-assert.ok(todayPage.includes('mockToday'))
-console.log('✓ Mock date wiring\n')
+assert.ok(todayPage.includes(MOCK_MOON_NUDGE_QUERY_PARAM))
+assert.ok(todayPage.includes('mockMoonNudgeDone'))
+const nudgeSource = readFileSync(join(root, 'components/today/MoonDayRitualNudge.tsx'), 'utf8')
+assert.ok(!nudgeSource.includes('WebkitLineClamp'), 'body must not use line-clamp truncation')
+assert.ok(nudgeSource.includes('sm:hidden') && nudgeSource.includes('sm:block'))
+console.log('✓ Mock date / mockMoonNudge wiring\n')
 
 console.log('Today layout: nudge lives on SkyBanner only')
 const skyBanner = readFileSync(join(root, 'components/today/SkyBanner.tsx'), 'utf8')
