@@ -26,7 +26,35 @@ export interface MoonDayRitualNudgeProps {
   onStripVisibleChange?: (visible: boolean) => void
 }
 
-function PhaseGlyph({ phase }: { phase: MoonDayNudgePhase }) {
+function DismissButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="shrink-0"
+      style={{
+        minHeight: 44,
+        minWidth: 44,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '-6px -8px -6px 0',
+        border: 'none',
+        background: 'transparent',
+        color: MUTED,
+        cursor: 'pointer',
+        borderRadius: 8,
+      }}
+    >
+      <X size={20} aria-hidden />
+      <span className="sr-only">{label}</span>
+    </button>
+  )
+}
+
+function PhaseGlyph({ phase, centered }: { phase: MoonDayNudgePhase; centered?: boolean }) {
   const filled = phase === 'full'
   return (
     <span
@@ -38,7 +66,7 @@ function PhaseGlyph({ phase }: { phase: MoonDayNudgePhase }) {
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        marginTop: 2,
+        marginTop: centered ? 0 : 2,
       }}
     >
       <span
@@ -151,67 +179,77 @@ export function MoonDayRitualNudge({
         @media (min-width: 768px) {
           .moon-day-nudge .moon-day-nudge-headline { font-size: 16px; }
         }
-        @media (max-width: 390px) {
-          .moon-day-nudge-body-phone { display: none !important; }
-        }
       `}</style>
-      <div className="flex gap-3">
-        <PhaseGlyph phase={phase} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-1">
+      <div className="sm:hidden">
+        <div className="flex gap-3">
+          <PhaseGlyph phase={phase} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-1">
+              <p
+                className="moon-day-nudge-headline min-w-0 flex-1"
+                style={{
+                  margin: 0,
+                  fontSize: 15,
+                  color: INK,
+                  lineHeight: 1.35,
+                  fontWeight: 500,
+                }}
+              >
+                {copy.headline}
+              </p>
+              <DismissButton label={copy.dismiss} onClick={persistDismiss} />
+            </div>
             <p
-              className="moon-day-nudge-headline min-w-0 flex-1"
-              style={{
-                margin: 0,
-                fontSize: 15,
-                color: INK,
-                lineHeight: 1.35,
-                fontWeight: 500,
-              }}
+              className="moon-day-nudge-body-phone mt-1 text-sm leading-snug text-[#A4A3B1]"
+              style={{ marginTop: 4 }}
             >
-              {copy.headline}
+              {copy.bodyPhone}
             </p>
-            <button
-              type="button"
-              onClick={persistDismiss}
-              aria-label={copy.dismiss}
-              title={copy.dismiss}
-              className="shrink-0"
-              style={{
-                minHeight: 44,
-                minWidth: 44,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '-6px -8px -6px 0',
-                border: 'none',
-                background: 'transparent',
-                color: MUTED,
-                cursor: 'pointer',
-                borderRadius: 8,
-              }}
-            >
-              <X size={20} aria-hidden />
-              <span className="sr-only">{copy.dismiss}</span>
-            </button>
           </div>
-          <p
-            className="moon-day-nudge-body-phone mt-1 text-sm leading-snug text-[#A4A3B1] sm:hidden"
-            style={{ marginTop: 4 }}
+        </div>
+        <div className="mt-2 pl-8">
+          <Link
+            href={moonDayRitualEntryHref(phase)}
+            className="moon-day-nudge-cta inline-flex w-full items-center justify-center"
+            style={{
+              minHeight: 44,
+              padding: '0 12px',
+              fontSize: 14,
+              fontWeight: 600,
+              color: VIOLET,
+              textDecoration: 'none',
+            }}
           >
-            {copy.bodyPhone}
+            {copy.cta}
+          </Link>
+        </div>
+      </div>
+
+      <div className="hidden items-center gap-3 sm:flex">
+        <PhaseGlyph phase={phase} centered />
+        <div className="min-w-0 flex-1">
+          <p
+            className="moon-day-nudge-headline"
+            style={{
+              margin: 0,
+              fontSize: 15,
+              color: INK,
+              lineHeight: 1.35,
+              fontWeight: 500,
+            }}
+          >
+            {copy.headline}
           </p>
-          <p className="mt-1 hidden text-sm leading-snug text-[#A4A3B1] sm:block" style={{ marginTop: 4 }}>
+          <p className="mt-1 text-sm leading-snug text-[#A4A3B1]" style={{ marginTop: 4 }}>
             {copy.body}
           </p>
         </div>
-      </div>
-      <div className="mt-2 pl-8 sm:pl-8">
         <Link
           href={moonDayRitualEntryHref(phase)}
-          className="moon-day-nudge-cta inline-flex w-full items-center justify-center sm:w-auto"
+          className="moon-day-nudge-cta inline-flex shrink-0 items-center justify-center whitespace-nowrap"
           style={{
             minHeight: 44,
+            minWidth: 44,
             padding: '0 12px',
             fontSize: 14,
             fontWeight: 600,
@@ -221,6 +259,7 @@ export function MoonDayRitualNudge({
         >
           {copy.cta}
         </Link>
+        <DismissButton label={copy.dismiss} onClick={persistDismiss} />
       </div>
     </div>
   )
