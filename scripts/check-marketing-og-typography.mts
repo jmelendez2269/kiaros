@@ -7,6 +7,10 @@ import assert from "node:assert/strict";
 
 import { BRAND } from "../lib/brand.ts";
 import {
+  getAllGuides,
+  GUIDES_INDEX_META_DESCRIPTION,
+} from "../lib/marketing/guides.ts";
+import {
   FIELD_NOTES_NEWSLETTER_BODY,
   FIELD_NOTES_NEWSLETTER_HEADLINE,
 } from "../lib/marketing/field-notes-copy.ts";
@@ -48,6 +52,18 @@ const cards: CardCase[] = [
     subtitle: FIELD_NOTES_NEWSLETTER_BODY,
     hasKicker: false,
   },
+  {
+    name: "/guides",
+    title: "Guides",
+    subtitle: GUIDES_INDEX_META_DESCRIPTION,
+    hasKicker: false,
+  },
+  ...getAllGuides().map((guide) => ({
+    name: `/guides/${guide.slug}`,
+    title: guide.seoTitle,
+    subtitle: guide.metaDescription,
+    hasKicker: true,
+  })),
 ];
 
 let checks = 0;

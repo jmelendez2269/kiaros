@@ -1,3 +1,4 @@
+const path = require('path')
 const { featureFlagEnabled } = require('./lib/calendar/feature-flag-enabled.cjs')
 
 const calendarDayOn = featureFlagEnabled(process.env.KIAROS_CALENDAR_DAY)
@@ -5,6 +6,14 @@ const calendarDayOn = featureFlagEnabled(process.env.KIAROS_CALENDAR_DAY)
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.md$/,
+      include: path.join(__dirname, 'content', 'guides'),
+      type: 'asset/source',
+    })
+    return config
+  },
   outputFileTracingIncludes: {
     '/api/admin/artifacts/[orderId]/export': [
       './docs/assets/etsy/natal-report-tour/*.jpg',
