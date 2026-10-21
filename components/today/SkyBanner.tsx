@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { MoonGlyph, StarField, K } from '@/components/almanac'
 import { AskOracleButton } from '@/components/oracle/AskOracleButton'
@@ -35,6 +36,8 @@ function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: numb
 export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge }: Props) {
   const { today, sabian, meta } = context
   const { hasOracleAccess } = useStelloquy()
+  const [moonStripVisible, setMoonStripVisible] = useState(Boolean(moonDayNudge))
+  const moonGlyphInFlow = Boolean(moonDayNudge) && moonStripVisible
   const moonPos = `${Math.round(today.moon.degreeInSign)}° ${signGlyph(today.moon.sign)}`
   const sunPos = `${Math.round(today.sun.degreeInSign)}° ${signGlyph(today.sun.sign)}`
   const illumPct = Math.round(today.moonIllumination * 100)
@@ -60,8 +63,8 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge
     >
       <StarField count={28} seed={3} opacity={0.55} />
       {moonDayNudge ? (
-        <div style={{ position: 'relative', zIndex: 2, marginBottom: 4 }}>
-          <MoonDayRitualNudge {...moonDayNudge} />
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <MoonDayRitualNudge {...moonDayNudge} onStripVisibleChange={setMoonStripVisible} />
         </div>
       ) : null}
       <svg
@@ -86,14 +89,23 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge
           boxShadow: `0 0 60px ${K.copperHi}`,
         }}
       />
-      <div style={{ position: 'absolute', top: 30, left: '32%' }}>
-        <MoonGlyph phase={today.moonIllumination} size={28} color={K.ink} />
-      </div>
+      {moonGlyphInFlow ? null : (
+        <div style={{ position: 'absolute', top: 30, left: '32%', zIndex: 1 }}>
+          <MoonGlyph phase={today.moonIllumination} size={28} color={K.ink} />
+        </div>
+      )}
+
+      {moonGlyphInFlow ? (
+        <div style={{ position: 'relative', zIndex: 1, marginBottom: 8 }}>
+          <MoonGlyph phase={today.moonIllumination} size={28} color={K.ink} />
+        </div>
+      ) : null}
 
       <div
         className="flex flex-col items-start gap-5 sm:flex-row sm:justify-between"
         style={{
           position: 'relative',
+          zIndex: 1,
           alignItems: 'flex-start',
         }}
       >
