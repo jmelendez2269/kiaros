@@ -137,8 +137,18 @@ assert.ok(copySource.includes('New moon today'))
 assert.ok(copySource.includes('Full moon today'))
 assert.ok(copySource.includes('Start a ritual entry'))
 assert.ok(copySource.includes('Not today'))
-assert.ok(copySource.includes('We like it for small beginnings.'))
-assert.ok(copySource.includes('We like it for looking back.'))
+assert.ok(copySource.includes('Starting something new?'))
+assert.ok(copySource.includes('Looking back on the month?'))
+assert.ok(
+  copySource.includes(
+    "A new moon can be a quiet place to start. A ritual entry is here if you want to note what you're beginning.",
+  ),
+)
+assert.ok(
+  copySource.includes(
+    'A full moon can be a good night to look back on the month. A ritual entry is here if you want to write it down.',
+  ),
+)
 const nudgeUi = readFileSync(join(root, 'components/today/MoonDayRitualNudge.tsx'), 'utf8')
 assert.ok(nudgeUi.includes('bodyPhone'))
 assert.ok(nudgeUi.includes('moon-day-nudge-body-phone'))

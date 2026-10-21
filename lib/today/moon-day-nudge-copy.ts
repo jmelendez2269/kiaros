@@ -16,16 +16,16 @@ export const MOON_DAY_NUDGE_COPY: Record<
   new: {
     headline: 'New moon today',
     body:
-      "We like the new moon for small beginnings. A ritual entry is here if you want to note what you're starting.",
-    bodyPhone: 'We like it for small beginnings.',
+      "A new moon can be a quiet place to start. A ritual entry is here if you want to note what you're beginning.",
+    bodyPhone: 'Starting something new?',
     cta: 'Start a ritual entry',
     dismiss: 'Not today',
   },
   full: {
     headline: 'Full moon today',
     body:
-      "We like the full moon for looking back at what's grown. A ritual entry is here if you want to write it down.",
-    bodyPhone: 'We like it for looking back.',
+      'A full moon can be a good night to look back on the month. A ritual entry is here if you want to write it down.',
+    bodyPhone: 'Looking back on the month?',
     cta: 'Start a ritual entry',
     dismiss: 'Not today',
   },
