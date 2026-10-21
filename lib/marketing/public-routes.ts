@@ -10,6 +10,8 @@ export const PUBLIC_ROUTE_PATTERNS: readonly string[] = [
   "/contact(.*)",
   "/privacy(.*)",
   "/terms(.*)",
+  "/robots.txt",
+  "/sitemap.xml",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/commerce/etsy-ingest",
