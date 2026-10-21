@@ -3,9 +3,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
+import type { PlanetaryHourBand } from '@/lib/planetary/planetary-hours'
 import type { PlanItemRow } from '@/lib/planner/get-day-plan'
+import { CALENDAR_DAY_EMPTY_CTA, CALENDAR_DAY_EMPTY_LINE } from '@/lib/copy/calendar-day-empty'
 import { PlanBlock } from './PlanBlock'
 import { EnergyWindowRail } from './EnergyWindowRail'
+import { PlanetaryHourRail } from './PlanetaryHourRail'
 import { GhostBlock } from './GhostBlock'
 import type { PlacementSuggestion } from './DayPlanner'
 
@@ -13,6 +16,7 @@ const SLOT_MINUTES = 30
 const ROW_HEIGHT = 32 // px per 30-minute slot
 const PX_PER_MINUTE = ROW_HEIGHT / SLOT_MINUTES
 const TOTAL_MINUTES = 24 * 60
+const DEFAULT_BLOCK_MINUTES = 30
 
 // Prominent zone fills — these are the drag targets, so each energy has to
 // read clearly at a glance. Blocks sit on top with solid backgrounds.
@@ -40,6 +44,8 @@ interface Props {
   isToday: boolean
   items: PlanItemRow[]
   windows: EnergyWindow[]
+  planetaryHourBands?: PlanetaryHourBand[]
+  showSkyTiming?: boolean
   suggestions: PlacementSuggestion[]
   onMove: (id: string, startMinute: number) => void
   onResize: (id: string, durationMinutes: number) => void
@@ -57,6 +63,8 @@ const DEFAULT_ANCHOR_MINUTE = 7 * 60
 
 /** Tailwind `md` — calendar mobile inset scroll only below this width. */
 const CALENDAR_INSET_SCROLL_MQ = '(max-width: 767px)'
+/** Below this width, hide PlanetaryHourRail and keep EnergyWindowRail only. */
+const NARROW_DAY_GRID_MQ = '(max-width: 390px)'
 
 function calendarUsesInsetScroll(): boolean {
   if (typeof window === 'undefined') return false
@@ -68,6 +76,8 @@ export function DayGrid({
   isToday,
   items,
   windows,
+  planetaryHourBands = [],
+  showSkyTiming = true,
   suggestions,
   onMove,
   onResize,
@@ -83,6 +93,16 @@ export function DayGrid({
   const [nowMinute, setNowMinute] = useState<number | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [narrowDayGrid, setNarrowDayGrid] = useState(false)
+
+  useEffect(() => {
+    if (scrollMode !== 'calendar') return
+    const mq = window.matchMedia(NARROW_DAY_GRID_MQ)
+    const update = () => setNarrowDayGrid(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [scrollMode])
 
   useEffect(() => {
     if (!isToday) return
@@ -156,6 +176,10 @@ export function DayGrid({
 
   const containerHeight = TOTAL_MINUTES * PX_PER_MINUTE
   const hourMarks = useMemo(() => Array.from({ length: 24 }, (_, i) => i * 60), [])
+  const halfHourMarks = useMemo(() => hourMarks.map((m) => m + 30), [hourMarks])
+  const showSkyOverlays = showSkyTiming
+  const isEmptyCalendarDay =
+    scrollMode === 'calendar' && items.length === 0 && suggestions.length === 0 && pendingSlot === null
 
   function handleGridClick(e: React.MouseEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest('[data-plan-block]')) return
@@ -177,7 +201,24 @@ export function DayGrid({
   }
 
   const gridRow = (
-    <div className="flex gap-2">
+    <div className="flex flex-col gap-4">
+      {isEmptyCalendarDay ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-bone-muted">{CALENDAR_DAY_EMPTY_LINE}</p>
+          <button
+            type="button"
+            className="shrink-0 rounded-md border border-leather-400/50 bg-leather-500/15 px-3 py-1.5 text-sm text-bone hover:bg-leather-500/25"
+            onClick={() => {
+              setPendingSlot(DEFAULT_ANCHOR_MINUTE)
+              setPendingTitle('')
+            }}
+          >
+            {CALENDAR_DAY_EMPTY_CTA}
+          </button>
+        </div>
+      ) : null}
+
+      <div className="flex gap-2">
       <div className="flex flex-col text-right">
         {hourMarks.map((m) => (
           <div key={m} className="pr-1 text-[10px] text-bone-muted/50" style={{ height: ROW_HEIGHT * 2 }}>
@@ -186,7 +227,17 @@ export function DayGrid({
         ))}
       </div>
 
-      <EnergyWindowRail windows={windows} pxPerMinute={PX_PER_MINUTE} totalMinutes={TOTAL_MINUTES} />
+      {showSkyOverlays ? (
+        <EnergyWindowRail windows={windows} pxPerMinute={PX_PER_MINUTE} totalMinutes={TOTAL_MINUTES} />
+      ) : null}
+
+      {showSkyOverlays && !narrowDayGrid ? (
+        <PlanetaryHourRail
+          bands={planetaryHourBands}
+          pxPerMinute={PX_PER_MINUTE}
+          totalMinutes={TOTAL_MINUTES}
+        />
+      ) : null}
 
       <div
         ref={gridRef}
@@ -194,18 +245,28 @@ export function DayGrid({
         style={{ height: containerHeight }}
         onClick={handleGridClick}
       >
-        {windows.map((w, i) => (
-          <div
-            key={i}
-            className={cn('pointer-events-none absolute inset-x-0', ENERGY_BG[w.energyType])}
-            style={{ top: w.startMinute * PX_PER_MINUTE, height: (w.endMinute - w.startMinute) * PX_PER_MINUTE }}
-          />
-        ))}
+        {showSkyOverlays
+          ? windows.map((w, i) => (
+              <div
+                key={i}
+                className={cn('pointer-events-none absolute inset-x-0', ENERGY_BG[w.energyType])}
+                style={{ top: w.startMinute * PX_PER_MINUTE, height: (w.endMinute - w.startMinute) * PX_PER_MINUTE }}
+              />
+            ))
+          : null}
 
         {hourMarks.map((m) => (
           <div
             key={m}
             className="pointer-events-none absolute inset-x-0 border-t border-border/40"
+            style={{ top: m * PX_PER_MINUTE }}
+          />
+        ))}
+
+        {halfHourMarks.map((m) => (
+          <div
+            key={m}
+            className="pointer-events-none absolute inset-x-0 border-t border-border/20"
             style={{ top: m * PX_PER_MINUTE }}
           />
         ))}
@@ -244,7 +305,10 @@ export function DayGrid({
           <div
             data-plan-block
             className="absolute inset-x-2 z-30 rounded-md border border-leather-400/50 bg-stone-900 p-2 shadow-lg"
-            style={{ top: pendingSlot * PX_PER_MINUTE }}
+            style={{
+              top: pendingSlot * PX_PER_MINUTE,
+              height: DEFAULT_BLOCK_MINUTES * PX_PER_MINUTE,
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <input
@@ -264,6 +328,7 @@ export function DayGrid({
             />
           </div>
         )}
+      </div>
       </div>
     </div>
   )

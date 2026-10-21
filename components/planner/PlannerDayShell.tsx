@@ -75,7 +75,7 @@ export function PlannerDayShell({
   const title = formatLongDate(safeDate)
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-6xl space-y-4 px-4 py-8 md:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="shell-kicker mb-1">{kicker}</p>
@@ -148,6 +148,7 @@ export function PlannerDayShell({
         isToday={safeDate === today}
         initialPlanItems={dayPlan.planItems}
         windows={dayPlan.windows}
+        planetaryHourBands={dayPlan.planetaryHourBands}
         dayGridScrollMode={dayGridScrollMode}
       />
     </div>
