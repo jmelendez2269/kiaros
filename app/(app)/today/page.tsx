@@ -42,8 +42,7 @@ import {
   resolveTodayDateISO,
   MOCK_TODAY_QUERY_PARAM,
 } from '@/lib/today/mock-today-date'
-import { getMoonDayPhaseForLocalDate, isMoonDayDismissed } from '@/lib/today/moon-day-phase'
-import { loadMoonDayNudgeSettings } from '@/lib/today/load-moon-day-nudge-settings'
+import { getMoonDayPhaseForLocalDate } from '@/lib/today/moon-day-phase'
 
 export default async function TodayPage({
   searchParams,
@@ -106,7 +105,6 @@ export default async function TodayPage({
     humanDesignWeather,
     todayPlanItemsRes,
     todayCurriculumSessions,
-    moonDayNudgeSettingsRes,
     ritualTodayRes,
   ] = await Promise.all([
     getActiveTransits(todayDate, supabaseUserId),
@@ -125,7 +123,6 @@ export default async function TodayPage({
       .eq('item_date', todayDate)
       .order('sort_order', { ascending: true }),
     getDueCurriculumSessions(supabaseUserId, todayDate),
-    loadMoonDayNudgeSettings(admin, supabaseUserId),
     admin
       .from('journal_entries')
       .select('id', { count: 'exact', head: true })
@@ -159,12 +156,6 @@ export default async function TodayPage({
     ? {
         phase: moonDayPhase,
         localDate: todayDate,
-        remindersEnabled: moonDayNudgeSettingsRes.remindersEnabled,
-        serverDismissed: isMoonDayDismissed(
-          moonDayNudgeSettingsRes.dismissals,
-          moonDayPhase,
-          todayDate,
-        ),
         ritualDone: (ritualTodayRes.count ?? 0) > 0,
       }
     : null

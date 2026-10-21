@@ -4,44 +4,26 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import { MOON_DAY_NUDGE_COPY, type MoonDayNudgePhase } from '@/lib/today/moon-day-nudge-copy'
-import {
-  isMoonDayDismissed,
-  MOON_DAY_NUDGE_LOCAL_STORAGE_KEY,
-  moonDayDismissalKey,
-  parseDismissalMap,
-} from '@/lib/today/moon-day-phase'
+import { isMoonDayDismissed, moonDayDismissalKey } from '@/lib/today/moon-day-phase'
 import { moonDayRitualEntryHref } from '@/lib/today/moon-day-ritual-entry-href'
+import {
+  MOON_DAY_NUDGE_DISMISSALS_KEY,
+  MOON_DAY_REMINDERS_ENABLED_KEY,
+  readMoonDayDismissals,
+  readMoonDayRemindersEnabled,
+  writeMoonDayDismissal,
+} from '@/lib/today/moon-day-nudge-storage'
+import { resolveMoonDayNudgeViewState } from '@/lib/today/moon-day-nudge-view-state'
 
 const VIOLET = '#A98AEF'
 const INK = '#E3E2ED'
 const MUTED = '#A4A3B1'
 
-export type MoonDayNudgeViewState = 'hidden' | 'showing' | 'done' | 'dismissed'
-
 export interface MoonDayRitualNudgeProps {
   phase: MoonDayNudgePhase
   localDate: string
-  remindersEnabled: boolean
-  serverDismissed: boolean
   ritualDone: boolean
   compactBody?: boolean
-}
-
-function readLocalDismissals(): Record<string, true> {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = window.localStorage.getItem(MOON_DAY_NUDGE_LOCAL_STORAGE_KEY)
-    if (!raw) return {}
-    return parseDismissalMap(JSON.parse(raw))
-  } catch {
-    return {}
-  }
-}
-
-function writeLocalDismissal(key: string) {
-  const current = readLocalDismissals()
-  current[key] = true
-  window.localStorage.setItem(MOON_DAY_NUDGE_LOCAL_STORAGE_KEY, JSON.stringify(current))
 }
 
 function PhaseGlyph({ phase }: { phase: MoonDayNudgePhase }) {
@@ -72,37 +54,37 @@ function PhaseGlyph({ phase }: { phase: MoonDayNudgePhase }) {
   )
 }
 
-export function resolveMoonDayNudgeViewState(args: {
-  phase: MoonDayNudgePhase | null
-  remindersEnabled: boolean
-  dismissed: boolean
-  ritualDone: boolean
-}): MoonDayNudgeViewState {
-  if (!args.phase || !args.remindersEnabled) return 'hidden'
-  if (args.dismissed) return 'dismissed'
-  if (args.ritualDone) return 'done'
-  return 'showing'
-}
-
 export function MoonDayRitualNudge({
   phase,
   localDate,
-  remindersEnabled,
-  serverDismissed,
   ritualDone,
   compactBody = false,
 }: MoonDayRitualNudgeProps) {
   const copy = MOON_DAY_NUDGE_COPY[phase]
   const dismissalKey = moonDayDismissalKey(phase, localDate)
-  const [localDismissed, setLocalDismissed] = useState(false)
+  const [remindersEnabled, setRemindersEnabled] = useState(true)
+  const [dismissed, setDismissed] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
-    setLocalDismissed(isMoonDayDismissed(readLocalDismissals(), phase, localDate))
+    setRemindersEnabled(readMoonDayRemindersEnabled())
+    setDismissed(isMoonDayDismissed(readMoonDayDismissals(), phase, localDate))
     setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    setHydrated(true)
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === MOON_DAY_REMINDERS_ENABLED_KEY) {
+        setRemindersEnabled(readMoonDayRemindersEnabled())
+      }
+      if (event.key === MOON_DAY_NUDGE_DISMISSALS_KEY) {
+        setDismissed(isMoonDayDismissed(readMoonDayDismissals(), phase, localDate))
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [phase, localDate])
 
-  const dismissed = serverDismissed || localDismissed
   const viewState = resolveMoonDayNudgeViewState({
     phase,
     remindersEnabled,
@@ -110,18 +92,9 @@ export function MoonDayRitualNudge({
     ritualDone,
   })
 
-  const persistDismiss = useCallback(async () => {
-    setLocalDismissed(true)
-    writeLocalDismissal(dismissalKey)
-    try {
-      await fetch('/api/settings/moon-day-reminders', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dismissKey: dismissalKey }),
-      })
-    } catch {
-      // Local dismissal still holds for this device / moon day.
-    }
+  const persistDismiss = useCallback(() => {
+    setDismissed(true)
+    writeMoonDayDismissal(dismissalKey)
   }, [dismissalKey])
 
   const bodyText = useMemo(() => {
@@ -132,7 +105,7 @@ export function MoonDayRitualNudge({
     return copy.body
   }, [compactBody, copy.body])
 
-  if (viewState === 'hidden' || viewState === 'dismissed') return null
+  if (!hydrated || viewState === 'hidden' || viewState === 'dismissed') return null
 
   const fadeIn = reducedMotion ? undefined : 'moonDayNudgeFadeIn 150ms ease-out'
 
@@ -184,10 +157,7 @@ export function MoonDayRitualNudge({
           .moon-day-nudge-cta { width: 100%; text-align: center; }
         }
       `}</style>
-      <div
-        className="flex flex-wrap items-start gap-3"
-        style={{ rowGap: 10 }}
-      >
+      <div className="flex flex-wrap items-start gap-3" style={{ rowGap: 10 }}>
         <PhaseGlyph phase={phase} />
         <div style={{ flex: '1 1 160px', minWidth: 0 }}>
           <p
@@ -242,7 +212,7 @@ export function MoonDayRitualNudge({
           </Link>
           <button
             type="button"
-            onClick={() => void persistDismiss()}
+            onClick={persistDismiss}
             aria-label={copy.dismiss}
             title={copy.dismiss}
             style={{

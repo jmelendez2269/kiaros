@@ -62,5 +62,3 @@ export function isMoonDayDismissed(
 ): boolean {
   return dismissals[moonDayDismissalKey(phase, localDateIso)] === true
 }
-
-export const MOON_DAY_NUDGE_LOCAL_STORAGE_KEY = 'kiaros-moon-day-nudge-dismissals'

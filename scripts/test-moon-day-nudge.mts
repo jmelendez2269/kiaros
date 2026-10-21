@@ -1,5 +1,5 @@
 /**
- * Moon-day ritual nudge — phase-day detection, dismissal keys, mock date guard.
+ * Moon-day ritual nudge — phase-day detection, dismissal keys, local storage, mock date guard.
  */
 
 import assert from 'node:assert/strict'
@@ -19,7 +19,11 @@ import {
   parseMockTodayDateParam,
   MOCK_TODAY_QUERY_PARAM,
 } from '../lib/today/mock-today-date.ts'
-import { resolveMoonDayNudgeViewState } from '../components/today/MoonDayRitualNudge.tsx'
+import { resolveMoonDayNudgeViewState } from '../lib/today/moon-day-nudge-view-state.ts'
+import {
+  MOON_DAY_NUDGE_DISMISSALS_KEY,
+  MOON_DAY_REMINDERS_ENABLED_KEY,
+} from '../lib/today/moon-day-nudge-storage.ts'
 import { getMoonPhasesForYear } from '../lib/ephemeris/astronomia-adapter.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -120,5 +124,20 @@ assert.ok(copySource.includes('Full moon today'))
 assert.ok(copySource.includes('Start a ritual entry'))
 assert.ok(copySource.includes('Not today'))
 console.log('✓ Copy constants\n')
+
+console.log('localStorage-only persistence (no DB migration or API)')
+assert.ok(!readFileSync(join(root, 'types/database.ts'), 'utf8').includes('moon_day'))
+assert.ok(!readFileSync(join(root, 'lib/today/moon-day-nudge-storage.ts'), 'utf8').includes('supabase'))
+assert.ok(readFileSync(join(root, 'components/settings/MoonDayRemindersSettingsPanel.tsx'), 'utf8').includes('writeMoonDayRemindersEnabled'))
+assert.ok(!readFileSync(join(root, 'components/today/MoonDayRitualNudge.tsx'), 'utf8').includes('/api/settings/moon-day-reminders'))
+try {
+  readFileSync(join(root, 'supabase/migrations/0052_moon_day_reminders.sql'))
+  assert.fail('migration 0052 should be deleted')
+} catch {
+  // expected
+}
+assert.equal(MOON_DAY_NUDGE_DISMISSALS_KEY, 'kiaros-moon-day-nudge-dismissals')
+assert.equal(MOON_DAY_REMINDERS_ENABLED_KEY, 'kiaros-moon-day-reminders-enabled')
+console.log('✓ localStorage keys, no schema\n')
 
 console.log('All moon-day nudge tests passed.')

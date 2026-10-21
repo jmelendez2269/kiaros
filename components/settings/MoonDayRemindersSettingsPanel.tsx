@@ -2,54 +2,23 @@
 
 import { Bell } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import {
+  readMoonDayRemindersEnabled,
+  writeMoonDayRemindersEnabled,
+} from '@/lib/today/moon-day-nudge-storage'
 
 export function MoonDayRemindersSettingsPanel() {
   const [enabled, setEnabled] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const res = await fetch('/api/settings/moon-day-reminders', { cache: 'no-store' })
-        const data = (await res.json()) as { remindersEnabled?: boolean; error?: string }
-        if (!res.ok) throw new Error(data.error ?? 'Unable to load moon-day reminders.')
-        if (!cancelled) setEnabled(data.remindersEnabled ?? true)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Unable to load moon-day reminders.')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    void load()
-    return () => {
-      cancelled = true
-    }
+    setEnabled(readMoonDayRemindersEnabled())
+    setHydrated(true)
   }, [])
 
-  async function handleToggle(next: boolean) {
-    setSaving(true)
-    setError(null)
+  function handleToggle(next: boolean) {
     setEnabled(next)
-    try {
-      const res = await fetch('/api/settings/moon-day-reminders', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ remindersEnabled: next }),
-      })
-      const data = (await res.json()) as { remindersEnabled?: boolean; error?: string }
-      if (!res.ok) throw new Error(data.error ?? 'Unable to save.')
-      setEnabled(data.remindersEnabled ?? next)
-    } catch (err) {
-      setEnabled((current) => !next || current)
-      setError(err instanceof Error ? err.message : 'Unable to save.')
-    } finally {
-      setSaving(false)
-    }
+    writeMoonDayRemindersEnabled(next)
   }
 
   return (
@@ -69,19 +38,17 @@ export function MoonDayRemindersSettingsPanel() {
           type="checkbox"
           className="mt-1 h-4 w-4 rounded border-border/80"
           checked={enabled}
-          disabled={loading || saving}
-          onChange={(event) => void handleToggle(event.target.checked)}
+          disabled={!hydrated}
+          onChange={(event) => handleToggle(event.target.checked)}
         />
         <span>
           <span className="block text-sm font-medium text-bone">Moon-day reminders</span>
           <span className="mt-1 block text-sm leading-6 text-bone-muted">
-            On new and full moon days, show a gentle strip on Today offering a ritual journal entry. No push
-            notifications.
+            On new and full moon days, show a gentle strip on Today offering a ritual journal entry. Stored on
+            this device only. No push notifications.
           </span>
         </span>
       </label>
-
-      {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
     </section>
   )
 }
