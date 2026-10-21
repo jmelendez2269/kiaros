@@ -17,6 +17,14 @@ import {
   shouldRedirectPlannerToCalendar,
   weekArcHref,
 } from '../lib/calendar/calendar-day-routes.ts'
+import {
+  CALENDAR_DAY_EMPTY_CTA,
+  CALENDAR_DAY_EMPTY_LINE,
+} from '../lib/copy/calendar-day-empty.ts'
+import {
+  SKY_TIMING_VISIBLE_STORAGE_KEY,
+  skyTimingVisibleFromStorage,
+} from '../lib/planner/sky-timing-preference.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
@@ -121,5 +129,73 @@ assert.ok(dayGridSource.includes('scrollContainerRef'))
 assert.ok(dayGridSource.includes("scrollMode === 'calendar'"))
 assert.ok(dayGridSource.includes('md:max-h-none md:overflow-visible'))
 console.log('✓ Calendar inset scroll container\n')
+
+console.log('Calendar Day empty state copy (Stella verbatim)')
+assert.equal(
+  CALENDAR_DAY_EMPTY_LINE,
+  'Nothing planned for this day yet. Open days are welcome here too.'
+)
+assert.equal(CALENDAR_DAY_EMPTY_CTA, 'Add a block')
+const dayPlannerSource = readFileSync(join(root, 'components/planner/DayPlanner.tsx'), 'utf8')
+const dayGridSourceForEmpty = readFileSync(join(root, 'components/planner/DayGrid.tsx'), 'utf8')
+assert.ok(dayGridSourceForEmpty.includes('CALENDAR_DAY_EMPTY_LINE'))
+assert.ok(dayGridSourceForEmpty.includes('CALENDAR_DAY_EMPTY_CTA'))
+assert.ok(dayPlannerSource.includes('SkyTimingToggle'))
+console.log('✓ Empty state copy and CTA wiring\n')
+
+console.log('Sky timing preference (localStorage, default on)')
+assert.equal(SKY_TIMING_VISIBLE_STORAGE_KEY, 'kiaros-calendar-day-sky-timing-visible')
+assert.equal(skyTimingVisibleFromStorage(undefined), true)
+assert.equal(skyTimingVisibleFromStorage(null), true)
+assert.equal(skyTimingVisibleFromStorage('true'), true)
+assert.equal(skyTimingVisibleFromStorage('false'), false)
+assert.ok(dayGridSourceForEmpty.includes('showSkyOverlays'))
+assert.ok(dayGridSourceForEmpty.includes('PlanetaryHourRail'))
+assert.ok(dayGridSourceForEmpty.includes('NARROW_DAY_GRID_MQ'))
+assert.ok(dayGridSourceForEmpty.includes('border-border/20'))
+console.log('✓ Sky timing toggle storage and overlay wiring\n')
+
+console.log('BrandMark in app sidebar')
+const sidebarSource = readFileSync(join(root, 'components/almanac/AlmanacSidebar.tsx'), 'utf8')
+assert.ok(sidebarSource.includes('BrandMark'))
+assert.ok(sidebarSource.includes("glyph: '✦'"), 'Stelloquy card star glyph must stay')
+console.log('✓ Almanac sidebar BrandMark\n')
+
+console.log('Sidebar nav: /calendar highlights Day planner, not Year')
+assert.ok(sidebarSource.includes("pathname.startsWith('/calendar')"))
+assert.ok(
+  sidebarSource.includes(
+    "subParts.pathname === '/planner' && pathname.startsWith('/calendar')"
+  ),
+  'Day planner sub-nav must be active on /calendar'
+)
+const yearActiveBlock = sidebarSource.slice(
+  sidebarSource.indexOf("if (key === 'year')"),
+  sidebarSource.indexOf("if (key === 'self')")
+)
+assert.ok(
+  !yearActiveBlock.includes("pathname.startsWith('/calendar')"),
+  'Year section must not treat /calendar as active'
+)
+console.log('✓ Calendar sidebar nav highlighting\n')
+
+console.log('Calendar Day empty grid stays scrolled to top')
+assert.ok(
+  dayGridSourceForEmpty.includes('items.length === 0') &&
+    dayGridSourceForEmpty.includes('? 0'),
+  'Empty calendar day must anchor scroll at minute 0, not now'
+)
+console.log('✓ Empty-day scroll guard\n')
+
+console.log('Mobile day spacing (md+ unchanged)')
+assert.ok(shellSource.includes('space-y-4') && shellSource.includes('md:space-y-6'))
+assert.ok(dayPlannerSource.includes('gap-4 md:gap-6'))
+console.log('✓ Mobile spacing classes\n')
+
+console.log('Planetary hours on day plan')
+const dayPlanSource = readFileSync(join(root, 'lib/planner/get-day-plan.ts'), 'utf8')
+assert.ok(dayPlanSource.includes('computePlanetaryHourBands'))
+assert.ok(dayPlanSource.includes('planetaryHourBands'))
+console.log('✓ get-day-plan planetary bands\n')
 
 console.log('All KIAROS_CALENDAR_DAY tests passed.')

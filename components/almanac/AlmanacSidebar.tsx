@@ -6,6 +6,7 @@ import { UserButton, SignOutButton } from '@clerk/nextjs'
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Settings, X } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 import { BRAND } from '@/lib/brand'
+import { BrandMark } from '@/components/shared/BrandMark'
 import { cn } from '@/lib/utils'
 import { K } from './tokens'
 import { StarField } from './StarField'
@@ -119,7 +120,11 @@ function splitSubHref(href: string): { pathname: string; hash: string } {
 
 function isSectionActive(key: NavKey, pathname: string, view: string | null = null): boolean {
   if (key === 'today') {
-    return pathname.startsWith('/today') || pathname.startsWith('/planner')
+    return (
+      pathname.startsWith('/today') ||
+      pathname.startsWith('/planner') ||
+      pathname.startsWith('/calendar')
+    )
   }
   if (key === 'week') {
     return pathname.startsWith('/year') && view === 'week'
@@ -130,7 +135,6 @@ function isSectionActive(key: NavKey, pathname: string, view: string | null = nu
   if (key === 'year') {
     return (
       pathname.startsWith('/reflections') ||
-      pathname.startsWith('/calendar') ||
       pathname.startsWith('/blueprint') ||
       (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
     )
@@ -157,28 +161,7 @@ const SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
 function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          border: `1px solid ${K.copper}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: `radial-gradient(circle at 30% 30%, ${K.bg3}, ${K.bg})`,
-          position: 'relative',
-          flexShrink: 0,
-        }}
-      >
-        <svg width={40} height={40} viewBox="0 0 40 40" style={{ position: 'absolute', inset: 0 }}>
-          <circle cx="20" cy="20" r="13" fill="none" stroke={K.copper} strokeWidth="0.5" opacity="0.6" />
-          <circle cx="20" cy="20" r="8" fill="none" stroke={K.copperHi} strokeWidth="0.5" opacity="0.8" />
-          <circle cx="20" cy="7" r="1.6" fill={K.copperHi} />
-          <circle cx="33" cy="20" r="1.1" fill={K.kairos} />
-          <circle cx="11" cy="26" r="1.1" fill={K.starlight} />
-        </svg>
-      </div>
+      <BrandMark size="header" />
       {!collapsed ? (
         <div>
           <div
@@ -382,7 +365,8 @@ function NavRow({
                 const subParts = splitSubHref(sub.href)
                 const pathMatches =
                   pathname === subParts.pathname ||
-                  pathname.startsWith(`${subParts.pathname}/`)
+                  pathname.startsWith(`${subParts.pathname}/`) ||
+                  (subParts.pathname === '/planner' && pathname.startsWith('/calendar'))
                 const subActive =
                   pathMatches && (!subParts.hash || currentHash === subParts.hash)
                 return (

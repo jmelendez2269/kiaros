@@ -1,11 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
+import type { PlanetaryHourBand } from '@/lib/planetary/planetary-hours'
 import type { PlanItemRow } from '@/lib/planner/get-day-plan'
+import {
+  readSkyTimingVisibleFromStorage,
+  writeSkyTimingVisibleToStorage,
+} from '@/lib/planner/sky-timing-preference'
 import { DayGrid } from './DayGrid'
 import { UnscheduledTray } from './UnscheduledTray'
 import { EnergyLegend } from './EnergyLegend'
+import { SkyTimingToggle } from './SkyTimingToggle'
 
 const DEFAULT_SLOT_MINUTE = 9 * 60 // 9:00 AM
 
@@ -22,15 +28,34 @@ interface Props {
   isToday: boolean
   initialPlanItems: PlanItemRow[]
   windows: EnergyWindow[]
+  planetaryHourBands?: PlanetaryHourBand[]
   /** Calendar Day only — unset on /planner. */
   dayGridScrollMode?: 'calendar'
 }
 
-export function DayPlanner({ date, isToday, initialPlanItems, windows, dayGridScrollMode }: Props) {
+export function DayPlanner({
+  date,
+  isToday,
+  initialPlanItems,
+  windows,
+  planetaryHourBands = [],
+  dayGridScrollMode,
+}: Props) {
   const [items, setItems] = useState<PlanItemRow[]>(initialPlanItems)
   const [suggestions, setSuggestions] = useState<PlacementSuggestion[]>([])
   const [isPlacing, setIsPlacing] = useState(false)
   const [placeError, setPlaceError] = useState<string | null>(null)
+  const [skyTimingVisible, setSkyTimingVisible] = useState(true)
+
+  useEffect(() => {
+    if (dayGridScrollMode !== 'calendar') return
+    setSkyTimingVisible(readSkyTimingVisibleFromStorage((key) => window.localStorage.getItem(key)))
+  }, [dayGridScrollMode])
+
+  function setSkyTimingPersisted(next: boolean) {
+    writeSkyTimingVisibleToStorage((key, value) => window.localStorage.setItem(key, value), next)
+    setSkyTimingVisible(next)
+  }
 
   const scheduled = useMemo(() => items.filter((i) => i.start_minute !== null), [items])
   const unscheduled = useMemo(() => items.filter((i) => i.start_minute === null), [items])
@@ -76,6 +101,7 @@ export function DayPlanner({ date, isToday, initialPlanItems, windows, dayGridSc
       body: JSON.stringify({
         item_date: date,
         title,
+        duration_minutes: 30,
         ...(startMinute !== null ? { start_minute: startMinute } : {}),
       }),
     })
@@ -142,17 +168,25 @@ export function DayPlanner({ date, isToday, initialPlanItems, windows, dayGridSc
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+    <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div className="shell-panel space-y-4 px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="shell-kicker">Day plan</p>
-          <EnergyLegend />
+          <div className="flex flex-wrap items-center gap-3">
+            {dayGridScrollMode === 'calendar' ? (
+              <SkyTimingToggle checked={skyTimingVisible} onCheckedChange={setSkyTimingPersisted} />
+            ) : null}
+            {dayGridScrollMode === 'calendar' && skyTimingVisible ? <EnergyLegend /> : null}
+            {dayGridScrollMode !== 'calendar' ? <EnergyLegend /> : null}
+          </div>
         </div>
         <DayGrid
           date={date}
           isToday={isToday}
           items={scheduled}
           windows={windows}
+          planetaryHourBands={planetaryHourBands}
+          showSkyTiming={dayGridScrollMode === 'calendar' ? skyTimingVisible : true}
           suggestions={suggestions}
           onMove={moveItem}
           onResize={resizeItem}

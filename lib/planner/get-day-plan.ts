@@ -1,6 +1,8 @@
 import 'server-only'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { computeTransitWindows } from '@/lib/planetary/transit-windows'
+import { computePlanetaryHourBands } from '@/lib/planetary/planetary-hours'
+import type { PlanetaryHourBand } from '@/lib/planetary/planetary-hours'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import type { NatalChart, YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
@@ -15,6 +17,7 @@ export interface DayPlan {
   planItems: PlanItemRow[]
   curriculumSessions: CurriculumSessionRow[]
   windows: EnergyWindow[]
+  planetaryHourBands: PlanetaryHourBand[]
   weekGoals: AreaGoalRow[]
 }
 
@@ -55,12 +58,14 @@ export async function getDayPlan(userId: string, date: string): Promise<DayPlan>
   const dayTransits = ephemeris?.days?.find((d) => d.date === date)?.transits ?? []
 
   const windows = computeTransitWindows({ date, lat, lng, timeZone, natalChart, dayTransits })
+  const planetaryHourBands = computePlanetaryHourBands({ date, lat, lng, timeZone })
 
   return {
     date,
     planItems: planItemsRes.data ?? [],
     curriculumSessions: (curriculumRes.data ?? []) as CurriculumSessionRow[],
     windows,
+    planetaryHourBands,
     weekGoals,
   }
 }
