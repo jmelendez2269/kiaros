@@ -2216,6 +2216,8 @@ export type Database = {
           jupiter_season_read_at: string | null
           jupiter_season_signature: string | null
           memory_mode_prompted_at: string | null
+          moon_day_nudge_dismissals: Json
+          moon_day_reminders_enabled: boolean
           past_entries_included_at: string | null
           season_read: string | null
           season_read_at: string | null
@@ -2235,6 +2237,8 @@ export type Database = {
           jupiter_season_read_at?: string | null
           jupiter_season_signature?: string | null
           memory_mode_prompted_at?: string | null
+          moon_day_nudge_dismissals?: Json
+          moon_day_reminders_enabled?: boolean
           past_entries_included_at?: string | null
           season_read?: string | null
           season_read_at?: string | null
@@ -2254,6 +2258,8 @@ export type Database = {
           jupiter_season_read_at?: string | null
           jupiter_season_signature?: string | null
           memory_mode_prompted_at?: string | null
+          moon_day_nudge_dismissals?: Json
+          moon_day_reminders_enabled?: boolean
           past_entries_included_at?: string | null
           season_read?: string | null
           season_read_at?: string | null

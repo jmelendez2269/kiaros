@@ -7,6 +7,7 @@ import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import { buildTransitPlacementExplanation } from '@/lib/human-design'
 import type { HumanDesignTransitWeather } from '@/lib/human-design-transit-model'
 import { buildHumanDesignWeatherPrompt, buildPlacementPrompt } from '@/lib/oracle/preseed'
+import { MoonDayRitualNudge, type MoonDayRitualNudgeProps } from '@/components/today/MoonDayRitualNudge'
 import type { TodayContext } from '@/lib/today/get-today-context'
 import type { Planet, ZodiacSign } from '@/types/blueprint'
 
@@ -14,6 +15,7 @@ interface Props {
   context: TodayContext
   weekTheme?: string | null
   humanDesignWeather?: HumanDesignTransitWeather | null
+  moonDayNudge?: MoonDayRitualNudgeProps | null
 }
 
 function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: number): string {
@@ -30,7 +32,7 @@ function placementPromptFor(planet: Planet, sign: ZodiacSign, degreeInSign: numb
 
 // The editorial moment of the page. Uses a sunset gradient by default;
 // later we can vary by time of day or season via window.__kairosTweaks.
-export function SkyBanner({ context, weekTheme, humanDesignWeather }: Props) {
+export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge }: Props) {
   const { today, sabian, meta } = context
   const { hasOracleAccess } = useStelloquy()
   const moonPos = `${Math.round(today.moon.degreeInSign)}° ${signGlyph(today.moon.sign)}`
@@ -57,6 +59,11 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather }: Props) {
       }}
     >
       <StarField count={28} seed={3} opacity={0.55} />
+      {moonDayNudge ? (
+        <div style={{ position: 'relative', zIndex: 2, marginBottom: 4 }}>
+          <MoonDayRitualNudge {...moonDayNudge} />
+        </div>
+      ) : null}
       <svg
         viewBox="0 0 100 12"
         preserveAspectRatio="none"

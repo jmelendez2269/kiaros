@@ -6,6 +6,7 @@ import { CalendarDays, MessageCircle, Palette, Sparkles, UserRound } from "lucid
 import { ThemePicker } from "@/components/shared/ThemePicker";
 import { VoicePanel } from "@/components/journal/VoicePanel";
 import { JournalMemorySettingsPanel } from "@/components/settings/JournalMemorySettingsPanel";
+import { MoonDayRemindersSettingsPanel } from "@/components/settings/MoonDayRemindersSettingsPanel";
 import { THEMES, type ThemeId } from "@/lib/constants";
 import { startTour } from "@/lib/tour/config";
 import { TRADITION_HOUSE_DEFAULTS, type HouseSystem, type Tradition } from "@/types/blueprint";
@@ -452,6 +453,8 @@ export default function SettingsPage() {
       </section>
 
       <VoicePanel />
+
+      <MoonDayRemindersSettingsPanel />
 
       <JournalMemorySettingsPanel />
 

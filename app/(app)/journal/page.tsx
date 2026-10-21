@@ -65,6 +65,7 @@ export default async function JournalPage({
   }
 
   const initialPrompt = value('prompt') ?? ''
+  const initialRitual = value('ritual') === '1' || value('ritual') === 'true'
   const initialArea = value('area') ?? ''
   const initialTheme = value('theme') ?? ''
   const initialWeek = value('week') ?? ''
@@ -82,6 +83,7 @@ export default async function JournalPage({
           : null
       }
       initialPrompt={initialPrompt}
+      initialRitual={initialRitual}
       initialArea={initialArea}
       initialTheme={initialTheme}
       initialWeek={initialWeek}
