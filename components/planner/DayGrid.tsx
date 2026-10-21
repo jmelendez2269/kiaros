@@ -158,9 +158,12 @@ export function DayGrid({
   useLayoutEffect(() => {
     if (scrollMode !== 'calendar') return
     let cancelled = false
-    const targetMinute = isToday
-      ? Math.max(0, nowMinutes() - 60)
-      : firstPlacedMinute ?? DEFAULT_ANCHOR_MINUTE
+    const targetMinute =
+      items.length === 0
+        ? 0
+        : isToday
+          ? Math.max(0, nowMinutes() - 60)
+          : firstPlacedMinute ?? DEFAULT_ANCHOR_MINUTE
     const run = () => {
       if (cancelled) return
       scrollGridToMinute(targetMinute)
@@ -172,7 +175,7 @@ export function DayGrid({
       cancelled = true
       cancelAnimationFrame(raf)
     }
-  }, [date, isToday, scrollMode, firstPlacedMinute])
+  }, [date, isToday, scrollMode, firstPlacedMinute, items.length])
 
   const containerHeight = TOTAL_MINUTES * PX_PER_MINUTE
   const hourMarks = useMemo(() => Array.from({ length: 24 }, (_, i) => i * 60), [])

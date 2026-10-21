@@ -120,7 +120,11 @@ function splitSubHref(href: string): { pathname: string; hash: string } {
 
 function isSectionActive(key: NavKey, pathname: string, view: string | null = null): boolean {
   if (key === 'today') {
-    return pathname.startsWith('/today') || pathname.startsWith('/planner')
+    return (
+      pathname.startsWith('/today') ||
+      pathname.startsWith('/planner') ||
+      pathname.startsWith('/calendar')
+    )
   }
   if (key === 'week') {
     return pathname.startsWith('/year') && view === 'week'
@@ -131,7 +135,6 @@ function isSectionActive(key: NavKey, pathname: string, view: string | null = nu
   if (key === 'year') {
     return (
       pathname.startsWith('/reflections') ||
-      pathname.startsWith('/calendar') ||
       pathname.startsWith('/blueprint') ||
       (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
     )
@@ -362,7 +365,8 @@ function NavRow({
                 const subParts = splitSubHref(sub.href)
                 const pathMatches =
                   pathname === subParts.pathname ||
-                  pathname.startsWith(`${subParts.pathname}/`)
+                  pathname.startsWith(`${subParts.pathname}/`) ||
+                  (subParts.pathname === '/planner' && pathname.startsWith('/calendar'))
                 const subActive =
                   pathMatches && (!subParts.hash || currentHash === subParts.hash)
                 return (

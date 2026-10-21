@@ -161,6 +161,32 @@ assert.ok(sidebarSource.includes('BrandMark'))
 assert.ok(sidebarSource.includes("glyph: '✦'"), 'Stelloquy card star glyph must stay')
 console.log('✓ Almanac sidebar BrandMark\n')
 
+console.log('Sidebar nav: /calendar highlights Day planner, not Year')
+assert.ok(sidebarSource.includes("pathname.startsWith('/calendar')"))
+assert.ok(
+  sidebarSource.includes(
+    "subParts.pathname === '/planner' && pathname.startsWith('/calendar')"
+  ),
+  'Day planner sub-nav must be active on /calendar'
+)
+const yearActiveBlock = sidebarSource.slice(
+  sidebarSource.indexOf("if (key === 'year')"),
+  sidebarSource.indexOf("if (key === 'self')")
+)
+assert.ok(
+  !yearActiveBlock.includes("pathname.startsWith('/calendar')"),
+  'Year section must not treat /calendar as active'
+)
+console.log('✓ Calendar sidebar nav highlighting\n')
+
+console.log('Calendar Day empty grid stays scrolled to top')
+assert.ok(
+  dayGridSourceForEmpty.includes('items.length === 0') &&
+    dayGridSourceForEmpty.includes('? 0'),
+  'Empty calendar day must anchor scroll at minute 0, not now'
+)
+console.log('✓ Empty-day scroll guard\n')
+
 console.log('Mobile day spacing (md+ unchanged)')
 assert.ok(shellSource.includes('space-y-4') && shellSource.includes('md:space-y-6'))
 assert.ok(dayPlannerSource.includes('gap-4 md:gap-6'))
