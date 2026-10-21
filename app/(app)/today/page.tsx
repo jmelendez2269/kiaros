@@ -35,8 +35,22 @@ import { DeeperToday } from '@/components/today/DeeperToday'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import type { YearEphemeris } from '@/types/blueprint'
+import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
+import {
+  isMockTodayDateAllowed,
+  parseMockMoonNudgeParam,
+  parseMockTodayDateParam,
+  resolveTodayDateISO,
+  MOCK_MOON_NUDGE_QUERY_PARAM,
+  MOCK_TODAY_QUERY_PARAM,
+} from '@/lib/today/mock-today-date'
+import { getMoonDayPhaseForLocalDate } from '@/lib/today/moon-day-phase'
 
-export default async function TodayPage() {
+export default async function TodayPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>
+}) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
@@ -57,7 +71,34 @@ export default async function TodayPage() {
     : 0
   const deeperOpenByDefault = accountAgeDays >= 7
 
-  const context = getTodayContext()
+  const params = (await searchParams) ?? {}
+  const rawMock =
+    typeof params[MOCK_TODAY_QUERY_PARAM] === 'string'
+      ? params[MOCK_TODAY_QUERY_PARAM]
+      : Array.isArray(params[MOCK_TODAY_QUERY_PARAM])
+        ? params[MOCK_TODAY_QUERY_PARAM][0]
+        : undefined
+  const mockAllowed = isMockTodayDateAllowed()
+  const mockToday = mockAllowed ? parseMockTodayDateParam(rawMock) : null
+  const rawMockMoonNudge =
+    typeof params[MOCK_MOON_NUDGE_QUERY_PARAM] === 'string'
+      ? params[MOCK_MOON_NUDGE_QUERY_PARAM]
+      : Array.isArray(params[MOCK_MOON_NUDGE_QUERY_PARAM])
+        ? params[MOCK_MOON_NUDGE_QUERY_PARAM][0]
+        : undefined
+  const mockMoonNudgeDone =
+    mockAllowed && parseMockMoonNudgeParam(rawMockMoonNudge) === 'done'
+
+  const { data: locationProfile } = await admin
+    .from('user_profiles')
+    .select('birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz')
+    .eq('id', supabaseUserId)
+    .maybeSingle()
+
+  const { timeZone } = resolvePlannerLocation(locationProfile)
+  const todayDate = resolveTodayDateISO({ timeZone, mockToday })
+
+  const context = getTodayContext({ dateISO: todayDate, timeZone })
   const shape = getShapeOfToday({
     moonPhase: context.today.moonPhase,
     moonSign: context.today.moon.sign,
@@ -74,23 +115,30 @@ export default async function TodayPage() {
     humanDesignWeather,
     todayPlanItemsRes,
     todayCurriculumSessions,
+    ritualTodayRes,
   ] = await Promise.all([
-    getActiveTransits(context.today.date, supabaseUserId),
-    getJournalStreak(context.today.date, supabaseUserId),
-    getTodayIntention(context.today.date, supabaseUserId),
-    getTodayCurriculum(context.today.date, supabaseUserId),
-    getSkyNow(context.today.date, supabaseUserId),
-    getLifeArc(context.today.date, supabaseUserId),
-    getJupiterSeason(context.today.date, supabaseUserId),
-    getNowEnergyWindows(supabaseUserId, context.today.date),
+    getActiveTransits(todayDate, supabaseUserId),
+    getJournalStreak(todayDate, supabaseUserId),
+    getTodayIntention(todayDate, supabaseUserId),
+    getTodayCurriculum(todayDate, supabaseUserId),
+    getSkyNow(todayDate, supabaseUserId),
+    getLifeArc(todayDate, supabaseUserId),
+    getJupiterSeason(todayDate, supabaseUserId),
+    getNowEnergyWindows(supabaseUserId, todayDate),
     getHumanDesignWeather(supabaseUserId),
     admin
       .from('plan_items')
       .select('id, item_date, title, sort_order, completed_at, created_at, updated_at, user_id, start_minute, duration_minutes, area_goal_id, source')
       .eq('user_id', supabaseUserId)
-      .eq('item_date', context.today.date)
+      .eq('item_date', todayDate)
       .order('sort_order', { ascending: true }),
-    getDueCurriculumSessions(supabaseUserId, context.today.date),
+    getDueCurriculumSessions(supabaseUserId, todayDate),
+    admin
+      .from('journal_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', supabaseUserId)
+      .eq('entry_date', todayDate)
+      .eq('is_ritual', true),
   ])
   const todayPlanItems = todayPlanItemsRes.data ?? []
 
@@ -113,6 +161,15 @@ export default async function TodayPage() {
   ) ?? null
   const calendarDayEnabled = isCalendarDayEnabled()
 
+  const moonDayPhase = getMoonDayPhaseForLocalDate(todayDate, timeZone)
+  const moonDayNudge = moonDayPhase
+    ? {
+        phase: moonDayPhase,
+        localDate: todayDate,
+        ritualDone: (ritualTodayRes.count ?? 0) > 0 || mockMoonNudgeDone,
+      }
+    : null
+
   return (
     <div
       className="grid gap-5 p-4 sm:p-6 md:p-7"
@@ -128,6 +185,7 @@ export default async function TodayPage() {
         context={context}
         weekTheme={currentWeek?.theme ?? null}
         humanDesignWeather={humanDesignWeather}
+        moonDayNudge={moonDayNudge}
       />
 
       <Frame tone="umber" padding={18}>

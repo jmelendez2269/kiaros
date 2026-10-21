@@ -115,8 +115,9 @@ function addDays(iso: string, days: number): string {
 
 const SHORT_DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
 
-export function getTodayContext(): TodayContext {
-  const date = todayISO()
+export function getTodayContext(options?: { dateISO?: string; timeZone?: string }): TodayContext {
+  const timeZone = options?.timeZone ?? APP_TIME_ZONE
+  const date = options?.dateISO ?? todayISO(timeZone)
   const longitudes = getDailyLongitudesForDate(date)
   const todaySnap = snapshotFromLongitudes(date, longitudes)
   const sabian = getSabianForDegree(todaySnap.sun.longitude + 1)
@@ -141,7 +142,7 @@ export function getTodayContext(): TodayContext {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
-    timeZone: APP_TIME_ZONE,
+    timeZone,
   })
 
   return {

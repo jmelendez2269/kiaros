@@ -43,6 +43,7 @@ interface JournalComposerProps {
   > | null
   entryLoadError: string | null
   initialPrompt: string
+  initialRitual?: boolean
   initialArea: string
   initialTheme: string
   initialWeek: string
@@ -80,6 +81,7 @@ export function JournalComposer({
   initialEntry,
   entryLoadError,
   initialPrompt,
+  initialRitual = false,
   initialArea,
   initialTheme,
   initialWeek,
@@ -105,7 +107,9 @@ export function JournalComposer({
   const [body, setBody] = useState(
     initialEntry?.body ?? (initialPrompt ? `${initialPrompt}\n\n` : ''),
   )
-  const [isRitual, setIsRitual] = useState(initialEntry?.is_ritual ?? Boolean(initialPrompt))
+  const [isRitual, setIsRitual] = useState(
+    initialEntry?.is_ritual ?? (initialRitual || Boolean(initialPrompt)),
+  )
   const [legacyOracleMemory, setLegacyOracleMemory] = useState(
     initialEntry?.include_in_stelloquy ?? initialEntry?.oracle_memory ?? false,
   )

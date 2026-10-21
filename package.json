@@ -19,6 +19,7 @@
     "test:reflections:integration": "node scripts/run-reflections-integration.mjs",
     "test:reflections:ai": "node scripts/check-reflections-ai.mjs",
     "test:calendar-day": "npx tsx scripts/test-calendar-day-flag.mts",
+    "test:moon-day-nudge": "npx tsx scripts/test-moon-day-nudge.mts",
     "test:consent": "npx tsx scripts/test-journal-consent-v2.mts",
     "test:memory-defaults": "npx tsx scripts/test-journal-memory-defaults.mts && npx tsx scripts/check-journal-memory-migration.mts",
     "test:oracle-journal-recall": "npx tsx scripts/test-oracle-journal-recall.mts",
