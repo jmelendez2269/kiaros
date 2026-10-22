@@ -64,3 +64,8 @@ export function isCalendarDayEnabled(): boolean {
 export function isIaJournalEnabled(): boolean {
   return enabled(process.env.NEXT_PUBLIC_IA_JOURNAL);
 }
+
+/** Goals and study nav grouping (Life areas + Curriculum). Off by default. */
+export function isIaGoalsEnabled(): boolean {
+  return enabled(process.env.NEXT_PUBLIC_IA_GOALS);
+}

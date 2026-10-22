@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils'
 import { K } from './tokens'
 import { StarField } from './StarField'
 
-type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal' | 'stelloquy'
-type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal'>
+type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal' | 'goalsStudy' | 'stelloquy'
+type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal' | 'goalsStudy'>
 type SubNavItem = { label: string; href: string; hint: string }
 
 const NAV: ReadonlyArray<{
@@ -101,13 +101,39 @@ const NAV: ReadonlyArray<{
   },
 ]
 
-function navForAccess(hasOracleAccess: boolean, journalIaEnabled: boolean) {
-  return NAV.map((item) => {
+const GOALS_STUDY_NAV: (typeof NAV)[number] = {
+  key: 'goalsStudy',
+  label: 'Goals and study',
+  hint: 'life areas · study plans',
+  glyph: '◈',
+  tone: K.starlight,
+  href: '/areas',
+  collapsible: true,
+  subItems: [
+    { label: 'Life areas', href: '/areas', hint: 'goals mapped to your chart' },
+    { label: 'Curriculum', href: '/curriculum', hint: 'study plans · sessions' },
+  ],
+}
+
+function navForAccess(
+  hasOracleAccess: boolean,
+  journalIaEnabled: boolean,
+  goalsIaEnabled: boolean,
+) {
+  let items = NAV.map((item) => {
     if (journalIaEnabled && item.key === 'year' && item.subItems) {
       return {
         ...item,
         subItems: item.subItems.filter(
           (sub) => sub.href !== '/reflections' && sub.href !== '/year/unwrapped',
+        ),
+      }
+    }
+    if (goalsIaEnabled && item.key === 'self' && item.subItems) {
+      return {
+        ...item,
+        subItems: item.subItems.filter(
+          (sub) => sub.href !== '/areas' && sub.href !== '/curriculum',
         ),
       }
     }
@@ -126,6 +152,13 @@ function navForAccess(hasOracleAccess: boolean, journalIaEnabled: boolean) {
     }
     return item
   })
+
+  if (goalsIaEnabled) {
+    const stelloquyIndex = items.findIndex((item) => item.key === 'stelloquy')
+    items = [...items.slice(0, stelloquyIndex), GOALS_STUDY_NAV, ...items.slice(stelloquyIndex)]
+  }
+
+  return items
 }
 
 function splitSubHref(href: string): { pathname: string; hash: string } {
@@ -140,6 +173,7 @@ function isSectionActive(
   view: string | null = null,
   calendarDayEnabled = false,
   journalIaEnabled = false,
+  goalsIaEnabled = false,
 ): boolean {
   if (key === 'today') {
     if (calendarDayEnabled) {
@@ -188,12 +222,18 @@ function isSectionActive(
     )
   }
   if (key === 'self') {
+    if (goalsIaEnabled) {
+      return pathname.startsWith('/human-design') || pathname.startsWith('/self')
+    }
     return (
       pathname.startsWith('/human-design') ||
       pathname.startsWith('/areas') ||
       pathname.startsWith('/curriculum') ||
       pathname.startsWith('/self')
     )
+  }
+  if (key === 'goalsStudy') {
+    return pathname.startsWith('/areas') || pathname.startsWith('/curriculum')
   }
   if (key === 'stelloquy') {
     return pathname.startsWith('/oracle')
@@ -248,6 +288,7 @@ function NavRow({
   onNavigate,
   calendarDayEnabled,
   journalIaEnabled,
+  goalsIaEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
@@ -255,14 +296,16 @@ function NavRow({
   onNavigate?: () => void
   calendarDayEnabled: boolean
   journalIaEnabled: boolean
+  goalsIaEnabled: boolean
 }) {
   const navId = useId()
   const searchParams = useSearchParams()
   const view = searchParams.get('view')
   const [currentHash, setCurrentHash] = useState('')
   const [openSections, setOpenSections] = useState<Record<CollapsibleNavKey, boolean>>({
-    self: isSectionActive('self', pathname, null, calendarDayEnabled, journalIaEnabled),
-    journal: isSectionActive('journal', pathname, null, calendarDayEnabled, journalIaEnabled),
+    self: isSectionActive('self', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
+    journal: isSectionActive('journal', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
+    goalsStudy: isSectionActive('goalsStudy', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
   })
 
   useEffect(() => {
@@ -273,23 +316,26 @@ function NavRow({
   }, [pathname])
 
   useEffect(() => {
-    const activeKey = (['self', 'journal'] as const).find((key) =>
-      isSectionActive(key, pathname, null, calendarDayEnabled, journalIaEnabled),
+    const activeKey = (['self', 'journal', 'goalsStudy'] as const).find((key) =>
+      isSectionActive(key, pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
     )
     if (!activeKey) return
 
     setOpenSections((current) =>
       current[activeKey] ? current : { ...current, [activeKey]: true },
     )
-  }, [pathname, calendarDayEnabled, journalIaEnabled])
+  }, [pathname, calendarDayEnabled, journalIaEnabled, goalsIaEnabled])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {navItems.map((n) => {
-        const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled, journalIaEnabled)
+        const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled, journalIaEnabled, goalsIaEnabled)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =
-          n.collapsible && (n.key === 'self' || n.key === 'journal') ? n.key : null
+          n.collapsible &&
+          (n.key === 'self' || n.key === 'journal' || n.key === 'goalsStudy')
+            ? n.key
+            : null
         const isExpanded = collapsibleKey ? openSections[collapsibleKey] : isActive
         const renderSubItems =
           !collapsed && subItems.length > 0 && (collapsibleKey !== null || isExpanded)
@@ -483,6 +529,7 @@ function SidebarBody({
   onNavigate,
   calendarDayEnabled,
   journalIaEnabled,
+  goalsIaEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
@@ -491,6 +538,7 @@ function SidebarBody({
   onNavigate?: () => void
   calendarDayEnabled: boolean
   journalIaEnabled: boolean
+  goalsIaEnabled: boolean
 }) {
   return (
     <div
@@ -555,6 +603,7 @@ function SidebarBody({
             onNavigate={onNavigate}
             calendarDayEnabled={calendarDayEnabled}
             journalIaEnabled={journalIaEnabled}
+            goalsIaEnabled={goalsIaEnabled}
           />
         </div>
 
@@ -635,12 +684,14 @@ export function AlmanacSidebar({
   hasOracleAccess,
   calendarDayEnabled = false,
   journalIaEnabled = false,
+  goalsIaEnabled = false,
 }: {
   hasOracleAccess: boolean
   calendarDayEnabled?: boolean
   journalIaEnabled?: boolean
+  goalsIaEnabled?: boolean
 }) {
-  const navItems = navForAccess(hasOracleAccess, journalIaEnabled)
+  const navItems = navForAccess(hasOracleAccess, journalIaEnabled, goalsIaEnabled)
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -688,6 +739,7 @@ export function AlmanacSidebar({
           onToggleDesktop={() => setCollapsed((c) => !c)}
           calendarDayEnabled={calendarDayEnabled}
           journalIaEnabled={journalIaEnabled}
+          goalsIaEnabled={goalsIaEnabled}
         />
       </aside>
 
@@ -755,6 +807,7 @@ export function AlmanacSidebar({
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}
+              goalsIaEnabled={goalsIaEnabled}
             />
           </div>
         </div>
