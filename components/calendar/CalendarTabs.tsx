@@ -77,7 +77,7 @@ export function CalendarTabs() {
           })}
         </nav>
         {onCalendarDayRoute ? (
-          <div className={`${styles.dayWeekWrap} hidden md:flex`}>
+          <div className={styles.dayWeekDesktop}>
             <div className={styles.dayWeek} aria-label="Day or week view">
               <Link
                 href={dayWeekHref(pathname, new URLSearchParams(params.toString()), 'day')}
@@ -99,7 +99,7 @@ export function CalendarTabs() {
         ) : null}
       </div>
       {onCalendarDayRoute ? (
-        <div className={`${styles.dayWeekWrap} md:hidden`}>
+        <div className={styles.dayWeekMobile}>
           <div className={styles.dayWeek} aria-label="Day or week view">
             <Link
               href={dayWeekHref(pathname, new URLSearchParams(params.toString()), 'day')}

@@ -80,34 +80,36 @@ export function PlannerDayShell({
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-4 py-8 md:space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="shell-kicker mb-1">{kicker}</p>
-          <h1 className="font-serif text-3xl text-bone">{title}</h1>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="shell-kicker mb-1">{kicker}</p>
+            <h1 className="font-serif text-3xl text-bone">{title}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href={prevHref}
+              className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone"
+            >
+              ← Prev
+            </Link>
+            <Link
+              href={todayHref}
+              className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone"
+            >
+              Today
+            </Link>
+            <Link
+              href={nextHref}
+              className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone"
+            >
+              Next →
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href={prevHref}
-            className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone"
-          >
-            ← Prev
-          </Link>
-          <Link
-            href={todayHref}
-            className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone"
-          >
-            Today
-          </Link>
-          <Link
-            href={nextHref}
-            className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone"
-          >
-            Next →
-          </Link>
-        </div>
-      </div>
 
-      {belowTitle}
+        {belowTitle ? <div className="w-full min-w-0">{belowTitle}</div> : null}
+      </div>
 
       {showViewToggles ? (
         <div className="flex gap-2 text-xs uppercase tracking-wider">

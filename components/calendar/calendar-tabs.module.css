@@ -7,6 +7,7 @@
 
 .topLine {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
   gap: 8px;
@@ -15,6 +16,7 @@
 
 @media (min-width: 768px) {
   .topLine {
+    flex-direction: row;
     align-items: center;
     justify-content: space-between;
   }
@@ -24,7 +26,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
-  flex: 1;
+  width: 100%;
   min-width: 0;
   padding: 4px;
   border: 1px solid rgba(227, 226, 237, 0.1);
@@ -100,17 +102,31 @@
   outline-offset: 2px;
 }
 
-.dayWeekWrap {
+.dayWeekDesktop {
+  display: none;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .dayWeekDesktop {
+    display: flex;
+  }
+}
+
+.dayWeekMobile {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   min-height: 36px;
+  width: 100%;
 }
 
 @media (min-width: 768px) {
-  .dayWeekWrap {
-    flex-shrink: 0;
-    min-height: 40px;
+  .dayWeekMobile {
+    display: none;
   }
 }
 
