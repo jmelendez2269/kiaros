@@ -3,6 +3,7 @@ const { featureFlagEnabled } = require('./lib/calendar/feature-flag-enabled.cjs'
 
 const calendarDayOn = featureFlagEnabled(process.env.KIAROS_CALENDAR_DAY)
 const iaJournalOn = featureFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)
+const iaOverlaysOn = featureFlagEnabled(process.env.NEXT_PUBLIC_IA_OVERLAYS)
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -35,11 +36,13 @@ const nextConfig = {
             },
           ]
         : []),
-      // /oracle's legacy full-page chat is superseded by the Stelloquy
-      // drawer, which StelloquyProvider mounts globally across every
-      // (app) route — there's no separate destination page for it, so
-      // old links land on /today where the drawer is already available.
-      { source: '/oracle', destination: '/today', permanent: true },
+      ...(!iaOverlaysOn
+        ? [
+            // /oracle's legacy full-page chat is superseded by the Stelloquy
+            // drawer when IA overlays are off — old links land on /today.
+            { source: '/oracle', destination: '/today', permanent: true },
+          ]
+        : []),
       // Curriculum setup moved from onboarding flow to /curriculum/setup.
       { source: '/onboarding/curriculum', destination: '/curriculum/setup', permanent: true },
       ...(iaJournalOn

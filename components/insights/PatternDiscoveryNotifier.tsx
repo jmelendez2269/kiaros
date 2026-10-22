@@ -41,9 +41,11 @@ function storeSeenPatternIds(storageKey: string, seenIds: Set<string>) {
 export function PatternDiscoveryNotifier({
   scope,
   initialPatternIds,
+  placement = 'floating',
 }: {
   scope: string
   initialPatternIds: string[]
+  placement?: 'floating' | 'notice'
 }) {
   const storageKey = `${STORAGE_PREFIX}:${scope}`
   const seenIdsRef = useRef(new Set<string>())
@@ -162,6 +164,7 @@ export function PatternDiscoveryNotifier({
       pattern={current}
       onOpen={showNext}
       onDismissAll={dismissAll}
+      placement={placement}
     />
   )
 }
@@ -170,20 +173,27 @@ function PatternDiscoveryToast({
   pattern,
   onOpen,
   onDismissAll,
+  placement,
 }: {
   pattern: PatternDiscovery
   onOpen: () => void
   onDismissAll: () => void
+  placement: 'floating' | 'notice'
 }) {
   const patternLabel = formatPatternLabel(pattern.pattern_type, pattern.pattern_key)
   const patternSummary = pattern.ai_summary ?? pattern.summary
+
+  const positionClasses =
+    placement === 'notice'
+      ? 'relative w-full animate-in fade-in duration-300 motion-reduce:animate-none'
+      : 'fixed inset-x-4 bottom-20 z-40 mx-auto max-w-md animate-in fade-in slide-in-from-bottom-3 duration-300 motion-reduce:animate-none sm:inset-x-auto sm:right-5 sm:w-[390px]'
 
   return (
     <aside
       role="status"
       aria-live="polite"
       aria-atomic="true"
-      className="fixed inset-x-4 bottom-20 z-40 mx-auto max-w-md animate-in fade-in slide-in-from-bottom-3 duration-300 motion-reduce:animate-none sm:inset-x-auto sm:right-5 sm:w-[390px]"
+      className={positionClasses}
     >
       <div className="relative overflow-hidden rounded-[1.4rem] border border-leather-300/40 bg-stone-900/95 px-5 py-5 shadow-[0_22px_70px_rgba(0,0,0,0.5),0_0_35px_hsl(var(--leather-400)/0.14)] backdrop-blur-xl">
         <div

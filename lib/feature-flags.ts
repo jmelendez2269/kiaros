@@ -1,6 +1,7 @@
 import "server-only";
 
 import { featureFlagEnabled } from "@/lib/calendar/calendar-day-routes";
+import { isIaOverlaysEnabled as iaOverlaysEnabled } from "@/lib/ia-overlays-flag";
 
 function enabled(value: string | undefined): boolean {
   return featureFlagEnabled(value);
@@ -68,4 +69,9 @@ export function isIaJournalEnabled(): boolean {
 /** Goals and study nav grouping (Life areas + Curriculum). Off by default. */
 export function isIaGoalsEnabled(): boolean {
   return enabled(process.env.NEXT_PUBLIC_IA_GOALS);
+}
+
+/** Stelloquy tab, notice area, feedback in help menu. Off by default. */
+export function isIaOverlaysEnabled(): boolean {
+  return iaOverlaysEnabled();
 }
