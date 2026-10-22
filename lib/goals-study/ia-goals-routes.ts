@@ -1,5 +1,6 @@
 /**
  * Pure URL helpers for NEXT_PUBLIC_IA_GOALS (unit-tested; no server-only imports).
+ * Sidebar-only IA: routes stay on /areas and /curriculum when the flag is on.
  */
 
 import { featureFlagEnabled } from '@/lib/calendar/calendar-day-routes'
