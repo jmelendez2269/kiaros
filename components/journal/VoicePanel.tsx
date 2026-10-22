@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { iaJournalFlagEnabled, patternsPageHref } from '@/lib/journal/ia-journal-routes'
 import { PenLine } from 'lucide-react'
 import { BRAND } from '@/lib/brand'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
@@ -282,7 +283,10 @@ export function VoicePanel() {
       {queued ? (
         <p className="mt-3 rounded-[0.75rem] border border-moss-500/35 bg-moss-500/10 px-4 py-2 text-sm text-moss-200">
           Saved. Your pattern cards are regenerating —{' '}
-          <Link href="/insights/map" className="underline decoration-moss-400/50 underline-offset-4">
+          <Link
+            href={patternsPageHref(iaJournalFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL))}
+            className="underline decoration-moss-400/50 underline-offset-4"
+          >
             watch them land on Patterns
           </Link>
           .

@@ -3,6 +3,8 @@ import { ArrowRight, CalendarDays, CalendarRange, LayoutGrid, ListChecks, MoonSt
 import { AccentCopy } from '@/components/blueprint/AccentCopy'
 import type { BlueprintOutput } from '@/types/blueprint'
 import { cn } from '@/lib/utils'
+import { isIaJournalEnabled } from '@/lib/feature-flags'
+import { journalTabLookBackHref } from '@/lib/journal/ia-journal-routes'
 
 interface CosmicPlanViewProps {
   blueprint: BlueprintOutput
@@ -10,6 +12,7 @@ interface CosmicPlanViewProps {
 }
 
 export function CosmicPlanView({ blueprint, planYear }: CosmicPlanViewProps) {
+  const journalIa = isIaJournalEnabled()
   const currentMonth = new Date().getMonth() + 1
   const currentQuarter = Math.ceil(currentMonth / 3)
   const currentQuarterData = blueprint.quarters.find((q) => q.quarter === currentQuarter)
@@ -85,6 +88,13 @@ export function CosmicPlanView({ blueprint, planYear }: CosmicPlanViewProps) {
             hint={`Q${currentQuarter} quarterly review`}
           />
         </div>
+        {journalIa ? (
+          <p className="text-sm text-bone-muted">
+            <Link href={journalTabLookBackHref('year')} className="underline underline-offset-4">
+              See this year in Look back
+            </Link>
+          </p>
+        ) : null}
       </div>
     </div>
   )

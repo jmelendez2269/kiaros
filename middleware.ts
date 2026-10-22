@@ -1,11 +1,33 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
+import { featureFlagEnabled } from "@/lib/calendar/calendar-day-routes";
 import { PUBLIC_ROUTE_PATTERNS } from "@/lib/marketing/public-routes";
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 
+function iaJournalInsightsMapRedirect(req: NextRequest): NextResponse | null {
+  if (!featureFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)) return null;
+  if (req.nextUrl.pathname !== "/insights/map") return null;
+
+  const tab = req.nextUrl.searchParams.get("tab");
+  if (tab === "journal") {
+    return NextResponse.redirect(new URL("/journal/entries", req.url), 307);
+  }
+  if (tab === "map") {
+    return NextResponse.redirect(new URL("/journal/patterns?view=map", req.url), 307);
+  }
+  if (tab === "captures") {
+    return NextResponse.redirect(new URL("/journal/patterns?view=captures", req.url), 307);
+  }
+  return NextResponse.redirect(new URL("/journal/patterns", req.url), 307);
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  const iaJournalRedirect = iaJournalInsightsMapRedirect(req);
+  if (iaJournalRedirect) return iaJournalRedirect;
+
   if (isPublicRoute(req)) return;
 
   const { userId, redirectToSignIn } = await auth();

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { JournalConsentControls } from '@/components/journal/JournalConsentControls'
 import { journalConsentSaveMessage, type JournalConsentState } from '@/lib/journal/consent'
 
@@ -201,11 +201,13 @@ export function JournalHistoryList({
   consentV2Enabled,
   hasOracleAccess,
   simplifiedMemoryUi = false,
+  emptyState,
 }: {
   entries: RecentJournalEntry[]
   consentV2Enabled: boolean
   hasOracleAccess: boolean
   simplifiedMemoryUi?: boolean
+  emptyState?: ReactNode
 }) {
   return (
     <div className="channel-mine mt-5 space-y-3">
@@ -220,9 +222,11 @@ export function JournalHistoryList({
           />
         ))
       ) : (
-        <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm leading-7 text-bone-muted">
-          No journal entries yet. The timing-window prompts from your area pages can open straight into the composer.
-        </div>
+        emptyState ?? (
+          <div className="rounded-[1rem] border border-border/70 bg-stone-950/60 px-4 py-4 text-sm leading-7 text-bone-muted">
+            No journal entries yet. The timing-window prompts from your area pages can open straight into the composer.
+          </div>
+        )
       )}
     </div>
   )

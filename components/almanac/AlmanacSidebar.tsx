@@ -101,14 +101,30 @@ const NAV: ReadonlyArray<{
   },
 ]
 
-function navForOracleAccess(hasOracleAccess: boolean) {
-  if (hasOracleAccess) return NAV
+function navForAccess(hasOracleAccess: boolean, journalIaEnabled: boolean) {
   return NAV.map((item) => {
-    if (item.key !== 'journal' || !item.subItems) return item
-    return {
-      ...item,
-      subItems: item.subItems.filter((sub) => sub.href !== '/insights/map'),
+    if (journalIaEnabled && item.key === 'year' && item.subItems) {
+      return {
+        ...item,
+        subItems: item.subItems.filter(
+          (sub) => sub.href !== '/reflections' && sub.href !== '/year/unwrapped',
+        ),
+      }
     }
+    if (journalIaEnabled && item.key === 'journal') {
+      return {
+        ...item,
+        collapsible: false,
+        subItems: [],
+      }
+    }
+    if (!journalIaEnabled && item.key === 'journal' && item.subItems && !hasOracleAccess) {
+      return {
+        ...item,
+        subItems: item.subItems.filter((sub) => sub.href !== '/insights/map'),
+      }
+    }
+    return item
   })
 }
 
@@ -122,7 +138,8 @@ function isSectionActive(
   key: NavKey,
   pathname: string,
   view: string | null = null,
-  calendarDayEnabled = false
+  calendarDayEnabled = false,
+  journalIaEnabled = false,
 ): boolean {
   if (key === 'today') {
     if (calendarDayEnabled) {
@@ -151,6 +168,12 @@ function isSectionActive(
     return pathname.startsWith('/year') && view === 'month'
   }
   if (key === 'year') {
+    if (journalIaEnabled) {
+      return (
+        pathname.startsWith('/blueprint') ||
+        (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
+      )
+    }
     if (calendarDayEnabled) {
       return (
         pathname.startsWith('/reflections') ||
@@ -175,10 +198,10 @@ function isSectionActive(
   if (key === 'stelloquy') {
     return pathname.startsWith('/oracle')
   }
-  return (
-    pathname.startsWith('/journal') ||
-    pathname.startsWith('/insights')
-  )
+  if (journalIaEnabled) {
+    return pathname.startsWith('/journal')
+  }
+  return pathname.startsWith('/journal') || pathname.startsWith('/insights')
 }
 
 const SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
@@ -224,20 +247,22 @@ function NavRow({
   collapsed,
   onNavigate,
   calendarDayEnabled,
+  journalIaEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
   collapsed: boolean
   onNavigate?: () => void
   calendarDayEnabled: boolean
+  journalIaEnabled: boolean
 }) {
   const navId = useId()
   const searchParams = useSearchParams()
   const view = searchParams.get('view')
   const [currentHash, setCurrentHash] = useState('')
   const [openSections, setOpenSections] = useState<Record<CollapsibleNavKey, boolean>>({
-    self: isSectionActive('self', pathname),
-    journal: isSectionActive('journal', pathname),
+    self: isSectionActive('self', pathname, null, calendarDayEnabled, journalIaEnabled),
+    journal: isSectionActive('journal', pathname, null, calendarDayEnabled, journalIaEnabled),
   })
 
   useEffect(() => {
@@ -249,19 +274,19 @@ function NavRow({
 
   useEffect(() => {
     const activeKey = (['self', 'journal'] as const).find((key) =>
-      isSectionActive(key, pathname),
+      isSectionActive(key, pathname, null, calendarDayEnabled, journalIaEnabled),
     )
     if (!activeKey) return
 
     setOpenSections((current) =>
       current[activeKey] ? current : { ...current, [activeKey]: true },
     )
-  }, [pathname])
+  }, [pathname, calendarDayEnabled, journalIaEnabled])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {navItems.map((n) => {
-        const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled)
+        const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled, journalIaEnabled)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =
           n.collapsible && (n.key === 'self' || n.key === 'journal') ? n.key : null
@@ -457,6 +482,7 @@ function SidebarBody({
   onToggleDesktop,
   onNavigate,
   calendarDayEnabled,
+  journalIaEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
@@ -464,6 +490,7 @@ function SidebarBody({
   onToggleDesktop?: () => void
   onNavigate?: () => void
   calendarDayEnabled: boolean
+  journalIaEnabled: boolean
 }) {
   return (
     <div
@@ -527,6 +554,7 @@ function SidebarBody({
             collapsed={collapsed}
             onNavigate={onNavigate}
             calendarDayEnabled={calendarDayEnabled}
+            journalIaEnabled={journalIaEnabled}
           />
         </div>
 
@@ -606,11 +634,13 @@ function SidebarBody({
 export function AlmanacSidebar({
   hasOracleAccess,
   calendarDayEnabled = false,
+  journalIaEnabled = false,
 }: {
   hasOracleAccess: boolean
   calendarDayEnabled?: boolean
+  journalIaEnabled?: boolean
 }) {
-  const navItems = navForOracleAccess(hasOracleAccess)
+  const navItems = navForAccess(hasOracleAccess, journalIaEnabled)
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -657,6 +687,7 @@ export function AlmanacSidebar({
           collapsed={collapsed}
           onToggleDesktop={() => setCollapsed((c) => !c)}
           calendarDayEnabled={calendarDayEnabled}
+          journalIaEnabled={journalIaEnabled}
         />
       </aside>
 
@@ -723,6 +754,7 @@ export function AlmanacSidebar({
               collapsed={false}
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
+              journalIaEnabled={journalIaEnabled}
             />
           </div>
         </div>

@@ -27,6 +27,9 @@ import {
   MOON_DAY_REMINDERS_ENABLED_KEY,
 } from '../lib/today/moon-day-nudge-storage.ts'
 import { getMoonPhasesForYear } from '../lib/ephemeris/astronomia-adapter.ts'
+import { resolveMoonRitualPromptForJournal } from '../lib/journal/resolve-moon-ritual-prompt.ts'
+import { MOON_DAY_NUDGE_COPY } from '../lib/today/moon-day-nudge-copy.ts'
+import { moonDayRitualEntryHref } from '../lib/today/moon-day-ritual-entry-href.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -170,5 +173,24 @@ try {
 assert.equal(MOON_DAY_NUDGE_DISMISSALS_KEY, 'kiaros-moon-day-nudge-dismissals')
 assert.equal(MOON_DAY_REMINDERS_ENABLED_KEY, 'kiaros-moon-day-reminders-enabled')
 console.log('✓ localStorage keys, no schema\n')
+
+console.log('/journal?ritual=1 without ?prompt= infers moon headline on phase days')
+const newMoonLocal = localDateISO(phaseEventInstant(majors.find((e) => e.phase === 'new')!), tz)
+const fullMoonLocal = localDateISO(phaseEventInstant(majors.find((e) => e.phase === 'full')!), tz)
+assert.equal(
+  resolveMoonRitualPromptForJournal(true, tz, newMoonLocal),
+  MOON_DAY_NUDGE_COPY.new.headline,
+)
+assert.equal(
+  resolveMoonRitualPromptForJournal(true, tz, fullMoonLocal),
+  MOON_DAY_NUDGE_COPY.full.headline,
+)
+assert.equal(resolveMoonRitualPromptForJournal(true, tz, '2026-03-15'), '')
+assert.equal(resolveMoonRitualPromptForJournal(false, tz, newMoonLocal), '')
+assert.ok(moonDayRitualEntryHref('new').includes('prompt=New+moon+today'))
+const journalPage = readFileSync(join(root, 'app/(app)/journal/page.tsx'), 'utf8')
+assert.ok(journalPage.includes('resolveMoonRitualPromptForJournal'))
+assert.ok(journalPage.includes('explicitPromptInUrl'))
+console.log('✓ Ritual-only journal prompt resolution\n')
 
 console.log('All moon-day nudge tests passed.')
