@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { DayPlanner } from '@/components/planner/DayPlanner'
 import type { DayPlan } from '@/lib/planner/get-day-plan'
@@ -39,6 +40,8 @@ interface PlannerDayShellProps {
   activeView?: 'day' | 'week' | 'month'
   /** Calendar Day grid scroll anchoring (not used on /planner). */
   dayGridScrollMode?: 'calendar'
+  /** Rendered directly under the page title (e.g. calendar tab row). */
+  belowTitle?: ReactNode
 }
 
 function plannerWeekHref(basePath: PlannerShellBasePath, date: string): string {
@@ -60,6 +63,7 @@ export function PlannerDayShell({
   showViewToggles = false,
   activeView = 'day',
   dayGridScrollMode,
+  belowTitle,
 }: PlannerDayShellProps) {
   const safeDate = DATE_RE.test(date) ? date : today
   const prevHref =
@@ -102,6 +106,8 @@ export function PlannerDayShell({
           </Link>
         </div>
       </div>
+
+      {belowTitle}
 
       {showViewToggles ? (
         <div className="flex gap-2 text-xs uppercase tracking-wider">

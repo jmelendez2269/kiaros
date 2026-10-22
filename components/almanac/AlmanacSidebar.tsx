@@ -118,8 +118,20 @@ function splitSubHref(href: string): { pathname: string; hash: string } {
   return { pathname, hash: hash ? `#${hash}` : '' }
 }
 
-function isSectionActive(key: NavKey, pathname: string, view: string | null = null): boolean {
+function isSectionActive(
+  key: NavKey,
+  pathname: string,
+  view: string | null = null,
+  calendarDayEnabled = false
+): boolean {
   if (key === 'today') {
+    if (calendarDayEnabled) {
+      return (
+        pathname.startsWith('/today') ||
+        pathname.startsWith('/planner') ||
+        (pathname.startsWith('/calendar') && !pathname.startsWith('/calendar/month'))
+      )
+    }
     return (
       pathname.startsWith('/today') ||
       pathname.startsWith('/planner') ||
@@ -127,12 +139,25 @@ function isSectionActive(key: NavKey, pathname: string, view: string | null = nu
     )
   }
   if (key === 'week') {
+    if (calendarDayEnabled) {
+      return false
+    }
     return pathname.startsWith('/year') && view === 'week'
   }
   if (key === 'month') {
+    if (calendarDayEnabled) {
+      return pathname.startsWith('/calendar/month')
+    }
     return pathname.startsWith('/year') && view === 'month'
   }
   if (key === 'year') {
+    if (calendarDayEnabled) {
+      return (
+        pathname.startsWith('/reflections') ||
+        pathname.startsWith('/blueprint') ||
+        (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
+      )
+    }
     return (
       pathname.startsWith('/reflections') ||
       pathname.startsWith('/blueprint') ||
@@ -198,11 +223,13 @@ function NavRow({
   pathname,
   collapsed,
   onNavigate,
+  calendarDayEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
   collapsed: boolean
   onNavigate?: () => void
+  calendarDayEnabled: boolean
 }) {
   const navId = useId()
   const searchParams = useSearchParams()
@@ -234,7 +261,7 @@ function NavRow({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {navItems.map((n) => {
-        const isActive = isSectionActive(n.key, pathname, view)
+        const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =
           n.collapsible && (n.key === 'self' || n.key === 'journal') ? n.key : null
@@ -366,7 +393,9 @@ function NavRow({
                 const pathMatches =
                   pathname === subParts.pathname ||
                   pathname.startsWith(`${subParts.pathname}/`) ||
-                  (subParts.pathname === '/planner' && pathname.startsWith('/calendar'))
+                  (subParts.pathname === '/planner' &&
+                    pathname.startsWith('/calendar') &&
+                    (!calendarDayEnabled || !pathname.startsWith('/calendar/month')))
                 const subActive =
                   pathMatches && (!subParts.hash || currentHash === subParts.hash)
                 return (
@@ -427,12 +456,14 @@ function SidebarBody({
   collapsed,
   onToggleDesktop,
   onNavigate,
+  calendarDayEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
   collapsed: boolean
   onToggleDesktop?: () => void
   onNavigate?: () => void
+  calendarDayEnabled: boolean
 }) {
   return (
     <div
@@ -495,6 +526,7 @@ function SidebarBody({
             pathname={pathname}
             collapsed={collapsed}
             onNavigate={onNavigate}
+            calendarDayEnabled={calendarDayEnabled}
           />
         </div>
 
@@ -571,7 +603,13 @@ function SidebarBody({
   )
 }
 
-export function AlmanacSidebar({ hasOracleAccess }: { hasOracleAccess: boolean }) {
+export function AlmanacSidebar({
+  hasOracleAccess,
+  calendarDayEnabled = false,
+}: {
+  hasOracleAccess: boolean
+  calendarDayEnabled?: boolean
+}) {
   const navItems = navForOracleAccess(hasOracleAccess)
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -618,6 +656,7 @@ export function AlmanacSidebar({ hasOracleAccess }: { hasOracleAccess: boolean }
           pathname={pathname}
           collapsed={collapsed}
           onToggleDesktop={() => setCollapsed((c) => !c)}
+          calendarDayEnabled={calendarDayEnabled}
         />
       </aside>
 
@@ -683,6 +722,7 @@ export function AlmanacSidebar({ hasOracleAccess }: { hasOracleAccess: boolean }
               pathname={pathname}
               collapsed={false}
               onNavigate={() => setMobileOpen(false)}
+              calendarDayEnabled={calendarDayEnabled}
             />
           </div>
         </div>

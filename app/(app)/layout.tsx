@@ -16,7 +16,11 @@ import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { getAppProfile } from '@/lib/app/get-app-profile'
 import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { ESTABLISHED_PATTERN_MIN_SAMPLE } from '@/lib/journal/pattern-discoveries'
-import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
+import {
+  isCalendarDayEnabled,
+  isJournalConsentV2Enabled,
+  isMemoryDefaultsEnabled,
+} from '@/lib/feature-flags'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
@@ -144,7 +148,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     >
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
-          <AlmanacSidebar hasOracleAccess={isAppAdmin || access.hasOracleAccess} />
+          <AlmanacSidebar
+            hasOracleAccess={isAppAdmin || access.hasOracleAccess}
+            calendarDayEnabled={isCalendarDayEnabled()}
+          />
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
             <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
               <div className="mx-auto w-full max-w-[1480px]">
