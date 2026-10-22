@@ -56,3 +56,49 @@ export function weekArcHref(startDate: string, calendarDayEnabled: boolean): str
   }
   return `/year?view=week&date=${startDate}`
 }
+
+export type CalendarTabKey = 'day' | 'month' | 'year' | 'blueprint'
+
+export function calendarTabDayHref(): string {
+  return '/calendar'
+}
+
+export function calendarTabMonthHref(month?: string): string {
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    return `/calendar/month?month=${month}`
+  }
+  return '/calendar/month'
+}
+
+export function calendarTabYearHref(): string {
+  return '/year'
+}
+
+export function calendarTabBlueprintHref(): string {
+  return '/blueprint'
+}
+
+/** Which top tab is active for the calendar tab row (flag-on routes). */
+export function resolveCalendarTabKey(
+  pathname: string,
+  view: string | null | undefined
+): CalendarTabKey {
+  if (pathname.startsWith('/blueprint')) return 'blueprint'
+  if (pathname.startsWith('/calendar/month')) return 'month'
+  if (pathname.startsWith('/calendar')) return 'day'
+  if (pathname.startsWith('/year')) {
+    if (view === 'month') return 'month'
+    return 'year'
+  }
+  return 'year'
+}
+
+export function monthChartNavHref(
+  month: string,
+  calendarDayEnabled: boolean
+): string {
+  if (calendarDayEnabled) {
+    return `/calendar/month?month=${month}`
+  }
+  return `/year?view=month&month=${month}`
+}

@@ -15,9 +15,10 @@ const VIEWS: { key: View; label: string }[] = [
 
 interface Props {
   current: View
+  calendarDayEnabled?: boolean
 }
 
-export function YearViewSwitcher({ current }: Props) {
+export function YearViewSwitcher({ current, calendarDayEnabled = false }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
@@ -75,7 +76,10 @@ export function YearViewSwitcher({ current }: Props) {
         padding: 4,
       }}
     >
-      {VIEWS.map((v) => {
+      {VIEWS.filter((v) => {
+        if (!calendarDayEnabled) return true
+        return v.key !== 'month' && v.key !== 'week'
+      }).map((v) => {
         const active = v.key === current
         return (
           <button

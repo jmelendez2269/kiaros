@@ -9,6 +9,7 @@ import { BlueprintListMode } from './BlueprintListMode'
 import type { BlueprintOutput, PeriodRange } from '@/types/blueprint'
 import type { BlueprintYearCapability } from '@/lib/commerce/capabilities'
 import { cn } from '@/lib/utils'
+import { CalendarTabs } from '@/components/calendar/CalendarTabs'
 
 interface BlueprintViewProps {
   blueprint: BlueprintOutput
@@ -20,6 +21,7 @@ interface BlueprintViewProps {
   accessState?: 'active' | 'read_only' | 'expired' | 'revoked' | null
   /** ACCESS-02 server-enforced scope. Null/'full' renders unchanged. */
   capability?: BlueprintYearCapability | null
+  calendarDayEnabled?: boolean
 }
 
 type Mode = 'layered' | 'list'
@@ -48,6 +50,7 @@ export function BlueprintView({
   fullAccessThrough = null,
   accessState = null,
   capability = null,
+  calendarDayEnabled = false,
 }: BlueprintViewProps) {
   const currentMonth = new Date().getMonth() + 1
   const currentQuarter = Math.ceil(currentMonth / 3)
@@ -72,6 +75,11 @@ export function BlueprintView({
           <h1 className="text-[1.85rem] font-semibold leading-tight text-bone md:text-[2.1rem]">
             {blueprint.yearTheme || 'Your year, laid out'}
           </h1>
+          {calendarDayEnabled ? (
+            <div className="mt-4">
+              <CalendarTabs />
+            </div>
+          ) : null}
           <p className="mt-1.5 text-sm text-bone-muted">
             Everything for the year — quarters, months, and weeks — on one page.
           </p>

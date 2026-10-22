@@ -16,6 +16,12 @@ import {
   plannerDayViewTodayHref,
   shouldRedirectPlannerToCalendar,
   weekArcHref,
+  calendarTabDayHref,
+  calendarTabMonthHref,
+  calendarTabYearHref,
+  calendarTabBlueprintHref,
+  resolveCalendarTabKey,
+  monthChartNavHref,
 } from '../lib/calendar/calendar-day-routes.ts'
 import {
   CALENDAR_DAY_EMPTY_CTA,
@@ -53,8 +59,31 @@ assert.ok(nextConfigSource.includes("destination: '/year'"))
 assert.ok(nextConfigSource.includes('permanent: true'))
 assert.ok(nextConfigSource.includes('!calendarDayOn'))
 const calendarPage = readFileSync(join(root, 'app/(app)/calendar/page.tsx'), 'utf8')
-assert.ok(!calendarPage.includes("redirect('/year')"), 'calendar page must not redirect to /year when flag off')
+assert.ok(
+  calendarPage.includes('isCalendarDayEnabled()') && calendarPage.includes("redirect('/year')"),
+  'calendar page must guard with isCalendarDayEnabled and redirect to /year when flag off'
+)
+const calendarMonthPage = readFileSync(join(root, 'app/(app)/calendar/month/page.tsx'), 'utf8')
+assert.ok(calendarMonthPage.includes('isCalendarDayEnabled()'))
+assert.ok(calendarMonthPage.includes('/year?view=month'))
 console.log('✓ Static calendar redirect wiring\n')
+
+console.log('Calendar tab row hrefs (flag on)')
+assert.equal(calendarTabDayHref(), '/calendar')
+assert.equal(calendarTabMonthHref(), '/calendar/month')
+assert.equal(calendarTabMonthHref('2026-06'), '/calendar/month?month=2026-06')
+assert.equal(calendarTabYearHref(), '/year')
+assert.equal(calendarTabBlueprintHref(), '/blueprint')
+assert.equal(resolveCalendarTabKey('/calendar', 'week'), 'day')
+assert.equal(resolveCalendarTabKey('/calendar/month', null), 'month')
+assert.equal(resolveCalendarTabKey('/year', 'month'), 'month')
+assert.equal(resolveCalendarTabKey('/blueprint', null), 'blueprint')
+assert.equal(monthChartNavHref('2026-07', true), '/calendar/month?month=2026-07')
+assert.equal(monthChartNavHref('2026-07', false), '/year?view=month&month=2026-07')
+const tabsSource = readFileSync(join(root, 'components/calendar/CalendarTabs.tsx'), 'utf8')
+assert.ok(tabsSource.includes('aria-current'))
+assert.ok(!tabsSource.includes('role="tablist"'))
+console.log('✓ Calendar tab hrefs and CalendarTabs wiring\n')
 
 console.log('Planner day-view nav hrefs (flag off / basePath planner)')
 assert.equal(plannerDayViewTodayHref(), '/planner?view=day')
@@ -161,21 +190,22 @@ assert.ok(sidebarSource.includes('BrandMark'))
 assert.ok(sidebarSource.includes("glyph: '✦'"), 'Stelloquy card star glyph must stay')
 console.log('✓ Almanac sidebar BrandMark\n')
 
-console.log('Sidebar nav: /calendar highlights Day planner, not Year')
-assert.ok(sidebarSource.includes("pathname.startsWith('/calendar')"))
+console.log('Sidebar nav: calendar flag on/off highlighting')
+assert.ok(sidebarSource.includes('calendarDayEnabled'))
+assert.ok(sidebarSource.includes("pathname.startsWith('/calendar/month')"))
 assert.ok(
-  sidebarSource.includes(
-    "subParts.pathname === '/planner' && pathname.startsWith('/calendar')"
-  ),
-  'Day planner sub-nav must be active on /calendar'
+  sidebarSource.includes("subParts.pathname === '/planner'") &&
+    sidebarSource.includes("pathname.startsWith('/calendar')"),
+  'Day planner sub-nav must be active on /calendar day routes'
 )
 const yearActiveBlock = sidebarSource.slice(
   sidebarSource.indexOf("if (key === 'year')"),
   sidebarSource.indexOf("if (key === 'self')")
 )
 assert.ok(
-  !yearActiveBlock.includes("pathname.startsWith('/calendar')"),
-  'Year section must not treat /calendar as active'
+  !yearActiveBlock.includes("pathname.startsWith('/calendar')") ||
+    yearActiveBlock.includes('calendarDayEnabled'),
+  'Year section must not treat /calendar as active when flag routes day to Today'
 )
 console.log('✓ Calendar sidebar nav highlighting\n')
 

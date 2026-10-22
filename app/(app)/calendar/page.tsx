@@ -5,10 +5,11 @@ import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { todayISO } from '@/lib/today/get-today-context'
 import { getDayPlan } from '@/lib/planner/get-day-plan'
 import { PlannerDayShell } from '@/components/planner/PlannerDayShell'
-import { CalendarViewSwitcher } from '@/components/calendar/CalendarViewSwitcher'
+import { CalendarTabs } from '@/components/calendar/CalendarTabs'
 import { CalendarWeekViewPanel } from '@/components/calendar/CalendarWeekViewPanel'
 import { weekRangeLabel } from '@/lib/calendar/week-range-label'
 import { clampWeekToPlanYear } from '@/lib/calendar/load-week-chart-data'
+import { isCalendarDayEnabled } from '@/lib/feature-flags'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 type View = 'day' | 'week'
@@ -23,6 +24,10 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ date?: string; view?: string }>
 }) {
+  if (!isCalendarDayEnabled()) {
+    redirect('/year')
+  }
+
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
@@ -42,12 +47,12 @@ export default async function CalendarPage({
     const rangeLabel = weekRangeLabel(weekDate)
     return (
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div>
             <p className="shell-kicker mb-1">Calendar</p>
             <h1 className="font-serif text-3xl text-bone">{rangeLabel}</h1>
           </div>
-          <CalendarViewSwitcher current="week" />
+          <CalendarTabs />
         </div>
         <CalendarWeekViewPanel date={date} />
       </div>
@@ -58,11 +63,6 @@ export default async function CalendarPage({
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-6xl px-4 pt-8">
-        <div className="flex flex-wrap items-center justify-end gap-4">
-          <CalendarViewSwitcher current="day" />
-        </div>
-      </div>
       <PlannerDayShell
         basePath="/calendar"
         date={date}
@@ -71,6 +71,7 @@ export default async function CalendarPage({
         kicker="Calendar"
         activeView="day"
         dayGridScrollMode="calendar"
+        belowTitle={<CalendarTabs />}
       />
     </div>
   )

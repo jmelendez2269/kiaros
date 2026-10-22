@@ -6,6 +6,7 @@ import { getAppProfile, appProfileId } from '@/lib/app/get-app-profile'
 import { getAccessWindow } from '@/lib/commerce/get-access-window'
 import { currentBlueprintRowExists, loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { Tradition } from '@/types/blueprint'
+import { isCalendarDayEnabled } from '@/lib/feature-flags'
 
 const TRADITION_LABELS: Record<Tradition, string> = {
   evolutionary: 'Evolutionary Astrology',
@@ -45,6 +46,7 @@ export default async function BlueprintPage() {
     )
 
   const currentTradition = profile?.tradition as Tradition | null
+  const calendarDayEnabled = isCalendarDayEnabled()
 
   if (!loaded) {
     // loadCurrentBlueprint() returns null both when nothing was ever
@@ -122,6 +124,7 @@ export default async function BlueprintPage() {
         fullAccessThrough={accessWindow?.fullAccessThrough ?? null}
         accessState={accessWindow?.state ?? null}
         capability={loaded.access}
+        calendarDayEnabled={calendarDayEnabled}
       />
     </>
   )
