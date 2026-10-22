@@ -8,6 +8,7 @@ import {
   PATTERN_DISCOVERY_CHECK_EVENT,
   type PatternDiscovery,
 } from '@/lib/journal/pattern-discoveries'
+import { iaJournalFlagEnabled, patternsPageHref } from '@/lib/journal/ia-journal-routes'
 
 type DiscoveryResponse =
   | { success: true; data: { patterns: PatternDiscovery[] } }
@@ -207,7 +208,7 @@ function PatternDiscoveryToast({
               {pattern.sample_size} entries are beginning to echo one another.
             </p>
             <Link
-              href="/insights/map"
+              href={patternsPageHref(iaJournalFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL))}
               onClick={onOpen}
               className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-leather-300/45 bg-leather-500/20 px-4 text-sm font-medium text-bone transition-colors hover:bg-leather-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-300/70"
             >

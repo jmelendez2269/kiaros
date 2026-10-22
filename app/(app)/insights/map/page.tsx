@@ -21,7 +21,8 @@ import { InsightsTabs } from '@/components/insights/InsightsTabs'
 import { InsightsPollingShell } from '@/components/journal/InsightsPollingShell'
 import { DEFAULT_VOICE_KEY, VOICE_PRESETS } from '@/lib/ai/journal-insight-synthesis'
 import { BRAND } from '@/lib/brand'
-import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
+import { isIaJournalEnabled, isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
+import { redirect } from 'next/navigation'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 
 export const metadata = {
@@ -30,6 +31,10 @@ export const metadata = {
 }
 
 export default async function PatternsPage() {
+  if (isIaJournalEnabled()) {
+    redirect('/journal/patterns')
+  }
+
   const supabase = await createServerSupabase()
   const consentV2Enabled = isJournalConsentV2Enabled()
   const memoryDefaultsEnabled = isMemoryDefaultsEnabled() && consentV2Enabled

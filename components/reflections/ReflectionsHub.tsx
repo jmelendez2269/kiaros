@@ -9,7 +9,13 @@ type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback
 type Passage = { text: string; sources: string[] }
 const inputClass = 'w-full rounded-lg border border-white/20 bg-transparent p-3 text-bone focus:outline-none focus:ring-2 focus:ring-amber-200/60'
 const buttonClass = 'rounded-lg border border-white/20 px-4 py-2 text-sm transition hover:bg-white/10 disabled:cursor-wait disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4'
-export function ReflectionsHub({ initialKind = 'month' }: { initialKind?: PeriodKind }) {
+export function ReflectionsHub({
+  initialKind = 'month',
+  journalIaEmbed = false,
+}: {
+  initialKind?: PeriodKind
+  journalIaEmbed?: boolean
+}) {
   const [data, setData] = useState<State | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false), [loading, setLoading] = useState(true)
   const [kind, setKind] = useState<PeriodKind>(initialKind), [year, setYear] = useState(new Date().getFullYear())
@@ -79,18 +85,37 @@ export function ReflectionsHub({ initialKind = 'month' }: { initialKind?: Period
   }
   const showEmptyState = data?.consentV2Enabled && data?.includedEntriesCount === 0
   const content = report?.content
-  return <div className="mx-auto max-w-5xl space-y-8 px-5 py-10 text-bone sm:px-8">
-    <header className="max-w-2xl space-y-3">
-      <p className="text-xs uppercase tracking-[.24em] text-amber-200/70">Your lived year</p>
-      <h1 className="font-display text-4xl sm:text-5xl">{kind === 'year' ? 'Yearly Unwrapped' : 'A little space to look back'}</h1>
-      <p className="leading-relaxed text-bone-muted">The moments, changes, and quiet discoveries that made this time yours. A gentle direction for what comes next.</p>
-      <Link href="/year?view=review" className="inline-block text-sm underline underline-offset-4">Write your own quarterly reflection</Link>
-    </header>
+  const quarterlyReviewHref = journalIaEmbed ? '/journal/look-back?view=quarter' : '/year?view=review'
+  const reflectionsHomeHref = journalIaEmbed ? '/journal/look-back' : '/reflections'
+  return <div className={journalIaEmbed ? 'space-y-8 text-bone' : 'mx-auto max-w-5xl space-y-8 px-5 py-10 text-bone sm:px-8'}>
+    {!journalIaEmbed ? (
+      <header className="max-w-2xl space-y-3">
+        <p className="text-xs uppercase tracking-[.24em] text-amber-200/70">Your lived year</p>
+        <h1 className="font-display text-4xl sm:text-5xl">{kind === 'year' ? 'Yearly Unwrapped' : 'A little space to look back'}</h1>
+        <p className="leading-relaxed text-bone-muted">The moments, changes, and quiet discoveries that made this time yours. A gentle direction for what comes next.</p>
+        <Link href={quarterlyReviewHref} className="inline-block text-sm underline underline-offset-4">Write your own quarterly reflection</Link>
+      </header>
+    ) : (
+      <header className="max-w-2xl space-y-2">
+        <h2 className="font-display text-[1.4rem] text-bone">
+          {kind === 'year' ? 'Yearly Unwrapped' : 'A little space to look back'}
+        </h2>
+        <p className="shell-prose text-sm text-bone-muted">
+          The moments, changes, and quiet discoveries that made this time yours. A gentle direction for what comes
+          next.
+        </p>
+        <Link href={quarterlyReviewHref} className="inline-block text-sm underline underline-offset-4">
+          Write your own quarterly reflection
+        </Link>
+      </header>
+    )}
     {showEmptyState && <ConsentEmptyState variant="reflections" />}
-    <nav aria-label="Reflection periods" className="flex flex-wrap gap-2">
-      {(['month', 'quarter', 'year'] as const).map(k => <button key={k} type="button" aria-pressed={kind === k} onClick={() => changeKind(k)}
-        className={buttonClass + (kind === k ? ' bg-amber-100/10 text-amber-100' : '')}>{k === 'month' ? 'Monthly' : k === 'quarter' ? 'Quarterly' : 'Yearly Unwrapped'}</button>)}
-    </nav>
+    {!journalIaEmbed ? (
+      <nav aria-label="Reflection periods" className="flex flex-wrap gap-2">
+        {(['month', 'quarter', 'year'] as const).map(k => <button key={k} type="button" aria-pressed={kind === k} onClick={() => changeKind(k)}
+          className={buttonClass + (kind === k ? ' bg-amber-100/10 text-amber-100' : '')}>{k === 'month' ? 'Monthly' : k === 'quarter' ? 'Quarterly' : 'Yearly Unwrapped'}</button>)}
+      </nav>
+    ) : null}
     {loading && <p role="status">Gathering your reflections…</p>}
     {error && <div role="alert" className="rounded-xl border border-rose-200/30 p-4"><p>{error}</p><button type="button" className={buttonClass + ' mt-3'} onClick={() => { setError(''); load(true).catch(e => setError(e.message)) }}>Try again</button></div>}
     {notice && <p role="status" className="rounded-xl bg-emerald-100/10 p-4">{notice}</p>}
@@ -156,7 +181,7 @@ export function ReflectionsHub({ initialKind = 'month' }: { initialKind?: Period
           </section>
           {content.letter && <section className="space-y-3 border-t border-white/10 pt-6"><h3 className="font-display text-2xl">A letter to carry with you</h3><PassageView passage={content.letter} report={report} /></section>}
           {kind === 'year' && report.analysis && <section className="space-y-4"><h3 className="font-display text-2xl">Chapters of your year</h3><p className="text-sm text-bone-muted">Recorded days show the shape of the information available, not a score for your year.</p><div className="grid grid-cols-3 gap-3 sm:grid-cols-6">{report.analysis.months.map(m => <div key={m.month} className="rounded-lg border border-white/10 p-3"><p className="text-xs">{m.month}</p><p className="mt-2 text-lg">{m.days} days</p></div>)}</div>
-            <Link href="/reflections" className="inline-block underline underline-offset-4">Visit your monthly and quarterly reflections</Link>
+            <Link href={reflectionsHomeHref} className="inline-block underline underline-offset-4">Visit your monthly and quarterly reflections</Link>
             <button type="button" className={buttonClass + ' ml-3'} onClick={() => { setShareText(''); setShareOpen(!shareOpen) }}>Choose a moment to share</button>
             {shareOpen && <div className="space-y-3 rounded-xl border border-white/15 p-5"><p>Only the text you choose below goes into your downloaded card. Review it before sharing.</p><label className="block space-y-2"><span>Card text</span><textarea value={shareText} onChange={e => setShareText(e.target.value)} maxLength={450} rows={5} className={inputClass} placeholder="A moment or lesson you want to share…" /></label><p className="text-sm text-bone-muted">Card heading: {title}</p><blockquote className="border-l border-amber-200/30 pl-4">{shareText || 'Your chosen words will appear here.'}</blockquote><button type="button" disabled={!shareText.trim()} className={buttonClass} onClick={downloadCard}>Download private preview card</button></div>}
           </section>}

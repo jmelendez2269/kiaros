@@ -2,7 +2,7 @@ import { createServerSupabase } from '@/lib/supabase/server'
 import { JournalComposer } from '@/components/journal/JournalComposer'
 import { memberHasOracleAccess } from '@/lib/commerce/member-oracle-access'
 import type { ProductEntitlementRecord } from '@/lib/commerce/entitlements'
-import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
+import { isIaJournalEnabled, isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { loadJournalMemorySettings } from '@/lib/journal/load-memory-settings'
 import { resolveNewEntryConsent } from '@/lib/journal/memory-defaults'
 import type { JournalConsentState } from '@/lib/journal/consent'
@@ -73,9 +73,12 @@ export default async function JournalPage({
   const initialEnd = value('end') ?? ''
   const initialContext = value('context') ?? ''
 
+  const iaJournalShell = isIaJournalEnabled()
+
   return (
     <JournalComposer
       key={selectedEntryRes.data?.id ?? 'new-entry'}
+      iaJournalShell={iaJournalShell}
       initialEntry={selectedEntryRes.data}
       entryLoadError={
         selectedEntryId && (selectedEntryRes.error || !selectedEntryRes.data)

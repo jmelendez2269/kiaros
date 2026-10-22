@@ -59,3 +59,8 @@ export function isRetentionEmailsEnabled(): boolean {
 export function isCalendarDayEnabled(): boolean {
   return enabled(process.env.KIAROS_CALENDAR_DAY);
 }
+
+/** Journal tab row IA (Write / Entries / Patterns / Look back). Off by default. */
+export function isIaJournalEnabled(): boolean {
+  return enabled(process.env.NEXT_PUBLIC_IA_JOURNAL);
+}

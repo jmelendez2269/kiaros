@@ -9,6 +9,7 @@ import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries
 import { JournalConsentControls } from '@/components/journal/JournalConsentControls'
 import { JournalMemoryModePrompt } from '@/components/journal/JournalMemoryModePrompt'
 import { journalConsentSaveMessage, type JournalConsentState } from '@/lib/journal/consent'
+import { iaJournalFlagEnabled, patternsPageHref } from '@/lib/journal/ia-journal-routes'
 
 type RecentJournalEntry = {
   id: string
@@ -58,6 +59,7 @@ interface JournalComposerProps {
   showMemoryPrompt?: boolean
   initialNewEntryConsent?: JournalConsentState
   hasOracleAccess?: boolean
+  iaJournalShell?: boolean
 }
 
 const PRIVATE_CONSENT: JournalConsentState = {
@@ -96,7 +98,9 @@ export function JournalComposer({
   showMemoryPrompt = false,
   initialNewEntryConsent,
   hasOracleAccess: hasOracleAccessProp = false,
+  iaJournalShell = false,
 }: JournalComposerProps) {
+  const iaJournal = iaJournalShell || iaJournalFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)
   const isEditing = Boolean(initialEntry)
   const [entryCount, setEntryCount] = useState(journalEntriesCount)
   const [memoryCount, setMemoryCount] = useState(oracleMemoryCount)
@@ -260,27 +264,50 @@ export function JournalComposer({
           }}
         />
       ) : null}
-      <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div className="max-w-2xl">
-          <p className="channel-mine channel-kicker mb-2.5">Journal</p>
-          <h1 className="shell-hero-title">Capture the prompt while the window is open</h1>
-          <p className="mt-4 shell-prose">
-            Save a reflection from a timing window, ritual, or live question. This is also where you decide what
-            Stelloquy should carry forward as memory.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="channel-mine channel-pill">
-            {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
-          </span>
-          <span className="channel-memory channel-pill">{memoryCount} in memory</span>
-          {blueprintYear ? (
-            <Link href="/blueprint" className="channel-sky channel-pill transition-colors hover:text-bone">
-              {blueprintYear} blueprint
-            </Link>
-          ) : null}
-        </div>
-      </header>
+      {iaJournalShell ? (
+        <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="shell-hero-title">Capture the prompt while the window is open</h2>
+            <p className="mt-4 shell-prose">
+              Save a reflection from a timing window, ritual, or live question. This is also where you decide what
+              Stelloquy should carry forward as memory.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="channel-mine channel-pill">
+              {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
+            </span>
+            <span className="channel-memory channel-pill">{memoryCount} in memory</span>
+            {blueprintYear ? (
+              <Link href="/blueprint" className="channel-sky channel-pill transition-colors hover:text-bone">
+                {blueprintYear} blueprint
+              </Link>
+            ) : null}
+          </div>
+        </header>
+      ) : (
+        <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-2xl">
+            <p className="channel-mine channel-kicker mb-2.5">Journal</p>
+            <h1 className="shell-hero-title">Capture the prompt while the window is open</h1>
+            <p className="mt-4 shell-prose">
+              Save a reflection from a timing window, ritual, or live question. This is also where you decide what
+              Stelloquy should carry forward as memory.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="channel-mine channel-pill">
+              {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
+            </span>
+            <span className="channel-memory channel-pill">{memoryCount} in memory</span>
+            {blueprintYear ? (
+              <Link href="/blueprint" className="channel-sky channel-pill transition-colors hover:text-bone">
+                {blueprintYear} blueprint
+              </Link>
+            ) : null}
+          </div>
+        </header>
+      )}
 
       <section className="channel-mine channel-panel px-6 py-6">
         <div className="flex items-center justify-between gap-3">
@@ -481,7 +508,7 @@ export function JournalComposer({
 
       {hasOracleAccess ? (
         <Link
-          href="/insights/map"
+          href={patternsPageHref(iaJournal)}
           className="channel-ai channel-card group flex items-center gap-4 px-5 py-4"
         >
           <span aria-hidden="true" className="channel-dot" />
