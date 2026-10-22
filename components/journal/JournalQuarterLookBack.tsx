@@ -261,7 +261,7 @@ export async function JournalQuarterLookBack({ quarterParam }: { quarterParam?: 
         </Link>
       ) : null}
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="grid grid-cols-2 gap-2 min-[480px]:flex min-[480px]:gap-2">
         {[1, 2, 3, 4].map((q) => {
           const row = reviewsByQuarter.get(q) ?? null
           const status = quarterStatus(row, q, currentQ)
@@ -271,8 +271,8 @@ export async function JournalQuarterLookBack({ quarterParam }: { quarterParam?: 
             <Link
               key={q}
               href={reviewHref(q)}
+              className="min-[480px]:flex-1"
               style={{
-                flex: 1,
                 padding: '12px 14px',
                 background: active ? K.bg2 : 'transparent',
                 border: `1px solid ${active ? K.copper : K.line}`,

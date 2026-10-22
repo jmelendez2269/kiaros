@@ -111,10 +111,11 @@ function navForAccess(hasOracleAccess: boolean, journalIaEnabled: boolean) {
         ),
       }
     }
-    if (journalIaEnabled && item.key === 'journal' && item.subItems) {
+    if (journalIaEnabled && item.key === 'journal') {
       return {
         ...item,
-        subItems: [{ label: 'Patterns', href: '/journal/patterns', hint: 'entries · captures · mind map' }],
+        collapsible: false,
+        subItems: [],
       }
     }
     if (!journalIaEnabled && item.key === 'journal' && item.subItems && !hasOracleAccess) {
@@ -198,7 +199,7 @@ function isSectionActive(
     return pathname.startsWith('/oracle')
   }
   if (journalIaEnabled) {
-    return pathname.startsWith('/journal') && !pathname.startsWith('/journal/patterns')
+    return pathname.startsWith('/journal')
   }
   return pathname.startsWith('/journal') || pathname.startsWith('/insights')
 }

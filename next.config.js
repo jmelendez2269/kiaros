@@ -44,25 +44,7 @@ const nextConfig = {
       { source: '/onboarding/curriculum', destination: '/curriculum/setup', permanent: true },
       ...(iaJournalOn
         ? [
-            {
-              source: '/insights/map',
-              has: [{ type: 'query', key: 'tab', value: 'journal' }],
-              destination: '/journal/entries',
-              permanent: false,
-            },
-            {
-              source: '/insights/map',
-              has: [{ type: 'query', key: 'tab', value: 'map' }],
-              destination: '/journal/patterns?view=map',
-              permanent: false,
-            },
-            {
-              source: '/insights/map',
-              has: [{ type: 'query', key: 'tab', value: 'captures' }],
-              destination: '/journal/patterns?view=captures',
-              permanent: false,
-            },
-            { source: '/insights/map', destination: '/journal/patterns', permanent: false },
+            // /insights/map (+ ?tab=) → journal IA routes without forwarding `tab` (middleware).
             { source: '/reflections', destination: '/journal/look-back', permanent: false },
             {
               source: '/year',

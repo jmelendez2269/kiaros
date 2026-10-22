@@ -7,6 +7,8 @@ import { loadJournalMemorySettings } from '@/lib/journal/load-memory-settings'
 import { resolveNewEntryConsent } from '@/lib/journal/memory-defaults'
 import type { JournalConsentState } from '@/lib/journal/consent'
 import { auth } from '@clerk/nextjs/server'
+import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
+import { resolveMoonRitualPromptForJournal } from '@/lib/journal/resolve-moon-ritual-prompt'
 
 export default async function JournalPage({
   searchParams,
@@ -32,7 +34,7 @@ export default async function JournalPage({
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
     supabase
       .from('user_profiles')
-      .select('id, plan_year')
+      .select('id, plan_year, birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz')
       .maybeSingle(),
     selectedEntryId
       ? supabase
@@ -64,8 +66,14 @@ export default async function JournalPage({
     initialNewEntryConsent = resolveNewEntryConsent(memorySettings, hasOracleAccess, undefined)
   }
 
-  const initialPrompt = value('prompt') ?? ''
   const initialRitual = value('ritual') === '1' || value('ritual') === 'true'
+  const explicitPromptInUrl = params.prompt !== undefined
+  let initialPrompt = value('prompt') ?? ''
+  if (!selectedEntryId && !explicitPromptInUrl) {
+    const { timeZone } = resolvePlannerLocation(profileRes.data)
+    const moonPrompt = resolveMoonRitualPromptForJournal(initialRitual, timeZone)
+    if (moonPrompt) initialPrompt = moonPrompt
+  }
   const initialArea = value('area') ?? ''
   const initialTheme = value('theme') ?? ''
   const initialWeek = value('week') ?? ''
