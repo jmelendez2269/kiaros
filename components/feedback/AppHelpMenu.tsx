@@ -51,8 +51,10 @@ export function AppHelpMenu({ collapsed }: { collapsed: boolean }) {
           style={{
             position: 'absolute',
             bottom: 'calc(100% + 8px)',
-            right: collapsed ? -8 : 0,
+            left: 0,
+            right: 'auto',
             minWidth: 200,
+            maxWidth: collapsed ? 168 : 220,
             borderRadius: 12,
             border: `1px solid ${K.line}`,
             background: K.bg,

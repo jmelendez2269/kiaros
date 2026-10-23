@@ -641,8 +641,11 @@ function SidebarBody({
             position: 'relative',
             zIndex: 10,
             overflow: 'visible',
+<<<<<<< HEAD
             width: '100%',
             boxSizing: 'border-box',
+=======
+>>>>>>> 0fc1a0b (fix(ia-overlays): help menu alignment and hide Stelloquy orb when mobile nav open)
           }}
         >
         <div style={{ height: 1, background: K.line }} />
@@ -650,9 +653,17 @@ function SidebarBody({
         <div
           ref={footerMenuAnchorRef}
           style={{
+<<<<<<< HEAD
             position: 'relative',
             width: '100%',
             boxSizing: 'border-box',
+=======
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '4px 6px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+>>>>>>> 0fc1a0b (fix(ia-overlays): help menu alignment and hide Stelloquy orb when mobile nav open)
             overflow: 'visible',
           }}
         >
@@ -818,6 +829,7 @@ function SidebarBody({
             </SignOutButton>
           </div>
         )}
+        </div>
         </div>
         </div>
       </div>
