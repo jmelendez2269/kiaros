@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { setSettingsIaStickySaveLift } from "@/lib/settings/settings-ia-sticky-save";
 import { MessageCircle } from "lucide-react";
 import {
   SETTINGS_IA_GROUPS,
-  SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS,
+  isSettingsIaNearPageBottom,
+  pickSettingsIaActiveSection,
   scrollSettingsAnchorIntoView,
   settingsShortcutBlueprintHref,
   settingsShortcutCurriculumHref,
@@ -198,6 +200,11 @@ export default function SettingsPageIa() {
   }, [baseline, form, hydrated]);
 
   useEffect(() => {
+    setSettingsIaStickySaveLift(isMainFormDirty);
+    return () => setSettingsIaStickySaveLift(false);
+  }, [isMainFormDirty]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadProfile = async () => {
@@ -333,35 +340,79 @@ export default function SettingsPageIa() {
 
   const astrologicalWord = profile?.word_of_year;
 
-  const scrollToSection = useCallback((id: SettingsIaGroupId) => {
-    const node = sectionRefs.current[id];
-    if (!node) return;
-    scrollSettingsAnchorIntoView(node);
-    const heading = node.querySelector<HTMLElement>("h2");
-    heading?.focus({ preventScroll: true });
+  const focusGroupHeading = useCallback((root: HTMLElement) => {
+    const section = root.closest("section") ?? root;
+    const heading = section.querySelector<HTMLElement>("h2");
+    if (heading) {
+      heading.focus({ preventScroll: true });
+      return;
+    }
+    if (root instanceof HTMLElement && root.matches("h2")) {
+      root.focus({ preventScroll: true });
+    }
   }, []);
+
+  const scrollToSection = useCallback(
+    (id: SettingsIaGroupId, behavior: ScrollBehavior = "smooth") => {
+      const node = sectionRefs.current[id];
+      if (!node) return false;
+      scrollSettingsAnchorIntoView(node, behavior);
+      focusGroupHeading(node);
+      return true;
+    },
+    [focusGroupHeading],
+  );
+
+  const scrollToHashAnchor = useCallback(
+    (hash: string, behavior: ScrollBehavior = "auto") => {
+      const groupId = SETTINGS_IA_GROUPS.find((g) => g.id === hash)?.id;
+      if (groupId && scrollToSection(groupId, behavior)) return true;
+
+      const anchor = document.getElementById(hash);
+      if (!anchor) return false;
+      scrollSettingsAnchorIntoView(anchor, behavior);
+      focusGroupHeading(anchor);
+      return true;
+    },
+    [focusGroupHeading, scrollToSection],
+  );
 
   useEffect(() => {
     if (!hydrated) return;
     const hash = window.location.hash.replace(/^#/, "");
     if (!hash) return;
-    requestAnimationFrame(() => {
-      if (SETTINGS_IA_GROUPS.some((g) => g.id === hash)) {
-        scrollToSection(hash as SettingsIaGroupId);
-        return;
-      }
-      const anchor = document.getElementById(hash);
-      if (anchor) {
-        scrollSettingsAnchorIntoView(anchor);
-        const section = anchor.closest("section") ?? anchor;
-        const heading =
-          section.querySelector<HTMLElement>("h2") ??
-          anchor.querySelector<HTMLElement>("h2, h3") ??
-          anchor;
-        if (heading instanceof HTMLElement) heading.focus({ preventScroll: true });
-      }
+
+    let cancelled = false;
+    let attempts = 0;
+
+    const run = () => {
+      if (cancelled) return;
+      if (scrollToHashAnchor(hash, attempts === 0 ? "auto" : "auto")) return;
+      if (attempts++ < 40) requestAnimationFrame(run);
+    };
+
+    requestAnimationFrame(run);
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, scrollToHashAnchor]);
+
+  const updateActiveSectionFromDom = useCallback(() => {
+    const intersecting = SETTINGS_IA_GROUPS.flatMap((group) => {
+      const node = sectionRefs.current[group.id];
+      if (!node) return [];
+      const rect = node.getBoundingClientRect();
+      const inView = rect.bottom > 0 && rect.top < window.innerHeight;
+      if (!inView) return [];
+      return [{ id: group.id, top: rect.top, ratio: 0 }];
     });
-  }, [hydrated, scrollToSection]);
+
+    const picked = pickSettingsIaActiveSection({
+      intersecting,
+      nearPageBottom: isSettingsIaNearPageBottom(),
+    });
+    if (picked) setActiveSection(picked);
+  }, []);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -370,20 +421,37 @@ export default function SettingsPageIa() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
+        const intersecting = entries
           .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        const top = visible[0]?.target.id as SettingsIaGroupId | undefined;
-        if (top && SETTINGS_IA_GROUPS.some((g) => g.id === top)) {
-          setActiveSection(top);
-        }
+          .map((e) => ({
+            id: e.target.id as SettingsIaGroupId,
+            top: e.boundingClientRect.top,
+            ratio: e.intersectionRatio,
+          }))
+          .filter((e) => SETTINGS_IA_GROUPS.some((g) => g.id === e.id));
+
+        const picked = pickSettingsIaActiveSection({
+          intersecting,
+          nearPageBottom: isSettingsIaNearPageBottom(),
+        });
+        if (picked) setActiveSection(picked);
       },
-      { rootMargin: "-24px 0px -55% 0px", threshold: [0, 0.25, 0.5, 1] },
+      { rootMargin: "-24px 0px -40% 0px", threshold: [0, 0.1, 0.25, 0.5, 1] },
     );
 
     for (const node of nodes) observer.observe(node);
-    return () => observer.disconnect();
-  }, [hydrated]);
+
+    const onScroll = () => {
+      if (!isSettingsIaNearPageBottom()) return;
+      updateActiveSectionFromDom();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [hydrated, updateActiveSectionFromDom]);
 
   const setSectionRef = (id: SettingsIaGroupId) => (node: HTMLElement | null) => {
     sectionRefs.current[id] = node;
@@ -485,7 +553,14 @@ export default function SettingsPageIa() {
                 </label>
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-bone">Birth time</span>
-                  <input type="time" value={form.birth_time} onChange={(event) => setField("birth_time", event.target.value)} disabled={form.birth_time_unknown} className={`${FIELD_INPUT_CLASS} disabled:cursor-default disabled:opacity-45`} />
+                  <input
+                    type="time"
+                    value={form.birth_time}
+                    onChange={(event) => setField("birth_time", event.target.value)}
+                    disabled={form.birth_time_unknown}
+                    aria-disabled={form.birth_time_unknown}
+                    className={`${FIELD_INPUT_CLASS} disabled:cursor-default disabled:opacity-45`}
+                  />
                 </label>
                 <label className="block space-y-2 md:col-span-2">
                   <span className="text-sm font-medium text-bone">Birth city</span>
@@ -656,7 +731,7 @@ export default function SettingsPageIa() {
 
       {isMainFormDirty ? (
         <div
-          className={`fixed inset-x-0 bottom-0 z-40 flex h-14 items-center justify-between border-t border-[#E3E2ED]/10 bg-[#0A0C14]/92 px-4 md:bottom-0 md:px-8 ${SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS}`}
+          className="fixed inset-x-0 bottom-0 z-50 flex h-14 items-center justify-between border-t border-[#E3E2ED]/10 bg-[#0A0C14]/92 px-4 md:px-8"
           style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
         >
           <p className="text-sm text-[#A4A3B1]">Unsaved changes</p>

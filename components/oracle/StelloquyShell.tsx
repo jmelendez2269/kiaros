@@ -88,13 +88,14 @@ export function StelloquyShell({ today }: Props) {
       {showDock ? (
         <button
           type="button"
+          data-kiaros-floating-stelloquy=""
           onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
           aria-label={hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`}
           aria-expanded={hasOracleAccess ? open : undefined}
           aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
           style={{
             position: 'fixed',
-            bottom: 22,
+            bottom: 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
             right: 22,
             zIndex: 40,
             display: 'flex',

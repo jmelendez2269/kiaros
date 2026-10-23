@@ -9,11 +9,6 @@ import { goalsStudyCurriculumHref } from '@/lib/goals-study/ia-goals-routes'
 /** Top offset when scrolling to in-page settings anchors (spec: 24px). */
 export const SETTINGS_IA_SCROLL_OFFSET_PX = 24
 
-/**
- * Tailwind class: sticky save bar sits above the Stelloquy dock on narrow viewports (~390px).
- */
-export const SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS = 'max-md:bottom-[5rem]'
-
 export const SETTINGS_IA_GROUPS = [
   { id: 'birth-data', label: 'Birth details' },
   { id: 'chart', label: 'Chart' },
@@ -48,6 +43,49 @@ export function scrollSettingsAnchorIntoView(
   const top =
     element.getBoundingClientRect().top + window.scrollY - SETTINGS_IA_SCROLL_OFFSET_PX
   window.scrollTo({ top: Math.max(0, top), behavior })
+}
+
+export type SettingsIaSectionIntersect = {
+  id: SettingsIaGroupId
+  top: number
+  ratio: number
+}
+
+/** Pick the nav-highlighted section from IntersectionObserver samples. */
+export function pickSettingsIaActiveSection(params: {
+  intersecting: SettingsIaSectionIntersect[]
+  nearPageBottom: boolean
+}): SettingsIaGroupId | null {
+  const { intersecting, nearPageBottom } = params
+  if (intersecting.length === 0) return null
+
+  const order = SETTINGS_IA_GROUPS.map((g) => g.id)
+
+  if (nearPageBottom) {
+    for (let i = order.length - 1; i >= 0; i--) {
+      if (intersecting.some((e) => e.id === order[i])) return order[i]
+    }
+  }
+
+  const anchorLine = SETTINGS_IA_SCROLL_OFFSET_PX
+  let best: SettingsIaSectionIntersect | null = null
+  for (const entry of intersecting) {
+    if (entry.top <= anchorLine + 8 && (!best || entry.top > best.top)) {
+      best = entry
+    }
+  }
+  if (best) return best.id
+
+  const sorted = [...intersecting].sort((a, b) => a.top - b.top)
+  return sorted[0]?.id ?? null
+}
+
+export function isSettingsIaNearPageBottom(thresholdPx = 64): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    window.innerHeight + window.scrollY >=
+    document.documentElement.scrollHeight - thresholdPx
+  )
 }
 
 export function settingsShortcutBlueprintHref(): string {

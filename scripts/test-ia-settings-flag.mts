@@ -11,13 +11,17 @@ import { isIaSettingsEnabled } from '../lib/ia-settings-flag.ts'
 import {
   iaSettingsFlagEnabled,
   MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL,
+  pickSettingsIaActiveSection,
   scrollSettingsAnchorIntoView,
   SETTINGS_IA_SCROLL_OFFSET_PX,
-  SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS,
   settingsBirthDataHref,
   settingsMoonReminderHref,
   SETTINGS_IA_GROUPS,
 } from '../lib/settings/ia-settings-routes.ts'
+import {
+  SETTINGS_IA_STICKY_SAVE_BAR_HEIGHT_PX,
+  SETTINGS_IA_STICKY_SAVE_CSS_VAR,
+} from '../lib/settings/settings-ia-sticky-save.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
@@ -64,7 +68,38 @@ console.log('✓ Page switch\n')
 console.log('Scroll offset helper')
 assert.equal(SETTINGS_IA_SCROLL_OFFSET_PX, 24)
 assert.ok(typeof scrollSettingsAnchorIntoView === 'function')
+assert.equal(
+  pickSettingsIaActiveSection({
+    intersecting: [
+      { id: 'journal', top: 80, ratio: 0.5 },
+      { id: 'plan', top: 240, ratio: 0.4 },
+    ],
+    nearPageBottom: true,
+  }),
+  'plan',
+)
+assert.equal(
+  pickSettingsIaActiveSection({
+    intersecting: [
+      { id: 'journal', top: -40, ratio: 0.2 },
+      { id: 'plan', top: 20, ratio: 0.5 },
+    ],
+    nearPageBottom: false,
+  }),
+  'plan',
+)
 console.log('✓ Scroll helper\n')
+
+console.log('Sticky save lifts floating chrome')
+assert.equal(SETTINGS_IA_STICKY_SAVE_BAR_HEIGHT_PX, 56)
+assert.equal(SETTINGS_IA_STICKY_SAVE_CSS_VAR, '--kiaros-settings-sticky-save-offset')
+const stickyLiftSource = readFileSync(join(root, 'lib/settings/settings-ia-sticky-save.ts'), 'utf8')
+assert.ok(stickyLiftSource.includes('setSettingsIaStickySaveLift'))
+const stelloquySource = readFileSync(join(root, 'components/oracle/StelloquyShell.tsx'), 'utf8')
+const feedbackSource = readFileSync(join(root, 'components/feedback/FeedbackModal.tsx'), 'utf8')
+assert.ok(stelloquySource.includes('var(--kiaros-settings-sticky-save-offset'))
+assert.ok(feedbackSource.includes('var(--kiaros-settings-sticky-save-offset'))
+console.log('✓ Sticky save lift\n')
 
 console.log('IA settings layout anchors and sticky save bar')
 const iaSource = readFileSync(join(root, 'components/settings/SettingsPageIa.tsx'), 'utf8')
@@ -81,9 +116,14 @@ assert.ok(
   iaSource.includes('disabled={form.birth_time_unknown}'),
   'birth time must disable when unknown time is checked',
 )
-assert.ok(iaSource.includes('SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS'))
-assert.equal(SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS, 'max-md:bottom-[5rem]')
+assert.ok(iaSource.includes('setSettingsIaStickySaveLift'))
+assert.ok(iaSource.includes('scrollToHashAnchor'))
+assert.ok(iaSource.includes('pickSettingsIaActiveSection'))
+assert.ok(iaSource.includes('z-50 flex h-14'))
+assert.ok(iaSource.includes('aria-disabled={form.birth_time_unknown}'))
 assert.ok(iaSource.includes('text-bone-muted">Saved</p>'), 'Saved confirmation beside save in sticky bar')
+const moonPanelSource = readFileSync(join(root, 'components/settings/MoonDayRemindersSettingsPanel.tsx'), 'utf8')
+assert.ok(moonPanelSource.includes('scroll-mt-6'), 'moon-reminder anchor uses 24px scroll margin')
 const shortcutsSection = iaSource.match(/id="shortcuts"[\s\S]*?<\/section>/)?.[0] ?? ''
 assert.ok(
   !shortcutsSection.includes('text-bone-muted">Saved</p>'),

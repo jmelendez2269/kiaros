@@ -51,7 +51,11 @@ export function MoonDayRemindersSettingsPanel({
   )
 
   if (embedded) {
-    return <div id={anchorId}>{toggle}</div>
+    return (
+      <div id={anchorId} className="scroll-mt-6">
+        {toggle}
+      </div>
+    )
   }
 
   return (
