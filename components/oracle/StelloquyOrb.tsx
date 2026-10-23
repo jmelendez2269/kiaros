@@ -46,7 +46,9 @@ export function StelloquyOrb({
         ? STATE_GLOW[state].replace(/0\.5/g, '0.3').replace(/0\.4/g, '0.22').replace(/0\.2/g, '0.12')
         : 'none'
 
-  const starSize = size <= 36 ? 10 : 12
+  const preferredStarPx = 14
+  const maxStarPxForOrb = Math.floor(size * 0.42)
+  const starSize = Math.min(preferredStarPx, maxStarPxForOrb)
 
   return (
     <span
@@ -77,7 +79,8 @@ export function StelloquyOrb({
             justifyContent: 'center',
             fontSize: starSize,
             lineHeight: 1,
-            color: 'rgba(227, 226, 237, 0.85)',
+            color: '#FFFFFF',
+            textShadow: '0 0 3px rgba(10, 12, 20, 0.6)',
             pointerEvents: 'none',
           }}
         >
