@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { MessageCircle } from "lucide-react";
 import {
   SETTINGS_IA_GROUPS,
+  SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS,
+  scrollSettingsAnchorIntoView,
   settingsShortcutBlueprintHref,
   settingsShortcutCurriculumHref,
   settingsShortcutJournalHref,
@@ -126,6 +128,7 @@ function buildInitialState(profile?: SettingsProfile | null): SettingsState {
   };
 }
 
+/** Matches SETTINGS_IA_SCROLL_OFFSET_PX (24px) for hash / scroll-margin parity. */
 const SCROLL_MARGIN_CLASS = "scroll-mt-6";
 const FIELD_INPUT_CLASS =
   "w-full rounded-xl border border-[#E3E2ED]/12 bg-[#0A0C14] px-4 py-3 text-[#E3E2ED] placeholder:text-bone-muted/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2";
@@ -333,7 +336,7 @@ export default function SettingsPageIa() {
   const scrollToSection = useCallback((id: SettingsIaGroupId) => {
     const node = sectionRefs.current[id];
     if (!node) return;
-    node.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollSettingsAnchorIntoView(node);
     const heading = node.querySelector<HTMLElement>("h2");
     heading?.focus({ preventScroll: true });
   }, []);
@@ -349,8 +352,12 @@ export default function SettingsPageIa() {
       }
       const anchor = document.getElementById(hash);
       if (anchor) {
-        anchor.scrollIntoView({ behavior: "smooth", block: "start" });
-        const heading = anchor.querySelector<HTMLElement>("h2, h3") ?? anchor;
+        scrollSettingsAnchorIntoView(anchor);
+        const section = anchor.closest("section") ?? anchor;
+        const heading =
+          section.querySelector<HTMLElement>("h2") ??
+          anchor.querySelector<HTMLElement>("h2, h3") ??
+          anchor;
         if (heading instanceof HTMLElement) heading.focus({ preventScroll: true });
       }
     });
@@ -643,15 +650,27 @@ export default function SettingsPageIa() {
               <Link href={shortcutCurriculumHref} className="flex h-11 items-center justify-center rounded-xl border border-[#E3E2ED]/12 bg-[#0A0C14] text-sm font-medium text-[#A4A3B1] transition-colors hover:bg-[#E3E2ED]/5 hover:text-[#E3E2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2">Set up curriculum</Link>
               <button type="button" onClick={startTour} className="flex h-11 items-center justify-center rounded-xl border border-[#E3E2ED]/12 bg-[#0A0C14] text-sm font-medium text-[#A4A3B1] transition-colors hover:bg-[#E3E2ED]/5 hover:text-[#E3E2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2">Restart tour</button>
             </div>
-            {saved ? <p className="mt-4 text-sm text-bone-muted">Saved</p> : null}
           </section>
         </div>
       </div>
 
       {isMainFormDirty ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-center justify-between border-t border-[#E3E2ED]/10 bg-[#0A0C14]/92 px-4 md:px-8" style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}>
+        <div
+          className={`fixed inset-x-0 bottom-0 z-40 flex h-14 items-center justify-between border-t border-[#E3E2ED]/10 bg-[#0A0C14]/92 px-4 md:bottom-0 md:px-8 ${SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS}`}
+          style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
+        >
           <p className="text-sm text-[#A4A3B1]">Unsaved changes</p>
-          <button type="button" onClick={handleSave} disabled={!hydrated || isPending} className="rounded-xl bg-[#A98AEF] px-5 py-2.5 text-sm font-medium text-[#0A0C14] transition hover:bg-[#A98AEF]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-45">{isPending ? "Saving…" : "Save"}</button>
+          <div className="flex items-center gap-3">
+            {saved ? <p className="text-sm text-bone-muted">Saved</p> : null}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!hydrated || isPending}
+              className="rounded-xl bg-[#A98AEF] px-5 py-2.5 text-sm font-medium text-[#0A0C14] transition hover:bg-[#A98AEF]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-45"
+            >
+              {isPending ? "Saving…" : "Save"}
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

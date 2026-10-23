@@ -10,6 +10,10 @@ import { fileURLToPath } from 'node:url'
 import { isIaSettingsEnabled } from '../lib/ia-settings-flag.ts'
 import {
   iaSettingsFlagEnabled,
+  MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL,
+  scrollSettingsAnchorIntoView,
+  SETTINGS_IA_SCROLL_OFFSET_PX,
+  SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS,
   settingsBirthDataHref,
   settingsMoonReminderHref,
   SETTINGS_IA_GROUPS,
@@ -57,6 +61,11 @@ assert.ok(pageSource.includes('SettingsPageLegacy'))
 assert.ok(pageSource.includes('SettingsPageIa'))
 console.log('✓ Page switch\n')
 
+console.log('Scroll offset helper')
+assert.equal(SETTINGS_IA_SCROLL_OFFSET_PX, 24)
+assert.ok(typeof scrollSettingsAnchorIntoView === 'function')
+console.log('✓ Scroll helper\n')
+
 console.log('IA settings layout anchors and sticky save bar')
 const iaSource = readFileSync(join(root, 'components/settings/SettingsPageIa.tsx'), 'utf8')
 for (const id of ['birth-data', 'chart', 'year', 'look', 'journal', 'plan', 'shortcuts']) {
@@ -65,7 +74,31 @@ for (const id of ['birth-data', 'chart', 'year', 'look', 'journal', 'plan', 'sho
 assert.ok(iaSource.includes('Unsaved changes'))
 assert.ok(iaSource.includes('moon-reminder'))
 assert.ok(iaSource.includes('insight-voice') || iaSource.includes('VoicePanel'))
+assert.ok(iaSource.includes('scrollSettingsAnchorIntoView'))
+assert.ok(iaSource.includes('scroll-mt-6'), 'sections use 24px scroll margin')
+assert.ok(iaSource.includes('aria-current={isActive ? "true" : undefined}'))
+assert.ok(
+  iaSource.includes('disabled={form.birth_time_unknown}'),
+  'birth time must disable when unknown time is checked',
+)
+assert.ok(iaSource.includes('SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS'))
+assert.equal(SETTINGS_IA_STICKY_BAR_MOBILE_BOTTOM_CLASS, 'max-md:bottom-[5rem]')
+assert.ok(iaSource.includes('text-bone-muted">Saved</p>'), 'Saved confirmation beside save in sticky bar')
+const shortcutsSection = iaSource.match(/id="shortcuts"[\s\S]*?<\/section>/)?.[0] ?? ''
+assert.ok(
+  !shortcutsSection.includes('text-bone-muted">Saved</p>'),
+  'Saved must not appear in Shortcuts section',
+)
 console.log('✓ IA layout\n')
+
+console.log('Moon-day nudge reminder settings link (flag-gated)')
+const nudgeSource = readFileSync(join(root, 'components/today/MoonDayRitualNudge.tsx'), 'utf8')
+assert.ok(nudgeSource.includes('settingsMoonReminderHref'))
+assert.ok(nudgeSource.includes('isIaSettingsEnabled'))
+assert.equal(MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL, 'Reminder settings')
+assert.ok(nudgeSource.includes('MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL'))
+assert.ok(nudgeSource.includes('iaSettingsOn'), 'link only when IA settings flag on')
+console.log('✓ Moon-day nudge link\n')
 
 console.log('Self chapters deep-link birth data when flag on')
 const designSource = readFileSync(join(root, 'components/self/chapters/DesignChapter.tsx'), 'utf8')
