@@ -9,7 +9,6 @@ import {
   areaNatalPlanets,
   buildAreaYearNarrative,
   getAreaDefinition,
-  slugifyAreaName,
 } from '@/lib/areas'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { NatalChart } from '@/types/blueprint'
