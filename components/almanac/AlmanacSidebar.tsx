@@ -132,6 +132,7 @@ function navForAccess(
     if (goalsIaEnabled && item.key === 'self' && item.subItems) {
       return {
         ...item,
+        hint: 'natal · design',
         subItems: item.subItems.filter(
           (sub) => sub.href !== '/areas' && sub.href !== '/curriculum',
         ),

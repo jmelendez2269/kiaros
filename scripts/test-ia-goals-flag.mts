@@ -64,6 +64,18 @@ assert.ok(
     sidebarSource.includes("sub.href !== '/curriculum'"),
   'Self sub-nav must drop Life areas and Curriculum when IA goals is on',
 )
+const selfGoalsIaBlock = sidebarSource.match(
+  /if \(goalsIaEnabled && item\.key === 'self'[\s\S]*?}\s*\n\s*}/,
+)
+assert.ok(selfGoalsIaBlock, 'expected Self IA goals nav branch')
+assert.ok(
+  selfGoalsIaBlock![0].includes("hint: 'natal · design'"),
+  'Self hint must drop areas when IA goals is on',
+)
+assert.ok(
+  !selfGoalsIaBlock![0].includes('natal · design · areas'),
+  'Self IA branch must not keep the full areas hint',
+)
 assert.ok(sidebarSource.includes("key === 'goalsStudy'"))
 assert.ok(sidebarSource.includes("glyph: '✦'"), 'Stelloquy card star glyph must stay')
 assert.ok(
