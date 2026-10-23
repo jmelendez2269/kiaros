@@ -207,11 +207,24 @@ export default function OnboardingBirthPage() {
     const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
 
     if (ia5 && destination === "/onboarding/tradition") {
-      await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(defaultOnboardingTraditionPayload()),
-      });
+      try {
+        const traditionRes = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(defaultOnboardingTraditionPayload()),
+        });
+        if (!traditionRes.ok) {
+          console.warn(
+            "[onboarding] Tradition default PATCH failed; EnsureTraditionDefault on goals will retry:",
+            traditionRes.status,
+          );
+        }
+      } catch (err) {
+        console.warn(
+          "[onboarding] Tradition default PATCH failed; EnsureTraditionDefault on goals will retry:",
+          err,
+        );
+      }
       router.push("/onboarding/goals");
       return;
     }

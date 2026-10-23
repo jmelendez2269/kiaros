@@ -106,7 +106,7 @@ export default function OnboardingGoalsPage() {
     <div className="space-y-8">
       {ia5 ? <EnsureTraditionDefault /> : null}
       <div className="space-y-3">
-        <p className="shell-kicker">{ia5 ? "Step 2" : "Step 2"}</p>
+        <p className="shell-kicker">Step 2</p>
         <h2 className="font-serif text-3xl text-bone">Choose your focus layers</h2>
         <p className="leading-relaxed text-bone-muted">
           What parts of your life matter most right now? Choose the areas you want this planner to
