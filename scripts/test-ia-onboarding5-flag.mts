@@ -12,6 +12,7 @@ import {
   ONBOARDING_STEPS_IA5,
   defaultOnboardingTraditionPayload,
   ia5LegacyOnboardingRedirect,
+  ia5OnboardingPathFromDestination,
   iaOnboarding5FlagEnabled,
   onboardingGeneratingHref,
 } from '../lib/onboarding/ia-onboarding-routes.ts'
@@ -51,6 +52,12 @@ console.log('Generating href helper')
 assert.equal(onboardingGeneratingHref(false, '/onboarding/generating-week'), '/onboarding/generating-week')
 assert.equal(onboardingGeneratingHref(true, '/onboarding/generating-week'), '/onboarding/generating')
 console.log('✓ Generating href\n')
+
+console.log('IA5 path from complete destination')
+assert.equal(ia5OnboardingPathFromDestination('/onboarding/generating-week'), 'free')
+assert.equal(ia5OnboardingPathFromDestination('/onboarding/tradition'), 'paid')
+assert.equal(ia5OnboardingPathFromDestination('/onboarding/generating'), 'paid')
+console.log('✓ Path from destination\n')
 
 console.log('middleware wiring')
 const middlewareSource = readFileSync(join(root, 'middleware.ts'), 'utf8')

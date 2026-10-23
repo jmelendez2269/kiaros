@@ -29,7 +29,37 @@ export const ONBOARDING_STEPS_IA5 = [
 
 export const IA5_GENERATING_MODE_KEY = 'kiaros_ia5_generating_mode'
 
+export const IA5_ONBOARDING_PATH_KEY = 'kiaros_ia5_onboarding_path'
+
 export type Ia5GeneratingMode = 'blueprint' | 'week'
+
+export type Ia5OnboardingPath = 'paid' | 'free'
+
+/** Mirrors /api/onboarding/complete destination branching (no extra API). */
+export function ia5OnboardingPathFromDestination(destination: string): Ia5OnboardingPath {
+  return destination.includes('generating-week') ? 'free' : 'paid'
+}
+
+export function persistIa5OnboardingRoutingFromDestination(destination: string): void {
+  if (typeof sessionStorage === 'undefined') return
+  sessionStorage.setItem(IA5_ONBOARDING_PATH_KEY, ia5OnboardingPathFromDestination(destination))
+  sessionStorage.setItem(
+    IA5_GENERATING_MODE_KEY,
+    destination.includes('generating-week') ? 'week' : 'blueprint',
+  )
+}
+
+export function readIa5OnboardingPath(): Ia5OnboardingPath | null {
+  if (typeof sessionStorage === 'undefined') return null
+  const value = sessionStorage.getItem(IA5_ONBOARDING_PATH_KEY)
+  return value === 'paid' || value === 'free' ? value : null
+}
+
+export function readIa5GeneratingMode(): Ia5GeneratingMode | null {
+  if (typeof sessionStorage === 'undefined') return null
+  const value = sessionStorage.getItem(IA5_GENERATING_MODE_KEY)
+  return value === 'week' || value === 'blueprint' ? value : null
+}
 
 /** Old onboarding paths → canonical IA5 screen (307 targets). */
 export const IA5_ONBOARDING_LEGACY_REDIRECTS: Readonly<Record<string, string>> = {

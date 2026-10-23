@@ -7,8 +7,8 @@ import { THEMES, type ThemeId } from "@/lib/constants";
 import { BRAND } from "@/lib/brand";
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
 import {
-  IA5_GENERATING_MODE_KEY,
   onboardingGeneratingHref,
+  persistIa5OnboardingRoutingFromDestination,
 } from "@/lib/onboarding/ia-onboarding-routes";
 
 const STORAGE_KEY = "kiaros_onboarding_step6";
@@ -87,10 +87,7 @@ export default function OnboardingThemePage() {
 
     const { destination } = (await completeRes.json()) as { destination: string };
     if (ia5) {
-      sessionStorage.setItem(
-        IA5_GENERATING_MODE_KEY,
-        destination.includes("generating-week") ? "week" : "blueprint",
-      );
+      persistIa5OnboardingRoutingFromDestination(destination);
       router.push(onboardingGeneratingHref(true, destination));
       return;
     }

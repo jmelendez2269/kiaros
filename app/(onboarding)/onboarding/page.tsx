@@ -12,8 +12,8 @@ import { subscribeFieldNotesKit } from "@/lib/marketing/subscribe-field-notes-ki
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
 import {
   defaultOnboardingTraditionPayload,
-  IA5_GENERATING_MODE_KEY,
   onboardingGeneratingHref,
+  persistIa5OnboardingRoutingFromDestination,
 } from "@/lib/onboarding/ia-onboarding-routes";
 
 const STORAGE_KEY = "kiaros_onboarding_step1";
@@ -206,6 +206,10 @@ export default function OnboardingBirthPage() {
     const { destination } = (await nextRes.json()) as { destination: string };
     const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
 
+    if (ia5) {
+      persistIa5OnboardingRoutingFromDestination(destination);
+    }
+
     if (ia5 && destination === "/onboarding/tradition") {
       try {
         const traditionRes = await fetch("/api/profile", {
@@ -230,9 +234,6 @@ export default function OnboardingBirthPage() {
     }
 
     if (ia5) {
-      if (destination.includes("generating-week")) {
-        sessionStorage.setItem(IA5_GENERATING_MODE_KEY, "week");
-      }
       router.push(onboardingGeneratingHref(true, destination));
       return;
     }
