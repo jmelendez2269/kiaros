@@ -7,6 +7,11 @@ import { OnboardingIa5StepKicker } from "@/components/onboarding/OnboardingIa5St
 import { OnboardingIa5StepNav } from "@/components/onboarding/OnboardingIa5StepNav";
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
 import { LIFE_CATEGORIES } from "@/lib/constants";
+import {
+  dedupeGoalCategories,
+  goalCategoriesMatch,
+  resolveGoalCategoryLabel,
+} from "@/lib/goal-categories";
 import { ONBOARDING_IA5_FOCUS_RING, onboardingIa5FieldClass } from "@/lib/onboarding/ia5-ui";
 
 const STORAGE_KEY = "kiaros_onboarding_step2";
@@ -31,28 +36,30 @@ export default function OnboardingGoalsPage() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setSelected(JSON.parse(saved));
+        const parsed = JSON.parse(saved) as GoalCategory[];
+        setSelected(dedupeGoalCategories(parsed));
       } catch {}
     }
   }, []);
 
-  const isSelectedName = (name: string) => selected.some((c) => c.name === name);
+  const isSelectedName = (name: string) => selected.some((c) => goalCategoriesMatch(c.name, name));
 
   const toggleCategory = (name: string) => {
-    if (isSelectedName(name)) {
-      setSelected((prev) => prev.filter((c) => c.name !== name));
+    const label = resolveGoalCategoryLabel(name);
+    if (isSelectedName(label)) {
+      setSelected((prev) => prev.filter((c) => !goalCategoriesMatch(c.name, label)));
     } else {
       if (selected.length >= 7) {
         setError("Choose up to 7 areas.");
         return;
       }
-      setSelected((prev) => [...prev, { name, success: "" }]);
+      setSelected((prev) => [...prev, { name: label, success: "" }]);
       setError("");
     }
   };
 
   const addCustom = () => {
-    const name = customInput.trim();
+    const name = resolveGoalCategoryLabel(customInput.trim());
     if (!name) return;
     if (selected.length >= 7) {
       setError("Choose up to 7 areas.");
@@ -75,14 +82,16 @@ export default function OnboardingGoalsPage() {
     }
     setSaveError("");
     setIsSubmitting(true);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
+    const normalized = dedupeGoalCategories(selected);
+    setSelected(normalized);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
 
     try {
       const res = await fetch("/api/goals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          categories: selected.map((c, i) => ({
+          categories: normalized.map((c, i) => ({
             name: c.name,
             success: c.success || null,
             sort_order: i,

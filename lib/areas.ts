@@ -1,5 +1,11 @@
 import type { MonthBlueprint, NatalChart, Planet, WeekBlueprint, ZodiacSign } from '@/types/blueprint'
-import { findGoalCategorySpec, normalizeGoalCategoryKey, resolveGoalCategoryLabel } from '@/lib/goal-categories'
+import {
+  findGoalCategorySpec,
+  goalCategoryUrlSlugForName,
+  legacySlugifyGoalCategoryName,
+  normalizeGoalCategoryKey,
+  resolveGoalCategoryLabel,
+} from '@/lib/goal-categories'
 
 export type AreaEnergyMode = 'building' | 'opening' | 'stabilizing' | 'recalibrating'
 
@@ -202,12 +208,13 @@ const PLANET_LABELS: Record<'sun' | 'moon' | 'mercury' | 'venus' | 'mars' | 'jup
   pluto: 'Pluto',
 }
 
+/** Prefer canonical area URL slug; falls back to legacy slugify for custom category names. */
 export function slugifyAreaName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+  return goalCategoryUrlSlugForName(name)
+}
+
+export function legacySlugifyAreaName(name: string): string {
+  return legacySlugifyGoalCategoryName(name)
 }
 
 export function canonicalAreaName(name: string): string {

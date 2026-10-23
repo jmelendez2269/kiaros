@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { PenSquare } from 'lucide-react'
 import { createServerSupabase } from '@/lib/supabase/server'
 import {
@@ -15,6 +15,10 @@ import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import type { NatalChart } from '@/types/blueprint'
 import { AreaGoalsPanel, type AreaGoal } from '@/components/areas/AreaGoalsPanel'
 import { BRAND } from '@/lib/brand'
+import {
+  findGoalCategoryRowByUrlSlug,
+  goalCategoryUrlSlugForName,
+} from '@/lib/goal-categories'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -96,9 +100,14 @@ export default async function AreaDetailPage({
     ? loadCurrentBlueprint(profileRes.data.id)
     : Promise.resolve(null)
 
-  const category = (categoryRes.data ?? []).find((item) => slugifyAreaName(item.name) === slug)
-  if (!category || slugifyAreaName(category.name) !== slug) {
+  const category = findGoalCategoryRowByUrlSlug(categoryRes.data ?? [], slug)
+  if (!category) {
     notFound()
+  }
+
+  const canonicalSlug = goalCategoryUrlSlugForName(category.name)
+  if (slug !== canonicalSlug) {
+    redirect(`/areas/${canonicalSlug}`)
   }
 
   // Goals for this area. Lives on a separate table (migration 0020).
