@@ -25,27 +25,27 @@ const TRADITION_SLIDES: Record<Tradition, { kicker: string; title: string; body:
   evolutionary: {
     kicker: "Your lens",
     title: "Built through an evolutionary lens",
-    body: `${BRAND.product} is reading your chart the way evolutionary astrology does — Pluto's current position and what it's asking of your soul, the South Node story you're evolving beyond, and the North Node calling you forward. Every week in your blueprint reflects those themes.`,
+    body: `${BRAND.product} is reading your chart the way evolutionary astrology does: Pluto's current position and what it's asking of your soul, the South Node story you're evolving beyond, and the North Node calling you forward. Every week in your blueprint reflects those themes.`,
   },
   karmic: {
     kicker: "Your lens",
     title: "Built through a karmic lens",
-    body: `${BRAND.product} is reading your chart through karma and dharma — Saturn's current position and what it's consolidating, the nodal axis and the soul contracts encoded in it, and the past-life patterns that surface as present-life patterns.`,
+    body: `${BRAND.product} is reading your chart through karma and dharma: Saturn's current position and what it's consolidating, the nodal axis and the soul contracts encoded in it, and the past-life patterns that surface as present-life patterns.`,
   },
   psychological: {
     kicker: "Your lens",
     title: "Built through a psychological lens",
-    body: `${BRAND.product} is reading your chart through a Jungian lens — the archetypes at work in your life this year, the shadow material activated by current transits, and the inner figures that show up as outer events.`,
+    body: `${BRAND.product} is reading your chart through a Jungian lens: the archetypes at work in your life this year, the shadow material activated by current transits, and the inner figures that show up as outer events.`,
   },
   traditional: {
     kicker: "Your lens",
     title: "Built through a Hellenistic lens",
-    body: `${BRAND.product} is reading your chart the traditional way — sect light, essential dignities, and time lords. The ancient timing techniques determine which planets carry the most weight in your year.`,
+    body: `${BRAND.product} is reading your chart the traditional way: sect light, essential dignities, and time lords. The ancient timing techniques determine which planets carry the most weight in your year.`,
   },
   synthesis: {
     kicker: "Your lens",
     title: "Woven from all four traditions",
-    body: `${BRAND.product} is reading your chart through all four lenses — evolutionary, karmic, psychological, and traditional — letting each placement determine which framework fits best. The result holds more complexity than any single tradition can.`,
+    body: `${BRAND.product} is reading your chart through all four lenses (evolutionary, karmic, psychological, and traditional), letting each placement determine which framework fits best. The result holds more complexity than any single tradition can.`,
   },
 };
 
@@ -77,7 +77,7 @@ const FEATURE_SLIDES = [
   },
   {
     kicker: `Meet ${BRAND.oracle}`,
-    title: `${BRAND.oracle} — the Planner + Oracle guide`,
+    title: `${BRAND.oracle}, the Planner + Oracle guide`,
     body: `Pronounced ${BRAND.oraclePronunciation}. Included only with Planner + Oracle, ${BRAND.oracle} is a conversational guide grounded in your natal chart, permitted Blueprint context, current transits, and goals.`,
   },
   {
@@ -122,7 +122,7 @@ function buildSlides(tradition: Tradition | null, goals: string[]) {
         goals.length === 1
           ? `Anchored to ${goals[0]}`
           : `Anchored to ${listed}`,
-      body: `${goals.join(", ")} — each gets its own timing windows, transit phases, and milestone rhythm across the year. Not general advice for those areas. Yours.`,
+      body: `${goals.join(", ")}. Each one gets its own timing windows, transit phases, and milestone rhythm across the year.`,
     });
   }
 
@@ -280,7 +280,7 @@ export default function OnboardingGeneratingPage() {
       if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
         clearInterval(poll);
         setErrorDetail(
-          "Generation is taking longer than expected. This sometimes happens on the first run — please try again and it should be faster."
+          "Generation is taking longer than expected. This sometimes happens on the first run. Please try again, and it should be faster."
         );
         setFailed(true);
         return;
@@ -361,12 +361,12 @@ export default function OnboardingGeneratingPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setNudgeError((data as { error?: string }).error ?? "Couldn't build the curriculum right now — you can create one from the Curriculum page.");
+        setNudgeError((data as { error?: string }).error ?? "Couldn't build the curriculum right now. You can create one from the Curriculum page.");
         setPhase("nudge");
         return;
       }
     } catch {
-      setNudgeError("Couldn't reach the server — you can create a curriculum from the Curriculum page.");
+      setNudgeError("Couldn't reach the server. You can create a curriculum from the Curriculum page.");
       setPhase("nudge");
       return;
     }
@@ -418,7 +418,7 @@ export default function OnboardingGeneratingPage() {
             <p className="shell-kicker">Your planner is ready</p>
             <h2 className="font-serif text-3xl text-bone">Build your first curriculum?</h2>
             <p className="text-sm leading-relaxed text-bone-muted">
-              You mentioned what you want to study. {BRAND.product} can generate a week-by-week plan around it right now — tied to your blueprint timeline.
+              You mentioned what you want to study. {BRAND.product} can generate a week-by-week plan around it right now, tied to your blueprint timeline.
             </p>
           </div>
 
@@ -534,7 +534,7 @@ export default function OnboardingGeneratingPage() {
         )}
         <p className="mx-auto max-w-sm text-sm text-bone-muted">
           This takes <strong className="text-bone/80">5–15 minutes</strong> depending on your
-          connection. Go get a coffee — this only ever happens once.
+          connection. Go get a coffee. This only happens once.
         </p>
       </div>
 

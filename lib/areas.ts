@@ -1,4 +1,5 @@
 import type { MonthBlueprint, NatalChart, Planet, WeekBlueprint, ZodiacSign } from '@/types/blueprint'
+import { findGoalCategorySpec, normalizeGoalCategoryKey, resolveGoalCategoryLabel } from '@/lib/goal-categories'
 
 export type AreaEnergyMode = 'building' | 'opening' | 'stabilizing' | 'recalibrating'
 
@@ -10,6 +11,8 @@ export interface AreaYearNarrative {
 export interface AreaDefinition {
   slug: string
   name: string
+  /** Older goal_categories.name values still in the database. */
+  legacyNames?: string[]
   summary: string
   plannerPrompt: string
   primaryHouses: number[]
@@ -69,7 +72,8 @@ const AREA_DEFINITIONS: AreaDefinition[] = [
   },
   {
     slug: 'financial',
-    name: 'Financial',
+    name: 'Money',
+    legacyNames: ['Financial'],
     summary: 'Personal resources, shared money, security, value, and the long arc of material stability.',
     plannerPrompt: 'Track when the chart supports earning, organizing, renegotiating, saving, or reviewing obligations.',
     primaryHouses: [2, 8, 11],
@@ -85,7 +89,8 @@ const AREA_DEFINITIONS: AreaDefinition[] = [
   },
   {
     slug: 'work-career',
-    name: 'Work & Career',
+    name: 'Work and career',
+    legacyNames: ['Work & Career'],
     summary: 'Vocation, visibility, daily work rhythm, mastery, and the way your effort meets the world.',
     plannerPrompt: 'Track when the sky supports visibility, strategic effort, restructuring, and sustainable momentum.',
     primaryHouses: [10, 6, 2],
@@ -101,7 +106,8 @@ const AREA_DEFINITIONS: AreaDefinition[] = [
   },
   {
     slug: 'health-wellness',
-    name: 'Health & Wellness',
+    name: 'Health and wellness',
+    legacyNames: ['Health & Wellness'],
     summary: 'The body, daily rhythms, nervous-system regulation, and the small practices that keep you well.',
     plannerPrompt: 'Track when the chart supports building routine, repairing tissue, deepening rest, or recalibrating habits.',
     primaryHouses: [6, 1, 12],
@@ -117,7 +123,8 @@ const AREA_DEFINITIONS: AreaDefinition[] = [
   },
   {
     slug: 'creative-projects',
-    name: 'Creative Projects',
+    name: 'Creative projects',
+    legacyNames: ['Creative Projects'],
     summary: 'Original work, play, voice, and the practice of making something that did not exist before.',
     plannerPrompt: 'Track when the sky supports drafting, refining, releasing, or letting the work rest.',
     primaryHouses: [5, 3, 11],
@@ -133,7 +140,8 @@ const AREA_DEFINITIONS: AreaDefinition[] = [
   },
   {
     slug: 'personal-growth',
-    name: 'Personal Growth',
+    name: 'Personal growth',
+    legacyNames: ['Personal Growth'],
     summary: 'Inner work, integration, learning, and the slow remodelling of how you move through your life.',
     plannerPrompt: 'Track when the chart supports inner inquiry, study, integration, and the recalibration of identity.',
     primaryHouses: [9, 12, 1],
@@ -203,14 +211,23 @@ export function slugifyAreaName(name: string): string {
 }
 
 export function canonicalAreaName(name: string): string {
-  const normalized = normalizeName(name)
-  const match = AREA_DEFINITIONS.find((area) => normalizeName(area.name) === normalized || area.slug === slugifyAreaName(name))
-  return match?.name ?? name
+  return resolveGoalCategoryLabel(name)
 }
 
 export function getAreaDefinition(nameOrSlug: string): AreaDefinition {
+  const spec = findGoalCategorySpec(nameOrSlug)
+  if (spec) {
+    const match = AREA_DEFINITIONS.find((area) => area.slug === spec.slug)
+    if (match) return match
+  }
+
   const normalized = normalizeName(nameOrSlug)
-  const match = AREA_DEFINITIONS.find((area) => normalizeName(area.name) === normalized || area.slug === slugifyAreaName(nameOrSlug))
+  const match = AREA_DEFINITIONS.find(
+    (area) =>
+      normalizeName(area.name) === normalized ||
+      area.slug === slugifyAreaName(nameOrSlug) ||
+      area.legacyNames?.some((legacy) => normalizeName(legacy) === normalized),
+  )
   if (match) return match
 
   return {
@@ -341,7 +358,7 @@ export function buildAreaYearNarrative({
 }
 
 function normalizeName(value: string): string {
-  return value.trim().toLowerCase()
+  return normalizeGoalCategoryKey(value)
 }
 
 function todayISO(): string {

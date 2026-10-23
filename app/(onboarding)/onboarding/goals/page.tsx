@@ -6,20 +6,12 @@ import { EnsureTraditionDefault } from "@/components/onboarding/EnsureTraditionD
 import { OnboardingIa5StepKicker } from "@/components/onboarding/OnboardingIa5StepKicker";
 import { OnboardingIa5StepNav } from "@/components/onboarding/OnboardingIa5StepNav";
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import { LIFE_CATEGORIES } from "@/lib/constants";
 import { ONBOARDING_IA5_FOCUS_RING, onboardingIa5FieldClass } from "@/lib/onboarding/ia5-ui";
 
 const STORAGE_KEY = "kiaros_onboarding_step2";
 
-const SUGGESTED_CATEGORIES = [
-  "Work & Career",
-  "Relationships",
-  "Health & Wellness",
-  "Creative Projects",
-  "Personal Growth",
-  "Family",
-  "Financial",
-  "Spirituality",
-];
+const SUGGESTED_CATEGORIES = LIFE_CATEGORIES;
 
 interface GoalCategory {
   name: string;

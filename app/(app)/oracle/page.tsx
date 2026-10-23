@@ -15,10 +15,10 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
           Turn a Stelloquy reading into a conversation.
         </h1>
         <p className="shell-prose-lead mt-4 max-w-3xl">
-          Stelloquy is the voice woven through {BRAND.product} — an ongoing conversation grounded
-          in your chart, the current sky, your goals and blueprint, and the memory you choose to
-          carry forward. Follow up, refine the question, and capture what matters with active
-          Planner + Oracle access.
+          Stelloquy is the voice woven through {BRAND.product}. It&apos;s an ongoing conversation
+          grounded in your chart, the current sky, your goals and blueprint, and the memory you
+          choose to carry forward. With Planner + Oracle access, you can follow up, refine the
+          question, and save what you want to keep.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
