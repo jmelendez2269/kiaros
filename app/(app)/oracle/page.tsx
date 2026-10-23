@@ -35,8 +35,8 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
 
         {hasReadOnlyPlannerAccess ? (
           <p className="mt-6 rounded-[1rem] border border-leather-500/25 bg-leather-500/10 px-4 py-3 text-sm leading-6 text-bone-muted">
-            Your previous annual planner remains readable, but Stelloquy requires active Planner +
-            Oracle access.
+            Your previous annual planner is still here to read. Stelloquy opens again when your plan
+            with Stelloquy access is active.
           </p>
         ) : null}
 
