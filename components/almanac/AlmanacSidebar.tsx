@@ -900,6 +900,7 @@ export function AlmanacSidebar({
           onToggleDesktop={() => setCollapsed((c) => !c)}
           calendarDayEnabled={calendarDayEnabled}
           journalIaEnabled={journalIaEnabled}
+          goalsIaEnabled={goalsIaOn}
           iaOverlaysEnabled={iaOverlaysEnabled}
           showPatternDiscovery={showPatternDiscovery}
           patternScope={patternScope}
@@ -980,6 +981,7 @@ export function AlmanacSidebar({
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}
+              goalsIaEnabled={goalsIaOn}
               iaOverlaysEnabled={iaOverlaysEnabled}
               showPatternDiscovery={showPatternDiscovery}
               patternScope={patternScope}
