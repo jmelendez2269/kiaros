@@ -7,7 +7,7 @@ import {
   SETTINGS_IA_STICKY_SAVE_BAR_HEIGHT_PX,
   setSettingsIaStickySaveLift,
 } from "@/lib/settings/settings-ia-sticky-save";
-import { MessageCircle } from "lucide-react";
+import { ChevronDown, MessageCircle } from "lucide-react";
 import {
   SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER,
   SETTINGS_IA_CHECKBOX_ACCENT_CLASS,
@@ -740,9 +740,14 @@ export default function SettingsPageIa() {
                   type="button"
                   aria-expanded={usageDetailsOpen}
                   onClick={() => setUsageDetailsOpen((open) => !open)}
-                  className="mt-4 rounded-xl border border-[#E3E2ED]/12 bg-[#0A0C14] px-4 py-2 text-sm font-medium text-[#A4A3B1] transition-colors hover:bg-[#E3E2ED]/5 hover:text-[#E3E2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#E3E2ED]/12 bg-[#0A0C14] px-4 py-2 text-sm font-medium text-[#A4A3B1] transition-colors hover:bg-[#E3E2ED]/5 hover:text-[#E3E2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2"
                 >
                   {SETTINGS_IA_USAGE_DETAILS_LABEL}
+                  <ChevronDown
+                    aria-hidden
+                    size={15}
+                    className={`shrink-0 text-bone-muted transition-transform ${usageDetailsOpen ? "rotate-180" : ""}`}
+                  />
                 </button>
                 {usageDetailsOpen ? (
                   <div className="mt-4 space-y-3">
