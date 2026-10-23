@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { UserButton, SignOutButton } from '@clerk/nextjs'
 import { ChevronDown, ChevronLeft, ChevronRight, LogOut, Menu, Settings, X } from 'lucide-react'
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 import { BrandMark } from '@/components/shared/BrandMark'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,9 @@ import {
 } from '@/lib/goals-study/ia-goals-routes'
 import { K } from './tokens'
 import { StarField } from './StarField'
+import { AppHelpMenu } from '@/components/feedback/AppHelpMenu'
+import { IaOverlaysNoticeStack } from '@/components/overlays/IaOverlaysNoticeStack'
+import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
 
 type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal' | 'goalsStudy' | 'stelloquy'
 type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal' | 'goalsStudy'>
@@ -537,6 +540,10 @@ function SidebarBody({
   calendarDayEnabled,
   journalIaEnabled,
   goalsIaEnabled,
+  iaOverlaysEnabled,
+  showPatternDiscovery,
+  patternScope,
+  initialPatternIds,
 }: {
   navItems: typeof NAV
   pathname: string
@@ -546,7 +553,13 @@ function SidebarBody({
   calendarDayEnabled: boolean
   journalIaEnabled: boolean
   goalsIaEnabled: boolean
+  iaOverlaysEnabled: boolean
+  showPatternDiscovery: boolean
+  patternScope: string
+  initialPatternIds: string[]
 }) {
+  const footerMenuAnchorRef = useRef<HTMLDivElement>(null)
+
   return (
     <div
       style={{
@@ -602,6 +615,14 @@ function SidebarBody({
 
         <div style={{ height: 1, background: K.line }} />
 
+        {iaOverlaysEnabled && !collapsed ? (
+          <IaOverlaysNoticeStack
+            showPatternDiscovery={showPatternDiscovery}
+            patternScope={patternScope}
+            initialPatternIds={initialPatternIds}
+          />
+        ) : null}
+
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: collapsed ? 0 : 2 }}>
           <NavRow
             navItems={navItems}
@@ -614,73 +635,190 @@ function SidebarBody({
           />
         </div>
 
+        <div
+          style={{
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 10,
+            overflow: 'visible',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
         <div style={{ height: 1, background: K.line }} />
 
         <div
+          ref={footerMenuAnchorRef}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '4px 6px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
+            position: 'relative',
+            width: '100%',
+            boxSizing: 'border-box',
+            overflow: 'visible',
           }}
         >
-          <UserButton
-            appearance={{
-              elements: {
-                userButtonAvatarBox: { width: 30, height: 30 },
-              },
-            }}
-          />
-          {!collapsed ? (
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: K.fMono, fontSize: 13, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
-                Your chart
-              </div>
-            </div>
-          ) : null}
-          <Link
-            href="/settings"
-            onClick={onNavigate}
-            title="Settings"
-            aria-label="Settings"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 44,
-              height: 44,
-              color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
-            }}
-          >
-            <Settings size={14} />
-          </Link>
-          <SignOutButton>
-            <button
-              type="button"
-              title="Sign out"
+        {iaOverlaysEnabled ? (
+          <>
+            <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                minWidth: 44,
-                height: 44,
-                padding: collapsed ? 0 : '0 8px',
-                justifyContent: 'center',
-                fontFamily: K.fMono,
-                fontSize: 12,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: K.inkSoft,
+                gap: 10,
+                padding: '6px 6px 4px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                boxSizing: 'border-box',
               }}
             >
-              <LogOut size={14} />
-              {!collapsed ? 'Sign out' : null}
-            </button>
-          </SignOutButton>
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: { width: 30, height: 30 },
+                  },
+                }}
+              />
+              {!collapsed ? (
+                <div
+                  style={{
+                    fontFamily: K.fMono,
+                    fontSize: 13,
+                    color: K.inkSoft,
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Your chart
+                </div>
+              ) : null}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                padding: '0 6px 6px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                boxSizing: 'border-box',
+              }}
+            >
+              <Link
+                href="/settings"
+                onClick={onNavigate}
+                title="Settings"
+                aria-label="Settings"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 44,
+                  height: 44,
+                  color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
+                }}
+              >
+                <Settings size={14} />
+              </Link>
+              <AppHelpMenu menuAnchorRef={footerMenuAnchorRef} />
+              <SignOutButton>
+                <button
+                  type="button"
+                  title="Sign out"
+                  aria-label="Sign out"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    width: 44,
+                    height: 44,
+                    padding: 0,
+                    color: K.inkSoft,
+                  }}
+                >
+                  <LogOut size={14} aria-hidden="true" />
+                </button>
+              </SignOutButton>
+            </div>
+          </>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '4px 6px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              overflow: 'visible',
+              boxSizing: 'border-box',
+            }}
+          >
+            <UserButton
+              appearance={{
+                elements: {
+                  userButtonAvatarBox: { width: 30, height: 30 },
+                },
+              }}
+            />
+            {!collapsed ? (
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontFamily: K.fMono,
+                    fontSize: 13,
+                    color: K.inkSoft,
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Your chart
+                </div>
+              </div>
+            ) : null}
+            <Link
+              href="/settings"
+              onClick={onNavigate}
+              title="Settings"
+              aria-label="Settings"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 44,
+                height: 44,
+                color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
+              }}
+            >
+              <Settings size={14} />
+            </Link>
+            <SignOutButton>
+              <button
+                type="button"
+                title="Sign out"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  minWidth: 44,
+                  height: 44,
+                  padding: collapsed ? 0 : '0 8px',
+                  justifyContent: 'center',
+                  fontFamily: K.fMono,
+                  fontSize: 12,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: K.inkSoft,
+                }}
+              >
+                <LogOut size={14} />
+                {!collapsed ? 'Sign out' : null}
+              </button>
+            </SignOutButton>
+          </div>
+        )}
+        </div>
         </div>
       </div>
     </div>
@@ -692,11 +830,19 @@ export function AlmanacSidebar({
   calendarDayEnabled = false,
   journalIaEnabled = false,
   goalsIaEnabled = false,
+  iaOverlaysEnabled = false,
+  showPatternDiscovery = false,
+  patternScope = '',
+  initialPatternIds = [],
 }: {
   hasOracleAccess: boolean
   calendarDayEnabled?: boolean
   journalIaEnabled?: boolean
   goalsIaEnabled?: boolean
+  iaOverlaysEnabled?: boolean
+  showPatternDiscovery?: boolean
+  patternScope?: string
+  initialPatternIds?: string[]
 }) {
   const goalsIaOn =
     goalsIaEnabled || iaGoalsFlagEnabled(process.env.NEXT_PUBLIC_IA_GOALS)
@@ -704,6 +850,12 @@ export function AlmanacSidebar({
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const { setMobileNavOpen } = useMobileNavOpen()
+
+  useEffect(() => {
+    if (!iaOverlaysEnabled) return
+    setMobileNavOpen(mobileOpen)
+  }, [iaOverlaysEnabled, mobileOpen, setMobileNavOpen])
 
   useEffect(() => {
     const saved = window.localStorage.getItem(SIDEBAR_STORAGE_KEY)
@@ -749,6 +901,10 @@ export function AlmanacSidebar({
           calendarDayEnabled={calendarDayEnabled}
           journalIaEnabled={journalIaEnabled}
           goalsIaEnabled={goalsIaOn}
+          iaOverlaysEnabled={iaOverlaysEnabled}
+          showPatternDiscovery={showPatternDiscovery}
+          patternScope={patternScope}
+          initialPatternIds={initialPatternIds}
         />
       </aside>
 
@@ -786,6 +942,15 @@ export function AlmanacSidebar({
             {mobileOpen ? <X size={16} /> : <Menu size={16} />}
           </button>
         </div>
+        {iaOverlaysEnabled ? (
+          <div style={{ marginTop: 10 }}>
+            <IaOverlaysNoticeStack
+              showPatternDiscovery={showPatternDiscovery}
+              patternScope={patternScope}
+              initialPatternIds={initialPatternIds}
+            />
+          </div>
+        ) : null}
       </div>
 
       {mobileOpen ? (
@@ -817,6 +982,10 @@ export function AlmanacSidebar({
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}
               goalsIaEnabled={goalsIaOn}
+              iaOverlaysEnabled={iaOverlaysEnabled}
+              showPatternDiscovery={showPatternDiscovery}
+              patternScope={patternScope}
+              initialPatternIds={initialPatternIds}
             />
           </div>
         </div>

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { after } from 'next/server'
 import Link from 'next/link'
 import { createAdminSupabase } from '@/lib/supabase/admin'
+import { MobileNavOpenProvider } from '@/components/app/MobileNavOpenContext'
 import { AlmanacSidebar } from '@/components/almanac/AlmanacSidebar'
 import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
@@ -20,6 +21,7 @@ import {
   isCalendarDayEnabled,
   isIaGoalsEnabled,
   isIaJournalEnabled,
+  isIaOverlaysEnabled,
   isJournalConsentV2Enabled,
   isMemoryDefaultsEnabled,
 } from '@/lib/feature-flags'
@@ -142,12 +144,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const showNoAccessBanner = !isAppAdmin && !entitlementsUnknown && !access.hasPlannerAccess && !access.hasReadOnlyPlannerAccess && access.entitlements.length === 0
   const memoryDefaultsCaptureEnabled =
     isMemoryDefaultsEnabled() && isJournalConsentV2Enabled()
+  const iaOverlaysEnabled = isIaOverlaysEnabled()
+  const showPatternDiscovery = isAppAdmin || access.hasOracleAccess
 
   return (
     <StelloquyProvider
       hasOracleAccess={isAppAdmin || access.hasOracleAccess}
       memoryDefaultsCaptureEnabled={memoryDefaultsCaptureEnabled}
+      sharedConversationEnabled={iaOverlaysEnabled}
     >
+      <MobileNavOpenProvider>
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
           <AlmanacSidebar
@@ -155,6 +161,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             calendarDayEnabled={isCalendarDayEnabled()}
             journalIaEnabled={isIaJournalEnabled()}
             goalsIaEnabled={isIaGoalsEnabled()}
+            iaOverlaysEnabled={iaOverlaysEnabled}
+            showPatternDiscovery={showPatternDiscovery}
+            patternScope={profile.id}
+            initialPatternIds={initialPatternIds}
           />
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
             <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
@@ -217,7 +227,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                     </Link>
                   </div>
                 )}
-                <ReflectionNotification />
+                {!iaOverlaysEnabled ? <ReflectionNotification /> : null}
                 {children}
               </div>
             </main>
@@ -231,11 +241,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           })}
         />
         <TourOverlay />
-        {isAppAdmin || access.hasOracleAccess ? (
+        {!iaOverlaysEnabled && showPatternDiscovery ? (
           <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
         ) : null}
-        <FeedbackButton />
+        {!iaOverlaysEnabled ? <FeedbackButton /> : null}
       </div>
+      </MobileNavOpenProvider>
     </StelloquyProvider>
   )
 }

@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { writeOraclePreseed } from '@/lib/oracle/preseed'
+import { StelloquySharedChatProvider } from './StelloquySharedChat'
 
 interface StelloquyContextValue {
   /** True when the drawer is on-screen. */
@@ -33,12 +34,15 @@ interface Props {
   children: ReactNode
   hasOracleAccess: boolean
   memoryDefaultsCaptureEnabled?: boolean
+  /** When true, drawer and /oracle page share one useChat thread. */
+  sharedConversationEnabled?: boolean
 }
 
 export function StelloquyProvider({
   children,
   hasOracleAccess,
   memoryDefaultsCaptureEnabled = false,
+  sharedConversationEnabled = false,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [preseedNonce, setPreseedNonce] = useState(0)
@@ -75,7 +79,13 @@ export function StelloquyProvider({
     ],
   )
 
-  return <StelloquyContext.Provider value={value}>{children}</StelloquyContext.Provider>
+  const tree = <StelloquyContext.Provider value={value}>{children}</StelloquyContext.Provider>
+
+  if (sharedConversationEnabled) {
+    return <StelloquySharedChatProvider>{tree}</StelloquySharedChatProvider>
+  }
+
+  return tree
 }
 
 export function useStelloquy(): StelloquyContextValue {

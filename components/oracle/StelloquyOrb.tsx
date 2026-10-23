@@ -5,6 +5,8 @@ interface Props {
   size?: number
   className?: string
   ariaLabel?: string
+  /** Center ✦ mark for compact dock orbs (IA overlays floating button). */
+  showStarMark?: boolean
 }
 
 const STATE_BACKGROUND: Record<OrbState, string> = {
@@ -33,6 +35,7 @@ export function StelloquyOrb({
   size = 64,
   className,
   ariaLabel,
+  showStarMark = false,
 }: Props) {
   // Scale outer glow with size: full glow above 80px, halved for header-sized orbs,
   // dropped entirely at avatar size to avoid bleeding into surrounding text.
@@ -43,6 +46,10 @@ export function StelloquyOrb({
         ? STATE_GLOW[state].replace(/0\.5/g, '0.3').replace(/0\.4/g, '0.22').replace(/0\.2/g, '0.12')
         : 'none'
 
+  const preferredStarPx = 14
+  const maxStarPxForOrb = Math.floor(size * 0.42)
+  const starSize = Math.min(preferredStarPx, maxStarPxForOrb)
+
   return (
     <span
       role={ariaLabel ? 'img' : undefined}
@@ -50,6 +57,7 @@ export function StelloquyOrb({
       aria-hidden={ariaLabel ? undefined : true}
       className={['stelloquy-orb', className].filter(Boolean).join(' ')}
       style={{
+        position: 'relative',
         display: 'inline-block',
         width: size,
         height: size,
@@ -59,7 +67,27 @@ export function StelloquyOrb({
         animation: STATE_ANIMATION[state],
         flexShrink: 0,
       }}
-    />
+    >
+      {showStarMark ? (
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: starSize,
+            lineHeight: 1,
+            color: '#FFFFFF',
+            textShadow: '0 0 3px rgba(10, 12, 20, 0.6)',
+            pointerEvents: 'none',
+          }}
+        >
+          ✦
+        </span>
+      ) : null}
+    </span>
   )
 }
 

@@ -8,6 +8,8 @@ import { K } from '@/components/almanac/tokens'
 import { OracleConversation } from './OracleConversation'
 import { StelloquyOrb } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
+import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
+import { isIaOverlaysEnabled } from '@/lib/ia-overlays-flag'
 
 interface Props {
   /** Localized date string to pass into OracleChat's header. */
@@ -28,6 +30,9 @@ export function StelloquyShell({ today }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const { open, closeDrawer: close, toggleDrawer: toggle, hasOracleAccess } = useStelloquy()
+  const sharedConversation = isIaOverlaysEnabled()
+  const iaOverlays = sharedConversation
+  const { mobileNavOpen } = useMobileNavOpen()
 
   // ⌘K / Ctrl+K from anywhere. Skip when an input is focused so we don't
   // hijack the journal composer.
@@ -75,7 +80,8 @@ export function StelloquyShell({ today }: Props) {
 
   // On the legacy /oracle page the full chat is already on screen — don't
   // duplicate the dock there.
-  const showDock = !pathname?.startsWith('/oracle')
+  const showDock =
+    !pathname?.startsWith('/oracle') && !(iaOverlays && mobileNavOpen)
 
   return (
     <>
@@ -104,7 +110,7 @@ export function StelloquyShell({ today }: Props) {
             cursor: 'pointer',
           }}
         >
-          <StelloquyOrb size={34} state="speaking" />
+          <StelloquyOrb size={34} state="speaking" showStarMark={iaOverlays} />
           <div style={{ textAlign: 'left' }}>
             <div
               style={{
@@ -226,7 +232,11 @@ export function StelloquyShell({ today }: Props) {
               </button>
             </div>
             <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-              <OracleConversation className="flex min-h-0 flex-1 flex-col px-4 py-4" />
+              <OracleConversation
+                className="flex min-h-0 flex-1 flex-col px-4 py-4"
+                showStatusOrb
+                useSharedChat={sharedConversation}
+              />
             </div>
           </aside>
         </>

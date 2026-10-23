@@ -8,6 +8,7 @@ import { OracleMessage } from './OracleMessage'
 import { OracleInput } from './OracleInput'
 import { StelloquyOrb, type OrbState } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
+import { useStelloquySharedChat } from './StelloquySharedChat'
 import { consumeOraclePreseed } from '@/lib/oracle/preseed'
 import { buildCaptureOptions, capturePanelCopy, type CaptureMode as ThreadCaptureMode } from '@/lib/oracle/capture-options'
 
@@ -59,6 +60,8 @@ interface Props {
   /** Tradition tab this conversation belongs to. Sent to the API so the
    *  system prompt uses the matching interpretive lens. */
   tradition?: string
+  /** Use the global shared thread (drawer + Stelloquy tab). */
+  useSharedChat?: boolean
 }
 
 /**
@@ -76,8 +79,10 @@ export function OracleConversation({
   className = 'flex min-h-0 flex-1 flex-col px-5 py-5',
   showStatusOrb = false,
   tradition,
+  useSharedChat = false,
 }: Props) {
   const [memorySources, setMemorySources] = useState<Array<{ id: string; date: string; title: string | null }>>([])
+  const sharedChat = useStelloquySharedChat()
   const transport = useMemo(
     () => new DefaultChatTransport({ api: '/api/oracle/chat', body: tradition ? { tradition } : undefined,
       fetch: async (input, init) => {
@@ -90,7 +95,11 @@ export function OracleConversation({
     }),
     [tradition]
   )
-  const { messages, sendMessage, status, error } = useChat({ transport })
+  const localChat = useChat({ transport })
+  const useShared = useSharedChat && sharedChat !== null
+  const { messages, sendMessage, status, error } = useShared
+    ? sharedChat
+    : localChat
   const [captureError, setCaptureError] = useState<string | null>(null)
   const [showThreadPanel, setShowThreadPanel] = useState(false)
   const [savingThread, setSavingThread] = useState(false)

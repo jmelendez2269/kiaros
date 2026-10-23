@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { OracleConversation } from './OracleConversation'
 import { StelloquyOrb } from './StelloquyOrb'
+import { isIaOverlaysEnabled } from '@/lib/ia-overlays-flag'
 
 const ORACLE_TRADITIONS = [
   { id: 'evolutionary', label: 'Evolutionary' },
@@ -29,6 +30,7 @@ export function OracleChat({ today, userTradition }: Props) {
 
   const [active, setActive] = useState<OracleTradition>(defaultTab)
   const [mounted, setMounted] = useState<Set<OracleTradition>>(() => new Set([defaultTab]))
+  const sharedConversation = isIaOverlaysEnabled()
 
   function handleTabClick(id: OracleTradition) {
     setActive(id)
@@ -83,6 +85,7 @@ export function OracleChat({ today, userTradition }: Props) {
               <OracleConversation
                 tradition={t.id}
                 className="shell-panel flex min-h-0 flex-1 flex-col px-5 py-5"
+                useSharedChat={sharedConversation && t.id === defaultTab}
               />
             </div>
           ) : null
