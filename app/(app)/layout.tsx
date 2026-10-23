@@ -18,6 +18,7 @@ import { DataUnavailable } from '@/components/shared/DataUnavailable'
 import { ESTABLISHED_PATTERN_MIN_SAMPLE } from '@/lib/journal/pattern-discoveries'
 import {
   isCalendarDayEnabled,
+  isIaGoalsEnabled,
   isIaJournalEnabled,
   isJournalConsentV2Enabled,
   isMemoryDefaultsEnabled,
@@ -153,6 +154,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             hasOracleAccess={isAppAdmin || access.hasOracleAccess}
             calendarDayEnabled={isCalendarDayEnabled()}
             journalIaEnabled={isIaJournalEnabled()}
+            goalsIaEnabled={isIaGoalsEnabled()}
           />
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
             <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
