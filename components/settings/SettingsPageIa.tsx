@@ -11,6 +11,7 @@ import { MessageCircle } from "lucide-react";
 import {
   SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER,
   SETTINGS_IA_CHECKBOX_ACCENT_CLASS,
+  SETTINGS_IA_USAGE_DETAILS_LABEL,
   SETTINGS_IA_GROUPS,
   isSettingsIaNearPageBottom,
   pickSettingsIaActiveSection,
@@ -176,6 +177,7 @@ export default function SettingsPageIa() {
   const [isPending, startTransition] = useTransition();
   const [billingError, setBillingError] = useState<string | null>(null);
   const [isBillingPending, setIsBillingPending] = useState(false);
+  const [usageDetailsOpen, setUsageDetailsOpen] = useState(false);
   const [oracleUsage, setOracleUsage] = useState<{
     messageCount: number;
     limit: number;
@@ -724,13 +726,34 @@ export default function SettingsPageIa() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-plum-400/30 bg-plum-400/10 text-plum-300"><MessageCircle size={18} /></div>
                   <div><p className="shell-kicker">Planner + Oracle</p><h3 className="shell-subsection-title mt-1">Stelloquy usage this month</h3></div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="rounded-[1rem] border border-border/70 bg-stone-950/55 px-4 py-3"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/70">Messages used</p><p className="mt-2 text-lg font-medium text-bone">{oracleUsage.messageCount} <span className="text-bone-muted/70">/ {oracleUsage.limit}</span></p></div>
                   <div className="rounded-[1rem] border border-border/70 bg-stone-950/55 px-4 py-3"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/70">Remaining</p><p className="mt-2 text-lg font-medium text-bone">{oracleUsage.remaining}</p></div>
-                  <div className="rounded-[1rem] border border-border/70 bg-stone-950/55 px-4 py-3"><p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/70">Cache hit rate</p><p className="mt-2 text-lg font-medium text-bone">{Math.round(oracleUsage.cacheHitRate * 100)}%</p></div>
                 </div>
+                <button
+                  type="button"
+                  aria-expanded={usageDetailsOpen}
+                  onClick={() => setUsageDetailsOpen((open) => !open)}
+                  className="mt-4 rounded-xl border border-[#E3E2ED]/12 bg-[#0A0C14] px-4 py-2 text-sm font-medium text-[#A4A3B1] transition-colors hover:bg-[#E3E2ED]/5 hover:text-[#E3E2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2"
+                >
+                  {SETTINGS_IA_USAGE_DETAILS_LABEL}
+                </button>
+                {usageDetailsOpen ? (
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-[1rem] border border-border/70 bg-stone-950/55 px-4 py-3">
+                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-bone-muted/70">Cache hit rate</p>
+                      <p className="mt-2 text-lg font-medium text-bone">{Math.round(oracleUsage.cacheHitRate * 100)}%</p>
+                    </div>
+                    <p className="text-xs leading-6 text-bone-muted/75">
+                      Cached input tokens cost ~90% less — a high cache hit rate means your natal chart and permitted
+                      Blueprint context aren&apos;t being re-billed on every message.
+                    </p>
+                  </div>
+                ) : null}
                 <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-stone-950/70"><div className="h-full rounded-full bg-leather-400/80" style={{ width: `${Math.min(100, Math.round((oracleUsage.messageCount / oracleUsage.limit) * 100))}%` }} /></div>
-                <p className="mt-3 text-xs leading-6 text-bone-muted/75">Stelloquy requires active Planner + Oracle access. Its limit resets on the first of each month. Cached input tokens cost ~90% less — a high cache hit rate means your natal chart and permitted Blueprint context aren&apos;t being re-billed on every message.</p>
+                <p className="mt-3 text-xs leading-6 text-bone-muted/75">
+                  Stelloquy requires active Planner + Oracle access. Its limit resets on the first of each month.
+                </p>
               </div>
             ) : null}
           </section>

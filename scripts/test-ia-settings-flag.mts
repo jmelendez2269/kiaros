@@ -20,6 +20,7 @@ import {
   SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER,
   SETTINGS_IA_CHECKBOX_ACCENT_CLASS,
   SETTINGS_IA_GROUPS,
+  SETTINGS_IA_USAGE_DETAILS_LABEL,
 } from '../lib/settings/ia-settings-routes.ts'
 import {
   SETTINGS_IA_PAGE_BOTTOM_PAD_PX,
@@ -55,6 +56,7 @@ assert.equal(settingsPlanHref(true), '/settings#plan')
 assert.equal(settingsPlanHref(false), '/settings')
 assert.equal(SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER, 'Unknown')
 assert.equal(SETTINGS_IA_CHECKBOX_ACCENT_CLASS, 'accent-[#A98AEF]')
+assert.equal(SETTINGS_IA_USAGE_DETAILS_LABEL, 'Details')
 assert.equal(SETTINGS_IA_PAGE_BOTTOM_PAD_PX, 72)
 assert.equal(SETTINGS_IA_GROUPS.length, 7)
 assert.equal(SETTINGS_IA_GROUPS[0].id, 'birth-data')
@@ -149,6 +151,16 @@ assert.ok(!iaSource.includes('backdrop-blur-sm'))
 assert.ok(iaSource.includes('SETTINGS_IA_PAGE_BOTTOM_PAD_PX'))
 assert.ok(iaSource.includes('SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER'))
 assert.ok(iaSource.includes('hashchange'))
+assert.ok(
+  iaSource.includes('const [usageDetailsOpen, setUsageDetailsOpen] = useState(false)'),
+  'usage details toggle must start collapsed',
+)
+assert.ok(iaSource.includes('aria-expanded={usageDetailsOpen}'))
+assert.ok(iaSource.includes('SETTINGS_IA_USAGE_DETAILS_LABEL'))
+assert.ok(
+  iaSource.includes('usageDetailsOpen ?') && iaSource.includes('Cache hit rate'),
+  'cache hit rate must be behind usage details toggle',
+)
 const kairosHomeSource = readFileSync(join(root, 'components/marketing/KairosHome.tsx'), 'utf8')
 assert.ok(kairosHomeSource.includes('settingsPlanHref'))
 assert.ok(iaSource.includes('z-50 flex h-14'))

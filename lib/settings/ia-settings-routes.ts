@@ -45,6 +45,9 @@ export function settingsMoonReminderHref(iaSettingsEnabled: boolean): string {
 /** Placeholder label until Stella finalizes copy (moon-day nudge → settings). */
 export const MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL = 'Reminder settings'
 
+/** Placeholder toggle label for Stelloquy usage cache details (Stella copy pending). */
+export const SETTINGS_IA_USAGE_DETAILS_LABEL = 'Details'
+
 export function scrollSettingsAnchorIntoView(
   element: HTMLElement,
   behavior: ScrollBehavior = 'smooth',
