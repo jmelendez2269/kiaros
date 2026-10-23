@@ -106,11 +106,11 @@ export default function OnboardingBirthPage() {
   const continueHint =
     ia5 && continueDisabled && !isSubmitting
       ? !displayName?.trim()
-        ? "Placeholder: Add your name to continue"
+        ? "Add your name to continue"
         : !birthDate
-          ? "Placeholder: Add your date of birth to continue"
+          ? "Add your date of birth to continue"
           : !birthCity
-            ? "Placeholder: Add your birth city to continue"
+            ? "Add your birth city to continue"
             : null
       : null;
 

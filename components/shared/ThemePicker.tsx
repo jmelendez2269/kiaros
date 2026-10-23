@@ -1,14 +1,20 @@
 "use client";
 
 import { THEMES, type ThemeId } from "@/lib/constants";
+import { ONBOARDING_IA5_FOCUS_RING } from "@/lib/onboarding/ia5-ui";
 
 interface ThemePickerProps {
   value: ThemeId;
   onChange: (theme: ThemeId) => void;
   compact?: boolean;
+  /** IA Phase 6 onboarding (flag on): designer focus ring on theme tiles. */
+  ia5FocusRing?: boolean;
 }
 
-export function ThemePicker({ value, onChange, compact = false }: ThemePickerProps) {
+export function ThemePicker({ value, onChange, compact = false, ia5FocusRing = false }: ThemePickerProps) {
+  const focusClass = ia5FocusRing
+    ? `focus:outline-none ${ONBOARDING_IA5_FOCUS_RING}`
+    : "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent";
   return (
     <div className={`grid gap-3 ${compact ? "grid-cols-3" : "grid-cols-1 sm:grid-cols-3"}`}>
       {THEMES.map((theme) => {
@@ -18,7 +24,7 @@ export function ThemePicker({ value, onChange, compact = false }: ThemePickerPro
             key={theme.id}
             type="button"
             onClick={() => onChange(theme.id)}
-            className={`group relative overflow-hidden rounded-2xl border text-left transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`group relative overflow-hidden rounded-2xl border text-left transition-all duration-300 ${focusClass} ${
               selected
                 ? "border-accent/70 bg-card/90 shadow-glow"
                 : "border-border/60 bg-stone-900/50 hover:border-border hover:bg-stone-900/70"

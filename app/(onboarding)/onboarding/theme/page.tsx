@@ -114,7 +114,7 @@ export default function OnboardingThemePage() {
         </p>
       </div>
 
-      <ThemePicker value={selected} onChange={handleChange} />
+      <ThemePicker value={selected} onChange={handleChange} ia5FocusRing={ia5} />
 
       <div className="rounded-xl border border-border/60 bg-stone-950/40 px-4 py-3">
         <p className="text-sm leading-relaxed text-bone-muted">
@@ -148,7 +148,7 @@ export default function OnboardingThemePage() {
                 onChange={(e) => setStudyFocus(e.target.value)}
                 disabled={isSubmitting}
                 rows={4}
-                placeholder="Placeholder: topics, books, or skills for Stella to refine"
+                placeholder="topics, books, or skills for Stella to refine"
                 className={onboardingIa5FieldClass(true, "w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/45")}
               />
             </div>
