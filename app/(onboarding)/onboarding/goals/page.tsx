@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { EnsureTraditionDefault } from "@/components/onboarding/EnsureTraditionDefault";
+import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
 
 const STORAGE_KEY = "kiaros_onboarding_step2";
 
@@ -23,6 +25,7 @@ interface GoalCategory {
 
 export default function OnboardingGoalsPage() {
   const router = useRouter();
+  const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
   const [selected, setSelected] = useState<GoalCategory[]>([]);
   const [customInput, setCustomInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,13 +99,14 @@ export default function OnboardingGoalsPage() {
       return;
     }
 
-    router.push("/onboarding/study-focus");
+    router.push(ia5 ? "/onboarding/year-focus" : "/onboarding/study-focus");
   };
 
   return (
     <div className="space-y-8">
+      {ia5 ? <EnsureTraditionDefault /> : null}
       <div className="space-y-3">
-        <p className="shell-kicker">Step 2</p>
+        <p className="shell-kicker">{ia5 ? "Step 2" : "Step 2"}</p>
         <h2 className="font-serif text-3xl text-bone">Choose your focus layers</h2>
         <p className="leading-relaxed text-bone-muted">
           What parts of your life matter most right now? Choose the areas you want this planner to

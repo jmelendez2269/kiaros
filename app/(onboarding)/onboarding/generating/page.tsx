@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { TOUR_PENDING_KEY } from "@/lib/tour/config";
+import { WeekPreviewGeneratingPanel } from "@/components/onboarding/WeekPreviewGeneratingPanel";
+import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import { IA5_GENERATING_MODE_KEY, type Ia5GeneratingMode } from "@/lib/onboarding/ia-onboarding-routes";
 
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_INTERVAL_MS = 8000;
@@ -143,6 +146,8 @@ type Phase = "loading" | "nudge" | "building";
 export default function OnboardingGeneratingPage() {
   const router = useRouter();
   const hasFired = useRef(false);
+  const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
+  const [generatingMode, setGeneratingMode] = useState<Ia5GeneratingMode | null>(null);
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [failed, setFailed] = useState(false);
@@ -162,8 +167,19 @@ export default function OnboardingGeneratingPage() {
   const [intensity, setIntensity] = useState<"light" | "balanced" | "dense">("balanced");
   const [nudgeError, setNudgeError] = useState("");
 
+  useEffect(() => {
+    if (!ia5) {
+      setGeneratingMode("blueprint");
+      return;
+    }
+    const stored = sessionStorage.getItem(IA5_GENERATING_MODE_KEY) as Ia5GeneratingMode | null;
+    setGeneratingMode(stored === "week" ? "week" : "blueprint");
+  }, [ia5]);
+
   // Load personalization from localStorage + profile API
   useEffect(() => {
+    if (ia5 && generatingMode === null) return;
+    if (ia5 && generatingMode === "week") return;
     let goals: string[] = [];
     try {
       const raw = localStorage.getItem("kiaros_onboarding_step2");
@@ -189,7 +205,7 @@ export default function OnboardingGeneratingPage() {
         setSlides(buildSlides(null, goals));
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ia5, generatingMode]);
 
   // Auto-advance slides every 7 seconds
   useEffect(() => {
@@ -295,11 +311,21 @@ export default function OnboardingGeneratingPage() {
   }
 
   useEffect(() => {
+    if (ia5 && generatingMode === null) return;
+    if (ia5 && generatingMode === "week") return;
     if (hasFired.current) return;
     hasFired.current = true;
     startGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ia5, generatingMode]);
+
+  if (ia5 && generatingMode === "week") {
+    return <WeekPreviewGeneratingPanel />;
+  }
+
+  if (ia5 && generatingMode === null) {
+    return null;
+  }
 
   async function handleRetry() {
     setFailed(false);

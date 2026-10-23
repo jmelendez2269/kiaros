@@ -9,6 +9,12 @@ import { z } from "zod";
 import { BRAND } from "@/lib/brand";
 import { FIELD_NOTES_ONBOARDING_OPT_IN } from "@/lib/marketing/field-notes-copy";
 import { subscribeFieldNotesKit } from "@/lib/marketing/subscribe-field-notes-kit";
+import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import {
+  defaultOnboardingTraditionPayload,
+  IA5_GENERATING_MODE_KEY,
+  onboardingGeneratingHref,
+} from "@/lib/onboarding/ia-onboarding-routes";
 
 const STORAGE_KEY = "kiaros_onboarding_step1";
 
@@ -198,6 +204,26 @@ export default function OnboardingBirthPage() {
     }
 
     const { destination } = (await nextRes.json()) as { destination: string };
+    const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
+
+    if (ia5 && destination === "/onboarding/tradition") {
+      await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(defaultOnboardingTraditionPayload()),
+      });
+      router.push("/onboarding/goals");
+      return;
+    }
+
+    if (ia5) {
+      if (destination.includes("generating-week")) {
+        sessionStorage.setItem(IA5_GENERATING_MODE_KEY, "week");
+      }
+      router.push(onboardingGeneratingHref(true, destination));
+      return;
+    }
+
     router.push(destination);
   };
 
