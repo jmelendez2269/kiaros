@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { settingsBirthDataHref } from '@/lib/settings/ia-settings-routes'
+import { isIaSettingsEnabled } from '@/lib/ia-settings-flag'
 import { HOUSE_MEANING } from '@/lib/human-design'
 import type { NatalChart, Planet } from '@/types/blueprint'
 
@@ -35,7 +37,7 @@ export function HousesChapter({ natalChart, birthTimeKnown }: Props) {
             and houses will appear here.
           </p>
           <Link
-            href="/settings"
+            href={settingsBirthDataHref(isIaSettingsEnabled())}
             className="mt-3 inline-block text-sm text-leather-200 underline underline-offset-2"
           >
             Update birth time

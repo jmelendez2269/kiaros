@@ -14,6 +14,11 @@ import {
   writeMoonDayDismissal,
 } from '@/lib/today/moon-day-nudge-storage'
 import { resolveMoonDayNudgeViewState } from '@/lib/today/moon-day-nudge-view-state'
+import { isIaSettingsEnabled } from '@/lib/ia-settings-flag'
+import {
+  MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL,
+  settingsMoonReminderHref,
+} from '@/lib/settings/ia-settings-routes'
 
 const VIOLET = '#A98AEF'
 const INK = '#E3E2ED'
@@ -90,6 +95,8 @@ export function MoonDayRitualNudge({
   onStripVisibleChange,
 }: MoonDayRitualNudgeProps) {
   const copy = MOON_DAY_NUDGE_COPY[phase]
+  const iaSettingsOn = isIaSettingsEnabled()
+  const reminderSettingsHref = settingsMoonReminderHref(iaSettingsOn)
   const dismissalKey = moonDayDismissalKey(phase, localDate)
   const [remindersEnabled, setRemindersEnabled] = useState(true)
   const [dismissed, setDismissed] = useState(false)
@@ -222,6 +229,14 @@ export function MoonDayRitualNudge({
           >
             {copy.cta}
           </Link>
+          {iaSettingsOn ? (
+            <Link
+              href={reminderSettingsHref}
+              className="mt-2 block text-center text-xs text-[#A4A3B1] underline-offset-2 hover:text-[#E3E2ED] hover:underline"
+            >
+              {MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL}
+            </Link>
+          ) : null}
         </div>
       </div>
 
@@ -261,6 +276,16 @@ export function MoonDayRitualNudge({
         </Link>
         <DismissButton label={copy.dismiss} onClick={persistDismiss} />
       </div>
+      {iaSettingsOn ? (
+        <div className="mt-2 hidden text-center sm:block">
+          <Link
+            href={reminderSettingsHref}
+            className="text-xs text-[#A4A3B1] underline-offset-2 hover:text-[#E3E2ED] hover:underline"
+          >
+            {MOON_DAY_NUDGE_REMINDER_SETTINGS_LABEL}
+          </Link>
+        </div>
+      ) : null}
     </div>
   )
 }

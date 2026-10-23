@@ -205,7 +205,11 @@ export function FeedbackFloatingTrigger({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className="fixed left-4 z-40 flex min-h-11 items-center gap-2 rounded-full border border-border/60 bg-stone-900/90 px-4 py-2 text-xs font-medium text-bone-muted shadow-lg backdrop-blur-sm transition-colors hover:border-border hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400 sm:left-5"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}
+      data-kiaros-floating-feedback=""
+      style={{
+        bottom:
+          'calc(env(safe-area-inset-bottom, 0px) + 1rem + var(--kiaros-settings-sticky-save-offset, 0px))',
+      }}
       aria-label="Give feedback"
     >
       <MessageSquareText aria-hidden="true" className="h-4 w-4" />

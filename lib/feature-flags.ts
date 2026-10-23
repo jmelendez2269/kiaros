@@ -2,6 +2,7 @@ import "server-only";
 
 import { featureFlagEnabled } from "@/lib/calendar/calendar-day-routes";
 import { isIaOverlaysEnabled as iaOverlaysEnabled } from "@/lib/ia-overlays-flag";
+import { isIaSettingsEnabled as iaSettingsEnabled } from "@/lib/ia-settings-flag";
 
 function enabled(value: string | undefined): boolean {
   return featureFlagEnabled(value);
@@ -74,4 +75,9 @@ export function isIaGoalsEnabled(): boolean {
 /** Stelloquy tab, notice area, feedback in help menu. Off by default. */
 export function isIaOverlaysEnabled(): boolean {
   return iaOverlaysEnabled();
+}
+
+/** Settings regroup (section nav, birth data first). Off by default. */
+export function isIaSettingsEnabled(): boolean {
+  return iaSettingsEnabled();
 }

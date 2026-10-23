@@ -9,6 +9,8 @@ import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterS
 import { FieldNotesHeroSignup } from "@/components/marketing/FieldNotesHeroSignup";
 import { BrandMark } from "@/components/shared/BrandMark";
 import { BRAND } from "@/lib/brand";
+import { isIaSettingsEnabled } from "@/lib/ia-settings-flag";
+import { settingsPlanHref } from "@/lib/settings/ia-settings-routes";
 
 interface Props {
   isSignedIn: boolean;
@@ -410,6 +412,7 @@ function Manifesto() {
 }
 
 function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
+  const managePlanHref = settingsPlanHref(isIaSettingsEnabled());
   return (
     <section id="pricing" className="scroll-mt-24 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5 md:px-8">
@@ -503,7 +506,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 {isSignedIn ? (
                   <Link
-                    href="/settings"
+                    href={managePlanHref}
                     className="rounded-full bg-almanac-kairos-hi px-5 py-2.5 text-sm font-semibold text-almanac-midnight"
                   >
                     Manage plan

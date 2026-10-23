@@ -6,8 +6,19 @@ import {
   readMoonDayRemindersEnabled,
   writeMoonDayRemindersEnabled,
 } from '@/lib/today/moon-day-nudge-storage'
+import { SETTINGS_IA_CHECKBOX_ACCENT_CLASS } from '@/lib/settings/ia-settings-routes'
 
-export function MoonDayRemindersSettingsPanel() {
+type MoonDayRemindersSettingsPanelProps = {
+  /** When true, omit outer shell and section headings (IA Settings journal group). */
+  embedded?: boolean
+  /** Anchor id for /settings#moon-reminder when IA settings is on. */
+  anchorId?: string
+}
+
+export function MoonDayRemindersSettingsPanel({
+  embedded = false,
+  anchorId,
+}: MoonDayRemindersSettingsPanelProps = {}) {
   const [enabled, setEnabled] = useState(true)
   const [hydrated, setHydrated] = useState(false)
 
@@ -21,8 +32,41 @@ export function MoonDayRemindersSettingsPanel() {
     writeMoonDayRemindersEnabled(next)
   }
 
+  const toggle = (
+    <label className="flex cursor-pointer items-start gap-3 rounded-[1rem] border border-border/70 bg-stone-950/55 px-4 py-4">
+        <input
+          type="checkbox"
+          className={`mt-1 h-4 w-4 rounded border-border/80 ${SETTINGS_IA_CHECKBOX_ACCENT_CLASS}`}
+          checked={enabled}
+          disabled={!hydrated}
+          onChange={(event) => handleToggle(event.target.checked)}
+        />
+        <span>
+          <span
+            tabIndex={-1}
+            {...(embedded ? { "data-moon-reminder-focus": true } : {})}
+            className="block text-sm font-medium text-bone outline-none"
+          >
+            Moon-day reminders
+          </span>
+          <span className="mt-1 block text-sm leading-6 text-bone-muted">
+            On new and full moon days, show a gentle strip on Today offering a ritual journal entry. Stored on
+            this device only. No push notifications.
+          </span>
+        </span>
+      </label>
+  )
+
+  if (embedded) {
+    return (
+      <div id={anchorId} className="scroll-mt-6">
+        {toggle}
+      </div>
+    )
+  }
+
   return (
-    <section className="shell-panel px-6 py-6 md:px-8">
+    <section className="shell-panel px-6 py-6 md:px-8" id={anchorId}>
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-violet-400/30 bg-violet-400/10 text-violet-200">
           <Bell size={18} />
@@ -33,22 +77,7 @@ export function MoonDayRemindersSettingsPanel() {
         </div>
       </div>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-[1rem] border border-border/70 bg-stone-950/55 px-4 py-4">
-        <input
-          type="checkbox"
-          className="mt-1 h-4 w-4 rounded border-border/80"
-          checked={enabled}
-          disabled={!hydrated}
-          onChange={(event) => handleToggle(event.target.checked)}
-        />
-        <span>
-          <span className="block text-sm font-medium text-bone">Moon-day reminders</span>
-          <span className="mt-1 block text-sm leading-6 text-bone-muted">
-            On new and full moon days, show a gentle strip on Today offering a ritual journal entry. Stored on
-            this device only. No push notifications.
-          </span>
-        </span>
-      </label>
+      {toggle}
     </section>
   )
 }
