@@ -842,6 +842,7 @@ export function AlmanacSidebar({
   journalIaEnabled = false,
   goalsIaEnabled = false,
   iaOverlaysEnabled = false,
+  iaTourActive = false,
   showPatternDiscovery = false,
   patternScope = '',
   initialPatternIds = [],
@@ -851,6 +852,7 @@ export function AlmanacSidebar({
   journalIaEnabled?: boolean
   goalsIaEnabled?: boolean
   iaOverlaysEnabled?: boolean
+  iaTourActive?: boolean
   showPatternDiscovery?: boolean
   patternScope?: string
   initialPatternIds?: string[]
@@ -997,7 +999,7 @@ export function AlmanacSidebar({
               navItems={navItems}
               pathname={pathname}
               collapsed={false}
-              hideBrandHeader
+              hideBrandHeader={iaTourActive}
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}

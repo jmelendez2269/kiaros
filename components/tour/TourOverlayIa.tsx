@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   TOUR_OPEN_MOBILE_NAV_EVENT,
@@ -11,7 +11,11 @@ import {
   type TourState,
 } from '@/lib/tour/config'
 import type { TourStep } from '@/lib/tour/tour-step'
-import { computeIaTourCardLayout } from '@/lib/tour/tour-placement'
+import {
+  computeIaTourCardLayout,
+  estimateIaTourCardMinHeight,
+  IA_TOUR_CARD_WIDTH_PX,
+} from '@/lib/tour/tour-placement'
 import { handleTourFocusTrap, listFocusableElements, TOUR_IA_FOCUS_RING } from '@/lib/tour/tour-focus'
 import {
   findVerticalScrollParent,
@@ -49,6 +53,8 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
   const targetElRef = useRef<HTMLElement | null>(null)
   const targetGroupRef = useRef<HTMLElement[]>([])
   const dialogRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
   const nextButtonRef = useRef<HTMLButtonElement>(null)
   const tourStepRef = useRef(0)
 
@@ -304,26 +310,73 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
     router.push(step.requiredRoute)
   }
 
-  if (!mounted || !tourState.active || tourState.completed) return null
-
   const currentStep = steps[tourState.step]
-  if (!currentStep) return null
-
   const isLast = tourState.step === steps.length - 1
   const showBack = tourState.step > 0
+  const tourVisible = mounted && tourState.active && !tourState.completed && Boolean(currentStep)
 
-  const vw = window.innerWidth
-  const vh = window.innerHeight
+  const vw = tourVisible ? window.innerWidth : 0
+  const vh = tourVisible ? window.innerHeight : 0
   const mobileNav = isMobileNavViewport(vw)
+  const cardWidth = Math.min(IA_TOUR_CARD_WIDTH_PX, Math.max(280, vw - 16))
+  const minCardHeight =
+    currentStep && tourVisible
+      ? estimateIaTourCardMinHeight({
+          body: currentStep.body,
+          cardWidth,
+          stepCount: steps.length,
+          showBack,
+        })
+      : IA_TOUR_CARD_WIDTH_PX
 
-  const cardLayout = spot
-    ? computeIaTourCardLayout(spot, vw, vh, mobileNav)
-    : {
-        left: vw / 2 - 170,
-        top: vh / 2 - 140,
-        maxHeight: vh - 16,
-        cardWidth: Math.min(344, vw - 16),
-      }
+  const cardLayout =
+    tourVisible && spot
+      ? computeIaTourCardLayout(spot, vw, vh, mobileNav, minCardHeight)
+      : tourVisible
+        ? {
+            left: vw / 2 - 170,
+            top: vh / 2 - 140,
+            maxHeight: vh - 16,
+            cardWidth,
+          }
+        : {
+            left: 0,
+            top: 0,
+            maxHeight: 0,
+            cardWidth: IA_TOUR_CARD_WIDTH_PX,
+          }
+
+  useLayoutEffect(() => {
+    if (!tourVisible) return
+    const card = dialogRef.current
+    const body = bodyRef.current
+    const footer = footerRef.current
+    if (!card || !body || !footer) return
+
+    body.style.maxHeight = ''
+    body.style.overflowY = 'visible'
+
+    const budget = cardLayout.maxHeight
+    const naturalHeight = card.scrollHeight
+    if (naturalHeight <= budget + 1) return
+
+    const footerHeight = footer.offsetHeight
+    const bodyMax = Math.max(72, budget - footerHeight)
+    body.style.maxHeight = `${bodyMax}px`
+    body.style.overflowY = 'auto'
+  }, [
+    tourVisible,
+    tourState.step,
+    cardLayout.maxHeight,
+    cardLayout.left,
+    cardLayout.top,
+    cardLayout.cardWidth,
+    currentStep?.body,
+    showBack,
+    steps.length,
+  ])
+
+  if (!tourVisible || !currentStep) return null
 
   const buttonClass = cn(
     TOUR_IA_FOCUS_RING,
@@ -377,10 +430,9 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
         }}
       >
         <div
+          ref={bodyRef}
           style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
+            flexShrink: 0,
             padding: '22px 22px 12px',
           }}
         >
@@ -397,7 +449,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
           </p>
         </div>
 
-        <div style={{ flexShrink: 0, padding: '0 22px 16px' }}>
+        <div ref={footerRef} style={{ flexShrink: 0, padding: '0 22px 16px' }}>
           <div
             data-tour-progress-dots
             style={{ display: 'flex', gap: 5, marginBottom: 14, paddingTop: 4 }}

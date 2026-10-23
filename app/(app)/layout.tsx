@@ -167,6 +167,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             journalIaEnabled={isIaJournalEnabled()}
             goalsIaEnabled={isIaGoalsEnabled()}
             iaOverlaysEnabled={iaOverlaysEnabled}
+            iaTourActive={iaTourActive}
             showPatternDiscovery={showPatternDiscovery}
             patternScope={profile.id}
             initialPatternIds={initialPatternIds}

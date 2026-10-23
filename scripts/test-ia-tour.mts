@@ -24,7 +24,10 @@ import {
   isTourTargetVisibleFromMetrics,
   TOUR_MOBILE_NAV_MAX_WIDTH_PX,
 } from '../lib/tour/tour-target-element.ts'
-import { computeIaTourCardLayout } from '../lib/tour/tour-placement.ts'
+import {
+  computeIaTourCardLayout,
+  estimateIaTourCardMinHeight,
+} from '../lib/tour/tour-placement.ts'
 import { scrollTopAfterAlignTarget } from '../lib/tour/tour-scroll-into-view.ts'
 import { TOUR_IA_FOCUS_RING } from '../lib/tour/tour-focus.ts'
 
@@ -173,10 +176,45 @@ console.log('✓ Desktop target wiring\n')
 
 console.log('Progress dots stay in fixed footer (not scroll-clipped)')
 assert.ok(iaTourSource.includes('data-tour-progress-dots'))
-const dotsIdx = iaTourSource.indexOf('data-tour-progress-dots')
-const scrollIdx = iaTourSource.indexOf('overflowY: \'auto\'')
-assert.ok(dotsIdx > scrollIdx, 'dots must render after scrollable body block')
+assert.ok(iaTourSource.includes('footerRef'))
+assert.ok(iaTourSource.includes('flexShrink: 0'))
+assert.ok(iaTourSource.includes('useLayoutEffect'))
 console.log('✓ Progress dots placement\n')
+
+console.log('IA tour card fits full copy at 390 and 1440 (calendar step)')
+const allFlagsOn: IaTourFlags = {
+  calendarDay: true,
+  journal: true,
+  goals: true,
+  overlays: true,
+}
+const calendarStep = buildTourSteps(allFlagsOn).find((s) => s.id === 'calendar')
+assert.ok(calendarStep)
+const calendarMin = estimateIaTourCardMinHeight({
+  body: calendarStep!.body,
+  cardWidth: 344,
+  stepCount: 6,
+  showBack: true,
+})
+const mobileCalendarSpot = { left: 12, top: 108, width: 366, height: 48 }
+const calendarMobileLayout = computeIaTourCardLayout(
+  mobileCalendarSpot,
+  390,
+  844,
+  true,
+  calendarMin,
+)
+assert.ok(calendarMobileLayout.maxHeight >= calendarMin)
+const desktopCalendarSpot = { left: 248, top: 96, width: 520, height: 44 }
+const calendarDesktopLayout = computeIaTourCardLayout(
+  desktopCalendarSpot,
+  1440,
+  900,
+  false,
+  calendarMin,
+)
+assert.ok(calendarDesktopLayout.maxHeight >= calendarMin)
+console.log('✓ Calendar card height budget\n')
 
 console.log('IA tour card placement avoids covering spotlight (mobile)')
 const spot = { left: 12, top: 400, width: 280, height: 52 }
@@ -235,8 +273,9 @@ assert.ok(iaTourSource.includes('preventScroll: true'))
 assert.ok(iaTourSource.includes('targetElRef'))
 console.log('✓ Layout and IA overlay wiring\n')
 
-console.log('Mobile drawer hides duplicate brand header')
-assert.ok(sidebarSource.includes('hideBrandHeader'))
+console.log('Mobile drawer hides duplicate brand header only when IA tour flags on')
+assert.ok(sidebarSource.includes('hideBrandHeader={iaTourActive}'))
+assert.ok(layoutSource.includes('iaTourActive={iaTourActive}'))
 console.log('✓ Duplicate header fix\n')
 
 console.log('Sidebar uses sidebarNavTourTarget')
