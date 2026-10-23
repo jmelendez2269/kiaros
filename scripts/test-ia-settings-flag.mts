@@ -16,9 +16,13 @@ import {
   SETTINGS_IA_SCROLL_OFFSET_PX,
   settingsBirthDataHref,
   settingsMoonReminderHref,
+  settingsPlanHref,
+  SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER,
+  SETTINGS_IA_CHECKBOX_ACCENT_CLASS,
   SETTINGS_IA_GROUPS,
 } from '../lib/settings/ia-settings-routes.ts'
 import {
+  SETTINGS_IA_PAGE_BOTTOM_PAD_PX,
   SETTINGS_IA_STICKY_SAVE_BAR_HEIGHT_PX,
   SETTINGS_IA_STICKY_SAVE_CSS_VAR,
 } from '../lib/settings/settings-ia-sticky-save.ts'
@@ -47,6 +51,11 @@ console.log('Route helpers')
 assert.equal(settingsBirthDataHref(false), '/settings')
 assert.equal(settingsBirthDataHref(true), '/settings#birth-data')
 assert.equal(settingsMoonReminderHref(true), '/settings#moon-reminder')
+assert.equal(settingsPlanHref(true), '/settings#plan')
+assert.equal(settingsPlanHref(false), '/settings')
+assert.equal(SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER, 'Unknown')
+assert.equal(SETTINGS_IA_CHECKBOX_ACCENT_CLASS, 'accent-[#A98AEF]')
+assert.equal(SETTINGS_IA_PAGE_BOTTOM_PAD_PX, 72)
 assert.equal(SETTINGS_IA_GROUPS.length, 7)
 assert.equal(SETTINGS_IA_GROUPS[0].id, 'birth-data')
 console.log('✓ Route helpers\n')
@@ -134,8 +143,14 @@ assert.ok(iaSource.includes('pickSettingsIaActiveSection'))
 assert.ok(iaSource.includes('jumpToSection'))
 assert.ok(iaSource.includes('focusMoonReminderTarget'))
 assert.ok(iaSource.includes('data-moon-reminder-focus') || moonPanelSource.includes('data-moon-reminder-focus'))
-assert.ok(iaSource.includes('bg-[rgba(10,12,20,0.92)]'))
-assert.ok(iaSource.includes('backdrop-blur-sm'))
+assert.ok(iaSource.includes('bg-[#0A0C14]'))
+assert.ok(iaSource.includes('border-[rgba(227,226,237,0.08)]'))
+assert.ok(!iaSource.includes('backdrop-blur-sm'))
+assert.ok(iaSource.includes('SETTINGS_IA_PAGE_BOTTOM_PAD_PX'))
+assert.ok(iaSource.includes('SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER'))
+assert.ok(iaSource.includes('hashchange'))
+const kairosHomeSource = readFileSync(join(root, 'components/marketing/KairosHome.tsx'), 'utf8')
+assert.ok(kairosHomeSource.includes('settingsPlanHref'))
 assert.ok(iaSource.includes('z-50 flex h-14'))
 assert.ok(iaSource.includes('aria-disabled={form.birth_time_unknown}'))
 assert.ok(iaSource.includes('text-bone-muted">Saved</p>'), 'Saved confirmation beside save in sticky bar')

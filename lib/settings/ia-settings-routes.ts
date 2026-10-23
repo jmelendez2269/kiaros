@@ -29,6 +29,15 @@ export function settingsBirthDataHref(iaSettingsEnabled: boolean): string {
   return iaSettingsEnabled ? '/settings#birth-data' : '/settings'
 }
 
+export function settingsPlanHref(iaSettingsEnabled: boolean): string {
+  return iaSettingsEnabled ? '/settings#plan' : '/settings'
+}
+
+/** Placeholder for birth time when unknown (Stella copy pending). */
+export const SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER = 'Unknown'
+
+export const SETTINGS_IA_CHECKBOX_ACCENT_CLASS = 'accent-[#A98AEF]'
+
 export function settingsMoonReminderHref(iaSettingsEnabled: boolean): string {
   return iaSettingsEnabled ? '/settings#moon-reminder' : '/settings'
 }

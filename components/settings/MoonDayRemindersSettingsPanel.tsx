@@ -6,6 +6,7 @@ import {
   readMoonDayRemindersEnabled,
   writeMoonDayRemindersEnabled,
 } from '@/lib/today/moon-day-nudge-storage'
+import { SETTINGS_IA_CHECKBOX_ACCENT_CLASS } from '@/lib/settings/ia-settings-routes'
 
 type MoonDayRemindersSettingsPanelProps = {
   /** When true, omit outer shell and section headings (IA Settings journal group). */
@@ -35,13 +36,19 @@ export function MoonDayRemindersSettingsPanel({
     <label className="flex cursor-pointer items-start gap-3 rounded-[1rem] border border-border/70 bg-stone-950/55 px-4 py-4">
         <input
           type="checkbox"
-          className="mt-1 h-4 w-4 rounded border-border/80"
+          className={`mt-1 h-4 w-4 rounded border-border/80 ${SETTINGS_IA_CHECKBOX_ACCENT_CLASS}`}
           checked={enabled}
           disabled={!hydrated}
           onChange={(event) => handleToggle(event.target.checked)}
         />
         <span>
-          <span className="block text-sm font-medium text-bone">Moon-day reminders</span>
+          <span
+            tabIndex={-1}
+            {...(embedded ? { "data-moon-reminder-focus": true } : {})}
+            className="block text-sm font-medium text-bone outline-none"
+          >
+            Moon-day reminders
+          </span>
           <span className="mt-1 block text-sm leading-6 text-bone-muted">
             On new and full moon days, show a gentle strip on Today offering a ritual journal entry. Stored on
             this device only. No push notifications.
@@ -53,13 +60,6 @@ export function MoonDayRemindersSettingsPanel({
   if (embedded) {
     return (
       <div id={anchorId} className="scroll-mt-6">
-        <h3
-          tabIndex={-1}
-          data-moon-reminder-focus
-          className="mb-3 text-sm font-medium text-bone outline-none"
-        >
-          Moon-day reminders
-        </h3>
         {toggle}
       </div>
     )

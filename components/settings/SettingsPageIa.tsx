@@ -2,9 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { setSettingsIaStickySaveLift } from "@/lib/settings/settings-ia-sticky-save";
+import {
+  SETTINGS_IA_PAGE_BOTTOM_PAD_PX,
+  SETTINGS_IA_STICKY_SAVE_BAR_HEIGHT_PX,
+  setSettingsIaStickySaveLift,
+} from "@/lib/settings/settings-ia-sticky-save";
 import { MessageCircle } from "lucide-react";
 import {
+  SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER,
+  SETTINGS_IA_CHECKBOX_ACCENT_CLASS,
   SETTINGS_IA_GROUPS,
   isSettingsIaNearPageBottom,
   pickSettingsIaActiveSection,
@@ -405,21 +411,26 @@ export default function SettingsPageIa() {
 
   useEffect(() => {
     if (!hydrated) return;
-    const hash = window.location.hash.replace(/^#/, "");
-    if (!hash) return;
 
     let cancelled = false;
-    let attempts = 0;
 
-    const run = () => {
-      if (cancelled) return;
-      if (scrollToHashAnchor(hash, attempts === 0 ? "auto" : "auto")) return;
-      if (attempts++ < 40) requestAnimationFrame(run);
+    const navigateToHash = () => {
+      const hash = window.location.hash.replace(/^#/, "");
+      if (!hash) return;
+      let attempts = 0;
+      const run = () => {
+        if (cancelled) return;
+        if (scrollToHashAnchor(hash, "auto")) return;
+        if (attempts++ < 40) requestAnimationFrame(run);
+      };
+      requestAnimationFrame(run);
     };
 
-    requestAnimationFrame(run);
+    navigateToHash();
+    window.addEventListener("hashchange", navigateToHash);
     return () => {
       cancelled = true;
+      window.removeEventListener("hashchange", navigateToHash);
     };
   }, [hydrated, scrollToHashAnchor]);
 
@@ -458,7 +469,12 @@ export default function SettingsPageIa() {
       : "border-[#E3E2ED]/12 bg-[#0A0C14] text-[#A4A3B1] hover:bg-[#E3E2ED]/5 hover:text-[#E3E2ED]";
 
   return (
-<div className={`mx-auto max-w-[1040px] bg-[#0A0C14] px-4 py-8 md:px-8 ${isMainFormDirty ? "pb-28" : "pb-8"}`}>
+<div
+      className="mx-auto max-w-[1040px] bg-[#0A0C14] px-4 py-8 md:px-8"
+      style={{
+        paddingBottom: `calc(${SETTINGS_IA_PAGE_BOTTOM_PAD_PX}px + ${isMainFormDirty ? SETTINGS_IA_STICKY_SAVE_BAR_HEIGHT_PX : 0}px + env(safe-area-inset-bottom, 0px))`,
+      }}
+    >
       <section className="shell-panel px-5 py-5 md:px-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
@@ -550,10 +566,13 @@ export default function SettingsPageIa() {
                   <span className="text-sm font-medium text-bone">Birth time</span>
                   <input
                     type="time"
-                    value={form.birth_time}
+                    value={form.birth_time_unknown ? "" : form.birth_time}
                     onChange={(event) => setField("birth_time", event.target.value)}
                     disabled={form.birth_time_unknown}
                     aria-disabled={form.birth_time_unknown}
+                    placeholder={
+                      form.birth_time_unknown ? SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER : undefined
+                    }
                     className={`${FIELD_INPUT_CLASS} disabled:cursor-default disabled:opacity-45`}
                   />
                 </label>
@@ -567,7 +586,12 @@ export default function SettingsPageIa() {
                 </label>
               </div>
               <label className="flex items-center gap-2 text-sm text-bone-muted">
-                <input type="checkbox" checked={form.birth_time_unknown} onChange={(event) => setField("birth_time_unknown", event.target.checked)} className="rounded border-border/80 bg-stone-950/70" />
+                <input
+                  type="checkbox"
+                  checked={form.birth_time_unknown}
+                  onChange={(event) => setField("birth_time_unknown", event.target.checked)}
+                  className={`rounded border-border/80 bg-stone-950/70 ${SETTINGS_IA_CHECKBOX_ACCENT_CLASS}`}
+                />
                 I don&apos;t know my birth time
               </label>
               <p className="text-xs leading-6 text-bone-muted/75">
@@ -726,7 +750,7 @@ export default function SettingsPageIa() {
 
       {isMainFormDirty ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-50 flex h-14 items-center justify-between border-t border-[#E3E2ED]/10 bg-[rgba(10,12,20,0.92)] px-4 backdrop-blur-sm md:px-8"
+          className="fixed inset-x-0 bottom-0 z-50 flex h-14 items-center justify-between border-t border-[rgba(227,226,237,0.08)] bg-[#0A0C14] px-4 md:px-8"
           style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
         >
           <p className="text-sm text-[#A4A3B1]">Unsaved changes</p>
