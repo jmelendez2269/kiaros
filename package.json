@@ -23,6 +23,7 @@
     "test:ia-goals": "npx tsx scripts/test-ia-goals-flag.mts",
     "test:ia-overlays": "npx tsx scripts/test-ia-overlays-flag.mts",
     "test:ia-settings": "npx tsx scripts/test-ia-settings-flag.mts",
+    "test:ia-tour": "npx tsx scripts/test-ia-tour.mts",
     "test:ia-onboarding5": "npx tsx scripts/test-ia-onboarding5-flag.mts",
     "test:onboarding-cycle-fields": "npx tsx scripts/test-onboarding-cycle-fields.mts",
     "test:moon-day-nudge": "npx tsx scripts/test-moon-day-nudge.mts",

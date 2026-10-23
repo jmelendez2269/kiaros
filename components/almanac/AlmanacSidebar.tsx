@@ -19,6 +19,11 @@ import { StarField } from './StarField'
 import { AppHelpMenu } from '@/components/feedback/AppHelpMenu'
 import { IaOverlaysNoticeStack } from '@/components/overlays/IaOverlaysNoticeStack'
 import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
+import {
+  NAV_CURRICULUM_TOUR_TARGET,
+  primaryNavTourTarget,
+  type AlmanacNavKey,
+} from '@/lib/almanac/nav-tour-target'
 
 type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal' | 'goalsStudy' | 'stelloquy'
 type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal' | 'goalsStudy'>
@@ -361,7 +366,7 @@ function NavRow({
             onClick={onNavigate}
             title={collapsed ? n.label : undefined}
             aria-current={pathname === n.href ? 'page' : undefined}
-            data-tour={`nav-${n.key}`}
+            data-tour={primaryNavTourTarget(n.key as AlmanacNavKey, calendarDayEnabled)}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -487,7 +492,7 @@ function NavRow({
                     aria-current={
                       subActive ? (subParts.hash ? 'location' : 'page') : undefined
                     }
-                    data-tour={sub.href === '/curriculum' ? 'nav-curriculum' : undefined}
+                    data-tour={sub.href === '/curriculum' ? NAV_CURRICULUM_TOUR_TARGET : undefined}
                     style={{
                       display: 'flex',
                       flexDirection: 'column',

@@ -1,56 +1,12 @@
-import { BRAND } from '@/lib/brand'
+import { LEGACY_TOUR_STEPS } from '@/lib/tour/build-tour-steps'
 
-export interface TourStep {
-  id: string
-  tourTarget: string     // value of the data-tour attribute on the nav element
-  requiredRoute: string  // where "Go there →" navigates
-  title: string
-  body: string
-  cta: string
-}
+export type { TourStep } from '@/lib/tour/tour-step'
+export { buildTourSteps, LEGACY_TOUR_STEPS, STELLOQUY_TOUR_PLACEHOLDER } from '@/lib/tour/build-tour-steps'
+export type { IaTourFlags } from '@/lib/tour/ia-tour-flags'
+export { iaTourFlagsFromProcessEnv, isIaTourActive } from '@/lib/tour/ia-tour-flags'
 
-export const TOUR_STEPS: TourStep[] = [
-  {
-    id: 'today',
-    tourTarget: 'nav-today',
-    requiredRoute: '/today',
-    title: 'Today',
-    body: "The sky above you right now, this week's intention, and the transits actively shaping your day. A good place to start each morning.",
-    cta: 'See Today',
-  },
-  {
-    id: 'year',
-    tourTarget: 'nav-year',
-    requiredRoute: '/year',
-    title: 'Year',
-    body: `Your full year mapped to astronomical timing — the 52-week blueprint ${BRAND.product} built for you, cosmic weather by season, and the arc you're moving through.`,
-    cta: 'See Year view',
-  },
-  {
-    id: 'curriculum',
-    tourTarget: 'nav-curriculum',
-    requiredRoute: '/curriculum',
-    title: 'Curriculum',
-    body: "A week-by-week study plan tied to your blueprint timeline. Sessions schedule themselves and show up on Today so nothing falls through.",
-    cta: 'See Curriculum',
-  },
-  {
-    id: 'self',
-    tourTarget: 'nav-self',
-    requiredRoute: '/self',
-    title: 'Self',
-    body: "Your natal chart, Human Design bodygraph, and life areas. The foundation everything else is built on — your timing layer, your type, your territory.",
-    cta: 'Explore Self',
-  },
-  {
-    id: 'journal',
-    tourTarget: 'nav-journal',
-    requiredRoute: '/journal',
-    title: 'Journal',
-    body: "Every entry is stamped with the transits active when you wrote it. Over time, patterns surface through Insights — you'll start to see what's actually been moving.",
-    cta: 'Open Journal',
-  },
-]
+/** @deprecated Use buildTourSteps(flags) or LEGACY_TOUR_STEPS. */
+export const TOUR_STEPS = LEGACY_TOUR_STEPS
 
 export interface TourState {
   active: boolean

@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  TOUR_STEPS,
   TOUR_PENDING_KEY,
   TOUR_RESTART_EVENT,
   getTourState,
   setTourState,
   type TourState,
 } from '@/lib/tour/config'
+import type { TourStep } from '@/lib/tour/tour-step'
 import { K } from '@/components/almanac/tokens'
 
 const PAD = 8
@@ -21,7 +21,7 @@ interface SpotRect {
   height: number
 }
 
-export function TourOverlay() {
+export function TourOverlay({ steps }: { steps: TourStep[] }) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [tourState, setLocal] = useState<TourState>({ active: false, step: 0, completed: false })
@@ -63,29 +63,29 @@ export function TourOverlay() {
       const fresh: TourState = { active: true, step: 0, completed: false }
       setTourState(fresh)
       setLocal(fresh)
-      attachSpotlight(TOUR_STEPS[0].tourTarget)
+      if (steps[0]) attachSpotlight(steps[0].tourTarget)
       return
     }
 
     const saved = getTourState()
     setLocal(saved)
-    if (saved.active && !saved.completed && TOUR_STEPS[saved.step]) {
-      attachSpotlight(TOUR_STEPS[saved.step].tourTarget)
+    if (saved.active && !saved.completed && steps[saved.step]) {
+      attachSpotlight(steps[saved.step].tourTarget)
     }
-  }, [attachSpotlight])
+  }, [attachSpotlight, steps])
 
   // Restart event from Settings
   useEffect(() => {
     function onRestart() {
       const s = getTourState()
       setLocal(s)
-      if (s.active && !s.completed && TOUR_STEPS[s.step]) {
-        attachSpotlight(TOUR_STEPS[s.step].tourTarget)
+      if (s.active && !s.completed && steps[s.step]) {
+        attachSpotlight(steps[s.step].tourTarget)
       }
     }
     window.addEventListener(TOUR_RESTART_EVENT, onRestart)
     return () => window.removeEventListener(TOUR_RESTART_EVENT, onRestart)
-  }, [attachSpotlight])
+  }, [attachSpotlight, steps])
 
   // Cleanup spotlight listeners when tour ends
   useEffect(() => {
@@ -98,13 +98,13 @@ export function TourOverlay() {
 
   function advance() {
     const nextStep = tourState.step + 1
-    const done = nextStep >= TOUR_STEPS.length
+    const done = nextStep >= steps.length
     if (done) {
       applyState({ active: false, step: tourState.step, completed: true })
     } else {
       const next: TourState = { active: true, step: nextStep, completed: false }
       applyState(next)
-      attachSpotlight(TOUR_STEPS[nextStep].tourTarget)
+      attachSpotlight(steps[nextStep].tourTarget)
     }
   }
 
@@ -113,7 +113,7 @@ export function TourOverlay() {
   }
 
   function goThere() {
-    const step = TOUR_STEPS[tourState.step]
+    const step = steps[tourState.step]
     if (!step) return
     advance()
     router.push(step.requiredRoute)
@@ -121,10 +121,10 @@ export function TourOverlay() {
 
   if (!mounted || !tourState.active || tourState.completed) return null
 
-  const currentStep = TOUR_STEPS[tourState.step]
+  const currentStep = steps[tourState.step]
   if (!currentStep) return null
 
-  const isLast = tourState.step === TOUR_STEPS.length - 1
+  const isLast = tourState.step === steps.length - 1
 
   // Compute tooltip position from spotlight rect
   const vw = window.innerWidth
@@ -165,7 +165,7 @@ export function TourOverlay() {
       {/* Tooltip panel */}
       <div
         role="dialog"
-        aria-label={`Tour step ${tourState.step + 1} of ${TOUR_STEPS.length}: ${currentStep.title}`}
+        aria-label={`Tour step ${tourState.step + 1} of ${steps.length}: ${currentStep.title}`}
         style={{
           position: 'fixed',
           left: tipLeft,
@@ -181,7 +181,7 @@ export function TourOverlay() {
       >
         {/* Step counter */}
         <div style={{ fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: K.copper, marginBottom: 10 }}>
-          {tourState.step + 1} / {TOUR_STEPS.length}
+          {tourState.step + 1} / {steps.length}
         </div>
 
         {/* Title */}
@@ -196,7 +196,7 @@ export function TourOverlay() {
 
         {/* Progress bar dots */}
         <div style={{ display: 'flex', gap: 5, marginBottom: 16 }}>
-          {TOUR_STEPS.map((_, i) => (
+          {steps.map((_, i) => (
             <div
               key={i}
               style={{

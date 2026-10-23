@@ -8,6 +8,8 @@ import { AlmanacSidebar } from '@/components/almanac/AlmanacSidebar'
 import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
 import { TourOverlay } from '@/components/tour/TourOverlay'
+import { buildTourSteps } from '@/lib/tour/build-tour-steps'
+import { iaTourFlagsFromProcessEnv } from '@/lib/tour/ia-tour-flags'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import { ReflectionNotification } from '@/components/reflections/ReflectionNotification'
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
@@ -146,6 +148,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isMemoryDefaultsEnabled() && isJournalConsentV2Enabled()
   const iaOverlaysEnabled = isIaOverlaysEnabled()
   const showPatternDiscovery = isAppAdmin || access.hasOracleAccess
+  const tourSteps = buildTourSteps(iaTourFlagsFromProcessEnv())
 
   return (
     <StelloquyProvider
@@ -240,7 +243,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             day: 'numeric',
           })}
         />
-        <TourOverlay />
+        <TourOverlay steps={tourSteps} />
         {!iaOverlaysEnabled && showPatternDiscovery ? (
           <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
         ) : null}
