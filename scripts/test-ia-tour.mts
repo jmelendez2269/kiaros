@@ -207,6 +207,10 @@ assert.ok(layoutSource.includes('<TourOverlay steps={tourSteps} iaTourActive={ia
 assert.ok(tourRouterSource.includes('TourOverlayLegacy'))
 assert.ok(iaTourSource.includes('goBack'))
 assert.ok(iaTourSource.includes('Back'))
+assert.ok(iaTourSource.includes('Done'))
+assert.ok(iaTourSource.includes('Skip tour'))
+assert.ok(!iaTourSource.includes("'Finish'"))
+assert.ok(!iaTourSource.includes('End tour'))
 assert.ok(iaTourSource.includes('nextButtonRef'))
 assert.ok(
   iaTourSource.includes('CALENDAR_TAB_ROW_TOUR_TARGET') ||

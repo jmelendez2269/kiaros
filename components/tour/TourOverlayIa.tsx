@@ -446,7 +446,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
               cursor: 'pointer',
             }}
           >
-            End tour
+            Skip tour
           </button>
         </div>
       </div>
