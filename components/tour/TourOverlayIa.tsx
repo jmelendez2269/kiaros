@@ -428,7 +428,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
                 fontWeight: 500,
               }}
             >
-              {isLast ? 'Finish' : 'Next →'}
+              {isLast ? 'Done' : 'Next →'}
             </button>
           </div>
 
