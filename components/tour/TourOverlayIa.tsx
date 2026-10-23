@@ -23,7 +23,7 @@ import {
 } from '@/lib/almanac/nav-tour-target'
 import {
   findAllTourTargetElements,
-  findTourTargetElement,
+  findBestTourTargetElement,
   isMobileNavViewport,
   isTourTargetVisible,
   unionSpotRectFromElements,
@@ -62,21 +62,28 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
     applyState({ active: false, step: tourStepRef.current, completed: false })
   }, [applyState])
 
-  const updateSpotFromRef = useCallback(() => {
+  const updateSpotFromRef = useCallback((): boolean => {
     const group = targetGroupRef.current.filter(
       (el) => document.contains(el) && isTourTargetVisible(el),
     )
     if (group.length > 1) {
       const union = unionSpotRectFromElements(group, PAD)
-      if (union) setSpot(union)
-      return
+      if (union) {
+        setSpot(union)
+        return true
+      }
+      return false
     }
     const el = targetElRef.current
     if (!el || !document.contains(el) || !isTourTargetVisible(el)) {
-      return
+      return false
     }
     const union = unionSpotRectFromElements([el], PAD)
-    if (union) setSpot(union)
+    if (union) {
+      setSpot(union)
+      return true
+    }
+    return false
   }, [])
 
   const attachSpotlight = useCallback(
@@ -88,11 +95,14 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
       let mobileNavOpenRequested = false
       let calendarRouteRequested = false
       let scrollCleanup: (() => void) | null = null
+      let measureAttempts = 0
+      const maxMeasureAttempts = 8
 
       function resolveTargetElement(): HTMLElement | null {
         const { tourTarget, requiredRoute } = step
+        const viewportWidth = window.innerWidth
         if (tourTarget === CALENDAR_TAB_ROW_TOUR_TARGET) {
-          const tabs = findTourTargetElement(tourTarget)
+          const tabs = findBestTourTargetElement(tourTarget, viewportWidth)
           if (tabs) {
             targetGroupRef.current = []
             return tabs
@@ -112,7 +122,13 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
         }
 
         targetGroupRef.current = []
-        return findTourTargetElement(tourTarget)
+        return findBestTourTargetElement(tourTarget, viewportWidth)
+      }
+
+      function scheduleMeasureRetry() {
+        if (measureAttempts >= maxMeasureAttempts) return
+        measureAttempts += 1
+        window.setTimeout(resolveAndMeasure, 40 * measureAttempts)
       }
 
       function resolveAndMeasure() {
@@ -140,28 +156,43 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
 
         if (!el) {
           setSpot(null)
+          scheduleMeasureRetry()
           return
         }
 
-        targetElRef.current = el
-        scrollTourTargetIntoView(el)
+        const targetEl = el
+        targetElRef.current = targetEl
+        scrollTourTargetIntoView(targetEl)
         if (targetGroupRef.current.length > 1) {
           for (const node of targetGroupRef.current) {
             scrollTourTargetIntoView(node)
           }
         }
-        window.requestAnimationFrame(() => {
-          updateSpotFromRef()
+
+        function afterLayoutMeasure(framesLeft: number) {
+          const ok = updateSpotFromRef()
+          if (!ok && framesLeft > 0) {
+            window.requestAnimationFrame(() => afterLayoutMeasure(framesLeft - 1))
+            return
+          }
+          if (!ok) {
+            scheduleMeasureRetry()
+            return
+          }
           scrollCleanup?.()
-          const scrollParent = findVerticalScrollParent(el)
-          const onReflow = () => updateSpotFromRef()
+          const scrollParent = findVerticalScrollParent(targetEl)
+          const onReflow = () => {
+            updateSpotFromRef()
+          }
           window.addEventListener('resize', onReflow)
           scrollParent?.addEventListener('scroll', onReflow, { passive: true })
           scrollCleanup = () => {
             window.removeEventListener('resize', onReflow)
             scrollParent?.removeEventListener('scroll', onReflow)
           }
-        })
+        }
+
+        window.requestAnimationFrame(() => afterLayoutMeasure(3))
       }
 
       function onMobileNavOpen() {
@@ -361,11 +392,16 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
             {currentStep.title}
           </div>
 
-          <p style={{ fontFamily: K.fBody, fontSize: 13.5, color: K.inkDim, lineHeight: 1.65, marginBottom: 18 }}>
+          <p style={{ fontFamily: K.fBody, fontSize: 13.5, color: K.inkDim, lineHeight: 1.65, marginBottom: 0 }}>
             {currentStep.body}
           </p>
+        </div>
 
-          <div style={{ display: 'flex', gap: 5, marginBottom: 8 }}>
+        <div style={{ flexShrink: 0, padding: '0 22px 16px' }}>
+          <div
+            data-tour-progress-dots
+            style={{ display: 'flex', gap: 5, marginBottom: 14, paddingTop: 4 }}
+          >
             {steps.map((_, i) => (
               <div
                 key={i}
@@ -379,9 +415,6 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
               />
             ))}
           </div>
-        </div>
-
-        <div style={{ flexShrink: 0, padding: '0 22px 16px' }}>
           <button
             type="button"
             onClick={goThere}

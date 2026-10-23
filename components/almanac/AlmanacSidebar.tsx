@@ -905,6 +905,7 @@ export function AlmanacSidebar({
   return (
     <>
       <aside
+        id="almanac-desktop-sidebar"
         className={cn(
           'hidden shrink-0 border-r border-almanac-line transition-[width] duration-300 md:flex md:min-h-screen md:flex-col',
           collapsed ? 'w-[5.25rem]' : 'w-[19rem]'

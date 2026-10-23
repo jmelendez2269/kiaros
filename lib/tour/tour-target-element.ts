@@ -1,6 +1,9 @@
 /** Tailwind `md` breakpoint — mobile nav drawer below this width. */
 export const TOUR_MOBILE_NAV_MAX_WIDTH_PX = 767
 
+export const ALMANAC_DESKTOP_SIDEBAR_ID = 'almanac-desktop-sidebar'
+export const ALMANAC_MOBILE_NAV_ID = 'almanac-mobile-nav'
+
 export function isMobileNavViewport(viewportWidth: number): boolean {
   return viewportWidth <= TOUR_MOBILE_NAV_MAX_WIDTH_PX
 }
@@ -19,7 +22,14 @@ export function isTourTargetVisibleFromMetrics(input: TourTargetVisibilityInput)
   return true
 }
 
-export function isTourTargetVisible(el: HTMLElement): boolean {
+/** True when the element and every ancestor are displayed (sidebar hidden md:flex duplicates). */
+export function isInVisibleAncestry(el: HTMLElement): boolean {
+  let node: HTMLElement | null = el
+  while (node) {
+    const style = window.getComputedStyle(node)
+    if (style.display === 'none' || style.visibility === 'hidden') return false
+    node = node.parentElement
+  }
   const rect = el.getBoundingClientRect()
   const style = window.getComputedStyle(el)
   return isTourTargetVisibleFromMetrics({
@@ -30,25 +40,62 @@ export function isTourTargetVisible(el: HTMLElement): boolean {
   })
 }
 
-/** Prefer a visible nav link when desktop and mobile drawers both exist in the DOM. */
-export function findTourTargetElement(
-  target: string,
-  root: ParentNode = document,
+export function isTourTargetVisible(el: HTMLElement): boolean {
+  return isInVisibleAncestry(el)
+}
+
+export function tourTargetElementArea(el: HTMLElement): number {
+  const rect = el.getBoundingClientRect()
+  return rect.width * rect.height
+}
+
+export function pickBestTourTargetElement(
+  candidates: HTMLElement[],
+  viewportWidth: number,
 ): HTMLElement | null {
-  return findAllTourTargetElements(target, root)[0] ?? null
+  const visible = candidates.filter(isInVisibleAncestry)
+  if (visible.length === 0) return null
+  if (visible.length === 1) return visible[0]
+
+  const mobile = isMobileNavViewport(viewportWidth)
+  let best = visible[0]
+  let bestScore = -Infinity
+  for (const el of visible) {
+    let score = tourTargetElementArea(el)
+    const inMobile = Boolean(el.closest(`#${ALMANAC_MOBILE_NAV_ID}`))
+    const inDesktop = Boolean(el.closest(`#${ALMANAC_DESKTOP_SIDEBAR_ID}`))
+    if (mobile && inMobile) score += 1_000_000
+    if (!mobile && inDesktop && !inMobile) score += 1_000_000
+    if (!mobile && inMobile) score -= 1_000_000
+    if (score > bestScore) {
+      bestScore = score
+      best = el
+    }
+  }
+  return best
 }
 
 export function findAllTourTargetElements(
   target: string,
   root: ParentNode = document,
 ): HTMLElement[] {
-  const nodes = root.querySelectorAll(`[data-tour="${target}"]`)
-  const visible: HTMLElement[] = []
-  for (const node of nodes) {
-    const el = node as HTMLElement
-    if (isTourTargetVisible(el)) visible.push(el)
-  }
-  return visible
+  return Array.from(root.querySelectorAll(`[data-tour="${target}"]`)) as HTMLElement[]
+}
+
+/** Prefer a visible nav link when desktop and mobile drawers both exist in the DOM. */
+export function findTourTargetElement(
+  target: string,
+  root: ParentNode = document,
+): HTMLElement | null {
+  return findBestTourTargetElement(target, window.innerWidth, root)
+}
+
+export function findBestTourTargetElement(
+  target: string,
+  viewportWidth: number,
+  root: ParentNode = document,
+): HTMLElement | null {
+  return pickBestTourTargetElement(findAllTourTargetElements(target, root), viewportWidth)
 }
 
 export type TourSpotRect = {
