@@ -641,11 +641,8 @@ function SidebarBody({
             position: 'relative',
             zIndex: 10,
             overflow: 'visible',
-<<<<<<< HEAD
             width: '100%',
             boxSizing: 'border-box',
-=======
->>>>>>> 0fc1a0b (fix(ia-overlays): help menu alignment and hide Stelloquy orb when mobile nav open)
           }}
         >
         <div style={{ height: 1, background: K.line }} />
@@ -653,17 +650,9 @@ function SidebarBody({
         <div
           ref={footerMenuAnchorRef}
           style={{
-<<<<<<< HEAD
             position: 'relative',
             width: '100%',
             boxSizing: 'border-box',
-=======
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '4px 6px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
->>>>>>> 0fc1a0b (fix(ia-overlays): help menu alignment and hide Stelloquy orb when mobile nav open)
             overflow: 'visible',
           }}
         >
@@ -831,7 +820,6 @@ function SidebarBody({
         )}
         </div>
         </div>
-        </div>
       </div>
     </div>
   )
@@ -912,7 +900,6 @@ export function AlmanacSidebar({
           onToggleDesktop={() => setCollapsed((c) => !c)}
           calendarDayEnabled={calendarDayEnabled}
           journalIaEnabled={journalIaEnabled}
-          goalsIaEnabled={goalsIaOn}
           iaOverlaysEnabled={iaOverlaysEnabled}
           showPatternDiscovery={showPatternDiscovery}
           patternScope={patternScope}
@@ -993,7 +980,6 @@ export function AlmanacSidebar({
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}
-              goalsIaEnabled={goalsIaOn}
               iaOverlaysEnabled={iaOverlaysEnabled}
               showPatternDiscovery={showPatternDiscovery}
               patternScope={patternScope}
