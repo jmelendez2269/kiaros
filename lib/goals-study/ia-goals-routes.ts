@@ -7,6 +7,21 @@ import { featureFlagEnabled } from '@/lib/calendar/calendar-day-routes'
 
 export type GoalsStudySubKey = 'life-areas' | 'curriculum'
 
+/** Self sidebar hint on main (flag off). */
+export const SELF_NAV_HINT_LEGACY = 'natal · design · areas'
+
+/** Self sidebar hint when NEXT_PUBLIC_IA_GOALS is on. */
+export const SELF_NAV_HINT_GOALS_IA = 'natal · design'
+
+export function resolveNavItemHint(
+  navKey: string,
+  hint: string,
+  goalsIaEnabled: boolean,
+): string {
+  if (goalsIaEnabled && navKey === 'self') return SELF_NAV_HINT_GOALS_IA
+  return hint
+}
+
 export function iaGoalsFlagEnabled(value: string | undefined): boolean {
   return featureFlagEnabled(value)
 }

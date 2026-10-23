@@ -8,6 +8,12 @@ import { useEffect, useId, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 import { BrandMark } from '@/components/shared/BrandMark'
 import { cn } from '@/lib/utils'
+import {
+  iaGoalsFlagEnabled,
+  resolveNavItemHint,
+  SELF_NAV_HINT_GOALS_IA,
+  SELF_NAV_HINT_LEGACY,
+} from '@/lib/goals-study/ia-goals-routes'
 import { K } from './tokens'
 import { StarField } from './StarField'
 
@@ -68,7 +74,7 @@ const NAV: ReadonlyArray<{
   {
     key: 'self',
     label: 'Self',
-    hint: 'natal · design · areas',
+    hint: SELF_NAV_HINT_LEGACY,
     glyph: '✺',
     tone: K.sage,
     href: '/self',
@@ -132,7 +138,7 @@ function navForAccess(
     if (goalsIaEnabled && item.key === 'self' && item.subItems) {
       return {
         ...item,
-        hint: 'natal · design',
+        hint: SELF_NAV_HINT_GOALS_IA,
         subItems: item.subItems.filter(
           (sub) => sub.href !== '/areas' && sub.href !== '/curriculum',
         ),
@@ -409,7 +415,7 @@ function NavRow({
                     marginTop: 2,
                   }}
                 >
-                  {n.hint}
+                  {resolveNavItemHint(n.key, n.hint, goalsIaEnabled)}
                 </div>
               </div>
             ) : null}
@@ -692,7 +698,9 @@ export function AlmanacSidebar({
   journalIaEnabled?: boolean
   goalsIaEnabled?: boolean
 }) {
-  const navItems = navForAccess(hasOracleAccess, journalIaEnabled, goalsIaEnabled)
+  const goalsIaOn =
+    goalsIaEnabled || iaGoalsFlagEnabled(process.env.NEXT_PUBLIC_IA_GOALS)
+  const navItems = navForAccess(hasOracleAccess, journalIaEnabled, goalsIaOn)
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -740,7 +748,7 @@ export function AlmanacSidebar({
           onToggleDesktop={() => setCollapsed((c) => !c)}
           calendarDayEnabled={calendarDayEnabled}
           journalIaEnabled={journalIaEnabled}
-          goalsIaEnabled={goalsIaEnabled}
+          goalsIaEnabled={goalsIaOn}
         />
       </aside>
 
@@ -808,7 +816,7 @@ export function AlmanacSidebar({
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}
-              goalsIaEnabled={goalsIaEnabled}
+              goalsIaEnabled={goalsIaOn}
             />
           </div>
         </div>

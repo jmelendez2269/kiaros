@@ -14,6 +14,9 @@ import {
   iaGoalsFlagEnabled,
   isGoalsStudyPath,
   resolveGoalsStudySubKey,
+  resolveNavItemHint,
+  SELF_NAV_HINT_GOALS_IA,
+  SELF_NAV_HINT_LEGACY,
 } from '../lib/goals-study/ia-goals-routes.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -40,6 +43,9 @@ assert.equal(resolveGoalsStudySubKey('/curriculum/abc/w/1/s/2'), 'curriculum')
 assert.equal(resolveGoalsStudySubKey('/self'), null)
 assert.equal(isGoalsStudyPath('/areas'), true)
 assert.equal(isGoalsStudyPath('/journal'), false)
+assert.equal(resolveNavItemHint('self', SELF_NAV_HINT_LEGACY, false), SELF_NAV_HINT_LEGACY)
+assert.equal(resolveNavItemHint('self', SELF_NAV_HINT_LEGACY, true), SELF_NAV_HINT_GOALS_IA)
+assert.equal(resolveNavItemHint('today', 'sky now · daily focus', true), 'sky now · daily focus')
 console.log('✓ Route helpers\n')
 
 console.log('feature-flags.ts exports isIaGoalsEnabled')
@@ -69,14 +75,15 @@ const selfGoalsIaBlock = sidebarSource.match(
 )
 assert.ok(selfGoalsIaBlock, 'expected Self IA goals nav branch')
 assert.ok(
-  selfGoalsIaBlock![0].includes("hint: 'natal · design'"),
-  'Self hint must drop areas when IA goals is on',
-)
-assert.ok(
-  !selfGoalsIaBlock![0].includes('natal · design · areas'),
-  'Self IA branch must not keep the full areas hint',
+  selfGoalsIaBlock![0].includes('hint: SELF_NAV_HINT_GOALS_IA'),
+  'Self nav builder must use IA goals hint constant',
 )
 assert.ok(sidebarSource.includes("key === 'goalsStudy'"))
+assert.ok(
+  sidebarSource.includes('resolveNavItemHint(n.key, n.hint, goalsIaEnabled)'),
+  'NavRow must derive Self hint at render time',
+)
+assert.ok(sidebarSource.includes('iaGoalsFlagEnabled(process.env.NEXT_PUBLIC_IA_GOALS)'))
 assert.ok(sidebarSource.includes("glyph: '✦'"), 'Stelloquy card star glyph must stay')
 assert.ok(
   !sidebarSource.match(/key: 'stelloquy'[\s\S]*?glyph: '✦'/g)?.some((block) => block.includes("key: 'goalsStudy'")),
