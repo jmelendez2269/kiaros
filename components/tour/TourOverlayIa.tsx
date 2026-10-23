@@ -20,12 +20,14 @@ import { computeIaTourCardLayout, IA_TOUR_CARD_WIDTH_PX } from '@/lib/tour/tour-
 import { handleTourFocusTrap, listFocusableElements, TOUR_IA_FOCUS_RING } from '@/lib/tour/tour-focus'
 import {
   findVerticalScrollParent,
-  scrollTourTargetClearanceBelow,
   scrollTourTargetIntoView,
 } from '@/lib/tour/tour-scroll-into-view'
 import {
+  mobileTourReserveBelowPx,
+  prepareTourTargetForCardPlacement,
+} from '@/lib/tour/tour-target-prepare'
+import {
   TOUR_CARD_SPOT_MIN_GAP_PX,
-  TOUR_SPOTLIGHT_BORDER_PX,
   verticalGapBetweenSpotAndCard,
 } from '@/lib/tour/tour-spotlight-gap'
 import {
@@ -188,17 +190,21 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
 
         const targetEl = el
         targetElRef.current = targetEl
-        scrollTourTargetIntoView(targetEl)
-        if (targetGroupRef.current.length > 1) {
-          for (const node of targetGroupRef.current) {
-            scrollTourTargetIntoView(node)
-          }
-        }
+        const reserveBelow = mobileTourReserveBelowPx()
         if (isMobileNavViewport(window.innerWidth)) {
-          scrollTourTargetClearanceBelow(
-            targetEl,
-            340 + TOUR_CARD_SPOT_MIN_GAP_PX + TOUR_SPOTLIGHT_BORDER_PX * 2,
-          )
+          prepareTourTargetForCardPlacement(targetEl, reserveBelow)
+          if (targetGroupRef.current.length > 1) {
+            for (const node of targetGroupRef.current) {
+              prepareTourTargetForCardPlacement(node, reserveBelow)
+            }
+          }
+        } else {
+          scrollTourTargetIntoView(targetEl)
+          if (targetGroupRef.current.length > 1) {
+            for (const node of targetGroupRef.current) {
+              scrollTourTargetIntoView(node)
+            }
+          }
         }
 
         function afterLayoutMeasure(framesLeft: number) {
@@ -399,10 +405,12 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
         gapScrollStepRef.current !== tourState.step
       ) {
         gapScrollStepRef.current = tourState.step
-        scrollTourTargetClearanceBelow(
-          targetElRef.current,
-          cardHeight + TOUR_CARD_SPOT_MIN_GAP_PX + TOUR_SPOTLIGHT_BORDER_PX * 2,
-        )
+        prepareTourTargetForCardPlacement(targetElRef.current, mobileTourReserveBelowPx())
+        if (targetGroupRef.current.length > 1) {
+          for (const node of targetGroupRef.current) {
+            prepareTourTargetForCardPlacement(node, mobileTourReserveBelowPx())
+          }
+        }
         updateSpotFromRef()
         window.dispatchEvent(new CustomEvent(TOUR_CARD_REMEASURE_EVENT))
       }
@@ -440,10 +448,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
       const cardHeight = card.offsetHeight
       const spotGap = verticalGapBetweenSpotAndCard(spot, applied.top, cardHeight)
       if (spotGap < TOUR_CARD_SPOT_MIN_GAP_PX - 0.5 && targetElRef.current) {
-        scrollTourTargetClearanceBelow(
-          targetElRef.current,
-          cardHeight + TOUR_CARD_SPOT_MIN_GAP_PX + TOUR_SPOTLIGHT_BORDER_PX * 2,
-        )
+        prepareTourTargetForCardPlacement(targetElRef.current, mobileTourReserveBelowPx())
         updateSpotFromRef()
         window.dispatchEvent(new CustomEvent(TOUR_CARD_REMEASURE_EVENT))
       }

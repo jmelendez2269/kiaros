@@ -202,7 +202,23 @@ const gapTop = enforceCardTopMinSpotGap({
   viewportHeight: 844,
 })
 assert.ok(verticalGapBetweenSpotAndCard(gapSpot, gapTop, 280) >= TOUR_CARD_SPOT_MIN_GAP_PX)
+const lowRoomSpot = { left: 12, top: 520, width: 366, height: 64 }
+const lowRoomTop = enforceCardTopMinSpotGap({
+  spot: lowRoomSpot,
+  cardTop: 8,
+  cardHeight: 300,
+  viewportHeight: 844,
+})
+assert.ok(
+  verticalGapBetweenSpotAndCard(lowRoomSpot, lowRoomTop, 300) >= TOUR_CARD_SPOT_MIN_GAP_PX,
+)
+assert.ok(lowRoomTop > 8)
 console.log('✓ Spotlight gap enforcement\n')
+
+console.log('Prepare scroll runs before fresh calendar measure')
+assert.ok(iaTourSource.includes('prepareTourTargetForCardPlacement'))
+assert.ok(iaTourSource.includes('mobileTourReserveBelowPx'))
+console.log('✓ Target prepare wiring\n')
 
 console.log('IA tour card placement avoids covering spotlight (mobile)')
 const spot = { left: 12, top: 400, width: 280, height: 52 }

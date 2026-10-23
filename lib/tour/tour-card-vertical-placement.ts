@@ -3,7 +3,11 @@ import {
   IA_TOUR_CARD_GAP_PX,
   IA_TOUR_VIEWPORT_MARGIN_PX,
 } from '@/lib/tour/tour-placement'
-import { spotOuterBottom, spotOuterTop } from '@/lib/tour/tour-spotlight-gap'
+import {
+  bottomSheetCardTop,
+  spotOuterBottom,
+  spotOuterTop,
+} from '@/lib/tour/tour-spotlight-gap'
 
 export type TourCardVerticalMode = 'below' | 'above' | 'sheet'
 
@@ -33,33 +37,37 @@ export function pickVerticalCardPlacement(
   },
 ): TourCardVerticalPlacement {
   const margin = options?.margin ?? IA_TOUR_VIEWPORT_MARGIN_PX
-  const gap = options?.gap ?? IA_TOUR_CARD_GAP_PX
-  const sheetRatio = options?.sheetViewportRatio ?? 0.78
-
   const minGap = options?.gap ?? IA_TOUR_CARD_GAP_PX
-  const belowTop = spotOuterBottom(spot) + minGap
-  const belowSpace = viewportHeight - margin - belowTop
 
-  if (measuredCardHeight <= belowSpace && belowSpace > 0) {
-    return { top: belowTop, maxHeight: belowSpace, mode: 'below' }
+  const belowTop = spotOuterBottom(spot) + minGap
+  const belowFits = belowTop + measuredCardHeight <= viewportHeight - margin
+
+  if (belowFits) {
+    return {
+      top: belowTop,
+      maxHeight: viewportHeight - margin - belowTop,
+      mode: 'below',
+    }
   }
 
-  const aboveSpace = spotOuterTop(spot) - minGap - margin
-  if (measuredCardHeight <= aboveSpace && aboveSpace > 0) {
+  const aboveTop = spotOuterTop(spot) - minGap - measuredCardHeight
+  const aboveFits = aboveTop >= margin
+
+  if (aboveFits) {
     return {
-      top: Math.max(margin, spotOuterTop(spot) - minGap - measuredCardHeight),
-      maxHeight: aboveSpace,
+      top: aboveTop,
+      maxHeight: spotOuterTop(spot) - minGap - aboveTop,
       mode: 'above',
     }
   }
 
+  const sheetTop = bottomSheetCardTop(viewportHeight, measuredCardHeight, margin)
   const sheetMax = Math.min(
-    viewportHeight * sheetRatio,
+    viewportHeight * (options?.sheetViewportRatio ?? 0.78),
     viewportHeight - margin * 2,
   )
-  const visibleHeight = Math.min(measuredCardHeight, sheetMax)
   return {
-    top: Math.max(margin, viewportHeight - margin - visibleHeight),
+    top: sheetTop,
     maxHeight: sheetMax,
     mode: 'sheet',
   }

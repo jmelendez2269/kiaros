@@ -4,6 +4,7 @@ export const TOUR_SPOTLIGHT_BORDER_PX = 2
 export const TOUR_CARD_SPOT_MIN_GAP_PX = 12
 
 const TOUR_VIEWPORT_MARGIN_PX = 8
+const SHEET_VIEWPORT_RATIO = 0.78
 
 export type TourSpotlightRect = {
   left: number
@@ -52,6 +53,19 @@ export function verticalGapBetweenSpotAndCard(
   return -Math.min(cardBottom - outerTop, outerBottom - cardTop)
 }
 
+export function bottomSheetCardTop(
+  viewportHeight: number,
+  cardHeight: number,
+  margin = TOUR_VIEWPORT_MARGIN_PX,
+): number {
+  const sheetMax = Math.min(
+    viewportHeight * SHEET_VIEWPORT_RATIO,
+    viewportHeight - margin * 2,
+  )
+  const visibleHeight = Math.min(cardHeight, sheetMax)
+  return Math.max(margin, viewportHeight - margin - visibleHeight)
+}
+
 export function enforceCardTopMinSpotGap(input: {
   spot: TourSpotlightRect
   cardTop: number
@@ -67,30 +81,32 @@ export function enforceCardTopMinSpotGap(input: {
   const outerBottom = outer.top + outer.height
   let top = input.cardTop
   const cardHeight = input.cardHeight
-  const cardBottom = top + cardHeight
 
-  const relation = top >= outerBottom - 2
-    ? 'below'
-    : cardBottom <= outerTop + 2
-      ? 'above'
-      : 'overlap'
+  const belowTop = outerBottom + minGap
+  const aboveTop = outerTop - minGap - cardHeight
 
-  if (relation === 'below') {
-    const minTop = outerBottom + minGap
-    top = Math.max(top, minTop)
-  } else if (relation === 'above') {
-    const maxBottom = outerTop - minGap
-    top = Math.min(top, maxBottom - cardHeight)
+  if (belowTop + cardHeight <= input.viewportHeight - margin) {
+    top = belowTop
+  } else if (aboveTop >= margin) {
+    top = aboveTop
   } else {
-    const belowTop = outerBottom + minGap
+    top = bottomSheetCardTop(input.viewportHeight, cardHeight, margin)
+  }
+
+  if (verticalGapBetweenSpotAndCard(input.spot, top, cardHeight) < minGap - 0.5) {
     if (belowTop + cardHeight <= input.viewportHeight - margin) {
       top = belowTop
     } else {
-      const aboveTop = outerTop - minGap - cardHeight
-      top = Math.max(margin, aboveTop)
+      top = bottomSheetCardTop(input.viewportHeight, cardHeight, margin)
     }
   }
 
   const maxTop = Math.max(margin, input.viewportHeight - margin - cardHeight)
-  return Math.min(Math.max(margin, top), maxTop)
+  top = Math.min(Math.max(margin, top), maxTop)
+
+  if (verticalGapBetweenSpotAndCard(input.spot, top, cardHeight) < minGap - 0.5) {
+    top = bottomSheetCardTop(input.viewportHeight, cardHeight, margin)
+  }
+
+  return top
 }
