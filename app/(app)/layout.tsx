@@ -9,7 +9,7 @@ import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
 import { TourOverlay } from '@/components/tour/TourOverlay'
 import { buildTourSteps } from '@/lib/tour/build-tour-steps'
-import { iaTourFlagsFromProcessEnv } from '@/lib/tour/ia-tour-flags'
+import { iaTourFlagsFromProcessEnv, isIaTourActive } from '@/lib/tour/ia-tour-flags'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 import { ReflectionNotification } from '@/components/reflections/ReflectionNotification'
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
@@ -148,7 +148,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isMemoryDefaultsEnabled() && isJournalConsentV2Enabled()
   const iaOverlaysEnabled = isIaOverlaysEnabled()
   const showPatternDiscovery = isAppAdmin || access.hasOracleAccess
-  const tourSteps = buildTourSteps(iaTourFlagsFromProcessEnv())
+  const tourFlags = iaTourFlagsFromProcessEnv()
+  const tourSteps = buildTourSteps(tourFlags)
+  const iaTourActive = isIaTourActive(tourFlags)
 
   return (
     <StelloquyProvider
@@ -243,7 +245,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             day: 'numeric',
           })}
         />
-        <TourOverlay steps={tourSteps} />
+        <TourOverlay steps={tourSteps} iaTourActive={iaTourActive} />
         {!iaOverlaysEnabled && showPatternDiscovery ? (
           <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
         ) : null}

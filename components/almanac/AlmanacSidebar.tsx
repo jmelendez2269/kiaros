@@ -543,6 +543,7 @@ function SidebarBody({
   collapsed,
   onToggleDesktop,
   onNavigate,
+  hideBrandHeader,
   calendarDayEnabled,
   journalIaEnabled,
   goalsIaEnabled,
@@ -556,6 +557,8 @@ function SidebarBody({
   collapsed: boolean
   onToggleDesktop?: () => void
   onNavigate?: () => void
+  /** Mobile drawer already shows the brand row in the sticky header. */
+  hideBrandHeader?: boolean
   calendarDayEnabled: boolean
   journalIaEnabled: boolean
   goalsIaEnabled: boolean
@@ -584,11 +587,13 @@ function SidebarBody({
       <StarField count={20} seed={11} opacity={0.12} />
 
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 18, height: '100%' }}>
-        <div style={{ padding: '0 4px' }}>
-          <Link href="/today" onClick={onNavigate} style={{ textDecoration: 'none' }}>
-            <ChromeMark collapsed={collapsed} />
-          </Link>
-        </div>
+        {!hideBrandHeader ? (
+          <div style={{ padding: '0 4px' }}>
+            <Link href="/today" onClick={onNavigate} style={{ textDecoration: 'none' }}>
+              <ChromeMark collapsed={collapsed} />
+            </Link>
+          </div>
+        ) : null}
 
         {onToggleDesktop ? (
           <button
@@ -991,6 +996,7 @@ export function AlmanacSidebar({
               navItems={navItems}
               pathname={pathname}
               collapsed={false}
+              hideBrandHeader
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}

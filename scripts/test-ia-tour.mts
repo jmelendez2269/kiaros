@@ -20,6 +20,9 @@ import {
   isTourTargetVisibleFromMetrics,
   TOUR_MOBILE_NAV_MAX_WIDTH_PX,
 } from '../lib/tour/tour-target-element.ts'
+import { computeIaTourCardLayout } from '../lib/tour/tour-placement.ts'
+import { scrollTopAfterAlignTarget } from '../lib/tour/tour-scroll-into-view.ts'
+import { TOUR_IA_FOCUS_RING } from '../lib/tour/tour-focus.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -148,21 +151,68 @@ assert.equal(
 console.log('✓ Mobile visibility helpers\n')
 
 console.log('Tour opens mobile drawer when target is in closed drawer')
-const tourSource = readFileSync(join(root, 'components/tour/TourOverlay.tsx'), 'utf8')
-assert.ok(tourSource.includes('findTourTargetElement'))
-assert.ok(tourSource.includes('TOUR_OPEN_MOBILE_NAV_EVENT'))
-assert.ok(tourSource.includes('isMobileNavViewport'))
+const tourRouterSource = readFileSync(join(root, 'components/tour/TourOverlay.tsx'), 'utf8')
+const iaTourSource = readFileSync(join(root, 'components/tour/TourOverlayIa.tsx'), 'utf8')
+assert.ok(tourRouterSource.includes('TourOverlayIa'))
+assert.ok(iaTourSource.includes('findTourTargetElement'))
+assert.ok(iaTourSource.includes('TOUR_OPEN_MOBILE_NAV_EVENT'))
+assert.ok(iaTourSource.includes('isMobileNavViewport'))
 const sidebarSource = readFileSync(join(root, 'components/almanac/AlmanacSidebar.tsx'), 'utf8')
 assert.ok(sidebarSource.includes('TOUR_OPEN_MOBILE_NAV_EVENT'))
 assert.ok(sidebarSource.includes('setMobileOpen(true)'))
 console.log('✓ Mobile drawer wiring\n')
 
-console.log('Layout passes buildTourSteps to TourOverlay')
+console.log('IA tour card placement avoids covering spotlight (mobile)')
+const spot = { left: 12, top: 400, width: 280, height: 52 }
+const mobileLayout = computeIaTourCardLayout(spot, 390, 844, true)
+assert.ok(mobileLayout.top >= spot.top + spot.height + 8 || mobileLayout.top + mobileLayout.maxHeight <= spot.top - 8)
+console.log('✓ Card placement\n')
+
+console.log('Scroll-into-view adjusts drawer scroll parent')
+assert.equal(
+  scrollTopAfterAlignTarget({
+    elTop: 40,
+    elBottom: 88,
+    parentTop: 100,
+    parentBottom: 700,
+    scrollTop: 200,
+    scrollHeight: 1200,
+    clientHeight: 600,
+  }),
+  124,
+)
+assert.equal(
+  scrollTopAfterAlignTarget({
+    elTop: 680,
+    elBottom: 728,
+    parentTop: 100,
+    parentBottom: 700,
+    scrollTop: 200,
+    scrollHeight: 1200,
+    clientHeight: 600,
+  }),
+  244,
+)
+console.log('✓ Scroll alignment\n')
+
+console.log('Layout passes IA tour mode to TourOverlay')
 const layoutSource = readFileSync(join(root, 'app/(app)/layout.tsx'), 'utf8')
 assert.ok(layoutSource.includes('buildTourSteps'))
 assert.ok(layoutSource.includes('iaTourFlagsFromProcessEnv'))
-assert.ok(layoutSource.includes('<TourOverlay steps={tourSteps}'))
-console.log('✓ Layout wiring\n')
+assert.ok(layoutSource.includes('iaTourActive'))
+assert.ok(layoutSource.includes('<TourOverlay steps={tourSteps} iaTourActive={iaTourActive}'))
+assert.ok(tourRouterSource.includes('TourOverlayLegacy'))
+assert.ok(iaTourSource.includes('goBack'))
+assert.ok(iaTourSource.includes('Back'))
+assert.ok(iaTourSource.includes('TOUR_IA_FOCUS_RING'))
+assert.ok(TOUR_IA_FOCUS_RING.includes('#A98AEF'))
+assert.ok(iaTourSource.includes('preventScroll: true'))
+assert.ok(iaTourSource.includes('targetElRef'))
+console.log('✓ Layout and IA overlay wiring\n')
+
+console.log('Mobile drawer hides duplicate brand header')
+assert.ok(sidebarSource.includes('hideBrandHeader'))
+console.log('✓ Duplicate header fix\n')
 
 console.log('Sidebar uses primaryNavTourTarget for calendar')
 assert.ok(sidebarSource.includes('primaryNavTourTarget'))
