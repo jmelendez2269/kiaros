@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
+  TOUR_CARD_REMEASURE_EVENT,
   TOUR_OPEN_MOBILE_NAV_EVENT,
   TOUR_PENDING_KEY,
   TOUR_RESTART_EVENT,
@@ -12,10 +13,10 @@ import {
 } from '@/lib/tour/config'
 import type { TourStep } from '@/lib/tour/tour-step'
 import {
-  computeIaTourCardLayout,
-  estimateIaTourCardMinHeight,
-  IA_TOUR_CARD_WIDTH_PX,
-} from '@/lib/tour/tour-placement'
+  applyMeasuredDesktopTourCardLayout,
+  applyMeasuredMobileTourCardLayout,
+} from '@/lib/tour/apply-measured-tour-card-layout'
+import { computeIaTourCardLayout, IA_TOUR_CARD_WIDTH_PX } from '@/lib/tour/tour-placement'
 import { handleTourFocusTrap, listFocusableElements, TOUR_IA_FOCUS_RING } from '@/lib/tour/tour-focus'
 import {
   findVerticalScrollParent,
@@ -53,10 +54,22 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
   const targetElRef = useRef<HTMLElement | null>(null)
   const targetGroupRef = useRef<HTMLElement[]>([])
   const dialogRef = useRef<HTMLDivElement>(null)
-  const bodyRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const bodyTextRef = useRef<HTMLParagraphElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
   const nextButtonRef = useRef<HTMLButtonElement>(null)
   const tourStepRef = useRef(0)
+  const [layoutEpoch, setLayoutEpoch] = useState(0)
+  const [cardFrame, setCardFrame] = useState({
+    left: 8,
+    top: 96,
+    cardWidth: IA_TOUR_CARD_WIDTH_PX,
+    maxHeight: undefined as number | undefined,
+  })
+
+  const requestCardRemeasure = useCallback(() => {
+    setLayoutEpoch((epoch) => epoch + 1)
+  }, [])
 
   const applyState = useCallback((next: TourState) => {
     setTourState(next)
@@ -189,6 +202,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
           const scrollParent = findVerticalScrollParent(targetEl)
           const onReflow = () => {
             updateSpotFromRef()
+            window.dispatchEvent(new CustomEvent(TOUR_CARD_REMEASURE_EVENT))
           }
           window.addEventListener('resize', onReflow)
           scrollParent?.addEventListener('scroll', onReflow, { passive: true })
@@ -196,6 +210,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
             window.removeEventListener('resize', onReflow)
             scrollParent?.removeEventListener('scroll', onReflow)
           }
+          window.dispatchEvent(new CustomEvent(TOUR_CARD_REMEASURE_EVENT))
         }
 
         window.requestAnimationFrame(() => afterLayoutMeasure(3))
@@ -284,6 +299,29 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [tourState.active, tourState.completed, endTour])
 
+  useEffect(() => {
+    if (!tourState.active || tourState.completed) return
+    function onRemeasure() {
+      requestCardRemeasure()
+    }
+    window.addEventListener(TOUR_CARD_REMEASURE_EVENT, onRemeasure)
+    return () => window.removeEventListener(TOUR_CARD_REMEASURE_EVENT, onRemeasure)
+  }, [tourState.active, tourState.completed, requestCardRemeasure])
+
+  useEffect(() => {
+    if (!tourState.active || tourState.completed) return
+    let cancelled = false
+    const bump = () => {
+      if (!cancelled) requestCardRemeasure()
+    }
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(bump).catch(() => {})
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [tourState.active, tourState.completed, tourState.step, requestCardRemeasure])
+
   function advance() {
     const nextStep = tourState.step + 1
     const done = nextStep >= steps.length
@@ -319,58 +357,98 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
   const vh = tourVisible ? window.innerHeight : 0
   const mobileNav = isMobileNavViewport(vw)
   const cardWidth = Math.min(IA_TOUR_CARD_WIDTH_PX, Math.max(280, vw - 16))
-  const minCardHeight =
-    currentStep && tourVisible
-      ? estimateIaTourCardMinHeight({
-          body: currentStep.body,
-          cardWidth,
-          stepCount: steps.length,
-          showBack,
-        })
-      : IA_TOUR_CARD_WIDTH_PX
-
-  const cardLayout =
-    tourVisible && spot
-      ? computeIaTourCardLayout(spot, vw, vh, mobileNav, minCardHeight)
-      : tourVisible
-        ? {
-            left: vw / 2 - 170,
-            top: vh / 2 - 140,
-            maxHeight: vh - 16,
-            cardWidth,
-          }
-        : {
-            left: 0,
-            top: 0,
-            maxHeight: 0,
-            cardWidth: IA_TOUR_CARD_WIDTH_PX,
-          }
 
   useLayoutEffect(() => {
     if (!tourVisible) return
     const card = dialogRef.current
-    const body = bodyRef.current
+    const scrollRegion = scrollRef.current
     const footer = footerRef.current
-    if (!card || !body || !footer) return
+    if (!card || !scrollRegion || !footer) return
 
-    body.style.maxHeight = ''
-    body.style.overflowY = 'visible'
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const mobile = isMobileNavViewport(viewportWidth)
+    const width = Math.min(IA_TOUR_CARD_WIDTH_PX, Math.max(280, viewportWidth - 16))
 
-    const budget = cardLayout.maxHeight
-    const naturalHeight = card.scrollHeight
-    if (naturalHeight <= budget + 1) return
+    if (spot && mobile) {
+      const applied = applyMeasuredMobileTourCardLayout({
+        elements: { card, scrollRegion, footer },
+        spot,
+        viewportWidth,
+        viewportHeight,
+        cardWidth: width,
+      })
+      setCardFrame((prev) => {
+        const next = {
+          left: applied.left,
+          top: applied.top,
+          cardWidth: applied.cardWidth,
+          maxHeight: applied.maxHeight,
+        }
+        if (
+          prev.left === next.left &&
+          prev.top === next.top &&
+          prev.cardWidth === next.cardWidth &&
+          prev.maxHeight === next.maxHeight
+        ) {
+          return prev
+        }
+        return next
+      })
+      return
+    }
 
-    const footerHeight = footer.offsetHeight
-    const bodyMax = Math.max(72, budget - footerHeight)
-    body.style.maxHeight = `${bodyMax}px`
-    body.style.overflowY = 'auto'
+    if (spot && !mobile) {
+      const seed = computeIaTourCardLayout(spot, viewportWidth, viewportHeight, false)
+      const applied = applyMeasuredDesktopTourCardLayout({
+        elements: { card, scrollRegion, footer },
+        left: seed.left,
+        top: seed.top,
+        maxHeightBudget: seed.maxHeight,
+        cardWidth: seed.cardWidth,
+      })
+      setCardFrame((prev) => {
+        const next = {
+          left: applied.left,
+          top: applied.top,
+          cardWidth: applied.cardWidth,
+          maxHeight: applied.maxHeight,
+        }
+        if (
+          prev.left === next.left &&
+          prev.top === next.top &&
+          prev.cardWidth === next.cardWidth &&
+          prev.maxHeight === next.maxHeight
+        ) {
+          return prev
+        }
+        return next
+      })
+      return
+    }
+
+    setCardFrame((prev) => {
+      const next = {
+        left: viewportWidth / 2 - width / 2,
+        top: viewportHeight / 2 - 140,
+        cardWidth: width,
+        maxHeight: viewportHeight - 16,
+      }
+      if (
+        prev.left === next.left &&
+        prev.top === next.top &&
+        prev.cardWidth === next.cardWidth &&
+        prev.maxHeight === next.maxHeight
+      ) {
+        return prev
+      }
+      return next
+    })
   }, [
     tourVisible,
+    spot,
     tourState.step,
-    cardLayout.maxHeight,
-    cardLayout.left,
-    cardLayout.top,
-    cardLayout.cardWidth,
+    layoutEpoch,
     currentStep?.body,
     showBack,
     steps.length,
@@ -415,10 +493,11 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
         aria-label={`Tour step ${tourState.step + 1} of ${steps.length}: ${currentStep.title}`}
         style={{
           position: 'fixed',
-          left: cardLayout.left,
-          top: cardLayout.top,
-          width: cardLayout.cardWidth,
-          maxHeight: cardLayout.maxHeight,
+          left: cardFrame.left,
+          top: cardFrame.top,
+          width: cardFrame.cardWidth,
+          maxHeight: cardFrame.maxHeight,
+          height: 'auto',
           zIndex: 9001,
           background: K.bg2,
           border: `1px solid ${K.copper}55`,
@@ -426,11 +505,12 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
           boxShadow: `0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px ${K.line}`,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         <div
-          ref={bodyRef}
+          ref={scrollRef}
+          data-tour-card-scroll
           style={{
             flexShrink: 0,
             padding: '22px 22px 12px',
@@ -444,7 +524,11 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
             {currentStep.title}
           </div>
 
-          <p style={{ fontFamily: K.fBody, fontSize: 13.5, color: K.inkDim, lineHeight: 1.65, marginBottom: 0 }}>
+          <p
+            ref={bodyTextRef}
+            data-tour-card-body
+            style={{ fontFamily: K.fBody, fontSize: 13.5, color: K.inkDim, lineHeight: 1.65, marginBottom: 0 }}
+          >
             {currentStep.body}
           </p>
         </div>

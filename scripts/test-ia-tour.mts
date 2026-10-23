@@ -24,10 +24,8 @@ import {
   isTourTargetVisibleFromMetrics,
   TOUR_MOBILE_NAV_MAX_WIDTH_PX,
 } from '../lib/tour/tour-target-element.ts'
-import {
-  computeIaTourCardLayout,
-  estimateIaTourCardMinHeight,
-} from '../lib/tour/tour-placement.ts'
+import { computeIaTourCardLayout } from '../lib/tour/tour-placement.ts'
+import { pickVerticalCardPlacement } from '../lib/tour/tour-card-vertical-placement.ts'
 import { scrollTopAfterAlignTarget } from '../lib/tour/tour-scroll-into-view.ts'
 import { TOUR_IA_FOCUS_RING } from '../lib/tour/tour-focus.ts'
 
@@ -177,44 +175,18 @@ console.log('✓ Desktop target wiring\n')
 console.log('Progress dots stay in fixed footer (not scroll-clipped)')
 assert.ok(iaTourSource.includes('data-tour-progress-dots'))
 assert.ok(iaTourSource.includes('footerRef'))
-assert.ok(iaTourSource.includes('flexShrink: 0'))
-assert.ok(iaTourSource.includes('useLayoutEffect'))
+assert.ok(iaTourSource.includes('data-tour-card-scroll'))
+assert.ok(iaTourSource.includes('applyMeasuredMobileTourCardLayout'))
+assert.ok(iaTourSource.includes('TOUR_CARD_REMEASURE_EVENT'))
 console.log('✓ Progress dots placement\n')
 
-console.log('IA tour card fits full copy at 390 and 1440 (calendar step)')
-const allFlagsOn: IaTourFlags = {
-  calendarDay: true,
-  journal: true,
-  goals: true,
-  overlays: true,
-}
-const calendarStep = buildTourSteps(allFlagsOn).find((s) => s.id === 'calendar')
-assert.ok(calendarStep)
-const calendarMin = estimateIaTourCardMinHeight({
-  body: calendarStep!.body,
-  cardWidth: 344,
-  stepCount: 6,
-  showBack: true,
-})
+console.log('Mobile vertical placement prefers below, then above/sheet')
 const mobileCalendarSpot = { left: 12, top: 108, width: 366, height: 48 }
-const calendarMobileLayout = computeIaTourCardLayout(
-  mobileCalendarSpot,
-  390,
-  844,
-  true,
-  calendarMin,
-)
-assert.ok(calendarMobileLayout.maxHeight >= calendarMin)
-const desktopCalendarSpot = { left: 248, top: 96, width: 520, height: 44 }
-const calendarDesktopLayout = computeIaTourCardLayout(
-  desktopCalendarSpot,
-  1440,
-  900,
-  false,
-  calendarMin,
-)
-assert.ok(calendarDesktopLayout.maxHeight >= calendarMin)
-console.log('✓ Calendar card height budget\n')
+const below = pickVerticalCardPlacement(mobileCalendarSpot, 844, 320)
+assert.equal(below.mode, 'below')
+const tight = pickVerticalCardPlacement({ left: 12, top: 620, width: 360, height: 48 }, 844, 520)
+assert.ok(tight.mode === 'above' || tight.mode === 'sheet')
+console.log('✓ Mobile placement helpers\n')
 
 console.log('IA tour card placement avoids covering spotlight (mobile)')
 const spot = { left: 12, top: 400, width: 280, height: 52 }

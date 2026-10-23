@@ -19,6 +19,8 @@ export const TOUR_PENDING_KEY = 'kiaros_tour_pending'
 export const TOUR_RESTART_EVENT = 'kiaros-tour-restart'
 /** Tour asks AlmanacSidebar to open the mobile nav drawer before measuring a target. */
 export const TOUR_OPEN_MOBILE_NAV_EVENT = 'kiaros-tour-open-mobile-nav'
+/** Spotlight or fonts settled — remeasure tour card from real DOM height. */
+export const TOUR_CARD_REMEASURE_EVENT = 'kiaros-tour-card-remeasure'
 
 export function getTourState(): TourState {
   if (typeof window === 'undefined') return { active: false, step: 0, completed: false }
