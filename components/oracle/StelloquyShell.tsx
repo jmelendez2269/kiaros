@@ -110,7 +110,7 @@ export function StelloquyShell({ today }: Props) {
             cursor: 'pointer',
           }}
         >
-          <StelloquyOrb size={34} state="speaking" />
+          <StelloquyOrb size={34} state="speaking" showStarMark={iaOverlays} />
           <div style={{ textAlign: 'left' }}>
             <div
               style={{
