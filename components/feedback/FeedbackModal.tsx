@@ -13,7 +13,7 @@ const CATEGORIES = [
 ] as const
 
 const FEELS_OFF_SUB = [
-  { id: 'generic', label: 'Feels generic — not specific to my chart' },
+  { id: 'generic', label: 'Feels generic, not specific to my chart' },
   { id: 'inaccurate', label: 'Factually inaccurate' },
   { id: 'tradition_mismatch', label: "Doesn't match my tradition / house system" },
   { id: 'other', label: 'Other' },
@@ -120,7 +120,7 @@ export function FeedbackModal({
               <div>
                 <p id="feedback-title" className="font-serif text-xl text-bone">Help us improve</p>
                 <p className="mt-1.5 text-xs leading-relaxed text-bone-muted">
-                  {BRAND.product} is built on real ephemeris data and AI synthesis. If a reading feels generic, inaccurate, or just off — we want to know. Your feedback directly shapes how we improve the generations.
+                  {BRAND.product} is built on real ephemeris data and AI synthesis. If a reading feels generic, inaccurate, or just off, we want to know. Your feedback directly shapes how we improve the generations.
                 </p>
               </div>
 
