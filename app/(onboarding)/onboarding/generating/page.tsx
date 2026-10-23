@@ -73,7 +73,7 @@ const FEATURE_SLIDES = [
   {
     kicker: "Journal",
     title: "Reflection that knows your sky",
-    body: "Each journal entry captures the transits active when you wrote it. The Insights surface uses those patterns to show you what's actually been moving through your life.",
+    body: "Each journal entry captures the transits active when you wrote it. Over time, Insights shows the patterns in what you've written.",
   },
   {
     kicker: `Meet ${BRAND.oracle}`,

@@ -14,7 +14,7 @@ const TRADITIONS: { id: Tradition; label: string; description: string; defaultSy
   {
     id: "karmic",
     label: "Karmic",
-    description: "Karma, dharma, and the soul's contracts — Saturn, the nodes, and past-life patterns.",
+    description: "Karma, dharma, and the soul's contracts, read through Saturn, the nodes, and past-life patterns.",
     defaultSystem: "Porphyry",
   },
   {
@@ -26,13 +26,13 @@ const TRADITIONS: { id: Tradition; label: string; description: string; defaultSy
   {
     id: "traditional",
     label: "Traditional / Hellenistic",
-    description: "Hellenistic roots — sect, essential dignities, time lords, and ancient timing methods.",
+    description: "Hellenistic roots: sect, essential dignities, time lords, and ancient timing methods.",
     defaultSystem: "Whole Sign",
   },
   {
     id: "synthesis",
     label: "Synthesis",
-    description: "A bit of everything — weaving all four lenses based on what each chart placement calls for.",
+    description: "A bit of everything. All four lenses, woven together by what each chart placement calls for.",
     defaultSystem: "Placidus",
   },
 ];
@@ -53,7 +53,7 @@ const HOUSE_SYSTEMS: { id: HouseSystem; label: string; description: string; used
   {
     id: "placidus",
     label: "Placidus",
-    description: "The most common modern default — houses are sized by dividing time (not degrees) between the angles.",
+    description: "The most common modern default. Houses are sized by dividing time between the angles.",
     usedBy: "Psychological, Synthesis",
   },
 ];
@@ -160,8 +160,8 @@ export default function OnboardingTraditionPage() {
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-bone-muted">
-            Picking a house system directly leaves your interpretive tradition unset for now — you
-            can choose one anytime in Settings without affecting this choice.
+            Picking a house system directly leaves your interpretive tradition unset for now. You
+            can choose one anytime in Settings without changing this choice.
           </p>
           {HOUSE_SYSTEMS.map((h) => (
             <button
