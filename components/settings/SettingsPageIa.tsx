@@ -352,6 +352,13 @@ export default function SettingsPageIa() {
     }
   }, []);
 
+  const focusMoonReminderTarget = useCallback((anchor: HTMLElement) => {
+    const panelHeading = anchor.querySelector<HTMLElement>("[data-moon-reminder-focus]");
+    const journalHeading = anchor.closest("section")?.querySelector<HTMLElement>("h2");
+    const target = panelHeading ?? journalHeading;
+    target?.focus({ preventScroll: true });
+  }, []);
+
   const scrollToSection = useCallback(
     (id: SettingsIaGroupId, behavior: ScrollBehavior = "smooth") => {
       const node = sectionRefs.current[id];
@@ -363,10 +370,29 @@ export default function SettingsPageIa() {
     [focusGroupHeading],
   );
 
+  const jumpToSection = useCallback(
+    (id: SettingsIaGroupId) => {
+      setActiveSection(id);
+      scrollToSection(id);
+    },
+    [scrollToSection],
+  );
+
   const scrollToHashAnchor = useCallback(
     (hash: string, behavior: ScrollBehavior = "auto") => {
+      if (hash === "moon-reminder") {
+        const anchor = document.getElementById("moon-reminder");
+        if (!anchor) return false;
+        scrollSettingsAnchorIntoView(anchor, behavior);
+        requestAnimationFrame(() => focusMoonReminderTarget(anchor));
+        return true;
+      }
+
       const groupId = SETTINGS_IA_GROUPS.find((g) => g.id === hash)?.id;
-      if (groupId && scrollToSection(groupId, behavior)) return true;
+      if (groupId && scrollToSection(groupId, behavior)) {
+        setActiveSection(groupId);
+        return true;
+      }
 
       const anchor = document.getElementById(hash);
       if (!anchor) return false;
@@ -374,7 +400,7 @@ export default function SettingsPageIa() {
       focusGroupHeading(anchor);
       return true;
     },
-    [focusGroupHeading, scrollToSection],
+    [focusGroupHeading, focusMoonReminderTarget, scrollToSection],
   );
 
   useEffect(() => {
@@ -397,61 +423,30 @@ export default function SettingsPageIa() {
     };
   }, [hydrated, scrollToHashAnchor]);
 
-  const updateActiveSectionFromDom = useCallback(() => {
-    const intersecting = SETTINGS_IA_GROUPS.flatMap((group) => {
+  const syncActiveSection = useCallback(() => {
+    const sectionTops = SETTINGS_IA_GROUPS.flatMap((group) => {
       const node = sectionRefs.current[group.id];
       if (!node) return [];
-      const rect = node.getBoundingClientRect();
-      const inView = rect.bottom > 0 && rect.top < window.innerHeight;
-      if (!inView) return [];
-      return [{ id: group.id, top: rect.top, ratio: 0 }];
+      return [{ id: group.id, top: node.getBoundingClientRect().top, ratio: 0 }];
     });
 
     const picked = pickSettingsIaActiveSection({
-      intersecting,
+      sectionTops,
       nearPageBottom: isSettingsIaNearPageBottom(),
+      viewportHeight: window.innerHeight,
     });
     if (picked) setActiveSection(picked);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    const nodes = SETTINGS_IA_GROUPS.map((g) => sectionRefs.current[g.id]).filter(Boolean) as HTMLElement[];
-    if (nodes.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const intersecting = entries
-          .filter((e) => e.isIntersecting)
-          .map((e) => ({
-            id: e.target.id as SettingsIaGroupId,
-            top: e.boundingClientRect.top,
-            ratio: e.intersectionRatio,
-          }))
-          .filter((e) => SETTINGS_IA_GROUPS.some((g) => g.id === e.id));
-
-        const picked = pickSettingsIaActiveSection({
-          intersecting,
-          nearPageBottom: isSettingsIaNearPageBottom(),
-        });
-        if (picked) setActiveSection(picked);
-      },
-      { rootMargin: "-24px 0px -40% 0px", threshold: [0, 0.1, 0.25, 0.5, 1] },
-    );
-
-    for (const node of nodes) observer.observe(node);
-
-    const onScroll = () => {
-      if (!isSettingsIaNearPageBottom()) return;
-      updateActiveSectionFromDom();
-    };
+    const onScroll = () => syncActiveSection();
     window.addEventListener("scroll", onScroll, { passive: true });
+    syncActiveSection();
 
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [hydrated, updateActiveSectionFromDom]);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [hydrated, syncActiveSection]);
 
   const setSectionRef = (id: SettingsIaGroupId) => (node: HTMLElement | null) => {
     sectionRefs.current[id] = node;
@@ -504,7 +499,7 @@ export default function SettingsPageIa() {
             <button
               key={group.id}
               type="button"
-              onClick={() => scrollToSection(group.id)}
+              onClick={() => jumpToSection(group.id)}
               className="flex h-11 items-center justify-center rounded-xl border border-[#E3E2ED]/12 bg-[#0A0C14] px-2 text-center text-sm text-[#A4A3B1] transition-colors hover:bg-[#E3E2ED]/5 hover:text-[#E3E2ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2"
             >
               {group.label}
@@ -522,7 +517,7 @@ export default function SettingsPageIa() {
                 <li key={group.id}>
                   <button
                     type="button"
-                    onClick={() => scrollToSection(group.id)}
+                    onClick={() => jumpToSection(group.id)}
                     aria-current={isActive ? "true" : undefined}
                     className={`flex h-9 w-full items-center rounded-r-md border-l-2 px-3 text-left text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#A98AEF] focus-visible:outline-offset-2 ${
                       isActive
@@ -731,7 +726,7 @@ export default function SettingsPageIa() {
 
       {isMainFormDirty ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-50 flex h-14 items-center justify-between border-t border-[#E3E2ED]/10 bg-[#0A0C14]/92 px-4 md:px-8"
+          className="fixed inset-x-0 bottom-0 z-50 flex h-14 items-center justify-between border-t border-[#E3E2ED]/10 bg-[rgba(10,12,20,0.92)] px-4 backdrop-blur-sm md:px-8"
           style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
         >
           <p className="text-sm text-[#A4A3B1]">Unsaved changes</p>

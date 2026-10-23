@@ -51,33 +51,35 @@ export type SettingsIaSectionIntersect = {
   ratio: number
 }
 
-/** Pick the nav-highlighted section from IntersectionObserver samples. */
+/** Pick the nav-highlighted section (nearest section top to the 24px anchor line). */
 export function pickSettingsIaActiveSection(params: {
-  intersecting: SettingsIaSectionIntersect[]
+  sectionTops: SettingsIaSectionIntersect[]
   nearPageBottom: boolean
+  viewportHeight?: number
 }): SettingsIaGroupId | null {
-  const { intersecting, nearPageBottom } = params
-  if (intersecting.length === 0) return null
+  const { sectionTops, nearPageBottom, viewportHeight = 800 } = params
+  if (sectionTops.length === 0) return null
 
   const order = SETTINGS_IA_GROUPS.map((g) => g.id)
 
   if (nearPageBottom) {
     for (let i = order.length - 1; i >= 0; i--) {
-      if (intersecting.some((e) => e.id === order[i])) return order[i]
+      const section = sectionTops.find((e) => e.id === order[i])
+      if (section && section.top < viewportHeight * 0.9) return order[i]
     }
   }
 
   const anchorLine = SETTINGS_IA_SCROLL_OFFSET_PX
-  let best: SettingsIaSectionIntersect | null = null
-  for (const entry of intersecting) {
-    if (entry.top <= anchorLine + 8 && (!best || entry.top > best.top)) {
-      best = entry
+  let bestId: SettingsIaGroupId | null = null
+  let bestDistance = Infinity
+  for (const entry of sectionTops) {
+    const distance = Math.abs(entry.top - anchorLine)
+    if (distance < bestDistance) {
+      bestDistance = distance
+      bestId = entry.id
     }
   }
-  if (best) return best.id
-
-  const sorted = [...intersecting].sort((a, b) => a.top - b.top)
-  return sorted[0]?.id ?? null
+  return bestId
 }
 
 export function isSettingsIaNearPageBottom(thresholdPx = 64): boolean {

@@ -53,6 +53,13 @@ export function MoonDayRemindersSettingsPanel({
   if (embedded) {
     return (
       <div id={anchorId} className="scroll-mt-6">
+        <h3
+          tabIndex={-1}
+          data-moon-reminder-focus
+          className="mb-3 text-sm font-medium text-bone outline-none"
+        >
+          Moon-day reminders
+        </h3>
         {toggle}
       </div>
     )
