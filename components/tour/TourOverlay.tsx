@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
+  TOUR_OPEN_MOBILE_NAV_EVENT,
   TOUR_PENDING_KEY,
   TOUR_RESTART_EVENT,
   getTourState,
@@ -10,6 +11,10 @@ import {
   type TourState,
 } from '@/lib/tour/config'
 import type { TourStep } from '@/lib/tour/tour-step'
+import {
+  findTourTargetElement,
+  isMobileNavViewport,
+} from '@/lib/tour/tour-target-element'
 import { K } from '@/components/almanac/tokens'
 
 const PAD = 8
@@ -35,21 +40,42 @@ export function TourOverlay({ steps }: { steps: TourStep[] }) {
 
   const attachSpotlight = useCallback((target: string) => {
     cleanupRef.current?.()
+    let mobileNavOpenRequested = false
 
     function measure() {
-      const el = document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null
-      if (!el) { setSpot(null); return }
+      let el = findTourTargetElement(target)
+      if (
+        !el &&
+        isMobileNavViewport(window.innerWidth) &&
+        !mobileNavOpenRequested
+      ) {
+        mobileNavOpenRequested = true
+        window.dispatchEvent(new CustomEvent(TOUR_OPEN_MOBILE_NAV_EVENT))
+        window.setTimeout(measure, 80)
+        return
+      }
+      if (!el) {
+        setSpot(null)
+        return
+      }
       const r = el.getBoundingClientRect()
-      setSpot({ left: r.left - PAD, top: r.top - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 })
+      setSpot({
+        left: r.left - PAD,
+        top: r.top - PAD,
+        width: r.width + PAD * 2,
+        height: r.height + PAD * 2,
+      })
     }
 
     measure()
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, { passive: true, capture: true })
+    window.addEventListener(TOUR_OPEN_MOBILE_NAV_EVENT, measure)
 
     cleanupRef.current = () => {
       window.removeEventListener('resize', measure)
       window.removeEventListener('scroll', measure, { capture: true })
+      window.removeEventListener(TOUR_OPEN_MOBILE_NAV_EVENT, measure)
     }
   }, [])
 

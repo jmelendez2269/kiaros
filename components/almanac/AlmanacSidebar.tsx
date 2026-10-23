@@ -19,6 +19,7 @@ import { StarField } from './StarField'
 import { AppHelpMenu } from '@/components/feedback/AppHelpMenu'
 import { IaOverlaysNoticeStack } from '@/components/overlays/IaOverlaysNoticeStack'
 import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
+import { TOUR_OPEN_MOBILE_NAV_EVENT } from '@/lib/tour/config'
 import {
   NAV_CURRICULUM_TOUR_TARGET,
   primaryNavTourTarget,
@@ -858,9 +859,16 @@ export function AlmanacSidebar({
   const { setMobileNavOpen } = useMobileNavOpen()
 
   useEffect(() => {
-    if (!iaOverlaysEnabled) return
     setMobileNavOpen(mobileOpen)
-  }, [iaOverlaysEnabled, mobileOpen, setMobileNavOpen])
+  }, [mobileOpen, setMobileNavOpen])
+
+  useEffect(() => {
+    function onTourOpenMobileNav() {
+      setMobileOpen(true)
+    }
+    window.addEventListener(TOUR_OPEN_MOBILE_NAV_EVENT, onTourOpenMobileNav)
+    return () => window.removeEventListener(TOUR_OPEN_MOBILE_NAV_EVENT, onTourOpenMobileNav)
+  }, [])
 
   useEffect(() => {
     const saved = window.localStorage.getItem(SIDEBAR_STORAGE_KEY)

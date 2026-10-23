@@ -17,6 +17,8 @@ export interface TourState {
 export const TOUR_STORAGE_KEY = 'kiaros_tour'
 export const TOUR_PENDING_KEY = 'kiaros_tour_pending'
 export const TOUR_RESTART_EVENT = 'kiaros-tour-restart'
+/** Tour asks AlmanacSidebar to open the mobile nav drawer before measuring a target. */
+export const TOUR_OPEN_MOBILE_NAV_EVENT = 'kiaros-tour-open-mobile-nav'
 
 export function getTourState(): TourState {
   if (typeof window === 'undefined') return { active: false, step: 0, completed: false }

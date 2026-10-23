@@ -61,7 +61,7 @@ const CALENDAR_STEP: TourStep = {
   requiredRoute: calendarTabDayHref(),
   title: 'Calendar',
   body:
-    'Day, week, month, and year views in one place. Plan time blocks, read the sky, and follow your blueprint week by week.',
+    'Day, week, month and year in one place. Plan your time blocks with the sky alongside, and follow your blueprint week by week.',
   cta: 'Open Calendar',
 }
 
@@ -73,7 +73,7 @@ const JOURNAL_IA_STEP: TourStep = {
   requiredRoute: journalTabWriteHref(),
   title: 'Journal',
   body:
-    'Write on the Write tab, browse Entries, and open Patterns when you want themes from your own words. Every entry keeps the transits from that moment.',
+    "Write on the Write tab and find past entries under Entries. Open Patterns when you're curious about themes in your own words. Each entry keeps the transits from the moment you wrote it.",
   cta: 'Open Journal',
 }
 
@@ -87,20 +87,22 @@ const GOALS_STUDY_STEP: TourStep = {
   requiredRoute: goalsStudyNavHref(),
   title: 'Goals and study',
   body:
-    'Life areas hold your goals against the chart. Curriculum holds study plans and sessions that still surface on Today when it is time to learn.',
+    "Life areas hold your goals alongside your chart. Curriculum holds your study plans, and sessions show up on Today when it's time to learn.",
   cta: 'Open Goals and study',
 }
 
-/** Placeholder until Stella finalizes Stelloquy tab copy. */
-export const STELLOQUY_TOUR_PLACEHOLDER: TourStep = {
+export const STELLOQUY_TOUR_STEP: TourStep = {
   id: 'stelloquy',
   tourTarget: 'nav-stelloquy',
   requiredRoute: '/oracle',
   title: BRAND.oracle,
   body:
-    'A dedicated tab for your ongoing conversation with Stelloquy. The floating star still opens the same thread from any page.',
+    'A tab for your ongoing conversation with the stars. The floating star opens the same thread from any page.',
   cta: `Open ${BRAND.oracle}`,
 }
+
+/** @deprecated Use STELLOQUY_TOUR_STEP */
+export const STELLOQUY_TOUR_PLACEHOLDER = STELLOQUY_TOUR_STEP
 
 export function buildTourSteps(flags: IaTourFlags): TourStep[] {
   if (!isIaTourActive(flags)) {
@@ -118,7 +120,7 @@ export function buildTourSteps(flags: IaTourFlags): TourStep[] {
   }
 
   if (flags.overlays) {
-    steps.push(STELLOQUY_TOUR_PLACEHOLDER)
+    steps.push(STELLOQUY_TOUR_STEP)
   }
 
   return steps
