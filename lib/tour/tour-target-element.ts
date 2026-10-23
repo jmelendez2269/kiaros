@@ -35,10 +35,51 @@ export function findTourTargetElement(
   target: string,
   root: ParentNode = document,
 ): HTMLElement | null {
+  return findAllTourTargetElements(target, root)[0] ?? null
+}
+
+export function findAllTourTargetElements(
+  target: string,
+  root: ParentNode = document,
+): HTMLElement[] {
   const nodes = root.querySelectorAll(`[data-tour="${target}"]`)
+  const visible: HTMLElement[] = []
   for (const node of nodes) {
     const el = node as HTMLElement
-    if (isTourTargetVisible(el)) return el
+    if (isTourTargetVisible(el)) visible.push(el)
   }
-  return null
+  return visible
+}
+
+export type TourSpotRect = {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export function unionSpotRectFromElements(
+  elements: HTMLElement[],
+  pad: number,
+): TourSpotRect | null {
+  if (elements.length === 0) return null
+  let left = Infinity
+  let top = Infinity
+  let right = -Infinity
+  let bottom = -Infinity
+  for (const el of elements) {
+    const r = el.getBoundingClientRect()
+    if (r.width <= 0 || r.height <= 0) continue
+    left = Math.min(left, r.left)
+    top = Math.min(top, r.top)
+    right = Math.max(right, r.right)
+    bottom = Math.max(bottom, r.bottom)
+  }
+  if (!Number.isFinite(left)) return null
+  return {
+    left: left - pad,
+    top: top - pad,
+    width: right - left + pad * 2,
+    height: bottom - top + pad * 2,
+  }
 }

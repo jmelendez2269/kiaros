@@ -18,9 +18,15 @@ import {
   scrollTourTargetIntoView,
 } from '@/lib/tour/tour-scroll-into-view'
 import {
+  CALENDAR_SIDEBAR_GROUP_TOUR_TARGET,
+  CALENDAR_TAB_ROW_TOUR_TARGET,
+} from '@/lib/almanac/nav-tour-target'
+import {
+  findAllTourTargetElements,
   findTourTargetElement,
   isMobileNavViewport,
   isTourTargetVisible,
+  unionSpotRectFromElements,
 } from '@/lib/tour/tour-target-element'
 import { cn } from '@/lib/utils'
 import { K } from '@/components/almanac/tokens'
@@ -41,8 +47,9 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
   const [spot, setSpot] = useState<SpotRect | null>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
   const targetElRef = useRef<HTMLElement | null>(null)
+  const targetGroupRef = useRef<HTMLElement[]>([])
   const dialogRef = useRef<HTMLDivElement>(null)
-  const primaryActionRef = useRef<HTMLButtonElement>(null)
+  const nextButtonRef = useRef<HTMLButtonElement>(null)
   const tourStepRef = useRef(0)
 
   const applyState = useCallback((next: TourState) => {
@@ -56,41 +63,74 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
   }, [applyState])
 
   const updateSpotFromRef = useCallback(() => {
+    const group = targetGroupRef.current.filter(
+      (el) => document.contains(el) && isTourTargetVisible(el),
+    )
+    if (group.length > 1) {
+      const union = unionSpotRectFromElements(group, PAD)
+      if (union) setSpot(union)
+      return
+    }
     const el = targetElRef.current
     if (!el || !document.contains(el) || !isTourTargetVisible(el)) {
       return
     }
-    const r = el.getBoundingClientRect()
-    setSpot({
-      left: r.left - PAD,
-      top: r.top - PAD,
-      width: r.width + PAD * 2,
-      height: r.height + PAD * 2,
-    })
+    const union = unionSpotRectFromElements([el], PAD)
+    if (union) setSpot(union)
   }, [])
 
   const attachSpotlight = useCallback(
-    (target: string) => {
+    (step: TourStep) => {
       cleanupRef.current?.()
       cleanupRef.current = null
       targetElRef.current = null
+      targetGroupRef.current = []
       let mobileNavOpenRequested = false
+      let calendarRouteRequested = false
       let scrollCleanup: (() => void) | null = null
+
+      function resolveTargetElement(): HTMLElement | null {
+        const { tourTarget, requiredRoute } = step
+        if (tourTarget === CALENDAR_TAB_ROW_TOUR_TARGET) {
+          const tabs = findTourTargetElement(tourTarget)
+          if (tabs) {
+            targetGroupRef.current = []
+            return tabs
+          }
+          const group = findAllTourTargetElements(CALENDAR_SIDEBAR_GROUP_TOUR_TARGET)
+          if (group.length > 0) {
+            targetGroupRef.current = group
+            return group[0]
+          }
+          if (requiredRoute && !calendarRouteRequested) {
+            calendarRouteRequested = true
+            router.push(requiredRoute)
+            window.setTimeout(resolveAndMeasure, 150)
+            return null
+          }
+          return null
+        }
+
+        targetGroupRef.current = []
+        return findTourTargetElement(tourTarget)
+      }
 
       function resolveAndMeasure() {
         let el = targetElRef.current
         if (el && (!document.contains(el) || !isTourTargetVisible(el))) {
           el = null
           targetElRef.current = null
+          targetGroupRef.current = []
         }
         if (!el) {
-          el = findTourTargetElement(target)
+          el = resolveTargetElement()
         }
 
         if (
           !el &&
           isMobileNavViewport(window.innerWidth) &&
-          !mobileNavOpenRequested
+          !mobileNavOpenRequested &&
+          step.tourTarget !== CALENDAR_TAB_ROW_TOUR_TARGET
         ) {
           mobileNavOpenRequested = true
           window.dispatchEvent(new CustomEvent(TOUR_OPEN_MOBILE_NAV_EVENT))
@@ -105,6 +145,11 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
 
         targetElRef.current = el
         scrollTourTargetIntoView(el)
+        if (targetGroupRef.current.length > 1) {
+          for (const node of targetGroupRef.current) {
+            scrollTourTargetIntoView(node)
+          }
+        }
         window.requestAnimationFrame(() => {
           updateSpotFromRef()
           scrollCleanup?.()
@@ -131,7 +176,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
         scrollCleanup?.()
       }
     },
-    [updateSpotFromRef],
+    [router, updateSpotFromRef],
   )
 
   useEffect(() => {
@@ -143,14 +188,14 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
       const fresh: TourState = { active: true, step: 0, completed: false }
       setTourState(fresh)
       setLocal(fresh)
-      if (steps[0]) attachSpotlight(steps[0].tourTarget)
+      if (steps[0]) attachSpotlight(steps[0])
       return
     }
 
     const saved = getTourState()
     setLocal(saved)
     if (saved.active && !saved.completed && steps[saved.step]) {
-      attachSpotlight(steps[saved.step].tourTarget)
+      attachSpotlight(steps[saved.step])
     }
   }, [attachSpotlight, steps])
 
@@ -159,7 +204,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
       const s = getTourState()
       setLocal(s)
       if (s.active && !s.completed && steps[s.step]) {
-        attachSpotlight(steps[s.step].tourTarget)
+        attachSpotlight(steps[s.step])
       }
     }
     window.addEventListener(TOUR_RESTART_EVENT, onRestart)
@@ -171,6 +216,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
       cleanupRef.current?.()
       cleanupRef.current = null
       targetElRef.current = null
+      targetGroupRef.current = []
       setSpot(null)
     }
   }, [tourState.active, tourState.completed])
@@ -180,7 +226,8 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
     const dialog = dialogRef.current
     if (!dialog) return
     const focusables = listFocusableElements(dialog)
-    const first = focusables[0] ?? primaryActionRef.current
+    const next = nextButtonRef.current
+    const first = next ?? focusables[0]
     first?.focus({ preventScroll: true })
   }, [tourState.step, tourState.active, tourState.completed])
 
@@ -208,7 +255,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
     } else {
       const next: TourState = { active: true, step: nextStep, completed: false }
       applyState(next)
-      attachSpotlight(steps[nextStep].tourTarget)
+      attachSpotlight(steps[nextStep])
     }
   }
 
@@ -216,7 +263,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
     if (tourState.step <= 0) return
     const prev = tourState.step - 1
     applyState({ active: true, step: prev, completed: false })
-    attachSpotlight(steps[prev].tourTarget)
+    attachSpotlight(steps[prev])
   }
 
   function goThere() {
@@ -335,37 +382,51 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
         </div>
 
         <div style={{ flexShrink: 0, padding: '0 22px 16px' }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={goThere}
+            className={cn(TOUR_IA_FOCUS_RING, 'mb-3 w-full border-0 bg-transparent p-0 text-left')}
+            style={{
+              fontFamily: K.fBody,
+              fontSize: 13.5,
+              color: K.copperHi,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textUnderlineOffset: 3,
+            }}
+          >
+            {currentStep.cta} →
+          </button>
+
+          <div style={{ display: 'flex', gap: 8 }}>
             {showBack ? (
               <button
                 type="button"
                 onClick={goBack}
                 className={cn(buttonClass, 'border border-solid px-3 py-2 text-[13.5px]')}
-                style={{ borderColor: K.line, background: 'transparent', color: K.inkDim, fontFamily: K.fBody }}
+                style={{
+                  borderColor: K.line,
+                  background: 'transparent',
+                  color: K.inkDim,
+                  fontFamily: K.fBody,
+                  minWidth: '5.5rem',
+                }}
               >
                 Back
               </button>
             ) : null}
             <button
-              ref={primaryActionRef}
+              ref={nextButtonRef}
               type="button"
-              onClick={goThere}
-              className={cn(buttonClass, 'flex-1 border border-solid px-3 py-2 text-[13.5px]')}
+              onClick={advance}
+              className={cn(buttonClass, 'flex-1 border border-solid px-3.5 py-2 text-[13.5px] whitespace-nowrap')}
               style={{
                 borderColor: `${K.copper}88`,
                 background: `${K.copper}1e`,
                 color: K.ink,
                 fontFamily: K.fBody,
-                minWidth: showBack ? '8rem' : undefined,
+                fontWeight: 500,
               }}
-            >
-              {currentStep.cta} →
-            </button>
-            <button
-              type="button"
-              onClick={advance}
-              className={cn(buttonClass, 'border border-solid px-3.5 py-2 text-[13.5px] whitespace-nowrap')}
-              style={{ borderColor: K.line, background: 'transparent', color: K.inkDim, fontFamily: K.fBody }}
             >
               {isLast ? 'Finish' : 'Next →'}
             </button>
@@ -374,7 +435,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
           <button
             type="button"
             onClick={endTour}
-            className={cn(buttonClass, 'mt-3 w-full border-0 bg-transparent py-1')}
+            className={cn(TOUR_IA_FOCUS_RING, 'mt-3 w-full border-0 bg-transparent py-1')}
             style={{
               textAlign: 'center',
               fontFamily: K.fMono,
@@ -382,6 +443,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
               color: K.inkSoft,
+              cursor: 'pointer',
             }}
           >
             End tour

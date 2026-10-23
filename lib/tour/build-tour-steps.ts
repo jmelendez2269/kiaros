@@ -2,7 +2,10 @@ import { BRAND } from '@/lib/brand'
 import { calendarTabDayHref } from '@/lib/calendar/calendar-day-routes'
 import { goalsStudyNavHref } from '@/lib/goals-study/ia-goals-routes'
 import { journalTabWriteHref } from '@/lib/journal/ia-journal-routes'
-import { NAV_CURRICULUM_TOUR_TARGET } from '@/lib/almanac/nav-tour-target'
+import {
+  CALENDAR_TAB_ROW_TOUR_TARGET,
+  NAV_CURRICULUM_TOUR_TARGET,
+} from '@/lib/almanac/nav-tour-target'
 import type { IaTourFlags } from '@/lib/tour/ia-tour-flags'
 import { isIaTourActive } from '@/lib/tour/ia-tour-flags'
 import type { TourStep } from '@/lib/tour/tour-step'
@@ -57,7 +60,7 @@ const YEAR_STEP = LEGACY_TOUR_STEPS[1]
 
 const CALENDAR_STEP: TourStep = {
   id: 'calendar',
-  tourTarget: 'nav-calendar',
+  tourTarget: CALENDAR_TAB_ROW_TOUR_TARGET,
   requiredRoute: calendarTabDayHref(),
   title: 'Calendar',
   body:

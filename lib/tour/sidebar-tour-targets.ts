@@ -4,8 +4,10 @@
  */
 
 import {
+  CALENDAR_SIDEBAR_GROUP_TOUR_TARGET,
+  CALENDAR_TAB_ROW_TOUR_TARGET,
   NAV_CURRICULUM_TOUR_TARGET,
-  primaryNavTourTarget,
+  sidebarNavTourTarget,
   type AlmanacNavKey,
 } from '@/lib/almanac/nav-tour-target'
 import type { IaTourFlags } from '@/lib/tour/ia-tour-flags'
@@ -43,11 +45,12 @@ export function collectSidebarTourTargets(
   _hasOracleAccess = true,
 ): string[] {
   const keys = navKeysForFlags(flags)
-  const targets = keys.map((key) =>
-    primaryNavTourTarget(key, flags.calendarDay),
-  )
+  const targets = keys.map((key) => sidebarNavTourTarget(key, flags.calendarDay))
   if (hasCurriculumSubNav(flags)) {
     targets.push(NAV_CURRICULUM_TOUR_TARGET)
+  }
+  if (flags.calendarDay) {
+    targets.push(CALENDAR_TAB_ROW_TOUR_TARGET, CALENDAR_SIDEBAR_GROUP_TOUR_TARGET)
   }
   return targets
 }

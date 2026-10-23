@@ -10,6 +10,7 @@ import {
   resolveCalendarTabKey,
   type CalendarTabKey,
 } from '@/lib/calendar/calendar-day-routes'
+import { CALENDAR_TAB_ROW_TOUR_TARGET } from '@/lib/almanac/nav-tour-target'
 import styles from './calendar-tabs.module.css'
 
 const TABS: { key: CalendarTabKey; label: string; href: () => string }[] = [
@@ -61,7 +62,11 @@ export function CalendarTabs() {
   return (
     <div className={styles.row}>
       <div className={styles.topLine}>
-        <nav className={styles.segment} aria-label="Calendar views">
+        <nav
+          className={styles.segment}
+          aria-label="Calendar views"
+          data-tour={CALENDAR_TAB_ROW_TOUR_TARGET}
+        >
           {TABS.map((tab) => {
             const isActive = tab.key === active
             return (

@@ -22,7 +22,7 @@ import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
 import { TOUR_OPEN_MOBILE_NAV_EVENT } from '@/lib/tour/config'
 import {
   NAV_CURRICULUM_TOUR_TARGET,
-  primaryNavTourTarget,
+  sidebarNavTourTarget,
   type AlmanacNavKey,
 } from '@/lib/almanac/nav-tour-target'
 
@@ -367,7 +367,7 @@ function NavRow({
             onClick={onNavigate}
             title={collapsed ? n.label : undefined}
             aria-current={pathname === n.href ? 'page' : undefined}
-            data-tour={primaryNavTourTarget(n.key as AlmanacNavKey, calendarDayEnabled)}
+            data-tour={sidebarNavTourTarget(n.key as AlmanacNavKey, calendarDayEnabled)}
             style={{
               display: 'flex',
               alignItems: 'center',

@@ -14,7 +14,11 @@ import {
 import type { IaTourFlags } from '../lib/tour/ia-tour-flags.ts'
 import { isIaTourActive } from '../lib/tour/ia-tour-flags.ts'
 import { collectSidebarTourTargets } from '../lib/tour/sidebar-tour-targets.ts'
-import { primaryNavTourTarget } from '../lib/almanac/nav-tour-target.ts'
+import {
+  CALENDAR_SIDEBAR_GROUP_TOUR_TARGET,
+  CALENDAR_TAB_ROW_TOUR_TARGET,
+  sidebarNavTourTarget,
+} from '../lib/almanac/nav-tour-target.ts'
 import {
   isMobileNavViewport,
   isTourTargetVisibleFromMetrics,
@@ -100,8 +104,7 @@ assert.deepEqual(
   full.map((s) => s.id),
   ['today', 'calendar', 'journal', 'goals-study', 'stelloquy'],
 )
-assert.equal(full[1].tourTarget, 'nav-calendar')
-assert.equal(full[1].tourTarget, primaryNavTourTarget('week', true))
+assert.equal(full[1].tourTarget, CALENDAR_TAB_ROW_TOUR_TARGET)
 console.log('✓ Full IA step ids\n')
 
 console.log('IA tour copy guardrails (no ampersands or em dashes)')
@@ -204,6 +207,11 @@ assert.ok(layoutSource.includes('<TourOverlay steps={tourSteps} iaTourActive={ia
 assert.ok(tourRouterSource.includes('TourOverlayLegacy'))
 assert.ok(iaTourSource.includes('goBack'))
 assert.ok(iaTourSource.includes('Back'))
+assert.ok(iaTourSource.includes('nextButtonRef'))
+assert.ok(
+  iaTourSource.includes('CALENDAR_TAB_ROW_TOUR_TARGET') ||
+    iaTourSource.includes(CALENDAR_TAB_ROW_TOUR_TARGET),
+)
 assert.ok(iaTourSource.includes('TOUR_IA_FOCUS_RING'))
 assert.ok(TOUR_IA_FOCUS_RING.includes('#A98AEF'))
 assert.ok(iaTourSource.includes('preventScroll: true'))
@@ -214,8 +222,19 @@ console.log('Mobile drawer hides duplicate brand header')
 assert.ok(sidebarSource.includes('hideBrandHeader'))
 console.log('✓ Duplicate header fix\n')
 
-console.log('Sidebar uses primaryNavTourTarget for calendar')
-assert.ok(sidebarSource.includes('primaryNavTourTarget'))
+console.log('Sidebar uses sidebarNavTourTarget')
+assert.ok(sidebarSource.includes('sidebarNavTourTarget'))
 console.log('✓ Sidebar data-tour helper\n')
+
+console.log('Calendar step spotlights tab row (fallback group on sidebar)')
+const calendarTabsSource = readFileSync(join(root, 'components/calendar/CalendarTabs.tsx'), 'utf8')
+assert.ok(
+  calendarTabsSource.includes('data-tour') &&
+    calendarTabsSource.includes('CALENDAR_TAB_ROW_TOUR_TARGET'),
+)
+assert.ok(sidebarSource.includes('sidebarNavTourTarget'))
+assert.equal(sidebarNavTourTarget('week', true), CALENDAR_SIDEBAR_GROUP_TOUR_TARGET)
+assert.equal(sidebarNavTourTarget('week', false), 'nav-week')
+console.log('✓ Calendar tour targets\n')
 
 console.log('All IA tour tests passed.')
