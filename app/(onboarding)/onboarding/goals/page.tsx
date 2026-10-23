@@ -81,28 +81,34 @@ export default function OnboardingGoalsPage() {
       setError("Choose at least 1 area.");
       return;
     }
+    setSaveError("");
     setIsSubmitting(true);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
 
-    const res = await fetch("/api/goals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        categories: selected.map((c, i) => ({
-          name: c.name,
-          success: c.success || null,
-          sort_order: i,
-        })),
-      }),
-    });
+    try {
+      const res = await fetch("/api/goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categories: selected.map((c, i) => ({
+            name: c.name,
+            success: c.success || null,
+            sort_order: i,
+          })),
+        }),
+      });
 
-    if (!res.ok) {
+      if (!res.ok) {
+        setSaveError("Something went wrong saving your goals. Please try again.");
+        return;
+      }
+
+      router.push(ia5 ? "/onboarding/year-focus" : "/onboarding/study-focus");
+    } catch {
       setSaveError("Something went wrong saving your goals. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    router.push(ia5 ? "/onboarding/year-focus" : "/onboarding/study-focus");
   };
 
   return (
@@ -164,7 +170,6 @@ export default function OnboardingGoalsPage() {
         </div>
 
         {error && <p className="text-xs text-destructive">{error}</p>}
-        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <p className="text-xs text-bone-muted">{selected.length}/7 selected</p>
       </div>
 
@@ -195,21 +200,27 @@ export default function OnboardingGoalsPage() {
       )}
 
       {ia5 ? (
-        <OnboardingIa5StepNav
-          backHref="/onboarding"
-          onContinue={onSubmit}
-          isSubmitting={isSubmitting}
-          continueDisabled={selected.length === 0}
-        />
+        <div className="space-y-3">
+          {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+          <OnboardingIa5StepNav
+            backHref="/onboarding"
+            onContinue={() => void onSubmit()}
+            isSubmitting={isSubmitting}
+            continueDisabled={selected.length === 0}
+          />
+        </div>
       ) : (
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={isSubmitting || selected.length === 0}
-          className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
-        >
-          {isSubmitting ? "Saving..." : "Continue"}
-        </button>
+        <>
+          {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+          <button
+            type="button"
+            onClick={() => void onSubmit()}
+            disabled={isSubmitting || selected.length === 0}
+            className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Continue"}
+          </button>
+        </>
       )}
     </div>
   );

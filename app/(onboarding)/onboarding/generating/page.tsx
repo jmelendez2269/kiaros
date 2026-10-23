@@ -6,7 +6,11 @@ import { BRAND } from "@/lib/brand";
 import { TOUR_PENDING_KEY } from "@/lib/tour/config";
 import { WeekPreviewGeneratingPanel } from "@/components/onboarding/WeekPreviewGeneratingPanel";
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
-import { IA5_GENERATING_MODE_KEY, type Ia5GeneratingMode } from "@/lib/onboarding/ia-onboarding-routes";
+import {
+  DEFAULT_ONBOARDING_TRADITION,
+  IA5_GENERATING_MODE_KEY,
+  type Ia5GeneratingMode,
+} from "@/lib/onboarding/ia-onboarding-routes";
 import { ONBOARDING_IA5_BUILDING_PROGRESS_LABEL } from "@/lib/onboarding/ia5-ui";
 
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
@@ -196,14 +200,18 @@ export default function OnboardingGeneratingPage() {
       .then((data) => {
         if (!data?.profile) return;
         const name = (data.profile.display_name as string | null)?.split(" ")[0] ?? "";
-        const t = (data.profile.tradition as Tradition | null) ?? null;
+        const profileTradition = (data.profile.tradition as Tradition | null) ?? null;
+        const t =
+          profileTradition ?? (ia5 ? DEFAULT_ONBOARDING_TRADITION : null);
         setFirstName(name);
         setTradition(t);
         setSlides(buildSlides(t, goals));
         setSlideIndex(0);
       })
       .catch(() => {
-        setSlides(buildSlides(null, goals));
+        const fallback = ia5 ? DEFAULT_ONBOARDING_TRADITION : null;
+        setTradition(fallback);
+        setSlides(buildSlides(fallback, goals));
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ia5, generatingMode]);
@@ -366,9 +374,11 @@ export default function OnboardingGeneratingPage() {
   }
 
   const slide = slides[slideIndex] ?? slides[0];
+  const displayTradition =
+    tradition ?? (ia5 ? DEFAULT_ONBOARDING_TRADITION : null);
   const [progressLeft, progressRight] =
-    tradition && tradition in TRADITION_PROGRESS
-      ? TRADITION_PROGRESS[tradition]
+    displayTradition && displayTradition in TRADITION_PROGRESS
+      ? TRADITION_PROGRESS[displayTradition]
       : ["Reading your chart", "Shaping your year"];
 
   // ── Error state ──────────────────────────────────────────────────────────
@@ -510,10 +520,12 @@ export default function OnboardingGeneratingPage() {
         <h2 className="font-serif text-3xl text-bone">
           Creating your personalized {BRAND.product}
         </h2>
-        {(tradition || goalAreas.length > 0) && (
+        {(displayTradition || goalAreas.length > 0) && (
           <p className="text-xs uppercase tracking-[0.16em] text-bone-muted/60">
             {[
-              tradition ? `${tradition.charAt(0).toUpperCase() + tradition.slice(1)} tradition` : null,
+              displayTradition
+                ? `${displayTradition.charAt(0).toUpperCase() + displayTradition.slice(1)} tradition`
+                : null,
               goalAreas.length > 0 ? `${goalAreas.length} focus area${goalAreas.length !== 1 ? "s" : ""}` : null,
             ]
               .filter(Boolean)

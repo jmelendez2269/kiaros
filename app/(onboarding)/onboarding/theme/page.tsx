@@ -148,7 +148,7 @@ export default function OnboardingThemePage() {
                 onChange={(e) => setStudyFocus(e.target.value)}
                 disabled={isSubmitting}
                 rows={4}
-                placeholder="topics, books, or skills for Stella to refine"
+                placeholder="Topics, books, or skills"
                 className={onboardingIa5FieldClass(true, "w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/45")}
               />
             </div>
