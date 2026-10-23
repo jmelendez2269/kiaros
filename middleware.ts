@@ -3,9 +3,19 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { featureFlagEnabled } from "@/lib/calendar/calendar-day-routes";
+import { ia5LegacyOnboardingRedirect } from "@/lib/onboarding/ia-onboarding-routes";
 import { PUBLIC_ROUTE_PATTERNS } from "@/lib/marketing/public-routes";
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
+
+function iaOnboarding5LegacyRedirect(req: NextRequest): NextResponse | null {
+  const destination = ia5LegacyOnboardingRedirect(
+    req.nextUrl.pathname,
+    featureFlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5),
+  );
+  if (!destination) return null;
+  return NextResponse.redirect(new URL(destination, req.url), 307);
+}
 
 function iaJournalInsightsMapRedirect(req: NextRequest): NextResponse | null {
   if (!featureFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)) return null;
@@ -25,6 +35,9 @@ function iaJournalInsightsMapRedirect(req: NextRequest): NextResponse | null {
 }
 
 export default clerkMiddleware(async (auth, req) => {
+  const iaOnboardingRedirect = iaOnboarding5LegacyRedirect(req);
+  if (iaOnboardingRedirect) return iaOnboardingRedirect;
+
   const iaJournalRedirect = iaJournalInsightsMapRedirect(req);
   if (iaJournalRedirect) return iaJournalRedirect;
 

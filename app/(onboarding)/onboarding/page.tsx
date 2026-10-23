@@ -9,6 +9,19 @@ import { z } from "zod";
 import { BRAND } from "@/lib/brand";
 import { FIELD_NOTES_ONBOARDING_OPT_IN } from "@/lib/marketing/field-notes-copy";
 import { subscribeFieldNotesKit } from "@/lib/marketing/subscribe-field-notes-kit";
+import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import {
+  defaultOnboardingTraditionPayload,
+  onboardingGeneratingHref,
+  persistIa5OnboardingRoutingFromDestination,
+} from "@/lib/onboarding/ia-onboarding-routes";
+import {
+  ONBOARDING_IA5_FOCUS_RING,
+  ONBOARDING_IA5_PRIMARY_BUTTON,
+  onboardingIa5FieldClass,
+} from "@/lib/onboarding/ia5-ui";
+import { SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER } from "@/lib/settings/ia-settings-routes";
+import { OnboardingIa5StepKicker } from "@/components/onboarding/OnboardingIa5StepKicker";
 
 const STORAGE_KEY = "kiaros_onboarding_step1";
 
@@ -46,9 +59,13 @@ interface NominatimResult {
   };
 }
 
+const BASE_INPUT_CLASS =
+  "w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45";
+
 export default function OnboardingBirthPage() {
   const { user } = useUser();
   const router = useRouter();
+  const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [selected, setSelected] = useState<NominatimResult | null>(null);
@@ -74,6 +91,28 @@ export default function OnboardingBirthPage() {
 
   const birthTimeUnknown = watch("birth_time_unknown");
   const birthCity = watch("birth_city");
+  const displayName = watch("display_name");
+  const birthDate = watch("birth_date");
+  const continueDisabled =
+    isSubmitting ||
+    !displayName?.trim() ||
+    !birthDate ||
+    !birthCity;
+  const fieldClass = () =>
+    ia5
+      ? onboardingIa5FieldClass(true, BASE_INPUT_CLASS)
+      : `${BASE_INPUT_CLASS} focus:outline-none focus:ring-2 focus:ring-leather-400`;
+
+  const continueHint =
+    ia5 && continueDisabled && !isSubmitting
+      ? !displayName?.trim()
+        ? "Add your name to continue"
+        : !birthDate
+          ? "Add your date of birth to continue"
+          : !birthCity
+            ? "Add your birth city to continue"
+            : null
+      : null;
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -198,13 +237,47 @@ export default function OnboardingBirthPage() {
     }
 
     const { destination } = (await nextRes.json()) as { destination: string };
+    const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
+
+    if (ia5) {
+      persistIa5OnboardingRoutingFromDestination(destination);
+    }
+
+    if (ia5 && destination === "/onboarding/tradition") {
+      try {
+        const traditionRes = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(defaultOnboardingTraditionPayload()),
+        });
+        if (!traditionRes.ok) {
+          console.warn(
+            "[onboarding] Tradition default PATCH failed; EnsureTraditionDefault on goals will retry:",
+            traditionRes.status,
+          );
+        }
+      } catch (err) {
+        console.warn(
+          "[onboarding] Tradition default PATCH failed; EnsureTraditionDefault on goals will retry:",
+          err,
+        );
+      }
+      router.push("/onboarding/goals");
+      return;
+    }
+
+    if (ia5) {
+      router.push(onboardingGeneratingHref(true, destination));
+      return;
+    }
+
     router.push(destination);
   };
 
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <p className="shell-kicker">Step 1</p>
+        <OnboardingIa5StepKicker legacyKicker="Step 1" />
         <h2 className="font-serif text-3xl text-bone">Set the timing foundation</h2>
         <p className="leading-relaxed text-bone-muted">
           Let&apos;s start with your timing foundation. This planner is built around your birth
@@ -229,7 +302,7 @@ export default function OnboardingBirthPage() {
             placeholder="Your name"
             {...register("display_name")}
             disabled={isSubmitting}
-            className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={fieldClass()}
           />
           {errors.display_name && <p className="text-xs text-destructive">{errors.display_name.message}</p>}
         </div>
@@ -240,7 +313,7 @@ export default function OnboardingBirthPage() {
             type="date"
             {...register("birth_date")}
             disabled={isSubmitting}
-            className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={fieldClass()}
           />
           {errors.birth_date && <p className="text-xs text-destructive">{errors.birth_date.message}</p>}
         </div>
@@ -249,14 +322,29 @@ export default function OnboardingBirthPage() {
           <label className="block text-sm font-medium text-bone">
             Time of birth <span className="font-normal text-bone-muted">(optional)</span>
           </label>
-          <input
-            type="time"
-            {...register("birth_time")}
-            disabled={isSubmitting || birthTimeUnknown}
-            className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone focus:outline-none focus:ring-2 focus:ring-leather-400 disabled:opacity-40"
-          />
+          {ia5 && birthTimeUnknown ? (
+            <input
+              type="text"
+              readOnly
+              value={SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER}
+              disabled
+              aria-disabled
+              className={`${fieldClass()} cursor-default text-bone-muted/45 disabled:cursor-default disabled:opacity-100`}
+            />
+          ) : (
+            <input
+              type="time"
+              {...register("birth_time")}
+              disabled={isSubmitting || birthTimeUnknown}
+              className={`${fieldClass()} ${!ia5 ? "disabled:opacity-40" : ""}`}
+            />
+          )}
           <label className="flex cursor-pointer items-center gap-2 text-sm text-bone-muted">
-            <input type="checkbox" {...register("birth_time_unknown")} className="rounded" />
+            <input
+              type="checkbox"
+              {...register("birth_time_unknown")}
+              className={`rounded ${ia5 ? ONBOARDING_IA5_FOCUS_RING : ""}`}
+            />
             I don&apos;t know my birth time
           </label>
           <p className="text-xs text-bone-muted">
@@ -277,14 +365,14 @@ export default function OnboardingBirthPage() {
               }}
               placeholder="Search for a city..."
               disabled={isSubmitting}
-              className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+              className={fieldClass()}
             />
             {selected && (
               <button
                 type="button"
                 onClick={handleClearCity}
                 aria-label="Clear selected city"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-lg leading-none text-bone-muted hover:text-bone"
+                className={`absolute right-3 top-1/2 -translate-y-1/2 text-lg leading-none text-bone-muted hover:text-bone ${ia5 ? ONBOARDING_IA5_FOCUS_RING : ""}`}
               >
                 x
               </button>
@@ -315,7 +403,7 @@ export default function OnboardingBirthPage() {
                       <button
                         type="button"
                         onClick={() => handleSelect(result)}
-                        className="w-full px-4 py-3 text-left text-sm text-bone hover:bg-stone-800"
+                        className={`w-full px-4 py-3 text-left text-sm text-bone hover:bg-stone-800 ${ia5 ? ONBOARDING_IA5_FOCUS_RING : ""}`}
                       >
                         <span className="font-medium">{city}</span>
                         {state && <span className="text-bone-muted">, {state}</span>}
@@ -346,7 +434,7 @@ export default function OnboardingBirthPage() {
           <input
             type="checkbox"
             {...register("marketing_consent")}
-            className="mt-0.5 rounded"
+            className={`mt-0.5 rounded ${ia5 ? ONBOARDING_IA5_FOCUS_RING : ""}`}
           />
           <span>
             Send me marketing emails and product updates from Project Parallax, {BRAND.product}&apos;s
@@ -358,7 +446,7 @@ export default function OnboardingBirthPage() {
           <input
             type="checkbox"
             {...register("field_notes_subscribe")}
-            className="mt-0.5 rounded"
+            className={`mt-0.5 rounded ${ia5 ? ONBOARDING_IA5_FOCUS_RING : ""}`}
           />
           <span>{FIELD_NOTES_ONBOARDING_OPT_IN}</span>
         </label>
@@ -366,11 +454,18 @@ export default function OnboardingBirthPage() {
         {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <button
           type="submit"
-          disabled={isSubmitting || !birthCity}
-          className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+          disabled={continueDisabled}
+          className={
+            ia5
+              ? `${ONBOARDING_IA5_PRIMARY_BUTTON} ${ONBOARDING_IA5_FOCUS_RING}`
+              : "w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+          }
         >
           {isSubmitting ? "Saving..." : "Continue"}
         </button>
+        {continueHint ? (
+          <p className="text-center text-xs text-bone-muted/80">{continueHint}</p>
+        ) : null}
       </form>
     </div>
   );

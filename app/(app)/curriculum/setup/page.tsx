@@ -22,10 +22,34 @@ export default function CurriculumSetupPage() {
   const router = useRouter();
 
   const [prompt, setPrompt] = useState("");
+  const [studyFocusDraft, setStudyFocusDraft] = useState("");
+  const [needsStudyFocus, setNeedsStudyFocus] = useState(false);
+  const [studyFocusSaving, setStudyFocusSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState<StepKey | null>(null)
   const [elapsed, setElapsed] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/profile", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { profile?: { study_focus?: string | null } };
+        if (cancelled) return;
+        const existing = data.profile?.study_focus?.trim() ?? "";
+        if (!existing) {
+          setNeedsStudyFocus(true);
+        }
+      } catch {
+        // If profile cannot load, do not block curriculum setup.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!loading) { setElapsed(0); return }
@@ -33,12 +57,38 @@ export default function CurriculumSetupPage() {
     return () => clearInterval(interval)
   }, [loading])
 
+  async function saveStudyFocusIfNeeded(): Promise<boolean> {
+    if (!needsStudyFocus) return true;
+    const trimmed = studyFocusDraft.trim();
+    if (!trimmed) {
+      setError("Add a study focus, or skip this step to continue without one.");
+      return false;
+    }
+    setStudyFocusSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ study_focus: trimmed }),
+      });
+      if (!res.ok) {
+        setError("Could not save your study focus. Please try again.");
+        return false;
+      }
+      setNeedsStudyFocus(false);
+      return true;
+    } finally {
+      setStudyFocusSaving(false);
+    }
+  }
+
   async function handleSubmit() {
     const trimmed = prompt.trim();
     if (!trimmed) {
       setError("Tell us what you want to learn first.");
       return;
     }
+    if (!(await saveStudyFocusIfNeeded())) return;
     setError("");
     setLoading(true);
     setCurrentStep(null);
@@ -122,6 +172,66 @@ export default function CurriculumSetupPage() {
           gap: 32,
         }}
       >
+        {needsStudyFocus ? (
+          <div
+            style={{
+              borderRadius: 14,
+              border: `1px solid ${K.line}`,
+              background: "rgba(0,0,0,0.22)",
+              padding: "18px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 500 }}>Study focus</div>
+            <p style={{ fontSize: 13.5, color: K.inkDim, lineHeight: 1.6, margin: 0 }}>
+              What are you learning or deepening this season? This helps {BRAND.product} shape Curriculum
+              and your planner context. You can change it later in Settings.
+            </p>
+            <textarea
+              value={studyFocusDraft}
+              onChange={(e) => setStudyFocusDraft(e.target.value)}
+              disabled={loading || studyFocusSaving}
+              rows={3}
+              placeholder="Topics, books, skills, or themes"
+              style={{
+                width: "100%",
+                resize: "vertical",
+                borderRadius: 12,
+                border: `1px solid ${K.line}`,
+                background: "rgba(0,0,0,0.3)",
+                padding: "12px 14px",
+                color: K.ink,
+                fontFamily: K.fBody,
+                fontSize: 14,
+                lineHeight: 1.55,
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setNeedsStudyFocus(false);
+                setStudyFocusDraft("");
+                setError("");
+              }}
+              disabled={loading || studyFocusSaving}
+              style={{
+                alignSelf: "flex-start",
+                padding: 0,
+                border: "none",
+                background: "transparent",
+                color: K.inkDim,
+                fontFamily: K.fBody,
+                fontSize: 13,
+                cursor: "pointer",
+              }}
+            >
+              Skip for now
+            </button>
+          </div>
+        ) : null}
+
         <div>
           <div
             style={{

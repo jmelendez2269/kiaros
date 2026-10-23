@@ -1,0 +1,158 @@
+"use client";
+
+import { BRAND } from "@/lib/brand";
+import { ONBOARDING_IA5_FOCUS_RING } from "@/lib/onboarding/ia5-ui";
+
+export type CycleFormState = {
+  enabled: boolean;
+  cycleLength: number;
+  periodLength: number;
+  lastPeriodStart: string;
+};
+
+type Props = {
+  state: CycleFormState;
+  onChange: (next: CycleFormState) => void;
+  disabled?: boolean;
+  ia5FocusRing?: boolean;
+};
+
+const PHASE_CARDS = [
+  { phase: "Menstrual", days: "Days 1-5", desc: "Rest, reflect, release" },
+  { phase: "Follicular", days: "Days 6-13", desc: "Plan, initiate, explore" },
+  { phase: "Ovulatory", days: "Days 14-17", desc: "Connect, lead, communicate" },
+  { phase: "Luteal", days: "Days 18-28", desc: "Focus, refine, complete" },
+] as const;
+
+export function toggleCycleEnabled(state: CycleFormState): CycleFormState {
+  return { ...state, enabled: !state.enabled };
+}
+
+export function OnboardingCycleFields({ state, onChange, disabled, ia5FocusRing }: Props) {
+  const { enabled, cycleLength, periodLength, lastPeriodStart } = state;
+  const toggleId = "kiaros-onboarding-cycle-enabled";
+  const focusRing = ia5FocusRing ? ONBOARDING_IA5_FOCUS_RING : "";
+
+  return (
+    <div className="space-y-6 border-t border-border/50 pt-6">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-bone">Optional energy layer</p>
+        <p className="text-xs leading-relaxed text-bone-muted">
+          If it supports you, {BRAND.product} can take your cycle into account as part of your planning
+          rhythm. You can change this later in Settings.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        {PHASE_CARDS.map(({ phase, days, desc }) => (
+          <div key={phase} className="rounded-xl border border-border/70 bg-stone-950/55 p-3">
+            <p className="font-medium text-bone">{phase}</p>
+            <p className="text-xs text-bone-muted">
+              {days} - {desc}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex cursor-pointer items-center gap-3">
+        <input
+          id={toggleId}
+          type="checkbox"
+          className="sr-only"
+          checked={enabled}
+          disabled={disabled}
+          onChange={(e) => onChange({ ...state, enabled: e.target.checked })}
+        />
+        <label
+          htmlFor={toggleId}
+          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+            enabled ? "bg-leather-400" : "bg-stone-700"
+          } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${focusRing}`}
+        >
+          <span
+            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              enabled ? "translate-x-5" : ""
+            }`}
+          />
+        </label>
+        <label htmlFor={toggleId} className={`text-sm font-medium text-bone ${disabled ? "" : "cursor-pointer"}`}>
+          Track my cycle with {BRAND.product}
+        </label>
+      </div>
+
+      {enabled && (
+        <div className="space-y-5 pl-1">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <label className="font-medium text-bone">Average cycle length</label>
+              <span className="text-bone-muted">{cycleLength} days</span>
+            </div>
+            <input
+              type="range"
+              min={21}
+              max={35}
+              value={cycleLength}
+              disabled={disabled}
+              onChange={(e) => onChange({ ...state, cycleLength: Number(e.target.value) })}
+              className={`w-full accent-[#b8a07b] ${focusRing}`}
+            />
+            <div className="flex justify-between text-xs text-bone-muted">
+              <span>21</span>
+              <span>35</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <label className="font-medium text-bone">Average period length</label>
+              <span className="text-bone-muted">{periodLength} days</span>
+            </div>
+            <input
+              type="range"
+              min={2}
+              max={8}
+              value={periodLength}
+              disabled={disabled}
+              onChange={(e) => onChange({ ...state, periodLength: Number(e.target.value) })}
+              className={`w-full accent-[#b8a07b] ${focusRing}`}
+            />
+            <div className="flex justify-between text-xs text-bone-muted">
+              <span>2</span>
+              <span>8</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-bone">
+              First day of your last period <span className="font-normal text-bone-muted">(optional)</span>
+            </label>
+            <input
+              type="date"
+              value={lastPeriodStart}
+              disabled={disabled}
+              onChange={(e) => onChange({ ...state, lastPeriodStart: e.target.value })}
+              className={`w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone focus:outline-none focus:ring-2 focus:ring-leather-400 ${focusRing}`}
+            />
+            <p className="text-xs text-bone-muted">
+              Lets {BRAND.product} calculate your current phase accurately.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function cycleStateToProfilePayload(state: CycleFormState) {
+  return {
+    cycle_enabled: state.enabled,
+    avg_cycle_length: state.enabled ? state.cycleLength : null,
+    avg_period_length: state.enabled ? state.periodLength : null,
+    last_period_start: state.enabled && state.lastPeriodStart ? state.lastPeriodStart : null,
+  };
+}
+
+/** Same shape as /onboarding/cycle onSubmit localStorage + PATCH payload. */
+export function cycleStateToStoragePayload(state: CycleFormState) {
+  return cycleStateToProfilePayload(state);
+}

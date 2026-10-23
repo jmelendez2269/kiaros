@@ -2,6 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { EnsureTraditionDefault } from "@/components/onboarding/EnsureTraditionDefault";
+import { OnboardingIa5StepKicker } from "@/components/onboarding/OnboardingIa5StepKicker";
+import { OnboardingIa5StepNav } from "@/components/onboarding/OnboardingIa5StepNav";
+import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import { ONBOARDING_IA5_FOCUS_RING, onboardingIa5FieldClass } from "@/lib/onboarding/ia5-ui";
 
 const STORAGE_KEY = "kiaros_onboarding_step2";
 
@@ -23,6 +28,7 @@ interface GoalCategory {
 
 export default function OnboardingGoalsPage() {
   const router = useRouter();
+  const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
   const [selected, setSelected] = useState<GoalCategory[]>([]);
   const [customInput, setCustomInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,34 +81,41 @@ export default function OnboardingGoalsPage() {
       setError("Choose at least 1 area.");
       return;
     }
+    setSaveError("");
     setIsSubmitting(true);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
 
-    const res = await fetch("/api/goals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        categories: selected.map((c, i) => ({
-          name: c.name,
-          success: c.success || null,
-          sort_order: i,
-        })),
-      }),
-    });
+    try {
+      const res = await fetch("/api/goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categories: selected.map((c, i) => ({
+            name: c.name,
+            success: c.success || null,
+            sort_order: i,
+          })),
+        }),
+      });
 
-    if (!res.ok) {
+      if (!res.ok) {
+        setSaveError("Something went wrong saving your goals. Please try again.");
+        return;
+      }
+
+      router.push(ia5 ? "/onboarding/year-focus" : "/onboarding/study-focus");
+    } catch {
       setSaveError("Something went wrong saving your goals. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    router.push("/onboarding/study-focus");
   };
 
   return (
     <div className="space-y-8">
+      {ia5 ? <EnsureTraditionDefault /> : null}
       <div className="space-y-3">
-        <p className="shell-kicker">Step 2</p>
+        <OnboardingIa5StepKicker legacyKicker="Step 2" />
         <h2 className="font-serif text-3xl text-bone">Choose your focus layers</h2>
         <p className="leading-relaxed text-bone-muted">
           What parts of your life matter most right now? Choose the areas you want this planner to
@@ -127,7 +140,7 @@ export default function OnboardingGoalsPage() {
                 isSelectedName(name)
                   ? "border-leather-400/50 bg-leather-500/25 text-bone"
                   : "border-border/80 bg-stone-950/70 text-bone-muted hover:bg-stone-850"
-              }`}
+              } ${ia5 ? ONBOARDING_IA5_FOCUS_RING : ""}`}
             >
               {name}
             </button>
@@ -141,19 +154,22 @@ export default function OnboardingGoalsPage() {
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustom())}
             placeholder="Add your own..."
-            className="flex-1 rounded-xl border border-border/80 bg-stone-950/70 px-3 py-2 text-sm text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={
+              ia5
+                ? onboardingIa5FieldClass(true, "flex-1 rounded-xl border border-border/80 bg-stone-950/70 px-3 py-2 text-sm text-bone placeholder:text-bone-muted/45")
+                : "flex-1 rounded-xl border border-border/80 bg-stone-950/70 px-3 py-2 text-sm text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            }
           />
           <button
             type="button"
             onClick={addCustom}
-            className="rounded-xl border border-border/80 bg-stone-900 px-3 py-2 text-sm text-bone-muted hover:bg-stone-800 hover:text-bone"
+            className={`rounded-xl border border-border/80 bg-stone-900 px-3 py-2 text-sm text-bone-muted hover:bg-stone-800 hover:text-bone ${ia5 ? ONBOARDING_IA5_FOCUS_RING : ""}`}
           >
             Add
           </button>
         </div>
 
         {error && <p className="text-xs text-destructive">{error}</p>}
-        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
         <p className="text-xs text-bone-muted">{selected.length}/7 selected</p>
       </div>
 
@@ -172,21 +188,40 @@ export default function OnboardingGoalsPage() {
                 onChange={(e) => updateSuccess(cat.name, e.target.value)}
                 placeholder={`What does success look like for ${cat.name.toLowerCase()}?`}
                 rows={2}
-                className="w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-3 py-3 text-sm text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+                className={
+                  ia5
+                    ? onboardingIa5FieldClass(true, "w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-3 py-3 text-sm text-bone placeholder:text-bone-muted/45")
+                    : "w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-3 py-3 text-sm text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+                }
               />
             </div>
           ))}
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={isSubmitting || selected.length === 0}
-        className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
-      >
-        {isSubmitting ? "Saving..." : "Continue"}
-      </button>
+      {ia5 ? (
+        <div className="space-y-3">
+          {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+          <OnboardingIa5StepNav
+            backHref="/onboarding"
+            onContinue={() => void onSubmit()}
+            isSubmitting={isSubmitting}
+            continueDisabled={selected.length === 0}
+          />
+        </div>
+      ) : (
+        <>
+          {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+          <button
+            type="button"
+            onClick={() => void onSubmit()}
+            disabled={isSubmitting || selected.length === 0}
+            className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Continue"}
+          </button>
+        </>
+      )}
     </div>
   );
 }

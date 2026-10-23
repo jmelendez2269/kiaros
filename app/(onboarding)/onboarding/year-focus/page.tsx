@@ -6,8 +6,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { BRAND } from "@/lib/brand";
+import {
+  OnboardingCycleFields,
+  cycleStateToProfilePayload,
+  type CycleFormState,
+} from "@/components/onboarding/OnboardingCycleFields";
+import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import { OnboardingIa5StepKicker } from "@/components/onboarding/OnboardingIa5StepKicker";
+import { OnboardingIa5StepNav } from "@/components/onboarding/OnboardingIa5StepNav";
+import { onboardingIa5FieldClass } from "@/lib/onboarding/ia5-ui";
 
 const STORAGE_KEY = "kiaros_onboarding_step4";
+const CYCLE_STORAGE_KEY = "kiaros_onboarding_step5";
 
 const schema = z.object({
   year_vision: z.string().min(1, "Please share your year vision"),
@@ -38,10 +48,17 @@ function ordinalSuffix(value: number) {
 
 export default function OnboardingYearFocusPage() {
   const router = useRouter();
+  const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
   const [astrologicalWord, setAstrologicalWord] =
     useState<AstrologicalWordResponse["astrological_word_of_year"]>(null);
 
   const [saveError, setSaveError] = useState<string>("");
+  const [cycleState, setCycleState] = useState<CycleFormState>({
+    enabled: false,
+    cycleLength: 28,
+    periodLength: 5,
+    lastPeriodStart: "",
+  });
 
   const {
     register,
@@ -60,6 +77,26 @@ export default function OnboardingYearFocusPage() {
       });
     } catch {}
   }, [setValue]);
+
+  useEffect(() => {
+    if (!ia5) return;
+    const saved = localStorage.getItem(CYCLE_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const data = JSON.parse(saved) as {
+        cycle_enabled?: boolean;
+        avg_cycle_length?: number;
+        avg_period_length?: number;
+        last_period_start?: string;
+      };
+      setCycleState({
+        enabled: data.cycle_enabled ?? false,
+        cycleLength: data.avg_cycle_length ?? 28,
+        periodLength: data.avg_period_length ?? 5,
+        lastPeriodStart: data.last_period_start ?? "",
+      });
+    } catch {}
+  }, [ia5]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,8 +119,20 @@ export default function OnboardingYearFocusPage() {
     };
   }, []);
 
+  const legacyFieldClass =
+    "w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400";
+  const textFieldClass = ia5
+    ? onboardingIa5FieldClass(true, legacyFieldClass.replace("resize-none ", ""))
+    : legacyFieldClass;
+  const textareaClass = ia5 ? onboardingIa5FieldClass(true, legacyFieldClass) : legacyFieldClass;
+
   const onSubmit = async (values: FormValues) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+
+    const cyclePayload = ia5 ? cycleStateToProfilePayload(cycleState) : {};
+    if (ia5) {
+      localStorage.setItem(CYCLE_STORAGE_KEY, JSON.stringify(cyclePayload));
+    }
 
     const res = await fetch("/api/profile", {
       method: "PATCH",
@@ -93,6 +142,7 @@ export default function OnboardingYearFocusPage() {
         word_of_year: values.word_of_year || null,
         what_to_release: values.what_to_release || null,
         plan_year: new Date().getFullYear(),
+        ...cyclePayload,
       }),
     });
 
@@ -101,14 +151,16 @@ export default function OnboardingYearFocusPage() {
       return;
     }
 
-    router.push("/onboarding/cycle");
+    router.push(ia5 ? "/onboarding/theme" : "/onboarding/cycle");
   };
 
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <p className="shell-kicker">Step 4</p>
-        <h2 className="font-serif text-3xl text-bone">Shape the customization layer</h2>
+        <OnboardingIa5StepKicker legacyKicker="Step 4" />
+        <h2 className="font-serif text-3xl text-bone">
+          {ia5 ? "Shape your year and energy" : "Shape the customization layer"}
+        </h2>
         <p className="leading-relaxed text-bone-muted">
           What do you want this year to feel like and mean? {BRAND.product} works best when it understands
           not just what you want to do, but what kind of year you are trying to live.
@@ -122,7 +174,7 @@ export default function OnboardingYearFocusPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form id="onboarding-year-focus-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-bone">
             What do you want this year to feel like and mean?
@@ -135,7 +187,7 @@ export default function OnboardingYearFocusPage() {
             {...register("year_vision")}
             disabled={isSubmitting}
             rows={5}
-            className="w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={textareaClass}
           />
           {errors.year_vision && <p className="text-xs text-destructive">{errors.year_vision.message}</p>}
         </div>
@@ -178,7 +230,7 @@ export default function OnboardingYearFocusPage() {
             placeholder="e.g., Roots, Expansion, Presence, Devotion..."
             {...register("word_of_year")}
             disabled={isSubmitting}
-            className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={textFieldClass}
           />
         </div>
 
@@ -194,19 +246,43 @@ export default function OnboardingYearFocusPage() {
             {...register("what_to_release")}
             disabled={isSubmitting}
             rows={3}
-            className="w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={textareaClass}
           />
         </div>
 
-        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
-        >
-          {isSubmitting ? "Saving..." : "Continue"}
-        </button>
+        {!ia5 && saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+        {!ia5 ? (
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Continue"}
+          </button>
+        ) : null}
       </form>
+
+      {ia5 ? (
+        <OnboardingCycleFields
+          state={cycleState}
+          onChange={setCycleState}
+          disabled={isSubmitting}
+          ia5FocusRing
+        />
+      ) : null}
+
+      {ia5 ? (
+        <div className="space-y-3">
+          {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+          <OnboardingIa5StepNav
+            backHref="/onboarding/goals"
+            onContinue={() => {}}
+            continueType="submit"
+            continueForm="onboarding-year-focus-form"
+            isSubmitting={isSubmitting}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

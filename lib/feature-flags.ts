@@ -3,6 +3,7 @@ import "server-only";
 import { featureFlagEnabled } from "@/lib/calendar/calendar-day-routes";
 import { isIaOverlaysEnabled as iaOverlaysEnabled } from "@/lib/ia-overlays-flag";
 import { isIaSettingsEnabled as iaSettingsEnabled } from "@/lib/ia-settings-flag";
+import { isIaOnboarding5Enabled as iaOnboarding5Enabled } from "@/lib/ia-onboarding-flag";
 
 function enabled(value: string | undefined): boolean {
   return featureFlagEnabled(value);
@@ -80,4 +81,9 @@ export function isIaOverlaysEnabled(): boolean {
 /** Settings regroup (section nav, birth data first). Off by default. */
 export function isIaSettingsEnabled(): boolean {
   return iaSettingsEnabled();
+}
+
+/** Five-screen onboarding (tradition default, merged year/cycle, one generating screen). Off by default. */
+export function isIaOnboarding5Enabled(): boolean {
+  return iaOnboarding5Enabled();
 }

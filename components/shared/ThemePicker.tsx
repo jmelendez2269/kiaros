@@ -1,14 +1,32 @@
 "use client";
 
 import { THEMES, type ThemeId } from "@/lib/constants";
+import { ONBOARDING_IA5_FOCUS_RING } from "@/lib/onboarding/ia5-ui";
 
 interface ThemePickerProps {
   value: ThemeId;
   onChange: (theme: ThemeId) => void;
   compact?: boolean;
+  /** IA Phase 6 onboarding (flag on): designer focus ring on theme tiles. */
+  ia5FocusRing?: boolean;
 }
 
-export function ThemePicker({ value, onChange, compact = false }: ThemePickerProps) {
+export function ThemePicker({ value, onChange, compact = false, ia5FocusRing = false }: ThemePickerProps) {
+  const focusClass = ia5FocusRing
+    ? `focus:outline-none ${ONBOARDING_IA5_FOCUS_RING}`
+    : "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+
+  const tileClass = (selected: boolean) => {
+    if (ia5FocusRing) {
+      return selected
+        ? "border-border/60 bg-stone-900/50 ring-2 ring-[#A98AEF] ring-offset-2 ring-offset-stone-950"
+        : "border-border/60 bg-stone-900/50 hover:border-border hover:bg-stone-900/70";
+    }
+    return selected
+      ? "border-accent/70 bg-card/90 shadow-glow"
+      : "border-border/60 bg-stone-900/50 hover:border-border hover:bg-stone-900/70";
+  };
+
   return (
     <div className={`grid gap-3 ${compact ? "grid-cols-3" : "grid-cols-1 sm:grid-cols-3"}`}>
       {THEMES.map((theme) => {
@@ -18,11 +36,7 @@ export function ThemePicker({ value, onChange, compact = false }: ThemePickerPro
             key={theme.id}
             type="button"
             onClick={() => onChange(theme.id)}
-            className={`group relative overflow-hidden rounded-2xl border text-left transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              selected
-                ? "border-accent/70 bg-card/90 shadow-glow"
-                : "border-border/60 bg-stone-900/50 hover:border-border hover:bg-stone-900/70"
-            }`}
+            className={`group relative overflow-hidden rounded-2xl border text-left transition-all duration-300 ${focusClass} ${tileClass(selected)}`}
           >
             {/* Mini palette preview */}
             <div className="relative flex h-20 w-full items-end overflow-hidden rounded-t-2xl"
@@ -46,7 +60,7 @@ export function ThemePicker({ value, onChange, compact = false }: ThemePickerPro
                 ))}
               </div>
               {/* Selected ring overlay */}
-              {selected && (
+              {selected && !ia5FocusRing && (
                 <div
                   className="pointer-events-none absolute inset-0 rounded-t-2xl"
                   style={{ boxShadow: `inset 0 0 0 1.5px ${theme.swatches[1]}66` }}
@@ -60,7 +74,7 @@ export function ThemePicker({ value, onChange, compact = false }: ThemePickerPro
                 <p className={`font-display font-medium text-bone ${compact ? "text-sm" : "text-[0.95rem]"}`}>
                   {theme.name}
                 </p>
-                {selected && (
+                {selected && !ia5FocusRing && (
                   <span className="inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
                 )}
               </div>

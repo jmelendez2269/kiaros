@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { TOUR_PENDING_KEY } from "@/lib/tour/config";
+import { WeekPreviewGeneratingPanel } from "@/components/onboarding/WeekPreviewGeneratingPanel";
+import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import {
+  DEFAULT_ONBOARDING_TRADITION,
+  IA5_GENERATING_MODE_KEY,
+  type Ia5GeneratingMode,
+} from "@/lib/onboarding/ia-onboarding-routes";
+import { ONBOARDING_IA5_BUILDING_PROGRESS_LABEL } from "@/lib/onboarding/ia5-ui";
 
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_INTERVAL_MS = 8000;
@@ -143,6 +151,8 @@ type Phase = "loading" | "nudge" | "building";
 export default function OnboardingGeneratingPage() {
   const router = useRouter();
   const hasFired = useRef(false);
+  const ia5 = iaOnboarding5FlagEnabled(process.env.NEXT_PUBLIC_IA_ONBOARDING5);
+  const [generatingMode, setGeneratingMode] = useState<Ia5GeneratingMode | null>(null);
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [failed, setFailed] = useState(false);
@@ -162,8 +172,19 @@ export default function OnboardingGeneratingPage() {
   const [intensity, setIntensity] = useState<"light" | "balanced" | "dense">("balanced");
   const [nudgeError, setNudgeError] = useState("");
 
+  useEffect(() => {
+    if (!ia5) {
+      setGeneratingMode("blueprint");
+      return;
+    }
+    const stored = sessionStorage.getItem(IA5_GENERATING_MODE_KEY) as Ia5GeneratingMode | null;
+    setGeneratingMode(stored === "week" ? "week" : "blueprint");
+  }, [ia5]);
+
   // Load personalization from localStorage + profile API
   useEffect(() => {
+    if (ia5 && generatingMode === null) return;
+    if (ia5 && generatingMode === "week") return;
     let goals: string[] = [];
     try {
       const raw = localStorage.getItem("kiaros_onboarding_step2");
@@ -179,17 +200,21 @@ export default function OnboardingGeneratingPage() {
       .then((data) => {
         if (!data?.profile) return;
         const name = (data.profile.display_name as string | null)?.split(" ")[0] ?? "";
-        const t = (data.profile.tradition as Tradition | null) ?? null;
+        const profileTradition = (data.profile.tradition as Tradition | null) ?? null;
+        const t =
+          profileTradition ?? (ia5 ? DEFAULT_ONBOARDING_TRADITION : null);
         setFirstName(name);
         setTradition(t);
         setSlides(buildSlides(t, goals));
         setSlideIndex(0);
       })
       .catch(() => {
-        setSlides(buildSlides(null, goals));
+        const fallback = ia5 ? DEFAULT_ONBOARDING_TRADITION : null;
+        setTradition(fallback);
+        setSlides(buildSlides(fallback, goals));
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ia5, generatingMode]);
 
   // Auto-advance slides every 7 seconds
   useEffect(() => {
@@ -295,11 +320,21 @@ export default function OnboardingGeneratingPage() {
   }
 
   useEffect(() => {
+    if (ia5 && generatingMode === null) return;
+    if (ia5 && generatingMode === "week") return;
     if (hasFired.current) return;
     hasFired.current = true;
     startGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ia5, generatingMode]);
+
+  if (ia5 && generatingMode === "week") {
+    return <WeekPreviewGeneratingPanel />;
+  }
+
+  if (ia5 && generatingMode === null) {
+    return null;
+  }
 
   async function handleRetry() {
     setFailed(false);
@@ -339,9 +374,11 @@ export default function OnboardingGeneratingPage() {
   }
 
   const slide = slides[slideIndex] ?? slides[0];
+  const displayTradition =
+    tradition ?? (ia5 ? DEFAULT_ONBOARDING_TRADITION : null);
   const [progressLeft, progressRight] =
-    tradition && tradition in TRADITION_PROGRESS
-      ? TRADITION_PROGRESS[tradition]
+    displayTradition && displayTradition in TRADITION_PROGRESS
+      ? TRADITION_PROGRESS[displayTradition]
       : ["Reading your chart", "Shaping your year"];
 
   // ── Error state ──────────────────────────────────────────────────────────
@@ -483,10 +520,12 @@ export default function OnboardingGeneratingPage() {
         <h2 className="font-serif text-3xl text-bone">
           Creating your personalized {BRAND.product}
         </h2>
-        {(tradition || goalAreas.length > 0) && (
+        {(displayTradition || goalAreas.length > 0) && (
           <p className="text-xs uppercase tracking-[0.16em] text-bone-muted/60">
             {[
-              tradition ? `${tradition.charAt(0).toUpperCase() + tradition.slice(1)} tradition` : null,
+              displayTradition
+                ? `${displayTradition.charAt(0).toUpperCase() + displayTradition.slice(1)} tradition`
+                : null,
               goalAreas.length > 0 ? `${goalAreas.length} focus area${goalAreas.length !== 1 ? "s" : ""}` : null,
             ]
               .filter(Boolean)
@@ -504,7 +543,13 @@ export default function OnboardingGeneratingPage() {
         <div className="h-2 overflow-hidden rounded-full bg-stone-900/90 ring-1 ring-white/10">
           <div className="h-full rounded-full bg-gradient-to-r from-leather-500 via-leather-300 to-leather-500 animate-[loading-bar_2s_ease-in-out_infinite]" />
         </div>
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-bone-muted/60">
+        <div
+          className={
+            ia5 && generatingMode === "blueprint"
+              ? `flex items-center justify-between ${ONBOARDING_IA5_BUILDING_PROGRESS_LABEL}`
+              : "flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-bone-muted/60"
+          }
+        >
           <span>{progressLeft}</span>
           <span>{progressRight}</span>
         </div>
