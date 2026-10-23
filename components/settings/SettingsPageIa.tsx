@@ -566,17 +566,23 @@ export default function SettingsPageIa() {
                 </label>
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-bone">Birth time</span>
-                  <input
-                    type="time"
-                    value={form.birth_time_unknown ? "" : form.birth_time}
-                    onChange={(event) => setField("birth_time", event.target.value)}
-                    disabled={form.birth_time_unknown}
-                    aria-disabled={form.birth_time_unknown}
-                    placeholder={
-                      form.birth_time_unknown ? SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER : undefined
-                    }
-                    className={`${FIELD_INPUT_CLASS} disabled:cursor-default disabled:opacity-45`}
-                  />
+                  {form.birth_time_unknown ? (
+                    <input
+                      type="text"
+                      readOnly
+                      value={SETTINGS_IA_BIRTH_TIME_UNKNOWN_PLACEHOLDER}
+                      disabled
+                      aria-disabled
+                      className={`${FIELD_INPUT_CLASS} cursor-default text-bone-muted/45 disabled:cursor-default disabled:opacity-100`}
+                    />
+                  ) : (
+                    <input
+                      type="time"
+                      value={form.birth_time}
+                      onChange={(event) => setField("birth_time", event.target.value)}
+                      className={FIELD_INPUT_CLASS}
+                    />
+                  )}
                 </label>
                 <label className="block space-y-2 md:col-span-2">
                   <span className="text-sm font-medium text-bone">Birth city</span>
