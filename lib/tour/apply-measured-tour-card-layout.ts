@@ -5,6 +5,7 @@ import {
 } from '@/lib/tour/tour-card-vertical-placement'
 import type { TourSpotRect } from '@/lib/tour/tour-placement'
 import { IA_TOUR_VIEWPORT_MARGIN_PX } from '@/lib/tour/tour-placement'
+import { enforceCardTopMinSpotGap } from '@/lib/tour/tour-spotlight-gap'
 
 export type MeasuredTourCardElements = {
   card: HTMLElement
@@ -56,44 +57,27 @@ export function applyMeasuredMobileTourCardLayout(input: {
   const natural = measureTourCardNaturalHeight(elements)
   const left = horizontalTourCardLeft(viewportWidth, cardWidth)
   const placement = pickVerticalCardPlacement(spot, viewportHeight, natural.total)
-  const constrained = shouldConstrainTourCardContent(natural.total, placement.maxHeight)
+  let top = enforceCardTopMinSpotGap({
+    spot,
+    cardTop: placement.top,
+    cardHeight: natural.total,
+    viewportHeight,
+  })
+  const belowBudget = viewportHeight - IA_TOUR_VIEWPORT_MARGIN_PX - top
+  const maxHeight = Math.max(56, belowBudget)
+  const constrained = shouldConstrainTourCardContent(natural.total, maxHeight)
 
   if (constrained) {
-    elements.card.style.maxHeight = `${placement.maxHeight}px`
-    const scrollMax = Math.max(56, placement.maxHeight - natural.footer)
+    elements.card.style.maxHeight = `${maxHeight}px`
+    const scrollMax = Math.max(56, maxHeight - natural.footer)
     elements.scrollRegion.style.maxHeight = `${scrollMax}px`
     elements.scrollRegion.style.overflowY = 'auto'
-  }
-
-  return {
-    left,
-    top: placement.top,
-    cardWidth,
-    constrained,
-    maxHeight: constrained ? placement.maxHeight : undefined,
-    mode: placement.mode,
-  }
-}
-
-/** Desktop: keep seeded position; only cap scroll region when content exceeds budget. */
-export function applyMeasuredDesktopTourCardLayout(input: {
-  elements: MeasuredTourCardElements
-  left: number
-  top: number
-  maxHeightBudget: number
-  cardWidth: number
-}): AppliedTourCardLayout {
-  const { elements, left, top, maxHeightBudget, cardWidth } = input
-  resetMeasuredTourCardLayout(elements)
-
-  const natural = measureTourCardNaturalHeight(elements)
-  const constrained = shouldConstrainTourCardContent(natural.total, maxHeightBudget)
-
-  if (constrained) {
-    elements.card.style.maxHeight = `${maxHeightBudget}px`
-    const scrollMax = Math.max(56, maxHeightBudget - natural.footer)
-    elements.scrollRegion.style.maxHeight = `${scrollMax}px`
-    elements.scrollRegion.style.overflowY = 'auto'
+    top = enforceCardTopMinSpotGap({
+      spot,
+      cardTop: top,
+      cardHeight: elements.card.offsetHeight,
+      viewportHeight,
+    })
   }
 
   return {
@@ -101,7 +85,53 @@ export function applyMeasuredDesktopTourCardLayout(input: {
     top,
     cardWidth,
     constrained,
-    maxHeight: constrained ? maxHeightBudget : undefined,
+    maxHeight: constrained ? maxHeight : undefined,
+    mode: placement.mode,
+  }
+}
+
+/** Desktop: keep seeded position; only cap scroll region when content exceeds budget. */
+export function applyMeasuredDesktopTourCardLayout(input: {
+  elements: MeasuredTourCardElements
+  spot: TourSpotRect
+  left: number
+  top: number
+  maxHeightBudget: number
+  cardWidth: number
+  viewportHeight: number
+}): AppliedTourCardLayout {
+  const { elements, spot, left, top: seedTop, maxHeightBudget, cardWidth, viewportHeight } = input
+  resetMeasuredTourCardLayout(elements)
+
+  const natural = measureTourCardNaturalHeight(elements)
+  let top = enforceCardTopMinSpotGap({
+    spot,
+    cardTop: seedTop,
+    cardHeight: natural.total,
+    viewportHeight,
+  })
+  const belowBudget = Math.min(maxHeightBudget, viewportHeight - IA_TOUR_VIEWPORT_MARGIN_PX - top)
+  const constrained = shouldConstrainTourCardContent(natural.total, belowBudget)
+
+  if (constrained) {
+    elements.card.style.maxHeight = `${belowBudget}px`
+    const scrollMax = Math.max(56, belowBudget - natural.footer)
+    elements.scrollRegion.style.maxHeight = `${scrollMax}px`
+    elements.scrollRegion.style.overflowY = 'auto'
+    top = enforceCardTopMinSpotGap({
+      spot,
+      cardTop: top,
+      cardHeight: elements.card.offsetHeight,
+      viewportHeight,
+    })
+  }
+
+  return {
+    left,
+    top,
+    cardWidth,
+    constrained,
+    maxHeight: constrained ? belowBudget : undefined,
     mode: 'desktop',
   }
 }

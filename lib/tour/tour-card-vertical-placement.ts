@@ -3,6 +3,7 @@ import {
   IA_TOUR_CARD_GAP_PX,
   IA_TOUR_VIEWPORT_MARGIN_PX,
 } from '@/lib/tour/tour-placement'
+import { spotOuterBottom, spotOuterTop } from '@/lib/tour/tour-spotlight-gap'
 
 export type TourCardVerticalMode = 'below' | 'above' | 'sheet'
 
@@ -35,17 +36,18 @@ export function pickVerticalCardPlacement(
   const gap = options?.gap ?? IA_TOUR_CARD_GAP_PX
   const sheetRatio = options?.sheetViewportRatio ?? 0.78
 
-  const belowTop = spot.top + spot.height + gap
+  const minGap = options?.gap ?? IA_TOUR_CARD_GAP_PX
+  const belowTop = spotOuterBottom(spot) + minGap
   const belowSpace = viewportHeight - margin - belowTop
 
   if (measuredCardHeight <= belowSpace && belowSpace > 0) {
     return { top: belowTop, maxHeight: belowSpace, mode: 'below' }
   }
 
-  const aboveSpace = spot.top - gap - margin
+  const aboveSpace = spotOuterTop(spot) - minGap - margin
   if (measuredCardHeight <= aboveSpace && aboveSpace > 0) {
     return {
-      top: Math.max(margin, spot.top - gap - measuredCardHeight),
+      top: Math.max(margin, spotOuterTop(spot) - minGap - measuredCardHeight),
       maxHeight: aboveSpace,
       mode: 'above',
     }

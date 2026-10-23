@@ -1,3 +1,10 @@
+import {
+  spotlightOuterRect,
+  spotOuterBottom,
+  spotOuterTop,
+  TOUR_CARD_SPOT_MIN_GAP_PX,
+} from '@/lib/tour/tour-spotlight-gap'
+
 export type TourSpotRect = {
   left: number
   top: number
@@ -13,7 +20,7 @@ export type TourCardLayout = {
 }
 
 export const IA_TOUR_CARD_WIDTH_PX = 344
-export const IA_TOUR_CARD_GAP_PX = 12
+export const IA_TOUR_CARD_GAP_PX = TOUR_CARD_SPOT_MIN_GAP_PX
 export const IA_TOUR_VIEWPORT_MARGIN_PX = 8
 export const IA_TOUR_MIN_CARD_BODY_PX = 160
 
@@ -83,7 +90,7 @@ function pickBestCardLayout(
   gap: number,
   minCardHeight: number,
 ): TourCardLayout {
-  const spotBox = spotBounds(spot)
+  const spotBox = spotBounds(spotlightOuterRect(spot))
   const heightForLayout = (layout: TourCardLayout) =>
     Math.min(layout.maxHeight, Math.max(minCardHeight, IA_TOUR_MIN_CARD_BODY_PX))
 
@@ -115,13 +122,14 @@ export function computeIaTourCardLayout(
   const gap = IA_TOUR_CARD_GAP_PX
   const cardWidth = Math.min(IA_TOUR_CARD_WIDTH_PX, viewportWidth - margin * 2)
 
-  const spaceBelow = viewportHeight - margin - (spot.top + spot.height + gap)
-  const spaceAbove = spot.top - gap - margin
+  const belowTop = spotOuterBottom(spot) + gap
+  const spaceBelow = viewportHeight - margin - belowTop
+  const spaceAbove = spotOuterTop(spot) - gap - margin
 
   const candidates: TourCardLayout[] = []
 
   if (spaceBelow >= IA_TOUR_MIN_CARD_BODY_PX) {
-    const top = spot.top + spot.height + gap
+    const top = belowTop
     const maxHeight = viewportHeight - top - margin
     candidates.push({
       left: clamp(spot.left, margin, viewportWidth - cardWidth - margin),
@@ -133,11 +141,11 @@ export function computeIaTourCardLayout(
 
   if (spaceAbove >= IA_TOUR_MIN_CARD_BODY_PX) {
     const maxHeight = Math.min(spaceAbove, viewportHeight - margin * 2)
-    const top = Math.max(margin, spot.top - gap - maxHeight)
+    const top = Math.max(margin, spotOuterTop(spot) - gap - maxHeight)
     candidates.push({
       left: clamp(spot.left, margin, viewportWidth - cardWidth - margin),
       top,
-      maxHeight: spot.top - gap - top,
+      maxHeight: spotOuterTop(spot) - gap - top,
       cardWidth,
     })
   }
@@ -157,7 +165,7 @@ export function computeIaTourCardLayout(
 
   if (candidates.length === 0) {
     const top = clamp(
-      spot.top + spot.height + gap,
+      belowTop,
       margin,
       viewportHeight - IA_TOUR_MIN_CARD_BODY_PX - margin,
     )

@@ -1,10 +1,10 @@
 /**
  * Headless DOM check: IA tour calendar step card at 390×844 must not clip body
- * text under the progress dots (real layout + fonts).
+ * text under the progress dots, and must keep ≥12px gap from the spotlight.
  */
 
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer-core'
@@ -13,6 +13,13 @@ import {
   pickVerticalCardPlacement,
   shouldConstrainTourCardContent,
 } from '../lib/tour/tour-card-vertical-placement.ts'
+import {
+  enforceCardTopMinSpotGap,
+  TOUR_CARD_SPOT_MIN_GAP_PX,
+  TOUR_SPOTLIGHT_BORDER_PX,
+  verticalGapBetweenSpotAndCard,
+} from '../lib/tour/tour-spotlight-gap.ts'
+import { IA_TOUR_VIEWPORT_MARGIN_PX } from '../lib/tour/tour-placement.ts'
 
 const root = dirname(fileURLToPath(import.meta.url))
 const calendarBody = buildTourSteps({
@@ -43,6 +50,7 @@ function tourCardHtml(body: string, showBack: boolean): string {
 <html>
 <head><meta charset="utf-8" /><style>*{box-sizing:border-box;}body{margin:0;background:#0a0c14;}</style></head>
 <body>
+  <div id="spotlight" style="position:fixed;left:12px;top:108px;width:366px;height:64px;border:${TOUR_SPOTLIGHT_BORDER_PX}px solid ${K.copper};border-radius:12px;box-sizing:border-box;pointer-events:none;"></div>
   <div id="card" style="position:fixed;left:16px;top:200px;display:flex;flex-direction:column;overflow:visible;background:${K.bg2};border:1px solid ${K.copper}55;border-radius:18px;width:358px;height:auto;">
     <div id="scroll" style="flex-shrink:0;padding:22px 22px 12px;">
       <div style="font-family:${K.fMono};font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:${K.copper};margin-bottom:10px;">2 / 6</div>
@@ -65,12 +73,24 @@ function tourCardHtml(body: string, showBack: boolean): string {
 </body></html>`
 }
 
-const chromePath =
-  process.env.CHROME_PATH ||
-  process.env.PUPPETEER_EXECUTABLE_PATH ||
-  '/usr/local/bin/google-chrome'
+const chromeCandidates = [
+  process.env.CHROME_PATH,
+  process.env.PUPPETEER_EXECUTABLE_PATH,
+  '/usr/local/bin/google-chrome',
+  '/usr/bin/google-chrome',
+].filter((p): p is string => Boolean(p))
+
+const chromePath = chromeCandidates.find((p) => existsSync(p))
 
 console.log('IA tour mobile card DOM (390×844, calendar step)')
+
+if (!chromePath) {
+  console.log('⊘ Skipping IA tour mobile card DOM check (no Chrome/Chromium found)')
+  process.exit(0)
+}
+
+const spot = { left: 12, top: 108, width: 366, height: 64 }
+const viewportHeight = 844
 
 const browser = await puppeteer.launch({
   headless: true,
@@ -78,45 +98,66 @@ const browser = await puppeteer.launch({
   args: ['--no-sandbox', '--disable-setuid-sandbox'],
 })
 
-const spot = { left: 12, top: 108, width: 366, height: 48 }
-
 for (const showBack of [false, true]) {
   const page = await browser.newPage()
-  await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 })
+  await page.setViewport({ width: 390, height: viewportHeight, deviceScaleFactor: 1 })
   await page.setContent(tourCardHtml(calendarBody, showBack), { waitUntil: 'networkidle0' })
   await page.evaluate(() => document.fonts.ready)
 
   const natural = await page.evaluate(() => {
     const card = document.getElementById('card') as HTMLElement
     const footer = document.getElementById('footer') as HTMLElement
-    const scroll = document.getElementById('scroll') as HTMLElement
-    return {
-      total: card.offsetHeight,
-      footer: footer.offsetHeight,
-      scroll: scroll.scrollHeight,
-    }
+    return { total: card.offsetHeight, footer: footer.offsetHeight }
   })
 
-  const placement = pickVerticalCardPlacement(spot, 844, natural.total)
-  const constrained = shouldConstrainTourCardContent(natural.total, placement.maxHeight)
+  const placement = pickVerticalCardPlacement(spot, viewportHeight, natural.total)
+  let top = enforceCardTopMinSpotGap({
+    spot,
+    cardTop: placement.top,
+    cardHeight: natural.total,
+    viewportHeight,
+  })
+  const belowBudget = viewportHeight - IA_TOUR_VIEWPORT_MARGIN_PX - top
+  const maxHeight = Math.max(56, belowBudget)
+  const constrained = shouldConstrainTourCardContent(natural.total, maxHeight)
 
   await page.evaluate(
-    ({ placement, constrained, footerH }) => {
+    ({ top, maxHeight, footerH, constrained, naturalTotal }) => {
       const card = document.getElementById('card') as HTMLElement
       const scroll = document.getElementById('scroll') as HTMLElement
-      card.style.left = '16px'
-      card.style.top = `${placement.top}px`
+      card.style.top = `${top}px`
       card.style.maxHeight = ''
       scroll.style.maxHeight = ''
       scroll.style.overflowY = 'visible'
       if (constrained) {
-        card.style.maxHeight = `${placement.maxHeight}px`
-        scroll.style.maxHeight = `${Math.max(56, placement.maxHeight - footerH)}px`
+        card.style.maxHeight = `${maxHeight}px`
+        scroll.style.maxHeight = `${Math.max(56, maxHeight - footerH)}px`
         scroll.style.overflowY = 'auto'
       }
+      void naturalTotal
     },
-    { placement, constrained, footerH: natural.footer },
+    {
+      top,
+      maxHeight,
+      footerH: natural.footer,
+      constrained,
+      naturalTotal: natural.total,
+    },
   )
+
+  if (constrained) {
+    const cardHeight = await page.evaluate(() => (document.getElementById('card') as HTMLElement).offsetHeight)
+    top = enforceCardTopMinSpotGap({
+      spot,
+      cardTop: top,
+      cardHeight,
+      viewportHeight,
+    })
+    await page.evaluate((nextTop) => {
+      const card = document.getElementById('card') as HTMLElement
+      card.style.top = `${nextTop}px`
+    }, top)
+  }
 
   const metrics = await page.evaluate(() => {
     const card = document.getElementById('card') as HTMLElement
@@ -126,6 +167,7 @@ for (const showBack of [false, true]) {
     const dotsRect = dots.getBoundingClientRect()
     return {
       cardHeight: card.offsetHeight,
+      cardTop: card.getBoundingClientRect().top,
       bodyScrollHeight: bodyText.scrollHeight,
       bodyClientHeight: bodyText.clientHeight,
       gap: dotsRect.top - bodyRect.bottom,
@@ -134,13 +176,19 @@ for (const showBack of [false, true]) {
     }
   })
 
+  const spotGap = verticalGapBetweenSpotAndCard(spot, top, metrics.cardHeight)
+
   assert.ok(
     metrics.textNotUnderDots,
-    `dots overlap body (gap=${metrics.gap}px, mode=${placement.mode}, back=${showBack})`,
+    `dots overlap body (gap=${metrics.gap}px, back=${showBack})`,
   )
   assert.ok(
     metrics.bodyFits,
     `body clipped (scroll=${metrics.bodyScrollHeight} client=${metrics.bodyClientHeight}, back=${showBack})`,
+  )
+  assert.ok(
+    spotGap >= TOUR_CARD_SPOT_MIN_GAP_PX - 0.5,
+    `spot-card gap ${spotGap}px < ${TOUR_CARD_SPOT_MIN_GAP_PX} (back=${showBack}, top=${top})`,
   )
   assert.ok(metrics.cardHeight >= 260, `card too short (${metrics.cardHeight}px)`)
 
@@ -151,7 +199,7 @@ await browser.close()
 
 const iaTourSource = readFileSync(join(root, '../components/tour/TourOverlayIa.tsx'), 'utf8')
 assert.ok(iaTourSource.includes('applyMeasuredMobileTourCardLayout'))
-assert.ok(iaTourSource.includes('TOUR_CARD_REMEASURE_EVENT'))
-assert.ok(iaTourSource.includes('data-tour-card-scroll'))
+assert.ok(iaTourSource.includes('TOUR_CARD_SPOT_MIN_GAP_PX'))
+assert.ok(iaTourSource.includes('scrollTourTargetClearanceBelow'))
 
 console.log('✓ Mobile calendar card DOM layout OK (with and without Back)')

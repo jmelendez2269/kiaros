@@ -20,8 +20,14 @@ import { computeIaTourCardLayout, IA_TOUR_CARD_WIDTH_PX } from '@/lib/tour/tour-
 import { handleTourFocusTrap, listFocusableElements, TOUR_IA_FOCUS_RING } from '@/lib/tour/tour-focus'
 import {
   findVerticalScrollParent,
+  scrollTourTargetClearanceBelow,
   scrollTourTargetIntoView,
 } from '@/lib/tour/tour-scroll-into-view'
+import {
+  TOUR_CARD_SPOT_MIN_GAP_PX,
+  TOUR_SPOTLIGHT_BORDER_PX,
+  verticalGapBetweenSpotAndCard,
+} from '@/lib/tour/tour-spotlight-gap'
 import {
   CALENDAR_SIDEBAR_GROUP_TOUR_TARGET,
   CALENDAR_TAB_ROW_TOUR_TARGET,
@@ -60,6 +66,7 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
   const nextButtonRef = useRef<HTMLButtonElement>(null)
   const tourStepRef = useRef(0)
   const [layoutEpoch, setLayoutEpoch] = useState(0)
+  const gapScrollStepRef = useRef(-1)
   const [cardFrame, setCardFrame] = useState({
     left: 8,
     top: 96,
@@ -186,6 +193,12 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
           for (const node of targetGroupRef.current) {
             scrollTourTargetIntoView(node)
           }
+        }
+        if (isMobileNavViewport(window.innerWidth)) {
+          scrollTourTargetClearanceBelow(
+            targetEl,
+            340 + TOUR_CARD_SPOT_MIN_GAP_PX + TOUR_SPOTLIGHT_BORDER_PX * 2,
+          )
         }
 
         function afterLayoutMeasure(framesLeft: number) {
@@ -378,6 +391,21 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
         viewportHeight,
         cardWidth: width,
       })
+      const cardHeight = card.offsetHeight
+      const spotGap = verticalGapBetweenSpotAndCard(spot, applied.top, cardHeight)
+      if (
+        spotGap < TOUR_CARD_SPOT_MIN_GAP_PX - 0.5 &&
+        targetElRef.current &&
+        gapScrollStepRef.current !== tourState.step
+      ) {
+        gapScrollStepRef.current = tourState.step
+        scrollTourTargetClearanceBelow(
+          targetElRef.current,
+          cardHeight + TOUR_CARD_SPOT_MIN_GAP_PX + TOUR_SPOTLIGHT_BORDER_PX * 2,
+        )
+        updateSpotFromRef()
+        window.dispatchEvent(new CustomEvent(TOUR_CARD_REMEASURE_EVENT))
+      }
       setCardFrame((prev) => {
         const next = {
           left: applied.left,
@@ -402,11 +430,23 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
       const seed = computeIaTourCardLayout(spot, viewportWidth, viewportHeight, false)
       const applied = applyMeasuredDesktopTourCardLayout({
         elements: { card, scrollRegion, footer },
+        spot,
         left: seed.left,
         top: seed.top,
         maxHeightBudget: seed.maxHeight,
         cardWidth: seed.cardWidth,
+        viewportHeight,
       })
+      const cardHeight = card.offsetHeight
+      const spotGap = verticalGapBetweenSpotAndCard(spot, applied.top, cardHeight)
+      if (spotGap < TOUR_CARD_SPOT_MIN_GAP_PX - 0.5 && targetElRef.current) {
+        scrollTourTargetClearanceBelow(
+          targetElRef.current,
+          cardHeight + TOUR_CARD_SPOT_MIN_GAP_PX + TOUR_SPOTLIGHT_BORDER_PX * 2,
+        )
+        updateSpotFromRef()
+        window.dispatchEvent(new CustomEvent(TOUR_CARD_REMEASURE_EVENT))
+      }
       setCardFrame((prev) => {
         const next = {
           left: applied.left,
@@ -452,7 +492,12 @@ export function TourOverlayIa({ steps }: { steps: TourStep[] }) {
     currentStep?.body,
     showBack,
     steps.length,
+    updateSpotFromRef,
   ])
+
+  useEffect(() => {
+    gapScrollStepRef.current = -1
+  }, [tourState.step])
 
   if (!tourVisible || !currentStep) return null
 

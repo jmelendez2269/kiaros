@@ -58,3 +58,24 @@ export function scrollTourTargetIntoView(el: HTMLElement, padding = 16): void {
   }
   el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
 }
+
+/** Scroll target up so at least `reserveBelowPx` sits below it in the viewport. */
+export function scrollTourTargetClearanceBelow(
+  el: HTMLElement,
+  reserveBelowPx: number,
+  viewportMargin = 16,
+): boolean {
+  const rect = el.getBoundingClientRect()
+  const viewportHeight = window.innerHeight
+  const spaceBelow = viewportHeight - viewportMargin - rect.bottom
+  const shortage = reserveBelowPx - spaceBelow
+  if (shortage <= 0) return false
+
+  const scrollParent = findVerticalScrollParent(el)
+  if (scrollParent) {
+    scrollParent.scrollTop += shortage
+    return true
+  }
+  window.scrollBy(0, shortage)
+  return true
+}

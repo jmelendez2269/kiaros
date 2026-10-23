@@ -26,6 +26,11 @@ import {
 } from '../lib/tour/tour-target-element.ts'
 import { computeIaTourCardLayout } from '../lib/tour/tour-placement.ts'
 import { pickVerticalCardPlacement } from '../lib/tour/tour-card-vertical-placement.ts'
+import {
+  enforceCardTopMinSpotGap,
+  TOUR_CARD_SPOT_MIN_GAP_PX,
+  verticalGapBetweenSpotAndCard,
+} from '../lib/tour/tour-spotlight-gap.ts'
 import { scrollTopAfterAlignTarget } from '../lib/tour/tour-scroll-into-view.ts'
 import { TOUR_IA_FOCUS_RING } from '../lib/tour/tour-focus.ts'
 
@@ -187,6 +192,17 @@ assert.equal(below.mode, 'below')
 const tight = pickVerticalCardPlacement({ left: 12, top: 620, width: 360, height: 48 }, 844, 520)
 assert.ok(tight.mode === 'above' || tight.mode === 'sheet')
 console.log('✓ Mobile placement helpers\n')
+
+console.log('Spotlight–card minimum gap (12px)')
+const gapSpot = { left: 12, top: 108, width: 366, height: 64 }
+const gapTop = enforceCardTopMinSpotGap({
+  spot: gapSpot,
+  cardTop: gapSpot.top + gapSpot.height + 4,
+  cardHeight: 280,
+  viewportHeight: 844,
+})
+assert.ok(verticalGapBetweenSpotAndCard(gapSpot, gapTop, 280) >= TOUR_CARD_SPOT_MIN_GAP_PX)
+console.log('✓ Spotlight gap enforcement\n')
 
 console.log('IA tour card placement avoids covering spotlight (mobile)')
 const spot = { left: 12, top: 400, width: 280, height: 52 }
