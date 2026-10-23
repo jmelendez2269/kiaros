@@ -12,6 +12,9 @@ import {
   type CycleFormState,
 } from "@/components/onboarding/OnboardingCycleFields";
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import { OnboardingIa5StepKicker } from "@/components/onboarding/OnboardingIa5StepKicker";
+import { OnboardingIa5StepNav } from "@/components/onboarding/OnboardingIa5StepNav";
+import { onboardingIa5FieldClass } from "@/lib/onboarding/ia5-ui";
 
 const STORAGE_KEY = "kiaros_onboarding_step4";
 const CYCLE_STORAGE_KEY = "kiaros_onboarding_step5";
@@ -116,6 +119,13 @@ export default function OnboardingYearFocusPage() {
     };
   }, []);
 
+  const legacyFieldClass =
+    "w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400";
+  const textFieldClass = ia5
+    ? onboardingIa5FieldClass(true, legacyFieldClass.replace("resize-none ", ""))
+    : legacyFieldClass;
+  const textareaClass = ia5 ? onboardingIa5FieldClass(true, legacyFieldClass) : legacyFieldClass;
+
   const onSubmit = async (values: FormValues) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
 
@@ -147,7 +157,7 @@ export default function OnboardingYearFocusPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <p className="shell-kicker">{ia5 ? "Step 3" : "Step 4"}</p>
+        <OnboardingIa5StepKicker legacyKicker="Step 4" />
         <h2 className="font-serif text-3xl text-bone">
           {ia5 ? "Shape your year and energy" : "Shape the customization layer"}
         </h2>
@@ -177,7 +187,7 @@ export default function OnboardingYearFocusPage() {
             {...register("year_vision")}
             disabled={isSubmitting}
             rows={5}
-            className="w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={textareaClass}
           />
           {errors.year_vision && <p className="text-xs text-destructive">{errors.year_vision.message}</p>}
         </div>
@@ -220,7 +230,7 @@ export default function OnboardingYearFocusPage() {
             placeholder="e.g., Roots, Expansion, Presence, Devotion..."
             {...register("word_of_year")}
             disabled={isSubmitting}
-            className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={textFieldClass}
           />
         </div>
 
@@ -236,7 +246,7 @@ export default function OnboardingYearFocusPage() {
             {...register("what_to_release")}
             disabled={isSubmitting}
             rows={3}
-            className="w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
+            className={textareaClass}
           />
         </div>
 
@@ -257,20 +267,20 @@ export default function OnboardingYearFocusPage() {
           state={cycleState}
           onChange={setCycleState}
           disabled={isSubmitting}
+          ia5FocusRing
         />
       ) : null}
 
       {ia5 ? (
         <div className="space-y-3">
           {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
-          <button
-            type="submit"
-            form="onboarding-year-focus-form"
-            disabled={isSubmitting}
-            className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
-          >
-            {isSubmitting ? "Saving..." : "Continue"}
-          </button>
+          <OnboardingIa5StepNav
+            backHref="/onboarding/goals"
+            onContinue={() => {}}
+            continueType="submit"
+            continueForm="onboarding-year-focus-form"
+            isSubmitting={isSubmitting}
+          />
         </div>
       ) : null}
     </div>

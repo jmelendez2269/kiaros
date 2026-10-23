@@ -10,6 +10,13 @@ import {
   onboardingGeneratingHref,
   persistIa5OnboardingRoutingFromDestination,
 } from "@/lib/onboarding/ia-onboarding-routes";
+import {
+  ONBOARDING_IA5_FOCUS_RING,
+  ONBOARDING_IA5_SECONDARY_BUTTON,
+  onboardingIa5FieldClass,
+} from "@/lib/onboarding/ia5-ui";
+import { OnboardingIa5StepKicker } from "@/components/onboarding/OnboardingIa5StepKicker";
+import { OnboardingIa5StepNav } from "@/components/onboarding/OnboardingIa5StepNav";
 
 const STORAGE_KEY = "kiaros_onboarding_step6";
 const STUDY_FOCUS_KEY = "kiaros_onboarding_step3_study_focus";
@@ -58,7 +65,7 @@ export default function OnboardingThemePage() {
     });
   };
 
-  const onSubmit = async (opts?: { forceSkipStudyFocus?: boolean }) => {
+  const onSubmit = async () => {
     setIsSubmitting(true);
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: selected }));
 
@@ -74,7 +81,7 @@ export default function OnboardingThemePage() {
       return;
     }
 
-    if (ia5 && !opts?.forceSkipStudyFocus && showStudyFocus && studyFocus.trim()) {
+    if (ia5 && studyFocus.trim()) {
       await persistStudyFocus(studyFocus);
     }
 
@@ -94,19 +101,12 @@ export default function OnboardingThemePage() {
     router.push(destination);
   };
 
-  const skipStudyFocusAndContinue = async () => {
-    setShowStudyFocus(false);
-    setStudyFocus("");
-    localStorage.removeItem(STUDY_FOCUS_KEY);
-    await onSubmit({ forceSkipStudyFocus: true });
-  };
-
   const selectedTheme = THEMES.find((t) => t.id === selected)!;
 
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <p className="shell-kicker">{ia5 ? "Step 4" : "Step 6"}</p>
+        <OnboardingIa5StepKicker legacyKicker="Step 6" />
         <h2 className="font-serif text-3xl text-bone">Choose your aesthetic</h2>
         <p className="leading-relaxed text-bone-muted">
           Choose the atmosphere you want to live with. Your blueprint will live in this palette
@@ -123,7 +123,7 @@ export default function OnboardingThemePage() {
         </p>
       </div>
 
-      {ia5 && !showStudyFocus ? (
+      {ia5 ? (
         <div className="rounded-xl border border-border/60 bg-stone-950/40 px-4 py-4">
           <p className="text-sm font-medium text-bone">Study focus (optional)</p>
           <p className="mt-1 text-xs leading-relaxed text-bone-muted">
@@ -131,58 +131,48 @@ export default function OnboardingThemePage() {
             Curriculum and your blueprint context. You can also add it later in Settings or when you
             open Curriculum.
           </p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          {!showStudyFocus ? (
             <button
               type="button"
               onClick={() => setShowStudyFocus(true)}
               disabled={isSubmitting}
-              className="flex-1 rounded-xl border border-border/80 bg-stone-900 px-3 py-2 text-sm text-bone hover:bg-stone-800"
+              className={`mt-3 ${ONBOARDING_IA5_SECONDARY_BUTTON} ${ONBOARDING_IA5_FOCUS_RING}`}
             >
               Add study focus
             </button>
-            <button
-              type="button"
-              onClick={() => void onSubmit()}
-              disabled={isSubmitting}
-              className="flex-1 rounded-xl border border-border/40 px-3 py-2 text-sm text-bone-muted hover:text-bone"
-            >
-              Skip
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {ia5 && showStudyFocus ? (
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-bone">What are you studying or deepening?</label>
-          <textarea
-            value={studyFocus}
-            onChange={(e) => setStudyFocus(e.target.value)}
-            disabled={isSubmitting}
-            rows={4}
-            placeholder="Placeholder: topics, books, or skills for Stella to refine"
-            className="w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/45 focus:outline-none focus:ring-2 focus:ring-leather-400"
-          />
-          <button
-            type="button"
-            onClick={() => void skipStudyFocusAndContinue()}
-            disabled={isSubmitting}
-            className="text-sm text-bone-muted hover:text-bone"
-          >
-            Skip
-          </button>
+          ) : (
+            <div className="mt-3 space-y-2">
+              <label className="block text-sm font-medium text-bone">What are you studying or deepening?</label>
+              <textarea
+                value={studyFocus}
+                onChange={(e) => setStudyFocus(e.target.value)}
+                disabled={isSubmitting}
+                rows={4}
+                placeholder="Placeholder: topics, books, or skills for Stella to refine"
+                className={onboardingIa5FieldClass(true, "w-full resize-none rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-sm text-bone placeholder:text-bone-muted/45")}
+              />
+            </div>
+          )}
         </div>
       ) : null}
 
       {saveError && <p className="text-sm text-destructive">{saveError}</p>}
-      {(!ia5 || showStudyFocus) && (
+
+      {ia5 ? (
+        <OnboardingIa5StepNav
+          backHref="/onboarding/year-focus"
+          onContinue={() => void onSubmit()}
+          continueLabel="Continue"
+          isSubmitting={isSubmitting}
+        />
+      ) : (
         <button
           type="button"
           onClick={() => void onSubmit()}
           disabled={isSubmitting}
           className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
         >
-          {isSubmitting ? "Saving..." : ia5 ? "Start building" : "See what comes next"}
+          {isSubmitting ? "Saving..." : "See what comes next"}
         </button>
       )}
     </div>

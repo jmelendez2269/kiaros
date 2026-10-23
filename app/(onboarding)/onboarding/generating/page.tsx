@@ -7,6 +7,7 @@ import { TOUR_PENDING_KEY } from "@/lib/tour/config";
 import { WeekPreviewGeneratingPanel } from "@/components/onboarding/WeekPreviewGeneratingPanel";
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
 import { IA5_GENERATING_MODE_KEY, type Ia5GeneratingMode } from "@/lib/onboarding/ia-onboarding-routes";
+import { ONBOARDING_IA5_BUILDING_PROGRESS_LABEL } from "@/lib/onboarding/ia5-ui";
 
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_INTERVAL_MS = 8000;
@@ -530,7 +531,13 @@ export default function OnboardingGeneratingPage() {
         <div className="h-2 overflow-hidden rounded-full bg-stone-900/90 ring-1 ring-white/10">
           <div className="h-full rounded-full bg-gradient-to-r from-leather-500 via-leather-300 to-leather-500 animate-[loading-bar_2s_ease-in-out_infinite]" />
         </div>
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-bone-muted/60">
+        <div
+          className={
+            ia5 && generatingMode === "blueprint"
+              ? `flex items-center justify-between ${ONBOARDING_IA5_BUILDING_PROGRESS_LABEL}`
+              : "flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-bone-muted/60"
+          }
+        >
           <span>{progressLeft}</span>
           <span>{progressRight}</span>
         </div>

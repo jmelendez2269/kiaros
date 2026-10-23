@@ -61,6 +61,11 @@ export function readIa5GeneratingMode(): Ia5GeneratingMode | null {
   return value === 'week' || value === 'blueprint' ? value : null
 }
 
+export function writeIa5OnboardingPath(path: Ia5OnboardingPath): void {
+  if (typeof sessionStorage === 'undefined') return
+  sessionStorage.setItem(IA5_ONBOARDING_PATH_KEY, path)
+}
+
 /** Old onboarding paths → canonical IA5 screen (307 targets). */
 export const IA5_ONBOARDING_LEGACY_REDIRECTS: Readonly<Record<string, string>> = {
   '/onboarding/tradition': '/onboarding/goals',

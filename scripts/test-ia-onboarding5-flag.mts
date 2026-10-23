@@ -16,6 +16,7 @@ import {
   iaOnboarding5FlagEnabled,
   onboardingGeneratingHref,
 } from '../lib/onboarding/ia-onboarding-routes.ts'
+import { ia5PathFromAccessWindow } from '../lib/onboarding/ia5-ui.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
@@ -58,6 +59,16 @@ assert.equal(ia5OnboardingPathFromDestination('/onboarding/generating-week'), 'f
 assert.equal(ia5OnboardingPathFromDestination('/onboarding/tradition'), 'paid')
 assert.equal(ia5OnboardingPathFromDestination('/onboarding/generating'), 'paid')
 console.log('✓ Path from destination\n')
+
+console.log('IA5 path from GET /api/profile access_window')
+assert.equal(ia5PathFromAccessWindow(null), 'free')
+assert.equal(ia5PathFromAccessWindow({ state: 'active' }), 'paid')
+assert.equal(ia5PathFromAccessWindow({ state: 'expired' }), 'free')
+console.log('✓ access_window inference\n')
+
+console.log('Year-focus is step 3 in IA5 ledger')
+assert.equal(ONBOARDING_STEPS_IA5.find((s) => s.path === '/onboarding/year-focus')?.step, 3)
+console.log('✓ year-focus step kicker source\n')
 
 console.log('middleware wiring')
 const middlewareSource = readFileSync(join(root, 'middleware.ts'), 'utf8')

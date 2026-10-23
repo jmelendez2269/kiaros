@@ -1,6 +1,7 @@
 "use client";
 
 import { BRAND } from "@/lib/brand";
+import { ONBOARDING_IA5_FOCUS_RING } from "@/lib/onboarding/ia5-ui";
 
 export type CycleFormState = {
   enabled: boolean;
@@ -13,6 +14,7 @@ type Props = {
   state: CycleFormState;
   onChange: (next: CycleFormState) => void;
   disabled?: boolean;
+  ia5FocusRing?: boolean;
 };
 
 const PHASE_CARDS = [
@@ -26,9 +28,10 @@ export function toggleCycleEnabled(state: CycleFormState): CycleFormState {
   return { ...state, enabled: !state.enabled };
 }
 
-export function OnboardingCycleFields({ state, onChange, disabled }: Props) {
+export function OnboardingCycleFields({ state, onChange, disabled, ia5FocusRing }: Props) {
   const { enabled, cycleLength, periodLength, lastPeriodStart } = state;
   const toggleId = "kiaros-onboarding-cycle-enabled";
+  const focusRing = ia5FocusRing ? ONBOARDING_IA5_FOCUS_RING : "";
 
   return (
     <div className="space-y-6 border-t border-border/50 pt-6">
@@ -64,7 +67,7 @@ export function OnboardingCycleFields({ state, onChange, disabled }: Props) {
           htmlFor={toggleId}
           className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
             enabled ? "bg-leather-400" : "bg-stone-700"
-          } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+          } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${focusRing}`}
         >
           <span
             className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
@@ -91,7 +94,7 @@ export function OnboardingCycleFields({ state, onChange, disabled }: Props) {
               value={cycleLength}
               disabled={disabled}
               onChange={(e) => onChange({ ...state, cycleLength: Number(e.target.value) })}
-              className="w-full accent-[#b8a07b]"
+              className={`w-full accent-[#b8a07b] ${focusRing}`}
             />
             <div className="flex justify-between text-xs text-bone-muted">
               <span>21</span>
@@ -111,7 +114,7 @@ export function OnboardingCycleFields({ state, onChange, disabled }: Props) {
               value={periodLength}
               disabled={disabled}
               onChange={(e) => onChange({ ...state, periodLength: Number(e.target.value) })}
-              className="w-full accent-[#b8a07b]"
+              className={`w-full accent-[#b8a07b] ${focusRing}`}
             />
             <div className="flex justify-between text-xs text-bone-muted">
               <span>2</span>
@@ -128,7 +131,7 @@ export function OnboardingCycleFields({ state, onChange, disabled }: Props) {
               value={lastPeriodStart}
               disabled={disabled}
               onChange={(e) => onChange({ ...state, lastPeriodStart: e.target.value })}
-              className="w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone focus:outline-none focus:ring-2 focus:ring-leather-400"
+              className={`w-full rounded-xl border border-border/80 bg-stone-950/70 px-4 py-3 text-bone focus:outline-none focus:ring-2 focus:ring-leather-400 ${focusRing}`}
             />
             <p className="text-xs text-bone-muted">
               Lets {BRAND.product} calculate your current phase accurately.

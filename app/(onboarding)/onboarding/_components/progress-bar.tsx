@@ -10,6 +10,8 @@ import {
   type Ia5OnboardingPath,
 } from "@/lib/onboarding/ia-onboarding-routes";
 import { iaOnboarding5FlagEnabled } from "@/lib/onboarding/ia-onboarding-flag";
+import { ia5PathFromAccessWindow } from "@/lib/onboarding/ia5-ui";
+import { writeIa5OnboardingPath } from "@/lib/onboarding/ia-onboarding-routes";
 
 function WeekReadingProgressBar() {
   return (
@@ -74,8 +76,26 @@ export function OnboardingProgressBar() {
 
   useEffect(() => {
     if (!ia5) return;
-    setIa5Path(readIa5OnboardingPath());
+    const stored = readIa5OnboardingPath();
+    setIa5Path(stored);
     setIa5GeneratingMode(readIa5GeneratingMode());
+
+    if (stored || pathname !== "/onboarding") return;
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/profile", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { access_window?: { state: string } | null };
+        const inferred = ia5PathFromAccessWindow(
+          data.access_window as { state: "active" | "read_only" | "expired" | "revoked" } | null,
+        );
+        writeIa5OnboardingPath(inferred);
+        setIa5Path(inferred);
+      } catch {
+        // Keep neutral label until complete POST persists path.
+      }
+    })();
   }, [ia5, pathname]);
 
   if (pathname === "/onboarding/generating-week") {
