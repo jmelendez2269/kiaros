@@ -164,7 +164,7 @@ export default function OnboardingYearFocusPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form id="onboarding-year-focus-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-bone">
             What do you want this year to feel like and mean?
@@ -240,23 +240,39 @@ export default function OnboardingYearFocusPage() {
           />
         </div>
 
-        {ia5 ? (
-          <OnboardingCycleFields
-            state={cycleState}
-            onChange={setCycleState}
+        {!ia5 && saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+        {!ia5 ? (
+          <button
+            type="submit"
             disabled={isSubmitting}
-          />
+            className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Continue"}
+          </button>
         ) : null}
-
-        {saveError && <p className="text-sm text-destructive">{saveError}</p>}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
-        >
-          {isSubmitting ? "Saving..." : "Continue"}
-        </button>
       </form>
+
+      {ia5 ? (
+        <OnboardingCycleFields
+          state={cycleState}
+          onChange={setCycleState}
+          disabled={isSubmitting}
+        />
+      ) : null}
+
+      {ia5 ? (
+        <div className="space-y-3">
+          {saveError ? <p className="text-sm text-destructive">{saveError}</p> : null}
+          <button
+            type="submit"
+            form="onboarding-year-focus-form"
+            disabled={isSubmitting}
+            className="w-full rounded-2xl border border-leather-400/50 bg-leather-500/35 px-4 py-3 font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Continue"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
