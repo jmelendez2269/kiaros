@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { settingsBirthDataHref } from '@/lib/settings/ia-settings-routes'
+import { isIaSettingsEnabled } from '@/lib/ia-settings-flag'
 import { HumanDesignView } from '@/components/human-design/HumanDesignView'
 import { BodyGraph } from '@/components/self/BodyGraph'
 import type { HumanDesignChart } from '@/lib/human-design'
@@ -30,7 +32,7 @@ export function DesignChapter({ chart, displayName, birthCity }: Props) {
             chapter will appear.
           </p>
           <Link
-            href="/settings"
+            href={settingsBirthDataHref(isIaSettingsEnabled())}
             className="mt-3 inline-block text-sm text-leather-200 underline underline-offset-2"
           >
             Update birth time
