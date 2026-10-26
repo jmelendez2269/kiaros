@@ -43,8 +43,7 @@ function calendarDayPlannerRedirects(req: NextRequest): NextResponse | null {
     const view = searchParams.get("view");
     if (view === "week") {
       const date = searchParams.get("date");
-      const url = new URL("/calendar", req.url);
-      url.searchParams.set("view", "week");
+      const url = new URL("/calendar/week", req.url);
       if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
         url.searchParams.set("date", date);
       }
@@ -58,6 +57,39 @@ function calendarDayPlannerRedirects(req: NextRequest): NextResponse | null {
       }
       return NextResponse.redirect(url, 307);
     }
+  }
+
+  if (pathname === "/year") {
+    const view = searchParams.get("view");
+    if (view === "week") {
+      const date = searchParams.get("date");
+      const url = new URL("/calendar/week", req.url);
+      if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        url.searchParams.set("date", date);
+      }
+      return NextResponse.redirect(url, 307);
+    }
+    if (view === "month") {
+      const month = searchParams.get("month");
+      const url = new URL("/calendar/month", req.url);
+      if (month && /^\d{4}-\d{2}$/.test(month)) {
+        url.searchParams.set("month", month);
+      }
+      return NextResponse.redirect(url, 307);
+    }
+    const url = new URL("/calendar/year", req.url);
+    for (const [key, value] of searchParams.entries()) {
+      url.searchParams.set(key, value);
+    }
+    return NextResponse.redirect(url, 307);
+  }
+
+  if (pathname === "/blueprint") {
+    const url = new URL("/calendar/blueprint", req.url);
+    for (const [key, value] of searchParams.entries()) {
+      url.searchParams.set(key, value);
+    }
+    return NextResponse.redirect(url, 307);
   }
 
   return null;

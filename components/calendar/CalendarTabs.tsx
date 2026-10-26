@@ -6,6 +6,7 @@ import {
   calendarTabBlueprintHref,
   calendarTabDayHref,
   calendarTabMonthHref,
+  calendarTabWeekHref,
   calendarTabYearHref,
   resolveCalendarTabKey,
   type CalendarTabKey,
@@ -15,32 +16,17 @@ import styles from './calendar-tabs.module.css'
 
 const TABS: { key: CalendarTabKey; label: string; href: () => string }[] = [
   { key: 'day', label: 'Day', href: calendarTabDayHref },
+  { key: 'week', label: 'Week', href: () => calendarTabWeekHref() },
   { key: 'month', label: 'Month', href: () => calendarTabMonthHref() },
   { key: 'year', label: 'Year', href: calendarTabYearHref },
   { key: 'blueprint', label: 'Blueprint', href: calendarTabBlueprintHref },
 ]
-
-type DayWeekView = 'day' | 'week'
-
-function dayWeekHref(pathname: string, params: URLSearchParams, view: DayWeekView): string {
-  const sp = new URLSearchParams(params.toString())
-  sp.set('view', view)
-  const date = params.get('date')
-  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    sp.set('date', date)
-  }
-  const qs = sp.toString()
-  return qs ? `${pathname}?${qs}` : pathname
-}
 
 export function CalendarTabs() {
   const pathname = usePathname()
   const params = useSearchParams()
   const view = params.get('view')
   const active = resolveCalendarTabKey(pathname, view)
-  const onCalendarDayRoute =
-    pathname === '/calendar' || (pathname.startsWith('/calendar') && !pathname.startsWith('/calendar/month'))
-  const dayWeekView: DayWeekView = view === 'week' ? 'week' : 'day'
 
   const monthHref = () => {
     const month = params.get('month')
@@ -54,8 +40,17 @@ export function CalendarTabs() {
     return calendarTabMonthHref()
   }
 
+  const weekHref = () => {
+    const date = params.get('date')
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return calendarTabWeekHref(date)
+    }
+    return calendarTabWeekHref()
+  }
+
   const hrefForTab = (key: CalendarTabKey, defaultHref: () => string) => {
     if (key === 'month') return monthHref()
+    if (key === 'week') return weekHref()
     return defaultHref()
   }
 
@@ -81,49 +76,7 @@ export function CalendarTabs() {
             )
           })}
         </nav>
-        {onCalendarDayRoute ? (
-          <div className={styles.dayWeekDesktop}>
-            <div className={styles.dayWeek} aria-label="Day or week view">
-              <Link
-                href={dayWeekHref(pathname, new URLSearchParams(params.toString()), 'day')}
-                className={`${styles.dayWeekLink}${dayWeekView === 'day' ? ` ${styles.dayWeekLinkActive}` : ''}`}
-                aria-current={dayWeekView === 'day' ? 'page' : undefined}
-              >
-                Day
-              </Link>
-              <span className={styles.dayWeekSep} aria-hidden>|</span>
-              <Link
-                href={dayWeekHref(pathname, new URLSearchParams(params.toString()), 'week')}
-                className={`${styles.dayWeekLink}${dayWeekView === 'week' ? ` ${styles.dayWeekLinkActive}` : ''}`}
-                aria-current={dayWeekView === 'week' ? 'page' : undefined}
-              >
-                Week
-              </Link>
-            </div>
-          </div>
-        ) : null}
       </div>
-      {onCalendarDayRoute ? (
-        <div className={styles.dayWeekMobile}>
-          <div className={styles.dayWeek} aria-label="Day or week view">
-            <Link
-              href={dayWeekHref(pathname, new URLSearchParams(params.toString()), 'day')}
-              className={`${styles.dayWeekLink}${dayWeekView === 'day' ? ` ${styles.dayWeekLinkActive}` : ''}`}
-              aria-current={dayWeekView === 'day' ? 'page' : undefined}
-            >
-              Day
-            </Link>
-            <span className={styles.dayWeekSep} aria-hidden>|</span>
-            <Link
-              href={dayWeekHref(pathname, new URLSearchParams(params.toString()), 'week')}
-              className={`${styles.dayWeekLink}${dayWeekView === 'week' ? ` ${styles.dayWeekLinkActive}` : ''}`}
-              aria-current={dayWeekView === 'week' ? 'page' : undefined}
-            >
-              Week
-            </Link>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
