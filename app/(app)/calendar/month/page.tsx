@@ -6,7 +6,6 @@ import { todayISO } from '@/lib/today/get-today-context'
 import { getMonthPlan } from '@/lib/planner/get-month-plan'
 import { MonthChartView } from '@/components/year/MonthChartView'
 import { MonthBoard } from '@/components/planner/MonthBoard'
-import { CalendarTabs } from '@/components/calendar/CalendarTabs'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 
 interface SearchParams {
@@ -50,12 +49,13 @@ export default async function CalendarMonthPage({
   const monthPlan = await getMonthPlan(profile.id, monthParts.year, monthParts.month)
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <div className="flex flex-col gap-4">
-        <CalendarTabs />
-      </div>
+    <div className="space-y-6">
       <MonthChartView searchParams={params} calendarDayEnabled />
-      {monthPlan && <MonthBoard plan={monthPlan} today={today} />}
+      {monthPlan && (
+        <div className="mx-auto max-w-6xl px-4 pb-8">
+          <MonthBoard plan={monthPlan} today={today} />
+        </div>
+      )}
     </div>
   )
 }

@@ -88,11 +88,8 @@ export function parseDate(raw: string | undefined, fallbackIso: string): string 
 }
 
 export function isoWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7)
+  const { getISOWeek } = require('@/lib/calendar/iso-week')
+  return getISOWeek(date)
 }
 
 export function dayOfYear(date: Date): number {

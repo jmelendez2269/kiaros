@@ -195,8 +195,7 @@ function isSectionActive(
     if (calendarDayEnabled) {
       return (
         pathname.startsWith('/today') ||
-        pathname.startsWith('/planner') ||
-        (pathname.startsWith('/calendar') && !pathname.startsWith('/calendar/month'))
+        pathname.startsWith('/planner')
       )
     }
     return (
@@ -207,7 +206,7 @@ function isSectionActive(
   }
   if (key === 'week') {
     if (calendarDayEnabled) {
-      return false
+      return pathname.startsWith('/calendar/week')
     }
     return pathname.startsWith('/year') && view === 'week'
   }
@@ -221,6 +220,8 @@ function isSectionActive(
     if (journalIaEnabled) {
       return (
         pathname.startsWith('/blueprint') ||
+        pathname.startsWith('/calendar/blueprint') ||
+        pathname.startsWith('/calendar/year') ||
         (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
       )
     }
@@ -228,6 +229,8 @@ function isSectionActive(
       return (
         pathname.startsWith('/reflections') ||
         pathname.startsWith('/blueprint') ||
+        pathname.startsWith('/calendar/blueprint') ||
+        pathname.startsWith('/calendar/year') ||
         (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
       )
     }
@@ -324,6 +327,27 @@ function NavRow({
     goalsStudy: isSectionActive('goalsStudy', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
   })
 
+  const effectiveNavItems = navItems.map((n) => {
+    if (calendarDayEnabled) {
+      if (n.key === 'week') {
+        return { ...n, href: '/calendar/week' }
+      }
+      if (n.key === 'month') {
+        return { ...n, href: '/calendar/month' }
+      }
+      if (n.key === 'year') {
+        return {
+          ...n,
+          href: '/calendar/year',
+          subItems: n.subItems?.map((sub) =>
+            sub.href === '/blueprint' ? { ...sub, href: '/calendar/blueprint' } : sub
+          ),
+        }
+      }
+    }
+    return n
+  })
+
   useEffect(() => {
     const syncHash = () => setCurrentHash(window.location.hash)
     syncHash()
@@ -344,7 +368,7 @@ function NavRow({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {navItems.map((n) => {
+      {effectiveNavItems.map((n) => {
         const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled, journalIaEnabled, goalsIaEnabled)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =

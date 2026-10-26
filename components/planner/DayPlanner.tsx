@@ -95,6 +95,23 @@ export function DayPlanner({
   }
 
   async function addItem(title: string, startMinute: number | null) {
+    const optimisticId = `temp-${Date.now()}`
+    const optimisticItem: PlanItemRow = {
+      id: optimisticId,
+      user_id: '',
+      item_date: date,
+      title,
+      start_minute: startMinute,
+      duration_minutes: 30,
+      completed_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      area_goal_id: null,
+      sort_order: 0,
+      source: 'user',
+    }
+    setItems((prev) => [...prev, optimisticItem])
+
     const res = await fetch('/api/plan-items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -105,9 +122,19 @@ export function DayPlanner({
         ...(startMinute !== null ? { start_minute: startMinute } : {}),
       }),
     })
+
     if (res.ok) {
       const { item } = await res.json()
-      upsertItem(item)
+      setItems((prev) => prev.map((i) => (i.id === optimisticId ? item : i)))
+      setPlaceError(null)
+    } else {
+      setItems((prev) => prev.filter((i) => i.id !== optimisticId))
+      if (res.status === 403) {
+        const body = await res.json().catch(() => ({ error: 'Access required' }))
+        setPlaceError(body.error || 'Your current access doesn\'t cover planning. Upgrade to add items.')
+      } else {
+        setPlaceError('Could not add item. Please try again.')
+      }
     }
   }
 

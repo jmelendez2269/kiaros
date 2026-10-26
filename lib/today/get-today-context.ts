@@ -9,6 +9,7 @@ import {
 } from '@/lib/ephemeris/astronomia-adapter'
 import type { LunarPhase, ZodiacSign } from '@/types/blueprint'
 import { getSabianForDegree, formatZodiacPosition, type SabianSymbol } from '@/lib/ephemeris/sabian'
+import { getISOWeek } from '@/lib/calendar/iso-week'
 
 const APP_TIME_ZONE = 'America/New_York'
 
@@ -62,14 +63,6 @@ export function todayISO(timeZone = APP_TIME_ZONE): string {
   return y && m && d ? `${y}-${m}-${d}` : new Date().toISOString().slice(0, 10)
 }
 
-function getISOWeek(iso: string): number {
-  const date = new Date(`${iso}T12:00:00`)
-  const day = date.getDay() || 7
-  date.setDate(date.getDate() + 4 - day)
-  const yearStart = new Date(Date.UTC(date.getFullYear(), 0, 1))
-  const current = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-  return Math.ceil(((current - yearStart.getTime()) / 86400000 + 1) / 7)
-}
 
 function dayOfYear(iso: string): number {
   const date = new Date(`${iso}T12:00:00`)
