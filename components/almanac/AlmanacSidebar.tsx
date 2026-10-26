@@ -194,6 +194,7 @@ function isSectionActive(
   if (key === 'today') {
     if (calendarDayEnabled) {
       return (
+        pathname === '/calendar' ||
         pathname.startsWith('/today') ||
         pathname.startsWith('/planner')
       )

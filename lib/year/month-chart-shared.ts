@@ -5,6 +5,7 @@ import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { computeTransitWindows } from '@/lib/planetary/transit-windows'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
 import { appProfileId, getAppProfile } from '@/lib/app/get-app-profile'
+import { getISOWeek } from '@/lib/calendar/iso-week'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import type { MonthBlueprint, MoonPhase, NatalChart, YearEphemeris } from '@/types/blueprint'
 import type { Tables } from '@/types/database'
@@ -88,7 +89,6 @@ export function parseDate(raw: string | undefined, fallbackIso: string): string 
 }
 
 export function isoWeek(date: Date): number {
-  const { getISOWeek } = require('@/lib/calendar/iso-week')
   return getISOWeek(date)
 }
 

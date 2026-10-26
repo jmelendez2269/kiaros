@@ -189,6 +189,7 @@ export async function CalendarWeekViewPanel({ date }: Props) {
         areaGoals={areaGoals}
         energyByDate={energyByDate}
         today={todayIso}
+        calendarDayEnabled
       />
     </div>
   )

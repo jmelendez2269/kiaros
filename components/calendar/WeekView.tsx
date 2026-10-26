@@ -9,6 +9,7 @@ import type { CurriculumSessionRow } from '@/types/curriculum'
 import type { Tables } from '@/types/database'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import { SHORT_DAY_NAMES, getWeekDates } from './utils'
+import { getISOWeek } from '@/lib/calendar/iso-week'
 
 type PlanItemRow = Tables<'plan_items'>
 type AreaGoalRow = Tables<'area_goals'>
@@ -215,6 +216,7 @@ interface WeekViewProps {
   areaGoals?: AreaGoalRow[]
   energyByDate?: Map<string, EnergyWindow>
   today: string
+  calendarDayEnabled?: boolean
 }
 
 function findWeekBlueprint(weeks: WeekBlueprint[], weekDates: string[]): WeekBlueprint | null {
@@ -232,6 +234,7 @@ export function WeekView({
   areaGoals = [],
   energyByDate,
   today,
+  calendarDayEnabled = false,
 }: WeekViewProps) {
   const weekDates = getWeekDates(selectedDate)
   const weekBlueprint = findWeekBlueprint(weeks, weekDates)
@@ -246,7 +249,7 @@ export function WeekView({
         <div className="shell-panel space-y-5 px-7 py-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-xs font-medium uppercase tracking-[0.22em] text-bone-muted/70">
-              Week {weekBlueprint.weekNumber}
+              Week {calendarDayEnabled ? getISOWeek(selectedDate) : weekBlueprint.weekNumber}
             </span>
             <span
               className={cn(
