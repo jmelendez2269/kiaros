@@ -562,7 +562,7 @@ function MarketingFooter() {
 export function KairosHome({ isSignedIn }: Props) {
   const currentPlannerYear = getPlannerYearWithOverride();
   return (
-    <div className="bg-almanac-bg text-almanac-ink">
+    <div className="text-almanac-ink" style={{ background: '#0A0C14' }}>
       <FunnelAttributionCapture />
       <NavBar />
       <Hero />
