@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServerSupabase } from '@/lib/supabase/server'
-import { slugifyAreaName } from '@/lib/areas'
+import { findGoalCategoryRowByUrlSlug } from '@/lib/goal-categories'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
 const MAX_TITLE = 200
@@ -13,7 +13,7 @@ async function resolveCategoryId(supabase: Awaited<ReturnType<typeof createServe
     .from('goal_categories')
     .select('id, name')
   if (error) return { error: error.message }
-  const match = (data ?? []).find((row) => slugifyAreaName(row.name) === slug)
+  const match = findGoalCategoryRowByUrlSlug(data ?? [], slug)
   if (!match) return { error: 'Area not found' }
   return { categoryId: match.id }
 }

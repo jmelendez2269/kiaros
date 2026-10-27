@@ -32,7 +32,7 @@ test.describe('IA onboarding 5 (NEXT_PUBLIC_IA_ONBOARDING5)', () => {
   test('theme step shows optional study focus card when flag on', async ({ page }) => {
     test.skip(!iaOnboarding5On, 'Set NEXT_PUBLIC_IA_ONBOARDING5=true on the dev server for this test')
     await page.goto('/onboarding/theme')
-    await expect(page.getByText('Study focus (optional)')).toBeVisible()
+    await expect(page.getByText("Something you're studying (optional)")).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add study focus' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Continue' })).toBeVisible()
   })
