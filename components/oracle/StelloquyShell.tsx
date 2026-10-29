@@ -95,8 +95,8 @@ export function StelloquyShell({ today }: Props) {
           aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
           style={{
             position: 'fixed',
-            bottom: 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
-            right: 22,
+            bottom: iaOverlays ? 'max(16px, env(safe-area-inset-bottom))' : 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
+            right: iaOverlays ? 'max(16px, env(safe-area-inset-right))' : 22,
             zIndex: 40,
             display: 'flex',
             alignItems: 'center',

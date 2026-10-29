@@ -309,6 +309,7 @@ function NavRow({
   calendarDayEnabled,
   journalIaEnabled,
   goalsIaEnabled,
+  iaOverlaysEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
@@ -317,6 +318,7 @@ function NavRow({
   calendarDayEnabled: boolean
   journalIaEnabled: boolean
   goalsIaEnabled: boolean
+  iaOverlaysEnabled: boolean
 }) {
   const navId = useId()
   const searchParams = useSearchParams()
@@ -393,15 +395,20 @@ function NavRow({
             title={collapsed ? n.label : undefined}
             aria-current={pathname === n.href ? 'page' : undefined}
             data-tour={sidebarNavTourTarget(n.key as AlmanacNavKey, calendarDayEnabled)}
+            className={iaOverlaysEnabled ? 'py-2 md:py-[10px]' : ''}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: collapsed ? 0 : 12,
               padding: collapsed
                 ? '10px 6px'
-                : collapsibleKey
-                  ? '10px 56px 10px 12px'
-                  : '10px 12px',
+                : iaOverlaysEnabled
+                  ? collapsibleKey
+                    ? '0 56px 0 12px'
+                    : '0 12px'
+                  : collapsibleKey
+                    ? '10px 56px 10px 12px'
+                    : '10px 12px',
               borderRadius: 10,
               border: `1px solid ${isActive ? `${n.tone}66` : 'transparent'}`,
               background: isActive ? `linear-gradient(to right, ${n.tone}1a, transparent)` : 'transparent',
@@ -441,6 +448,7 @@ function NavRow({
                   {n.label}
                 </div>
                 <div
+                  className={iaOverlaysEnabled ? 'hidden md:block' : ''}
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
@@ -668,6 +676,7 @@ function SidebarBody({
             calendarDayEnabled={calendarDayEnabled}
             journalIaEnabled={journalIaEnabled}
             goalsIaEnabled={goalsIaEnabled}
+            iaOverlaysEnabled={iaOverlaysEnabled}
           />
         </div>
 
