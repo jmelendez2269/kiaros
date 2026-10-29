@@ -1016,7 +1016,8 @@ export function AlmanacSidebar({
               width: 'min(20rem, 86vw)',
               borderRight: `1px solid ${K.line}`,
               overflowY: 'auto',
-              paddingBottom: 'env(safe-area-inset-bottom)',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
               background: K.bg2,
             }}
           >

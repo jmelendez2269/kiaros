@@ -43,7 +43,7 @@ export default async function CalendarWeekPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <div className="flex flex-col gap-4">
+      <div className="space-y-6">
         <div>
           <p className="shell-kicker mb-1">Calendar</p>
           <h1 className="font-serif text-3xl text-bone">{rangeLabel}</h1>

@@ -179,10 +179,10 @@ export function MonthBriefPanel({
         border: `1px solid ${K.line}`,
         borderRadius: 12,
         background: K.bg2,
-        padding: '22px 24px',
+        padding: '16px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', minWidth: 0 }}>
         <Kicker color={K.copperHi}>This month's brief · {monthName}</Kicker>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {stampLabel && status === 'ready' && !editing ? (
