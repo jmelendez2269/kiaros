@@ -24,6 +24,7 @@ interface Props {
   planItemsByDay?: Map<number, Tables<'plan_items'>[]>
   curriculumByDay?: Map<number, CurriculumSessionRow[]>
   energyByDay?: Map<number, EnergyWindow>
+  calendarDayEnabled?: boolean
 }
 
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
@@ -47,6 +48,7 @@ export function MonthGrid({
   planItemsByDay,
   curriculumByDay,
   energyByDay,
+  calendarDayEnabled = false,
 }: Props) {
   const offset = (new Date(year, month, 1).getDay() + 6) % 7
   const days = daysInMonth(year, month)
@@ -55,7 +57,7 @@ export function MonthGrid({
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginBottom: 4 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: calendarDayEnabled ? 'repeat(7, minmax(0, 1fr))' : 'repeat(7, 1fr)', gap: 1, marginBottom: 4 }}>
         {DOW.map((d, i) => (
           <div
             key={i}
@@ -66,13 +68,14 @@ export function MonthGrid({
               letterSpacing: '0.16em',
               textAlign: 'center',
               padding: '4px 0',
+              ...(calendarDayEnabled ? { minWidth: 0 } : {}),
             }}
           >
             {d}
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: K.line }}>
+      <div style={{ display: 'grid', gridTemplateColumns: calendarDayEnabled ? 'repeat(7, minmax(0, 1fr))' : 'repeat(7, 1fr)', gap: 1, background: K.line }}>
         {Array.from({ length: cellCount }).map((_, i) => {
           const d = i - offset + 1
           const valid = d >= 1 && d <= days
@@ -95,10 +98,11 @@ export function MonthGrid({
               : isToday
                 ? `linear-gradient(180deg, ${K.copper}22, ${K.bg2})`
                 : K.bg2,
-            padding: 7,
+            padding: calendarDayEnabled ? 4 : 7,
             position: 'relative',
             border: isToday ? `1px solid ${K.copper}` : 'none',
             borderRadius: isToday ? 4 : 0,
+            ...(calendarDayEnabled ? { minWidth: 0, overflow: 'hidden' } : {}),
           }
 
           if (!valid) return <div key={i} style={{ ...cellStyle, minHeight: 96 }} />

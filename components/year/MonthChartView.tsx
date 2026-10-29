@@ -234,7 +234,7 @@ export async function MonthChartView({
                   fontSize: 10,
                   letterSpacing: '0.16em',
                   color: K.copperHi,
-                  flexShrink: 0,
+                  ...(calendarDayEnabled ? { flexShrink: 0 } : {}),
                 }}
               >
                 Q{quarterNumber}
@@ -534,6 +534,7 @@ export async function MonthChartView({
               planItemsByDay={planItemsByDay}
               curriculumByDay={curriculumByDay}
               energyByDay={energyByDay}
+              calendarDayEnabled={calendarDayEnabled}
             />
           </Frame>
         </div>
