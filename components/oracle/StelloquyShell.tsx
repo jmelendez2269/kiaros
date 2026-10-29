@@ -90,54 +90,98 @@ export function StelloquyShell({ today }: Props) {
           type="button"
           data-kiaros-floating-stelloquy=""
           onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
-          aria-label={hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`}
+          aria-label={iaOverlays ? 'Open Stelloquy' : (hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`)}
           aria-expanded={hasOracleAccess ? open : undefined}
           aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
+          className={iaOverlays ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-copper-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg' : ''}
           style={{
             position: 'fixed',
-            bottom: iaOverlays ? 'max(16px, env(safe-area-inset-bottom))' : 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
+            bottom: iaOverlays 
+              ? 'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))' 
+              : 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
             right: iaOverlays ? 'max(16px, env(safe-area-inset-right))' : 22,
             zIndex: 40,
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
+            justifyContent: 'center',
+            gap: iaOverlays ? 0 : 12,
             background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
             border: `1px solid ${K.kairos}55`,
             borderRadius: 999,
-            padding: '8px 18px 8px 8px',
+            padding: iaOverlays ? 0 : '8px 18px 8px 8px',
+            width: iaOverlays ? 48 : 'auto',
+            height: iaOverlays ? 48 : 'auto',
             boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
             color: K.ink,
             fontFamily: K.fBody,
             cursor: 'pointer',
           }}
+
         >
-          <StelloquyOrb size={34} state="speaking" showStarMark={iaOverlays} />
-          <div style={{ textAlign: 'left' }}>
-            <div
-              style={{
-                fontFamily: K.fDisplay,
-                fontSize: 11,
-                lineHeight: 1,
-                letterSpacing: '0.24em',
-                fontWeight: 500,
-                color: K.ink,
-                textTransform: 'uppercase',
-              }}
-            >
-              {BRAND.oracle}
-            </div>
-            <div
-              style={{
-                fontFamily: K.fMono,
-                fontSize: 8.5,
-                color: K.inkSoft,
-                letterSpacing: '0.18em',
-                marginTop: 5,
-              }}
-            >
-              ⌘ K · ANYWHERE
-            </div>
-          </div>
+          {iaOverlays ? (
+            <>
+              <span className="md:hidden" style={{ fontSize: 20, color: K.starlight }}>✦</span>
+              <div className="hidden md:flex md:items-center md:gap-3">
+                <StelloquyOrb size={34} state="speaking" showStarMark={true} />
+                <div style={{ textAlign: 'left' }}>
+                  <div
+                    style={{
+                      fontFamily: K.fDisplay,
+                      fontSize: 11,
+                      lineHeight: 1,
+                      letterSpacing: '0.24em',
+                      fontWeight: 500,
+                      color: K.ink,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {BRAND.oracle}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: K.fMono,
+                      fontSize: 8.5,
+                      color: K.inkSoft,
+                      letterSpacing: '0.18em',
+                      marginTop: 5,
+                    }}
+                  >
+                    ⌘ K · ANYWHERE
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <StelloquyOrb size={34} state="speaking" showStarMark={iaOverlays} />
+              <div style={{ textAlign: 'left' }}>
+                <div
+                  style={{
+                    fontFamily: K.fDisplay,
+                    fontSize: 11,
+                    lineHeight: 1,
+                    letterSpacing: '0.24em',
+                    fontWeight: 500,
+                    color: K.ink,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {BRAND.oracle}
+                </div>
+                <div
+                  style={{
+                    fontFamily: K.fMono,
+                    fontSize: 8.5,
+                    color: K.inkSoft,
+                    letterSpacing: '0.18em',
+                    marginTop: 5,
+                  }}
+                >
+                  ⌘ K · ANYWHERE
+                </div>
+              </div>
+            </>
+          )}
         </button>
       ) : null}
 

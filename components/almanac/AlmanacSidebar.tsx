@@ -448,7 +448,7 @@ function NavRow({
                   {n.label}
                 </div>
                 <div
-                  className={iaOverlaysEnabled ? 'hidden md:block' : ''}
+                  className={iaOverlaysEnabled ? (n.key === 'today' ? 'hidden' : 'hidden md:block') : ''}
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
@@ -478,7 +478,8 @@ function NavRow({
               style={{
                 position: 'absolute',
                 right: 3,
-                top: 3,
+                top: iaOverlaysEnabled ? '50%' : 3,
+                ...(iaOverlaysEnabled ? { transform: 'translateY(-50%)' } : {}),
                 width: 44,
                 height: 44,
                 border: 'none',
