@@ -102,7 +102,7 @@ export function StelloquyShell({ today }: Props) {
                 : 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
               right: iaOverlays ? 'max(16px, env(safe-area-inset-right))' : 22,
               zIndex: 40,
-              display: 'flex',
+              ...(iaOverlays ? {} : { display: 'flex' }),
               alignItems: 'center',
               gap: 12,
               background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
@@ -146,7 +146,7 @@ export function StelloquyShell({ today }: Props) {
           {iaOverlays ? (
             <button
               type="button"
-              className="md:hidden kiaros-stello-fab"
+              className="flex md:hidden kiaros-stello-fab"
               onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
               aria-label="Open Stelloquy"
               aria-expanded={hasOracleAccess ? open : undefined}
@@ -159,7 +159,6 @@ export function StelloquyShell({ today }: Props) {
                 width: 48,
                 height: 48,
                 padding: 0,
-                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
