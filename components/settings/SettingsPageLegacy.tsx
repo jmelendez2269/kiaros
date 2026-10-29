@@ -651,7 +651,7 @@ export default function SettingsPageLegacy() {
 
           <p className="mt-3 text-xs leading-6 text-bone-muted/75">
             Stelloquy requires active Planner + Oracle access. Its limit resets on the first of
-            each month. Cached input tokens cost ~90% less—a high cache hit rate means your
+            each month. Cached input tokens cost ~90% less — a high cache hit rate means your
             natal chart and permitted Blueprint context aren&apos;t being re-billed on every message.
           </p>
         </section>

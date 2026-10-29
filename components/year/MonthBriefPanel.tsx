@@ -11,6 +11,7 @@ interface MonthBriefPanelProps {
   initialGeneratedAt?: string
   initialEditedAt?: string
   initialPinned?: boolean
+  calendarDayEnabled?: boolean
 }
 
 type Status = 'idle' | 'loading' | 'ready' | 'error'
@@ -34,6 +35,7 @@ export function MonthBriefPanel({
   initialGeneratedAt,
   initialEditedAt,
   initialPinned = false,
+  calendarDayEnabled = false,
 }: MonthBriefPanelProps) {
   const [brief, setBrief] = useState<string | null>(initialBrief ?? null)
   const [generatedAt, setGeneratedAt] = useState<string | null>(initialGeneratedAt ?? null)
@@ -179,10 +181,10 @@ export function MonthBriefPanel({
         border: `1px solid ${K.line}`,
         borderRadius: 12,
         background: K.bg2,
-        padding: '16px',
+        padding: calendarDayEnabled ? '16px' : '22px 24px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', ...(calendarDayEnabled ? { minWidth: 0 } : {}) }}>
         <Kicker color={K.copperHi}>This month's brief · {monthName}</Kicker>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {stampLabel && status === 'ready' && !editing ? (
