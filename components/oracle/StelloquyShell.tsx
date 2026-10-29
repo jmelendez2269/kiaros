@@ -93,7 +93,6 @@ export function StelloquyShell({ today }: Props) {
           aria-label={iaOverlays ? 'Open Stelloquy' : (hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`)}
           aria-expanded={hasOracleAccess ? open : undefined}
           aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
-          className={iaOverlays ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-copper-400 focus-visible:ring-offset-2 focus-visible:ring-offset-bg' : ''}
           style={{
             position: 'fixed',
             bottom: iaOverlays 
@@ -103,25 +102,49 @@ export function StelloquyShell({ today }: Props) {
             zIndex: 40,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: iaOverlays ? 0 : 12,
+            justifyContent: iaOverlays ? 'center' : 'flex-start',
+            gap: 12,
             background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
             border: `1px solid ${K.kairos}55`,
             borderRadius: 999,
-            padding: iaOverlays ? 0 : '8px 18px 8px 8px',
-            width: iaOverlays ? 48 : 'auto',
-            height: iaOverlays ? 48 : 'auto',
+            padding: '8px 18px 8px 8px',
             boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
             color: K.ink,
             fontFamily: K.fBody,
             cursor: 'pointer',
+            outline: 'none',
           }}
+          onFocus={(e) => {
+            if (iaOverlays) {
+              e.currentTarget.style.outline = `2px solid ${K.copper}`
+              e.currentTarget.style.outlineOffset = '2px'
+            }
+          }}
+          onBlur={(e) => {
+            if (iaOverlays) {
+              e.currentTarget.style.outline = 'none'
+            }
+          }}
+
 
         >
           {iaOverlays ? (
             <>
-              <span className="md:hidden" style={{ fontSize: 20, color: K.starlight }}>✦</span>
-              <div className="hidden md:flex md:items-center md:gap-3">
+              <div
+                className="md:hidden"
+                style={{
+                  width: 48,
+                  height: 48,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 20,
+                  color: K.starlight,
+                }}
+              >
+                ✦
+              </div>
+              <div className="hidden md:contents">
                 <StelloquyOrb size={34} state="speaking" showStarMark={true} />
                 <div style={{ textAlign: 'left' }}>
                   <div

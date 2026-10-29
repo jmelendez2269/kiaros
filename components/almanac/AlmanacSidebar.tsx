@@ -448,7 +448,7 @@ function NavRow({
                   {n.label}
                 </div>
                 <div
-                  className={iaOverlaysEnabled ? (n.key === 'today' ? 'hidden' : 'hidden md:block') : ''}
+                  className={iaOverlaysEnabled ? 'hidden md:block' : ''}
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
@@ -550,6 +550,7 @@ function NavRow({
                       {sub.label}
                     </span>
                     <span
+                      className={iaOverlaysEnabled ? 'hidden md:inline' : ''}
                       style={{
                         fontFamily: K.fMono,
                         fontSize: 12,
