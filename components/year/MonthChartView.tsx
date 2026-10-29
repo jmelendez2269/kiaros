@@ -136,10 +136,11 @@ export async function MonthChartView({
           minHeight: '100%',
           display: 'grid',
           gridTemplateRows: 'auto 1fr auto',
+          ...(calendarDayEnabled ? { gridTemplateColumns: 'minmax(0, 1fr)' } : {}),
           gap: 16,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16, ...(calendarDayEnabled ? { minWidth: 0 } : {}) }}>
           <div style={calendarDayEnabled ? { minWidth: 0, flex: '1 1 auto', maxWidth: '100%' } : {}}>
             <Kicker>{MONTH_NAMES[selected.month]} · {selected.year}</Kicker>
             <div
@@ -211,7 +212,7 @@ export async function MonthChartView({
           </nav>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0, ...(calendarDayEnabled ? { minWidth: 0 } : {}) }}>
           <div
             style={{
               display: 'flex',
@@ -223,15 +224,17 @@ export async function MonthChartView({
               border: `1px solid ${K.line}`,
               borderRadius: 10,
               background: K.bg2,
+              ...(calendarDayEnabled ? { minWidth: 0 } : {}),
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, ...(calendarDayEnabled ? { minWidth: 0, flex: '1 1 auto' } : {}) }}>
               <span
                 style={{
                   fontFamily: K.fMono,
                   fontSize: 10,
                   letterSpacing: '0.16em',
                   color: K.copperHi,
+                  flexShrink: 0,
                 }}
               >
                 Q{quarterNumber}
@@ -243,6 +246,7 @@ export async function MonthChartView({
                   fontSize: 16,
                   color: K.ink,
                   lineHeight: 1.2,
+                  ...(calendarDayEnabled ? { wordWrap: 'break-word' as const, minWidth: 0 } : {}),
                 }}
               >
                 {quarterBlueprint?.theme ?? 'Quarterly theme'}
@@ -534,14 +538,14 @@ export async function MonthChartView({
           </Frame>
         </div>
 
-        <div style={calendarDayEnabled ? { marginTop: 24, paddingTop: 24, borderTop: `1px solid ${K.line}` } : {}}>
+        <div style={calendarDayEnabled ? { marginTop: 24, paddingTop: 24, borderTop: `1px solid ${K.line}`, minWidth: 0 } : {}}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'baseline',
               marginBottom: calendarDayEnabled ? 10 : 6,
-              ...(calendarDayEnabled ? { flexWrap: 'wrap' as const, gap: 8 } : {}),
+              ...(calendarDayEnabled ? { flexWrap: 'wrap' as const, gap: 8, minWidth: 0 } : {}),
             }}
           >
             {calendarDayEnabled ? (
