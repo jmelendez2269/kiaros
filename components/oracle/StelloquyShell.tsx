@@ -86,126 +86,95 @@ export function StelloquyShell({ today }: Props) {
   return (
     <>
       {showDock ? (
-        <button
-          type="button"
-          data-kiaros-floating-stelloquy=""
-          onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
-          aria-label={iaOverlays ? 'Open Stelloquy' : (hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`)}
-          aria-expanded={hasOracleAccess ? open : undefined}
-          aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
-          style={{
-            position: 'fixed',
-            bottom: iaOverlays 
-              ? 'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))' 
-              : 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
-            right: iaOverlays ? 'max(16px, env(safe-area-inset-right))' : 22,
-            zIndex: 40,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: iaOverlays ? 'center' : 'flex-start',
-            gap: 12,
-            background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
-            border: `1px solid ${K.kairos}55`,
-            borderRadius: 999,
-            padding: '8px 18px 8px 8px',
-            boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
-            color: K.ink,
-            fontFamily: K.fBody,
-            cursor: 'pointer',
-            outline: 'none',
-          }}
-          onFocus={(e) => {
-            if (iaOverlays) {
-              e.currentTarget.style.outline = `2px solid ${K.copper}`
-              e.currentTarget.style.outlineOffset = '2px'
-            }
-          }}
-          onBlur={(e) => {
-            if (iaOverlays) {
-              e.currentTarget.style.outline = 'none'
-            }
-          }}
-
-
-        >
-          {iaOverlays ? (
-            <>
+        <>
+          <button
+            type="button"
+            data-kiaros-floating-stelloquy=""
+            onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
+            aria-label={hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`}
+            aria-expanded={hasOracleAccess ? open : undefined}
+            aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
+            className={iaOverlays ? 'hidden md:flex' : ''}
+            style={{
+              position: 'fixed',
+              bottom: iaOverlays 
+                ? 'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))' 
+                : 'calc(22px + var(--kiaros-settings-sticky-save-offset, 0px))',
+              right: iaOverlays ? 'max(16px, env(safe-area-inset-right))' : 22,
+              zIndex: 40,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
+              border: `1px solid ${K.kairos}55`,
+              borderRadius: 999,
+              padding: '8px 18px 8px 8px',
+              boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
+              color: K.ink,
+              fontFamily: K.fBody,
+              cursor: 'pointer',
+            }}
+          >
+            <StelloquyOrb size={34} state="speaking" showStarMark={iaOverlays} />
+            <div style={{ textAlign: 'left' }}>
               <div
-                className="md:hidden"
                 style={{
-                  width: 48,
-                  height: 48,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 20,
-                  color: K.starlight,
+                  fontFamily: K.fDisplay,
+                  fontSize: 11,
+                  lineHeight: 1,
+                  letterSpacing: '0.24em',
+                  fontWeight: 500,
+                  color: K.ink,
+                  textTransform: 'uppercase',
                 }}
               >
-                ✦
+                {BRAND.oracle}
               </div>
-              <div className="hidden md:contents">
-                <StelloquyOrb size={34} state="speaking" showStarMark={true} />
-                <div style={{ textAlign: 'left' }}>
-                  <div
-                    style={{
-                      fontFamily: K.fDisplay,
-                      fontSize: 11,
-                      lineHeight: 1,
-                      letterSpacing: '0.24em',
-                      fontWeight: 500,
-                      color: K.ink,
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {BRAND.oracle}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: K.fMono,
-                      fontSize: 8.5,
-                      color: K.inkSoft,
-                      letterSpacing: '0.18em',
-                      marginTop: 5,
-                    }}
-                  >
-                    ⌘ K · ANYWHERE
-                  </div>
-                </div>
+              <div
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 8.5,
+                  color: K.inkSoft,
+                  letterSpacing: '0.18em',
+                  marginTop: 5,
+                }}
+              >
+                ⌘ K · ANYWHERE
               </div>
-            </>
-          ) : (
-            <>
-              <StelloquyOrb size={34} state="speaking" showStarMark={iaOverlays} />
-              <div style={{ textAlign: 'left' }}>
-                <div
-                  style={{
-                    fontFamily: K.fDisplay,
-                    fontSize: 11,
-                    lineHeight: 1,
-                    letterSpacing: '0.24em',
-                    fontWeight: 500,
-                    color: K.ink,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {BRAND.oracle}
-                </div>
-                <div
-                  style={{
-                    fontFamily: K.fMono,
-                    fontSize: 8.5,
-                    color: K.inkSoft,
-                    letterSpacing: '0.18em',
-                    marginTop: 5,
-                  }}
-                >
-                  ⌘ K · ANYWHERE
-                </div>
-              </div>
-            </>
-          )}
-        </button>
+            </div>
+          </button>
+          {iaOverlays ? (
+            <button
+              type="button"
+              className="md:hidden kiaros-stello-fab"
+              onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
+              aria-label="Open Stelloquy"
+              aria-expanded={hasOracleAccess ? open : undefined}
+              aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
+              style={{
+                position: 'fixed',
+                bottom: 'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))',
+                right: 'max(16px, env(safe-area-inset-right))',
+                zIndex: 40,
+                width: 48,
+                height: 48,
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
+                border: `1px solid ${K.kairos}55`,
+                borderRadius: 999,
+                boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
+                color: K.starlight,
+                fontSize: 20,
+                cursor: 'pointer',
+              }}
+            >
+              ✦
+            </button>
+          ) : null}
+        </>
       ) : null}
 
       {open && hasOracleAccess ? (
