@@ -17,7 +17,7 @@ export const clerkAppearance = {
     headerTitle: "font-display text-3xl text-bone tracking-tight",
     headerSubtitle: "text-bone-muted",
     socialButtonsBlockButton:
-      "!border !border-[rgba(164,163,177,0.57)] bg-card/80 !text-[#E3E2ED] hover:bg-secondary hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#0A0C14]",
+      "!border !border-[rgba(164,163,177,0.61)] bg-card/80 !text-[#E3E2ED] hover:bg-secondary hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#090911] focus-visible:!shadow-[0_0_0_2px_#090911,0_0_0_4px_#A98AEF]",
     socialButtonsBlockButtonText: "!text-[#E3E2ED] font-medium",
     dividerLine: "bg-border",
     dividerText: "text-bone-muted",
@@ -27,15 +27,18 @@ export const clerkAppearance = {
     formButtonPrimary:
       "h-11 rounded-xl !bg-[#A98AEF] !text-[#0A0C14] !bg-none hover:!bg-[#A98AEF]/90 focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2",
     alternativeMethodsBlockButton:
-      "!text-[#E3E2ED] !bg-transparent !border !border-[rgba(164,163,177,0.57)] hover:!bg-[rgba(169,138,239,0.12)] hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#0A0C14]",
+      "!text-[#E3E2ED] !bg-transparent !border !border-[rgba(164,163,177,0.61)] hover:!bg-[rgba(169,138,239,0.12)] hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#090911] focus-visible:!shadow-[0_0_0_2px_#090911,0_0_0_4px_#A98AEF]",
     alternativeMethodsBlockButtonText: "!text-[#E3E2ED]",
     phoneInputBox:
-      "!text-[#E3E2ED] !border !border-[rgba(164,163,177,0.57)]",
+      "!text-[#E3E2ED] !border !border-[rgba(164,163,177,0.61)]",
     selectButton:
-      "!text-[#E3E2ED] !border !border-[rgba(164,163,177,0.57)]",
-    footer: "!text-[#A4A3B1] [&_svg]:fill-[#A4A3B1] [&_svg]:text-[#A4A3B1]",
-    footerPages: "!text-[#A4A3B1]",
-    logoBox: "!text-[#A4A3B1] [&_svg]:fill-[#A4A3B1]",
+      "!text-[#E3E2ED] !border !border-[rgba(164,163,177,0.61)] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#090911] focus-visible:!shadow-[0_0_0_2px_#090911,0_0_0_4px_#A98AEF]",
+    selectButtonIcon:
+      "!text-[#E3E2ED] [&_svg]:fill-[#E3E2ED] [&_svg]:stroke-[#E3E2ED]",
+    footer:
+      "!text-[#E3E2ED] [&_svg]:fill-[#E3E2ED] [&_svg]:text-[#E3E2ED]",
+    footerPages: "!text-[#E3E2ED]",
+    logoBox: "!text-[#E3E2ED] [&_svg]:fill-[#E3E2ED]",
     logoImage: "!opacity-100",
     footerActionText: "text-bone-muted",
     footerActionLink: "!text-[#A98AEF]",
