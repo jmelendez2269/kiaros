@@ -8,6 +8,9 @@ interface Props {
   currentWeekNumber: number
   /** When true, week bars link to Calendar Week instead of Year week view. */
   calendarDayEnabled?: boolean
+  /** IA overlays: Stella station-pattern copy instead of theme/cosmicContext when a station direct falls in the week. */
+  iaOverlaysEnabled?: boolean
+  stationPattern?: { headline: string; subline: string } | null
 }
 
 const RADIUS = 3
@@ -43,7 +46,13 @@ function rangeLabel(first: WeekBlueprint, last: WeekBlueprint): string {
   return `${start.toLocaleDateString('en-US', opts)} — ${end.toLocaleDateString('en-US', opts)}`
 }
 
-export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }: Props) {
+export function WeekArc({
+  weeks,
+  currentWeekNumber,
+  calendarDayEnabled = false,
+  iaOverlaysEnabled = false,
+  stationPattern = null,
+}: Props) {
   const window = weeks.filter(
     (w) => w.weekNumber >= currentWeekNumber - RADIUS && w.weekNumber <= currentWeekNumber + RADIUS
   )
@@ -145,21 +154,55 @@ export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }
       </div>
 
       {current ? (
-        <p
-          style={{
-            marginTop: 16,
-            paddingTop: 14,
-            borderTop: `1px solid ${K.line}`,
-            fontFamily: K.fSerif,
-            fontStyle: 'italic',
-            fontSize: 14.5,
-            lineHeight: 1.6,
-            color: K.starlight,
-          }}
-        >
-          <strong style={{ fontStyle: 'normal', color: K.ink }}>{current.theme}.</strong>{' '}
-          {current.cosmicContext}
-        </p>
+        iaOverlaysEnabled && stationPattern ? (
+          <div
+            style={{
+              marginTop: 16,
+              paddingTop: 14,
+              borderTop: `1px solid ${K.line}`,
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontFamily: K.fBody,
+                fontSize: 15,
+                lineHeight: 1.5,
+                color: K.ink,
+              }}
+            >
+              {stationPattern.headline}
+            </p>
+            <p
+              style={{
+                margin: '10px 0 0',
+                fontFamily: K.fSerif,
+                fontStyle: 'italic',
+                fontSize: 14.5,
+                lineHeight: 1.6,
+                color: K.starlight,
+              }}
+            >
+              {stationPattern.subline}
+            </p>
+          </div>
+        ) : (
+          <p
+            style={{
+              marginTop: 16,
+              paddingTop: 14,
+              borderTop: `1px solid ${K.line}`,
+              fontFamily: K.fSerif,
+              fontStyle: 'italic',
+              fontSize: 14.5,
+              lineHeight: 1.6,
+              color: K.starlight,
+            }}
+          >
+            <strong style={{ fontStyle: 'normal', color: K.ink }}>{current.theme}.</strong>{' '}
+            {current.cosmicContext}
+          </p>
+        )
       ) : null}
     </div>
   )

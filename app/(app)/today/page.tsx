@@ -47,6 +47,7 @@ import {
   MOCK_TODAY_QUERY_PARAM,
 } from '@/lib/today/mock-today-date'
 import { getMoonDayPhaseForLocalDate } from '@/lib/today/moon-day-phase'
+import { weekArcStationPatternForWeek } from '@/lib/today/week-arc-station-pattern'
 
 export default async function TodayPage({
   searchParams,
@@ -165,6 +166,11 @@ export default async function TodayPage({
   const iaOverlaysEnabled = isIaOverlaysEnabled()
   const openFullYearHref = calendarDayEnabled ? calendarTabYearHref() : '/year'
 
+  const weekArcStationPattern =
+    iaOverlaysEnabled && currentWeek
+      ? weekArcStationPatternForWeek(currentWeek.startDate, currentWeek.endDate, yearEphemeris)
+      : null
+
   const weekArcBlock =
     blueprintLoaded ? (
       <Frame tone="umber" padding={20}>
@@ -172,6 +178,8 @@ export default async function TodayPage({
           weeks={blueprintLoaded.blueprint.weeks}
           currentWeekNumber={context.meta.isoWeek}
           calendarDayEnabled={calendarDayEnabled}
+          iaOverlaysEnabled={iaOverlaysEnabled}
+          stationPattern={weekArcStationPattern}
         />
       </Frame>
     ) : null
