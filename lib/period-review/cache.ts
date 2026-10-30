@@ -86,3 +86,22 @@ export async function saveCachedPeriodReview(
   })
   if (error) throw new Error(`Failed to cache period review: ${error.message}`)
 }
+
+export async function loadPeriodReviewCacheStatus(
+  userId: string,
+  planYear: number,
+): Promise<Record<string, true>> {
+  const admin = createAdminSupabase()
+  const { data } = await admin
+    .from('quarterly_reviews')
+    .select('stats_snapshot')
+    .eq('user_id', userId)
+    .eq('plan_year', planYear)
+
+  const status: Record<string, true> = {}
+  for (const row of data ?? []) {
+    const map = readCacheFromStatsSnapshot(row.stats_snapshot)
+    for (const key of Object.keys(map)) status[key] = true
+  }
+  return status
+}

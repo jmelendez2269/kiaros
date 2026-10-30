@@ -33,7 +33,6 @@ import { getHumanDesignWeather } from '@/lib/today/get-human-design-weather'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { DeeperToday } from '@/components/today/DeeperToday'
 import { PeriodReviewTodayCards } from '@/components/period-review/PeriodReviewTodayCards'
-import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import type { YearEphemeris } from '@/types/blueprint'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
@@ -46,6 +45,7 @@ import {
   MOCK_TODAY_QUERY_PARAM,
 } from '@/lib/today/mock-today-date'
 import { getMoonDayPhaseForLocalDate } from '@/lib/today/moon-day-phase'
+import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 
 export default async function TodayPage({
   searchParams,
@@ -222,7 +222,6 @@ export default async function TodayPage({
           <Frame tone="umber" padding={20}>
             <WeekRibbon week={context.week} />
           </Frame>
-          <PeriodReviewTodayCards todayDate={todayDate} />
         </div>
 
         {/* Right column */}
@@ -252,6 +251,8 @@ export default async function TodayPage({
       </div>
 
       <TodayCurriculum result={curriculum} />
+
+      <PeriodReviewTodayCards todayDate={todayDate} />
 
       <DeeperToday defaultOpen={deeperOpenByDefault}>
         <div className="grid gap-5">

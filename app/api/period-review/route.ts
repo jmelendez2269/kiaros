@@ -9,6 +9,7 @@ import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { loadCachedPeriodReview, saveCachedPeriodReview } from '@/lib/period-review/cache'
 import { assertPeriodReviewRateLimit } from '@/lib/period-review/rate-limit'
 import { periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
+import { parseLegacySummarySections } from '@/lib/period-review/report-schema'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
 export const maxDuration = 120
@@ -21,6 +22,18 @@ const querySchema = z.object({
 
 function disabledResponse() {
   return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
+
+function serializeCached(entry: NonNullable<Awaited<ReturnType<typeof loadCachedPeriodReview>>>) {
+  const sections = entry.sections ?? parseLegacySummarySections(entry.summary)
+  return {
+    summary: entry.summary,
+    generatedAt: entry.generatedAt,
+    model: entry.model,
+    regenerations: entry.regenerations,
+    sections,
+    sourceChips: entry.sourceChips ?? { sky: [], plans: [], journal: [] },
+  }
 }
 
 export async function GET(req: Request) {
@@ -57,14 +70,7 @@ export async function GET(req: Request) {
       periodStart: period.periodStart,
       periodEnd: period.periodEnd,
     },
-    cached: cached
-      ? {
-          summary: cached.summary,
-          generatedAt: cached.generatedAt,
-          model: cached.model,
-          regenerations: cached.regenerations,
-        }
-      : null,
+    cached: cached ? serializeCached(cached) : null,
     journalEntryCount,
   })
 }
@@ -96,9 +102,7 @@ export async function POST(req: Request) {
   if (existing && !body.regenerate) {
     const journalEntryCount = await countPeriodJournalEntries(profileId, period)
     return NextResponse.json({
-      summary: existing.summary,
-      generatedAt: existing.generatedAt,
-      model: existing.model,
+      ...serializeCached(existing),
       cached: true,
       journalEntryCount,
     })
@@ -109,6 +113,8 @@ export async function POST(req: Request) {
   const generated = await generatePeriodReviewSummary(profileId, period)
   const entry = {
     summary: generated.summary,
+    sections: generated.sections,
+    sourceChips: generated.sourceChips,
     generatedAt: new Date().toISOString(),
     model: generated.model,
     regenerations: (existing?.regenerations ?? 0) + (existing ? 1 : 0),
@@ -118,10 +124,8 @@ export async function POST(req: Request) {
   const journalEntryCount = await countPeriodJournalEntries(profileId, period)
 
   return NextResponse.json({
-    summary: entry.summary,
-    generatedAt: entry.generatedAt,
-    model: entry.model,
+    ...serializeCached(entry),
     cached: false,
-    journalEntryCount: journalEntryCount,
+    journalEntryCount,
   })
 }

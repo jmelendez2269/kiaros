@@ -1,5 +1,7 @@
 import { planYearQuarterForPeriodStart, cacheKey, type PeriodReviewPeriod } from './periods'
 
+import type { PeriodReviewSections, PeriodReviewSourceChips } from './report-schema'
+
 export const PERIOD_REVIEW_CACHE_KEY = 'periodReviewCache'
 
 export interface PeriodReviewCacheEntry {
@@ -7,6 +9,8 @@ export interface PeriodReviewCacheEntry {
   generatedAt: string
   model: string
   regenerations: number
+  sections?: PeriodReviewSections
+  sourceChips?: PeriodReviewSourceChips
 }
 
 export type PeriodReviewCacheMap = Record<string, PeriodReviewCacheEntry>
@@ -25,6 +29,14 @@ export function readCacheFromStatsSnapshot(raw: unknown): PeriodReviewCacheMap {
       generatedAt: v.generatedAt,
       model: typeof v.model === 'string' ? v.model : 'unknown',
       regenerations: typeof v.regenerations === 'number' ? v.regenerations : 0,
+      sections:
+        v.sections && typeof v.sections === 'object' && !Array.isArray(v.sections)
+          ? (v.sections as PeriodReviewSections)
+          : undefined,
+      sourceChips:
+        v.sourceChips && typeof v.sourceChips === 'object' && !Array.isArray(v.sourceChips)
+          ? (v.sourceChips as PeriodReviewSourceChips)
+          : undefined,
     }
   }
   return out

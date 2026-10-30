@@ -25,6 +25,7 @@ import {
   isJournalConsentV2Enabled,
   isMemoryDefaultsEnabled,
 } from '@/lib/feature-flags'
+import { PeriodReviewGate } from '@/components/period-review/PeriodReviewGate'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth()
@@ -154,6 +155,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       sharedConversationEnabled={iaOverlaysEnabled}
     >
       <MobileNavOpenProvider>
+      <PeriodReviewGate>
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
           <AlmanacSidebar
@@ -246,6 +248,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ) : null}
         {!iaOverlaysEnabled ? <FeedbackButton /> : null}
       </div>
+      </PeriodReviewGate>
       </MobileNavOpenProvider>
     </StelloquyProvider>
   )

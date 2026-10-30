@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
-import { PeriodReviewPanel } from '@/components/period-review/PeriodReviewPanel'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
 import { BRAND } from '@/lib/brand'
+import { PeriodReviewRouteClient } from '@/components/period-review/PeriodReviewRouteClient'
 
 export const metadata = {
   title: `Period review — ${BRAND.product}`,
@@ -32,9 +32,11 @@ export default async function PeriodReviewPage({
 
   periodFor(kind, year, index)
 
+  const redirectTo = kind === 'month' ? '/journal/look-back' : '/year'
+
   return (
     <div className="mx-auto max-w-3xl p-4 sm:p-6 md:p-8">
-      <PeriodReviewPanel kind={kind} year={year} index={index} />
+      <PeriodReviewRouteClient kind={kind} year={year} index={index} redirectTo={redirectTo} />
     </div>
   )
 }

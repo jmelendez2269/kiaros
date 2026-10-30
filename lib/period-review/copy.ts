@@ -5,6 +5,25 @@ export function periodReviewDismissStorageKey(period: Pick<PeriodReviewPeriod, '
   return `kiaros-period-review-dismiss:${period.kind}:${period.periodStart}`
 }
 
+export function todayCardLabel(period: PeriodReviewPeriod): string {
+  if (period.kind === 'month') {
+    return `${periodMonthNameOnly(period).toUpperCase()} REVIEW`
+  }
+  return `Q${period.index} REVIEW`
+}
+
+export function formatPeriodDateRange(periodStart: string, periodEnd: string): string {
+  const start = new Date(`${periodStart}T12:00:00Z`)
+  const end = new Date(`${periodEnd}T12:00:00Z`)
+  const fmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+  return `${fmt.format(start)} - ${fmt.format(end)}`
+}
+
+export function formatGeneratedTimestamp(iso: string): string {
+  const d = new Date(iso)
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(d)
+}
+
 export function todayCardHeadline(period: PeriodReviewPeriod): string {
   if (period.kind === 'month') {
     return `${periodMonthNameOnly(period)} is wrapping up`
