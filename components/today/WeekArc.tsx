@@ -22,6 +22,13 @@ const ENERGY_TONE: Record<EnergyType, string> = {
   rest: K.sage,
 }
 
+const IA_REFLECT_TONE = '#C9B8F5'
+
+function energyTone(kind: EnergyType, iaOverlaysEnabled: boolean): string {
+  if (iaOverlaysEnabled && kind === 'reflect') return IA_REFLECT_TONE
+  return ENERGY_TONE[kind]
+}
+
 const ENERGY_LABEL: Record<EnergyType, string> = {
   push: 'Push',
   initiate: 'Initiate',
@@ -85,7 +92,7 @@ export function WeekArc({
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10 }}>
         {window.map((w) => {
-          const tone = ENERGY_TONE[w.energyType]
+          const tone = energyTone(w.energyType, iaOverlaysEnabled)
           const isCurrent = w.weekNumber === currentWeekNumber
           return (
             <Link
@@ -145,7 +152,7 @@ export function WeekArc({
                 width: 8,
                 height: 8,
                 borderRadius: 999,
-                background: ENERGY_TONE[kind],
+                background: energyTone(kind, iaOverlaysEnabled),
               }}
             />
             {ENERGY_LABEL[kind]}
