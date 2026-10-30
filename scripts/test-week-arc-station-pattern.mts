@@ -6,7 +6,10 @@ import assert from 'node:assert/strict'
 import {
   buildDayMap,
   buildWeekArcStationPatternCopy,
+  buildWeekArcOverlappingRetrogradeCopy,
   findStationDirectInRange,
+  weekArcEphemerisFooterCopyForWeek,
+  weekArcOverlappingRetrogradeForWeek,
 } from '../lib/today/week-arc-station-pattern.ts'
 import type { EphemerisDay } from '../types/blueprint.ts'
 
@@ -44,5 +47,27 @@ const copy = buildWeekArcStationPatternCopy(
   dayByDate,
 )
 assert.equal(copy.headline, 'Mercury stations direct Nov 14')
+
+const w44Days: EphemerisDay[] = []
+for (let dayNum = 26; dayNum <= 31; dayNum++) {
+  w44Days.push(day(`2026-10-${dayNum}`, ['Mercury', 'Venus']))
+}
+w44Days.push(day('2026-11-01', ['Mercury', 'Venus']))
+const w44Ephemeris = { year: 2026, days: w44Days } as import('../types/blueprint.ts').YearEphemeris
+const w44Copy = weekArcEphemerisFooterCopyForWeek('2026-10-26', '2026-11-01', w44Ephemeris)
+assert.ok(w44Copy)
+assert.equal(w44Copy.headline, 'Mercury and Venus are both retrograde')
+assert.equal(
+  w44Copy.subline,
+  "Astrologers often read overlapping retrogrades as a season for looking inward and reviewing. It's a quieter stretch if you want one.",
+)
+
+const overlapOnly = weekArcOverlappingRetrogradeForWeek('2026-10-26', '2026-11-01', w44Ephemeris)
+assert.ok(overlapOnly)
+assert.equal(overlapOnly.headline, w44Copy.headline)
+
+const threePlanetCopy = buildWeekArcOverlappingRetrogradeCopy(['Mercury', 'Venus', 'Mars'])
+assert.ok(threePlanetCopy)
+assert.equal(threePlanetCopy.headline, 'Mercury and Venus are both retrograde, and Mars is retrograde')
 
 console.log('All week-arc station pattern tests passed.')

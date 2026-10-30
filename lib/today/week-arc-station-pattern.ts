@@ -8,6 +8,9 @@ const RETRO_THEME: Partial<Record<Planet, string>> = {
 
 const RETRO_APPEND_ORDER: Planet[] = ['Mercury', 'Venus', 'Mars']
 
+const OVERLAP_RETRO_SUBLINE =
+  "Astrologers often read overlapping retrogrades as a season for looking inward and reviewing. It's a quieter stretch if you want one."
+
 function previousIso(date: string): string {
   const d = new Date(`${date}T00:00:00Z`)
   d.setUTCDate(d.getUTCDate() - 1)
@@ -74,6 +77,48 @@ function otherRetrogradesInWeek(
   return [...found]
 }
 
+/** Mercury / Venus / Mars retrograde on any day in the ISO week (cached ephemeris days). */
+export function innerPersonalRetrogradesInWeek(
+  startDate: string,
+  endDate: string,
+  dayByDate: Map<string, EphemerisDay>,
+): Planet[] {
+  const found = new Set<Planet>()
+  for (const date of datesInRange(startDate, endDate)) {
+    const day = dayByDate.get(date)
+    if (!day) continue
+    for (const planet of day.retrogrades) {
+      if (RETRO_APPEND_ORDER.includes(planet)) found.add(planet)
+    }
+  }
+  return RETRO_APPEND_ORDER.filter((p) => found.has(p))
+}
+
+export function buildWeekArcOverlappingRetrogradeCopy(
+  planets: Planet[],
+): { headline: string; subline: string } | null {
+  if (planets.length < 2) return null
+  const [first, second, ...rest] = planets
+  let headline = `${first} and ${second} are both retrograde`
+  if (rest.length === 1) {
+    headline += `, and ${rest[0]} is retrograde`
+  } else if (rest.length > 1) {
+    headline += `, and ${rest.join(', ')} are retrograde`
+  }
+  return { headline, subline: OVERLAP_RETRO_SUBLINE }
+}
+
+export function weekArcOverlappingRetrogradeForWeek(
+  weekStart: string,
+  weekEnd: string,
+  yearEphemeris: YearEphemeris | null,
+): { headline: string; subline: string } | null {
+  if (!yearEphemeris) return null
+  const dayByDate = buildDayMap(yearEphemeris.days)
+  const planets = innerPersonalRetrogradesInWeek(weekStart, weekEnd, dayByDate)
+  return buildWeekArcOverlappingRetrogradeCopy(planets)
+}
+
 export function buildWeekArcStationPatternCopy(
   station: { planet: Planet; date: string },
   weekStart: string,
@@ -103,4 +148,15 @@ export function weekArcStationPatternForWeek(
   const station = findStationDirectInRange(weekStart, weekEnd, dayByDate)
   if (!station) return null
   return buildWeekArcStationPatternCopy(station, weekStart, weekEnd, dayByDate)
+}
+
+/** Station-direct copy wins when both station and overlapping retrogrades apply. */
+export function weekArcEphemerisFooterCopyForWeek(
+  weekStart: string,
+  weekEnd: string,
+  yearEphemeris: YearEphemeris | null,
+): { headline: string; subline: string } | null {
+  const station = weekArcStationPatternForWeek(weekStart, weekEnd, yearEphemeris)
+  if (station) return station
+  return weekArcOverlappingRetrogradeForWeek(weekStart, weekEnd, yearEphemeris)
 }

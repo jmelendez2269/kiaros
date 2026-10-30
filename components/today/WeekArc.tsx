@@ -8,7 +8,7 @@ interface Props {
   currentWeekNumber: number
   /** When true, week bars link to Calendar Week instead of Year week view. */
   calendarDayEnabled?: boolean
-  /** IA overlays: Stella station-pattern copy instead of theme/cosmicContext when a station direct falls in the week. */
+  /** IA overlays: Stella ephemeris footer copy (station or overlapping retrogrades) instead of theme/cosmicContext. */
   iaOverlaysEnabled?: boolean
   stationPattern?: { headline: string; subline: string } | null
 }
