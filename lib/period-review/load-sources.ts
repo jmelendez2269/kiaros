@@ -12,6 +12,7 @@ export interface PeriodReviewSourceBundle {
   displayName: string
   sky: PeriodSkySummary
   planTasksCompleted: { title: string; date: string }[]
+  planTasksOpen: { title: string; date: string }[]
   planTasksTotal: number
   dailyLogDays: number
   goalsActive: number
@@ -94,6 +95,10 @@ export async function loadPeriodReviewSources(
     .filter((r) => r.completed_at)
     .map((r) => ({ title: r.title, date: r.item_date }))
     .slice(0, 24)
+  const openTasks = planRows
+    .filter((r) => !r.completed_at)
+    .map((r) => ({ title: r.title, date: r.item_date }))
+    .slice(0, 24)
 
   const journalRows = journalRes.data ?? []
   const journalExcerpts = journalRows
@@ -119,6 +124,7 @@ export async function loadPeriodReviewSources(
     displayName: profileRes.data?.display_name ?? 'there',
     sky,
     planTasksCompleted: completedTasks,
+    planTasksOpen: openTasks,
     planTasksTotal: planRows.length,
     dailyLogDays: uniqueLogDays.size,
     goalsActive: goalsActiveRes.count ?? 0,
@@ -129,3 +135,22 @@ export async function loadPeriodReviewSources(
     monthBlueprintTheme: monthBlueprint?.theme ?? null,
   }
 }
+
+export async function countPeriodJournalEntries(
+  userId: string,
+  period: PeriodReviewPeriod,
+): Promise<number> {
+  const admin = createAdminSupabase()
+  const consentV2 = isJournalConsentV2Enabled()
+  let q = admin
+    .from('journal_entries')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('entry_date', period.periodStart)
+    .lte('entry_date', period.periodEnd)
+  if (consentV2) q = q.eq('include_in_insights', true)
+  const { count, error } = await q
+  if (error) return 0
+  return count ?? 0
+}
+

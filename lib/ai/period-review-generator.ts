@@ -9,6 +9,7 @@ import {
 } from './period-review-system-prompt'
 import { loadPeriodReviewSources } from '@/lib/period-review/load-sources'
 import type { PeriodReviewPeriod } from '@/lib/period-review/periods'
+import { sanitizePeriodReviewOutput } from '@/lib/period-review/sanitize-output'
 import { recordUsage } from './usage'
 
 const MODEL_ID = 'claude-sonnet-4-6'
@@ -32,7 +33,7 @@ export async function generatePeriodReviewSummary(
     abortSignal: AbortSignal.timeout(90_000),
   })
 
-  const summary = text.trim().replace(/&/g, 'and')
+  const summary = sanitizePeriodReviewOutput(text)
   if (!summary) throw new Error('Empty period review returned from model')
 
   await recordUsage({

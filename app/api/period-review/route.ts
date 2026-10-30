@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { getUserProfileId } from '@/lib/ai/usage'
 import { generatePeriodReviewSummary } from '@/lib/ai/period-review-generator'
+import { countPeriodJournalEntries } from '@/lib/period-review/load-sources'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { loadCachedPeriodReview, saveCachedPeriodReview } from '@/lib/period-review/cache'
 import { assertPeriodReviewRateLimit } from '@/lib/period-review/rate-limit'
@@ -47,6 +48,7 @@ export async function GET(req: Request) {
   if (!profileId) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
   const cached = await loadCachedPeriodReview(profileId, period)
+  const journalEntryCount = await countPeriodJournalEntries(profileId, period)
   return NextResponse.json({
     period: {
       kind: period.kind,
@@ -63,6 +65,7 @@ export async function GET(req: Request) {
           regenerations: cached.regenerations,
         }
       : null,
+    journalEntryCount,
   })
 }
 
@@ -91,11 +94,13 @@ export async function POST(req: Request) {
 
   const existing = await loadCachedPeriodReview(profileId, period)
   if (existing && !body.regenerate) {
+    const journalEntryCount = await countPeriodJournalEntries(profileId, period)
     return NextResponse.json({
       summary: existing.summary,
       generatedAt: existing.generatedAt,
       model: existing.model,
       cached: true,
+      journalEntryCount,
     })
   }
 
@@ -110,10 +115,13 @@ export async function POST(req: Request) {
   }
   await saveCachedPeriodReview(profileId, period, entry)
 
+  const journalEntryCount = await countPeriodJournalEntries(profileId, period)
+
   return NextResponse.json({
     summary: entry.summary,
     generatedAt: entry.generatedAt,
     model: entry.model,
     cached: false,
+    journalEntryCount: journalEntryCount,
   })
 }

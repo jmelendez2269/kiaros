@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { periodReviewHref, periodLabel, periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
+import { periodReviewHref, periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
+import { todayCardButtonLabel } from '@/lib/period-review/copy'
 import { K, Kicker } from '@/components/almanac'
 
 export function PeriodReviewLookBackLinks({
@@ -15,7 +16,6 @@ export function PeriodReviewLookBackLinks({
 }) {
   const period = periodFor(kind, planYear, selectedIndex)
   const href = periodReviewHref(kind, planYear, selectedIndex)
-  const label = periodLabel(period)
 
   return (
     <div
@@ -28,9 +28,6 @@ export function PeriodReviewLookBackLinks({
       }}
     >
       <Kicker color={K.copper}>Period review</Kicker>
-      <p style={{ marginTop: 8, fontSize: 13, color: K.inkDim, lineHeight: 1.6 }}>
-        TODO-STELLA: Generate or reopen the on-demand review for {label}.
-      </p>
       <Link
         href={href}
         style={{
@@ -38,13 +35,13 @@ export function PeriodReviewLookBackLinks({
           marginTop: 10,
           fontFamily: K.fMono,
           fontSize: 11,
-          letterSpacing: '0.14em',
+          letterSpacing: '0.12em',
           color: K.copperHi,
           textDecoration: 'underline',
           textUnderlineOffset: 4,
         }}
       >
-        OPEN {kind === 'month' ? 'MONTH' : 'QUARTER'} REVIEW
+        {todayCardButtonLabel(period)}
       </Link>
     </div>
   )

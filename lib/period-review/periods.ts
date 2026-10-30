@@ -97,6 +97,13 @@ export function latestClosedQuarter(today: string): PeriodReviewPeriod {
   return periodFor('quarter', prevYear, prevQ)
 }
 
+export function periodMonthNameOnly(period: PeriodReviewPeriod): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(`${period.periodStart}T12:00:00Z`))
+}
+
 export function periodLabel(period: PeriodReviewPeriod): string {
   if (period.kind === 'month') {
     return new Intl.DateTimeFormat('en-US', {
@@ -106,6 +113,18 @@ export function periodLabel(period: PeriodReviewPeriod): string {
     }).format(new Date(`${period.periodStart}T12:00:00Z`))
   }
   return `Q${period.index} ${period.planYear}`
+}
+
+/** Calendar month after a closed month period (for carry-forward questions). */
+export function monthNameAfterPeriod(period: PeriodReviewPeriod): string | null {
+  if (period.kind !== 'month') return null
+  const { y, m } = parseIsoDate(period.periodStart)
+  const nextMonth1 = m === 12 ? 1 : m + 1
+  const nextYear = m === 12 ? y + 1 : y
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(nextYear, nextMonth1 - 1, 15)))
 }
 
 export function periodReviewHref(kind: PeriodReviewKind, year: number, index: number): string {

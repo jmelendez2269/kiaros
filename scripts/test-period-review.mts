@@ -20,6 +20,13 @@ import {
 } from '../lib/period-review/cache-schema.ts'
 import { periodReviewPublicFlagEnabled } from '../lib/period-review/flag.ts'
 import { formQuarterStatus, hasAuthoredQuarterlyReviewContent } from '../lib/reviews/quarter-review-row.ts'
+import {
+  todayCardHeadline,
+  todayCardSubline,
+  todayCardButtonLabel,
+  emptyJournalBanner,
+} from '../lib/period-review/copy.ts'
+import { sanitizePeriodReviewOutput } from '../lib/period-review/sanitize-output.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -57,6 +64,20 @@ assert.equal(periodReviewPublicFlagEnabled(undefined), false)
 
 assert.equal(hasAuthoredQuarterlyReviewContent({ wins: [], challenges: [] }), false)
 assert.equal(formQuarterStatus({ completed_at: null, wins: [] }, 2, 3), 'not-started')
+
+assert.equal(todayCardHeadline(oct), 'October is wrapping up')
+assert.equal(todayCardSubline(oct), "Want to look back on it? We'll gather the sky, your plans, goals and check-ins into one view.")
+assert.equal(todayCardButtonLabel(oct), 'Look back on October')
+assert.equal(
+  emptyJournalBanner(oct),
+  'There are no journal entries for October, so this look back draws on the sky, your plans, goals and check-ins.',
+)
+
+assert.equal(sanitizePeriodReviewOutput('A & B—C'), 'A and B, C')
+
+const systemPrompt = readFileSync(join(root, 'lib/ai/period-review-system-prompt.ts'), 'utf8')
+assert.ok(systemPrompt.includes('workshop "we" voice'))
+assert.ok(systemPrompt.includes('The sky'))
 
 const featureFlags = readFileSync(join(root, 'lib/feature-flags.ts'), 'utf8')
 assert.ok(featureFlags.includes('isPeriodReviewEnabled'))
