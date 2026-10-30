@@ -1,12 +1,12 @@
 export const clerkAppearance = {
   variables: {
-    colorPrimary: "hsl(252 72% 68%)",
+    colorPrimary: "#A98AEF",
     colorBackground: "transparent",
-    colorText: "hsl(235 22% 91%)",
-    colorTextSecondary: "hsl(233 12% 74%)",
-    colorInputText: "hsl(235 22% 91%)",
-    colorInputBackground: "hsl(237 20% 13%)",
-    colorNeutral: "hsl(237 20% 16%)",
+    colorText: "#E3E2ED",
+    colorTextSecondary: "#A4A3B1",
+    colorInputText: "#E3E2ED",
+    colorInputBackground: "#12141F",
+    colorNeutral: "#E3E2ED",
     colorDanger: "hsl(0 84% 68%)",
     borderRadius: "1rem",
   },
@@ -25,12 +25,16 @@ export const clerkAppearance = {
     formFieldInput:
       "h-11 rounded-xl border border-border bg-input text-foreground placeholder:text-bone-muted/60",
     formButtonPrimary:
-      "h-11 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90",
+      "h-11 rounded-xl !bg-[#A98AEF] !text-[#0A0C14] !bg-none hover:!bg-[#A98AEF]/90 focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2",
+    alternativeMethodsBlockButton:
+      "!text-[#E3E2ED] !bg-transparent !border !border-[rgba(164,163,177,0.45)] hover:!bg-[rgba(169,138,239,0.12)] hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#0A0C14]",
+    alternativeMethodsBlockButtonText: "!text-[#E3E2ED]",
     footerActionText: "text-bone-muted",
-    footerActionLink: "text-accent hover:text-accent/90",
-    formResendCodeLink: "text-accent hover:text-accent/90",
+    footerActionLink: "!text-[#A98AEF]",
+    formResendCodeLink: "!text-[#A98AEF]",
     identityPreviewText: "text-foreground",
-    identityPreviewEditButton: "text-accent hover:text-accent/90",
+    identityPreviewEditButton: "!text-[#A98AEF]",
+    backLink: "!text-[#A98AEF]",
     otpCodeFieldInput:
       "h-11 w-11 rounded-xl border border-border bg-input text-foreground",
     alertText: "text-foreground",
