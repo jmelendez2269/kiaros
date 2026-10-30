@@ -20,6 +20,7 @@
 
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import type { QuarterlyReviewStats } from '@/lib/ai/quarterly-review-system-prompt'
+import { mergeStatsSnapshotPreserveCache } from '@/lib/period-review/cache-schema'
 
 const MAX_BULLET_LENGTH = 400
 const MAX_TEXT_LENGTH = 2000
@@ -143,11 +144,22 @@ export async function updateQuarterlyReviewSynthesis(input: UpdateSynthesisInput
   const { userProfileId, planYear, quarter, aiSummary, statsSnapshot } = input
 
   const admin = createAdminSupabase()
+  const { data: existing } = await admin
+    .from('quarterly_reviews')
+    .select('stats_snapshot')
+    .eq('user_id', userProfileId)
+    .eq('plan_year', planYear)
+    .eq('quarter', quarter)
+    .maybeSingle()
+
   const { error } = await admin
     .from('quarterly_reviews')
     .update({
       ai_summary: aiSummary,
-      stats_snapshot: statsSnapshot as unknown as Record<string, number>,
+      stats_snapshot: mergeStatsSnapshotPreserveCache(
+        existing?.stats_snapshot,
+        statsSnapshot as unknown as Record<string, number>,
+      ),
     })
     .eq('user_id', userProfileId)
     .eq('plan_year', planYear)

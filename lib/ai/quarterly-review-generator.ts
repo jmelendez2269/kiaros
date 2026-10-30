@@ -25,6 +25,7 @@ import {
 import { recordUsage } from './usage'
 import { loadBlueprintForYear } from '@/lib/blueprint/load'
 import type { NatalChart } from '@/types/blueprint'
+import { isFormQuarterlyReviewRow } from '@/lib/reviews/quarter-review-row'
 
 const MODEL_ID = 'claude-sonnet-4-6'
 const MAX_OUTPUT_TOKENS = 600
@@ -137,10 +138,14 @@ export async function loadQuarterlyReviewPromptBundle(
       .lte('scheduled_for', end),
     admin
       .from('quarterly_reviews')
-      .select('quarter, plan_year, ai_summary, wins, challenges, pivots, next_quarter_intentions')
+      .select(
+        'quarter, plan_year, ai_summary, wins, challenges, pivots, next_quarter_intentions, completed_at, stats_snapshot',
+      )
       .eq('user_id', userProfileId)
       .eq('plan_year', prior.year)
       .eq('quarter', prior.quarter)
+      .gte('quarter', 1)
+      .lte('quarter', 4)
       .not('completed_at', 'is', null)
       .maybeSingle(),
     admin
@@ -192,7 +197,7 @@ export async function loadQuarterlyReviewPromptBundle(
     goal_linked_tasks_completed: goalLinkedTasksRes.count ?? 0,
   }
 
-  const priorQuarter: PriorQuarterContext | null = priorReviewRes.data
+  const priorQuarter: PriorQuarterContext | null = isFormQuarterlyReviewRow(priorReviewRes.data)
     ? {
         quarter: priorReviewRes.data.quarter,
         planYear: priorReviewRes.data.plan_year,

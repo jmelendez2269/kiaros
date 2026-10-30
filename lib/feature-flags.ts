@@ -87,3 +87,11 @@ export function isIaSettingsEnabled(): boolean {
 export function isIaOnboarding5Enabled(): boolean {
   return iaOnboarding5Enabled();
 }
+
+/** On-demand month/quarter period reviews (Today card, Look back, Year). Off in production by default. */
+export function isPeriodReviewEnabled(): boolean {
+  return (
+    enabled(process.env.KIAROS_PERIOD_REVIEW) ||
+    enabled(process.env.NEXT_PUBLIC_KIAROS_PERIOD_REVIEW)
+  );
+}

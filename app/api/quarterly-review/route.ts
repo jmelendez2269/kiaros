@@ -6,6 +6,8 @@ import { saveQuarterlyReview, updateQuarterlyReviewSynthesis } from '@/lib/revie
 import { generateQuarterlyReviewSummary } from '@/lib/ai/quarterly-review-generator'
 import type { QuarterlyReviewStats } from '@/lib/ai/quarterly-review-system-prompt'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
+import { buildQuarterlyReviewGetResponse } from '@/lib/reviews/quarterly-review-get'
+import { isFormQuarterlyReviewRow } from '@/lib/reviews/quarter-review-row'
 
 export const maxDuration = 90
 
@@ -75,26 +77,11 @@ export async function GET(req: Request) {
       .eq('user_id', profileId)
       .eq('plan_year', year)
       .eq('quarter', quarter)
+      .gte('quarter', 1)
+      .lte('quarter', 4)
       .maybeSingle()
 
-    if (!row) {
-      return NextResponse.json({ exists: false }, { status: 200 })
-    }
-
-    return NextResponse.json({
-      exists: true,
-      quarter: row.quarter,
-      completedAt: row.completed_at,
-      wins: coerceStringArray(row.wins),
-      challenges: coerceStringArray(row.challenges),
-      pivots: row.pivots,
-      nextQuarterIntentions: row.next_quarter_intentions,
-      aiSummary: row.ai_summary,
-      statsSnapshot:
-        row.stats_snapshot && typeof row.stats_snapshot === 'object'
-          ? (row.stats_snapshot as Record<string, number>)
-          : null,
-    })
+    return NextResponse.json(buildQuarterlyReviewGetResponse(row))
   } catch (error) {
     console.error('[quarterly-review] GET failed:', error)
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
@@ -139,7 +126,7 @@ export async function POST(req: Request) {
         .eq('quarter', quarter)
         .maybeSingle()
 
-      if (!existing) {
+      if (!existing || !isFormQuarterlyReviewRow(existing)) {
         return NextResponse.json({ error: 'No review exists for this quarter yet' }, { status: 404 })
       }
       if (!existing.completed_at) {

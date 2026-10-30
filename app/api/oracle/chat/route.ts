@@ -20,6 +20,7 @@ import { isRelevanceMemoryEnabled } from '@/lib/feature-flags'
 import { resolveOracleJournalEntriesForPrompt } from '@/lib/journal/oracle-journal-recall'
 import { loadCurrentBlueprint, toBlueprintPromptRecord } from '@/lib/blueprint/load'
 import { loadStelloquyPatternInsightsForPrompt } from '@/lib/journal/load-stelloquy-pattern-insights'
+import { filterFormQuarterlyReviewRows } from '@/lib/reviews/quarter-review-row'
 
 export const maxDuration = 60
 
@@ -149,10 +150,14 @@ export async function POST(req: Request) {
         .limit(8),
       supabase
         .from('quarterly_reviews')
-        .select('quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, created_at')
+        .select(
+          'quarter, completed_at, wins, challenges, pivots, next_quarter_intentions, ai_summary, created_at, stats_snapshot',
+        )
         .eq('plan_year', currentYear)
+        .gte('quarter', 1)
+        .lte('quarter', 4)
         .order('quarter', { ascending: false })
-        .limit(2),
+        .limit(4),
       supabase
         .from('plan_items')
         .select('item_date, title, start_minute, duration_minutes, completed_at, source, area_goals(title)')
@@ -249,11 +254,20 @@ export async function POST(req: Request) {
         'captured_text' | 'source_role' | 'include_in_insights' | 'include_in_planner' | 'created_at'
       >[],
       patternInsights: patternInsightsForPrompt,
-      quarterlyReviews: (quarterlyReviewsRes.data ?? []) as Pick<
-        Tables<'quarterly_reviews'>,
-        | 'quarter' | 'completed_at' | 'wins' | 'challenges' | 'pivots'
-        | 'next_quarter_intentions' | 'ai_summary' | 'created_at'
-      >[],
+      quarterlyReviews: filterFormQuarterlyReviewRows(
+        (quarterlyReviewsRes.data ?? []) as Pick<
+          Tables<'quarterly_reviews'>,
+          | 'quarter'
+          | 'completed_at'
+          | 'wins'
+          | 'challenges'
+          | 'pivots'
+          | 'next_quarter_intentions'
+          | 'ai_summary'
+          | 'created_at'
+          | 'stats_snapshot'
+        >[],
+      ).slice(0, 2),
       planItems: ((planItemsRes.data ?? []) as unknown as Array<{
         item_date: string
         title: string

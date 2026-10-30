@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation'
 import { ReflectionsHub } from '@/components/reflections/ReflectionsHub'
 import { JournalQuarterLookBack } from '@/components/journal/JournalQuarterLookBack'
+import { PeriodReviewLookBackLinks } from '@/components/period-review/PeriodReviewLookBackLinks'
 import { resolveLookBackSubView } from '@/lib/journal/ia-journal-routes'
-import { isIaJournalEnabled } from '@/lib/feature-flags'
+import { isIaJournalEnabled, isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { BRAND } from '@/lib/brand'
 import type { PeriodKind } from '@/lib/reflections/periods'
 
@@ -34,6 +35,17 @@ export default async function JournalLookBackPage({
   }
 
   const kind: PeriodKind = subView === 'year' ? 'year' : 'month'
+  const monthRaw = Array.isArray(params.month) ? params.month[0] : params.month
+  const monthMatch = typeof monthRaw === 'string' ? monthRaw.match(/^(\d{4})-(\d{2})$/) : null
+  const planYear = monthMatch ? Number(monthMatch[1]) : new Date().getFullYear()
+  const monthIndex = monthMatch ? Number(monthMatch[2]) : new Date().getMonth() + 1
 
-  return <ReflectionsHub initialKind={kind} journalIaEmbed />
+  return (
+    <div className="space-y-6">
+      {isPeriodReviewEnabled() && subView === 'month' ? (
+        <PeriodReviewLookBackLinks kind="month" planYear={planYear} selectedIndex={monthIndex} />
+      ) : null}
+      <ReflectionsHub initialKind={kind} journalIaEmbed />
+    </div>
+  )
 }
