@@ -21,6 +21,7 @@ import {
 import { recordUsage } from './usage'
 import { loadBlueprintForYear } from '@/lib/blueprint/load'
 import type { NatalChart } from '@/types/blueprint'
+import { isFormQuarterlyReviewRow } from '@/lib/reviews/quarter-review-row'
 
 const MODEL_ID = 'claude-sonnet-4-6'
 const MAX_OUTPUT_TOKENS = 700
@@ -143,8 +144,12 @@ export async function fetchOrGenerateMonthBrief(
       .maybeSingle(),
     admin
       .from('quarterly_reviews')
-      .select('quarter, plan_year, ai_summary, wins, challenges, pivots, next_quarter_intentions, completed_at')
+      .select(
+        'quarter, plan_year, ai_summary, wins, challenges, pivots, next_quarter_intentions, completed_at, stats_snapshot',
+      )
       .eq('user_id', userProfileId)
+      .gte('quarter', 1)
+      .lte('quarter', 4)
       .not('completed_at', 'is', null)
       .order('completed_at', { ascending: false })
       .limit(1)
@@ -179,7 +184,7 @@ export async function fetchOrGenerateMonthBrief(
       }
     : null
 
-  const priorQuarterReview: PriorQuarterReviewContext | null = quarterReviewRes.data
+  const priorQuarterReview: PriorQuarterReviewContext | null = isFormQuarterlyReviewRow(quarterReviewRes.data)
     ? {
         quarter: quarterReviewRes.data.quarter,
         planYear: quarterReviewRes.data.plan_year,

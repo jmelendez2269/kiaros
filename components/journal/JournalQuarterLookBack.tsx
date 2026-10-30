@@ -7,7 +7,8 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { appProfileId, getAppProfile } from '@/lib/app/get-app-profile'
 import { quarterlyReviewHref } from '@/lib/journal/ia-journal-routes'
 import { isIaJournalEnabled, isPeriodReviewEnabled } from '@/lib/feature-flags'
-import { formQuarterStatus, type FormQuarterStatus } from '@/lib/reviews/quarter-review-row'
+import { formQuarterStatus, isFormQuarterlyReviewRow, type FormQuarterStatus } from '@/lib/reviews/quarter-review-row'
+import { activityStatsSnapshotFromReviewRow, indexFormQuarterlyReviewsByQuarter } from '@/lib/reviews/quarterly-review-get'
 import { PeriodReviewLookBackLinks } from '@/components/period-review/PeriodReviewLookBackLinks'
 
 const QUARTER_MONTHS: Record<number, string> = {
@@ -87,11 +88,10 @@ export async function JournalQuarterLookBack({ quarterParam }: { quarterParam?: 
     )
     .eq('user_id', supabaseUserId)
     .eq('plan_year', loaded.planYear)
+    .gte('quarter', 1)
+    .lte('quarter', 4)
 
-  const reviewsByQuarter = new Map<number, NonNullable<typeof reviewsRes.data>[number]>()
-  for (const row of reviewsRes.data ?? []) {
-    if (typeof row.quarter === 'number') reviewsByQuarter.set(row.quarter, row)
-  }
+  const reviewsByQuarter = indexFormQuarterlyReviewsByQuarter(reviewsRes.data ?? [])
 
   const selectedReview = reviewsByQuarter.get(selectedQuarter) ?? null
   const quarterBlueprint = loaded.blueprint.quarters.find((q) => q.quarter === selectedQuarter)
@@ -105,19 +105,19 @@ export async function JournalQuarterLookBack({ quarterParam }: { quarterParam?: 
   let priorStatsSnapshot: Record<string, number> | null = null
   if (priorCoords.year === loaded.planYear) {
     const priorRow = reviewsByQuarter.get(priorCoords.quarter)
-    if (priorRow?.stats_snapshot && typeof priorRow.stats_snapshot === 'object') {
-      priorStatsSnapshot = priorRow.stats_snapshot as Record<string, number>
-    }
+    priorStatsSnapshot = activityStatsSnapshotFromReviewRow(priorRow)
   } else {
     const priorYearRes = await admin
       .from('quarterly_reviews')
-      .select('stats_snapshot')
+      .select('stats_snapshot, wins, challenges, pivots, next_quarter_intentions, completed_at')
       .eq('user_id', supabaseUserId)
       .eq('plan_year', priorCoords.year)
       .eq('quarter', priorCoords.quarter)
+      .gte('quarter', 1)
+      .lte('quarter', 4)
       .maybeSingle()
-    if (priorYearRes.data?.stats_snapshot && typeof priorYearRes.data.stats_snapshot === 'object') {
-      priorStatsSnapshot = priorYearRes.data.stats_snapshot as Record<string, number>
+    if (isFormQuarterlyReviewRow(priorYearRes.data)) {
+      priorStatsSnapshot = activityStatsSnapshotFromReviewRow(priorYearRes.data)
     }
   }
   const priorQuarterLabel = `Q${priorCoords.quarter}${
