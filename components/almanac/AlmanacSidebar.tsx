@@ -18,6 +18,7 @@ import { K } from './tokens'
 import { StarField } from './StarField'
 import { AppHelpMenu } from '@/components/feedback/AppHelpMenu'
 import { FeedbackMobileHeaderButton } from '@/components/feedback/FeedbackMobileHeaderButton'
+import { StelloquyMobileHeaderButton } from '@/components/oracle/StelloquyMobileHeaderButton'
 import { IaOverlaysNoticeStack } from '@/components/overlays/IaOverlaysNoticeStack'
 import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
 import { TOUR_OPEN_MOBILE_NAV_EVENT } from '@/lib/tour/config'
@@ -980,6 +981,7 @@ export function AlmanacSidebar({
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {iaOverlaysEnabled ? <FeedbackMobileHeaderButton /> : null}
+            {iaOverlaysEnabled ? <StelloquyMobileHeaderButton /> : null}
             <button
               type="button"
               onClick={() => setMobileOpen((o) => !o)}

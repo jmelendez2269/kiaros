@@ -174,7 +174,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             initialPatternIds={initialPatternIds}
           />
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
-            <main className={`w-full min-w-0 flex-1 px-3 pt-4 sm:px-4 md:px-7 md:pt-6 xl:px-10 2xl:px-12 ${iaOverlaysEnabled ? 'pb-[88px] md:pb-32' : 'pb-8 md:pb-10'}`}>
+            <main className={`w-full min-w-0 flex-1 px-3 pt-4 sm:px-4 md:px-7 md:pt-6 xl:px-10 2xl:px-12 ${iaOverlaysEnabled ? 'pb-8 md:pb-32' : 'pb-8 md:pb-10'}`}>
               <div className="mx-auto w-full max-w-[1480px]">
                 {showNoAccessBanner && (
                   <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-amber-500/40 bg-amber-500/10 px-5 py-3.5">

@@ -224,7 +224,7 @@ export default async function TodayPage({
 
   return (
     <div
-      className={`grid gap-5 p-4 sm:p-6 md:p-7${iaOverlaysEnabled ? ' pb-28 md:pb-32' : ''}`}
+      className={`grid gap-5 p-4 sm:p-6 md:p-7${iaOverlaysEnabled ? ' md:pb-32' : ''}`}
       style={{
         fontFamily: K.fBody,
         color: K.ink,

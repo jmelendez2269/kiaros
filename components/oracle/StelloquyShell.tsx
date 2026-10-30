@@ -151,40 +151,6 @@ export function StelloquyShell({ today }: Props) {
               </div>
             </div>
           </button>
-          {iaOverlays ? (
-            <button
-              type="button"
-              className="flex md:hidden kiaros-stello-fab"
-              onClick={hasOracleAccess ? toggle : () => router.push('/oracle')}
-              aria-label="Open Stelloquy"
-              aria-expanded={hasOracleAccess ? open : undefined}
-              aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
-              aria-hidden={stelloDockHidden || undefined}
-              tabIndex={stelloDockHidden ? -1 : 0}
-              style={{
-                position: 'fixed',
-                bottom: 'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))',
-                right: 'max(16px, env(safe-area-inset-right))',
-                zIndex: 40,
-                width: 48,
-                height: 48,
-                padding: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
-                visibility: stelloDockHidden ? 'hidden' : 'visible',
-                pointerEvents: stelloDockHidden ? 'none' : 'auto',
-                background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
-                border: `1px solid ${K.kairos}55`,
-                borderRadius: 999,
-                boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
-                color: K.starlight,
-                fontSize: 20,
-                cursor: 'pointer',
-              }}
-            >
-              ✦
-            </button>
-          ) : null}
         </>
       ) : null}
 
