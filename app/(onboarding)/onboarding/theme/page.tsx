@@ -125,11 +125,10 @@ export default function OnboardingThemePage() {
 
       {ia5 ? (
         <div className="rounded-xl border border-border/60 bg-stone-950/40 px-4 py-4">
-          <p className="text-sm font-medium text-bone">Study focus (optional)</p>
+          <p className="text-sm font-medium text-bone">Something you&apos;re studying (optional)</p>
           <p className="mt-1 text-xs leading-relaxed text-bone-muted">
-            If you are learning something this year, you can name it now. {BRAND.product} uses it for
-            Curriculum and your blueprint context. You can also add it later in Settings or when you
-            open Curriculum.
+            If you&apos;re learning something this year, you can add it here. We use it in Curriculum
+            and in your blueprint. You can also add it later in Settings or from Curriculum.
           </p>
           {!showStudyFocus ? (
             <button

@@ -11,9 +11,12 @@ import { cn } from '@/lib/utils'
 interface Props {
   yearEphemeris: YearEphemeris
   weeks: WeekBlueprint[]
+  /** Today IA overlay: compact chart + Open full year link only. */
+  compact?: boolean
+  openFullYearHref?: string
 }
 
-export function YearChartShell({ yearEphemeris, weeks }: Props) {
+export function YearChartShell({ yearEphemeris, weeks, compact = false, openFullYearHref }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [showLegend, setShowLegend] = useState(true)
@@ -36,45 +39,61 @@ export function YearChartShell({ yearEphemeris, weeks }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {todayInYear ? (
-          <Link
-            href={`/year?view=week&date=${today}`}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-leather-400/35 bg-leather-500/15 px-3 text-xs font-semibold uppercase tracking-[0.16em] text-leather-200 transition-colors hover:bg-leather-500/22"
-          >
-            <CalendarDays size={14} />
-            Today
-          </Link>
-        ) : (
-          <span className="inline-flex h-10 cursor-not-allowed items-center gap-2 rounded-2xl border border-border/55 bg-stone-950/45 px-3 text-xs font-semibold uppercase tracking-[0.16em] text-bone-muted/40">
-            <CalendarDays size={14} />
-            Today
-          </span>
-        )}
+      {compact ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {openFullYearHref ? (
+            <Link
+              href={openFullYearHref}
+              className="inline-flex h-10 items-center rounded-2xl border border-leather-400/35 bg-leather-500/15 px-3 text-xs font-semibold uppercase tracking-[0.16em] text-leather-200 transition-colors hover:bg-leather-500/22"
+            >
+              Open full year
+            </Link>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {todayInYear ? (
+              <Link
+                href={`/year?view=week&date=${today}`}
+                className="inline-flex h-10 items-center gap-2 rounded-2xl border border-leather-400/35 bg-leather-500/15 px-3 text-xs font-semibold uppercase tracking-[0.16em] text-leather-200 transition-colors hover:bg-leather-500/22"
+              >
+                <CalendarDays size={14} />
+                Today
+              </Link>
+            ) : (
+              <span className="inline-flex h-10 cursor-not-allowed items-center gap-2 rounded-2xl border border-border/55 bg-stone-950/45 px-3 text-xs font-semibold uppercase tracking-[0.16em] text-bone-muted/40">
+                <CalendarDays size={14} />
+                Today
+              </span>
+            )}
 
-        <button
-          type="button"
-          onClick={() => setShowLegend((value) => !value)}
-          aria-pressed={showLegend}
-          className={cn(
-            'inline-flex h-10 items-center gap-2 rounded-2xl border px-3 text-xs font-semibold uppercase tracking-[0.16em] transition-colors',
-            showLegend
-              ? 'border-plum-400/35 bg-plum-400/15 text-plum-300'
-              : 'border-border/70 bg-stone-950/55 text-bone-muted hover:text-bone'
-          )}
-        >
-          <SlidersHorizontal size={14} />
-          Signals
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={() => setShowLegend((value) => !value)}
+              aria-pressed={showLegend}
+              className={cn(
+                'inline-flex h-10 items-center gap-2 rounded-2xl border px-3 text-xs font-semibold uppercase tracking-[0.16em] transition-colors',
+                showLegend
+                  ? 'border-plum-400/35 bg-plum-400/15 text-plum-300'
+                  : 'border-border/70 bg-stone-950/55 text-bone-muted hover:text-bone',
+              )}
+            >
+              <SlidersHorizontal size={14} />
+              Signals
+            </button>
+          </div>
 
-      {showLegend ? <CalendarLegend /> : null}
+          {showLegend ? <CalendarLegend /> : null}
+        </>
+      )}
 
       <YearView
         yearEphemeris={yearEphemeris}
         weeks={weeks}
         onMonthClick={goMonth}
         onDayClick={goWeek}
+        compact={compact}
       />
     </div>
   )

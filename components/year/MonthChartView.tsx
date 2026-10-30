@@ -128,6 +128,7 @@ export async function MonthChartView({
         <WindowedAccessNote windowEnd={loaded.access.windowEnd} />
       ) : null}
       <div
+        className={calendarDayEnabled ? 'px-4 sm:px-6' : ''}
         style={{
           fontFamily: K.fBody,
           color: K.ink,
@@ -135,11 +136,12 @@ export async function MonthChartView({
           minHeight: '100%',
           display: 'grid',
           gridTemplateRows: 'auto 1fr auto',
+          ...(calendarDayEnabled ? { gridTemplateColumns: 'minmax(0, 1fr)' } : {}),
           gap: 16,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
-          <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16, ...(calendarDayEnabled ? { minWidth: 0 } : {}) }}>
+          <div style={calendarDayEnabled ? { minWidth: 0, flex: '1 1 auto', maxWidth: '100%' } : {}}>
             <Kicker>{MONTH_NAMES[selected.month]} · {selected.year}</Kicker>
             <div
               style={{
@@ -149,6 +151,7 @@ export async function MonthChartView({
                 color: K.ink,
                 lineHeight: 1.1,
                 marginTop: 4,
+                ...(calendarDayEnabled ? { wordWrap: 'break-word' as const } : {}),
               }}
             >
               {monthBlueprint?.theme ?? 'Your year, anchored to the sky.'}
@@ -161,7 +164,8 @@ export async function MonthChartView({
                   color: K.inkDim,
                   lineHeight: 1.6,
                   marginTop: 10,
-                  maxWidth: 720,
+                  maxWidth: calendarDayEnabled ? '100%' : 720,
+                  ...(calendarDayEnabled ? { wordWrap: 'break-word' as const } : {}),
                 }}
               >
                 {monthBlueprint.energyArc}
@@ -208,7 +212,7 @@ export async function MonthChartView({
           </nav>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0, ...(calendarDayEnabled ? { minWidth: 0 } : {}) }}>
           <div
             style={{
               display: 'flex',
@@ -220,15 +224,17 @@ export async function MonthChartView({
               border: `1px solid ${K.line}`,
               borderRadius: 10,
               background: K.bg2,
+              ...(calendarDayEnabled ? { minWidth: 0 } : {}),
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, ...(calendarDayEnabled ? { minWidth: 0, flex: '1 1 auto' } : {}) }}>
               <span
                 style={{
                   fontFamily: K.fMono,
                   fontSize: 10,
                   letterSpacing: '0.16em',
                   color: K.copperHi,
+                  ...(calendarDayEnabled ? { flexShrink: 0 } : {}),
                 }}
               >
                 Q{quarterNumber}
@@ -240,13 +246,20 @@ export async function MonthChartView({
                   fontSize: 16,
                   color: K.ink,
                   lineHeight: 1.2,
+                  ...(calendarDayEnabled ? { wordWrap: 'break-word' as const, minWidth: 0 } : {}),
                 }}
               >
                 {quarterBlueprint?.theme ?? 'Quarterly theme'}
               </span>
             </div>
             <div
-              style={{
+              className={calendarDayEnabled ? 'flex flex-wrap gap-2 sm:gap-[18px]' : ''}
+              style={calendarDayEnabled ? {
+                fontFamily: K.fMono,
+                fontSize: 11,
+                letterSpacing: '0.14em',
+                color: K.inkDim,
+              } : {
                 display: 'flex',
                 gap: 18,
                 fontFamily: K.fMono,
@@ -271,11 +284,13 @@ export async function MonthChartView({
               initialGeneratedAt={existingBrief?.generated_at ?? undefined}
               initialEditedAt={(existingBrief as { edited_at?: string | null } | null)?.edited_at ?? undefined}
               initialPinned={Boolean(existingBrief?.pinned)}
+              calendarDayEnabled={calendarDayEnabled}
             />
           ) : null}
 
           <div
-            style={{
+            className={calendarDayEnabled ? 'grid gap-[14px] grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(260px,1fr))]' : ''}
+            style={calendarDayEnabled ? { minHeight: 0 } : {
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               gap: 14,
@@ -519,20 +534,31 @@ export async function MonthChartView({
               planItemsByDay={planItemsByDay}
               curriculumByDay={curriculumByDay}
               energyByDay={energyByDay}
+              calendarDayEnabled={calendarDayEnabled}
             />
           </Frame>
         </div>
 
-        <div>
+        <div style={calendarDayEnabled ? { marginTop: 24, paddingTop: 24, borderTop: `1px solid ${K.line}`, minWidth: 0 } : {}}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'baseline',
-              marginBottom: 6,
+              marginBottom: calendarDayEnabled ? 10 : 6,
+              ...(calendarDayEnabled ? { flexWrap: 'wrap' as const, gap: 8, minWidth: 0 } : {}),
             }}
           >
-            <Kicker>Year&apos;s pulse · push / rest / edit</Kicker>
+            {calendarDayEnabled ? (
+              <div>
+                <Kicker>Year&apos;s pulse · full year overview</Kicker>
+                <div style={{ fontFamily: K.fBody, fontSize: 11, color: K.inkDim, marginTop: 4 }}>
+                  Push / rest / edit rhythm across all 12 months
+                </div>
+              </div>
+            ) : (
+              <Kicker>Year&apos;s pulse · push / rest / edit</Kicker>
+            )}
             <div
               style={{
                 fontFamily: K.fMono,
@@ -541,7 +567,7 @@ export async function MonthChartView({
                 letterSpacing: '0.14em',
               }}
             >
-              JAN — DEC
+              JAN — DEC{calendarDayEnabled ? ` ${selected.year}` : ''}
             </div>
           </div>
           <PushRestRibbon periods={arc} todayPct={todayPct} />

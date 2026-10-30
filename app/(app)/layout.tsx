@@ -8,7 +8,9 @@ import { AlmanacSidebar } from '@/components/almanac/AlmanacSidebar'
 import { StelloquyShell } from '@/components/oracle/StelloquyShell'
 import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
 import { TourOverlay } from '@/components/tour/TourOverlay'
-import { FeedbackButton } from '@/components/feedback/FeedbackButton'
+import { buildTourSteps } from '@/lib/tour/build-tour-steps'
+import { iaTourFlagsFromProcessEnv, isIaTourActive } from '@/lib/tour/ia-tour-flags'
+import { FeedbackProvider } from '@/components/feedback/FeedbackProvider'
 import { ReflectionNotification } from '@/components/reflections/ReflectionNotification'
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
 import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
@@ -146,6 +148,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isMemoryDefaultsEnabled() && isJournalConsentV2Enabled()
   const iaOverlaysEnabled = isIaOverlaysEnabled()
   const showPatternDiscovery = isAppAdmin || access.hasOracleAccess
+  const tourFlags = iaTourFlagsFromProcessEnv()
+  const tourSteps = buildTourSteps(tourFlags)
+  const iaTourActive = isIaTourActive(tourFlags)
 
   return (
     <StelloquyProvider
@@ -154,6 +159,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       sharedConversationEnabled={iaOverlaysEnabled}
     >
       <MobileNavOpenProvider>
+      <FeedbackProvider iaOverlaysEnabled={iaOverlaysEnabled}>
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
           <AlmanacSidebar
@@ -162,12 +168,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             journalIaEnabled={isIaJournalEnabled()}
             goalsIaEnabled={isIaGoalsEnabled()}
             iaOverlaysEnabled={iaOverlaysEnabled}
+            iaTourActive={iaTourActive}
             showPatternDiscovery={showPatternDiscovery}
             patternScope={profile.id}
             initialPatternIds={initialPatternIds}
           />
           <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col md:min-h-screen">
-            <main className="w-full min-w-0 flex-1 px-3 pb-8 pt-4 sm:px-4 md:px-7 md:pb-10 md:pt-6 xl:px-10 2xl:px-12">
+            <main className={`w-full min-w-0 flex-1 px-3 pt-4 sm:px-4 md:px-7 md:pt-6 xl:px-10 2xl:px-12 ${iaOverlaysEnabled ? 'pb-8 md:pb-32' : 'pb-8 md:pb-10'}`}>
               <div className="mx-auto w-full max-w-[1480px]">
                 {showNoAccessBanner && (
                   <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-amber-500/40 bg-amber-500/10 px-5 py-3.5">
@@ -240,12 +247,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             day: 'numeric',
           })}
         />
-        <TourOverlay />
+        <TourOverlay steps={tourSteps} iaTourActive={iaTourActive} />
         {!iaOverlaysEnabled && showPatternDiscovery ? (
           <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
         ) : null}
-        {!iaOverlaysEnabled ? <FeedbackButton /> : null}
       </div>
+      </FeedbackProvider>
       </MobileNavOpenProvider>
     </StelloquyProvider>
   )

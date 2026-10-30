@@ -17,8 +17,16 @@ import {
 import { K } from './tokens'
 import { StarField } from './StarField'
 import { AppHelpMenu } from '@/components/feedback/AppHelpMenu'
+import { FeedbackMobileHeaderButton } from '@/components/feedback/FeedbackMobileHeaderButton'
+import { StelloquyMobileHeaderButton } from '@/components/oracle/StelloquyMobileHeaderButton'
 import { IaOverlaysNoticeStack } from '@/components/overlays/IaOverlaysNoticeStack'
 import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
+import { TOUR_OPEN_MOBILE_NAV_EVENT } from '@/lib/tour/config'
+import {
+  NAV_CURRICULUM_TOUR_TARGET,
+  sidebarNavTourTarget,
+  type AlmanacNavKey,
+} from '@/lib/almanac/nav-tour-target'
 
 type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal' | 'goalsStudy' | 'stelloquy'
 type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal' | 'goalsStudy'>
@@ -113,7 +121,7 @@ const NAV: ReadonlyArray<{
 const GOALS_STUDY_NAV: (typeof NAV)[number] = {
   key: 'goalsStudy',
   label: 'Goals and study',
-  hint: 'life areas · study plans',
+  hint: 'goals · curriculum',
   glyph: '◈',
   tone: K.starlight,
   href: '/areas',
@@ -188,9 +196,9 @@ function isSectionActive(
   if (key === 'today') {
     if (calendarDayEnabled) {
       return (
+        pathname === '/calendar' ||
         pathname.startsWith('/today') ||
-        pathname.startsWith('/planner') ||
-        (pathname.startsWith('/calendar') && !pathname.startsWith('/calendar/month'))
+        pathname.startsWith('/planner')
       )
     }
     return (
@@ -201,7 +209,7 @@ function isSectionActive(
   }
   if (key === 'week') {
     if (calendarDayEnabled) {
-      return false
+      return pathname.startsWith('/calendar/week')
     }
     return pathname.startsWith('/year') && view === 'week'
   }
@@ -215,6 +223,8 @@ function isSectionActive(
     if (journalIaEnabled) {
       return (
         pathname.startsWith('/blueprint') ||
+        pathname.startsWith('/calendar/blueprint') ||
+        pathname.startsWith('/calendar/year') ||
         (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
       )
     }
@@ -222,6 +232,8 @@ function isSectionActive(
       return (
         pathname.startsWith('/reflections') ||
         pathname.startsWith('/blueprint') ||
+        pathname.startsWith('/calendar/blueprint') ||
+        pathname.startsWith('/calendar/year') ||
         (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
       )
     }
@@ -299,6 +311,7 @@ function NavRow({
   calendarDayEnabled,
   journalIaEnabled,
   goalsIaEnabled,
+  iaOverlaysEnabled,
 }: {
   navItems: typeof NAV
   pathname: string
@@ -307,6 +320,7 @@ function NavRow({
   calendarDayEnabled: boolean
   journalIaEnabled: boolean
   goalsIaEnabled: boolean
+  iaOverlaysEnabled: boolean
 }) {
   const navId = useId()
   const searchParams = useSearchParams()
@@ -316,6 +330,27 @@ function NavRow({
     self: isSectionActive('self', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
     journal: isSectionActive('journal', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
     goalsStudy: isSectionActive('goalsStudy', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
+  })
+
+  const effectiveNavItems = navItems.map((n) => {
+    if (calendarDayEnabled) {
+      if (n.key === 'week') {
+        return { ...n, href: '/calendar/week' }
+      }
+      if (n.key === 'month') {
+        return { ...n, href: '/calendar/month' }
+      }
+      if (n.key === 'year') {
+        return {
+          ...n,
+          href: '/calendar/year',
+          subItems: n.subItems?.map((sub) =>
+            sub.href === '/blueprint' ? { ...sub, href: '/calendar/blueprint' } : sub
+          ),
+        }
+      }
+    }
+    return n
   })
 
   useEffect(() => {
@@ -338,7 +373,7 @@ function NavRow({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {navItems.map((n) => {
+      {effectiveNavItems.map((n) => {
         const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled, journalIaEnabled, goalsIaEnabled)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =
@@ -361,16 +396,21 @@ function NavRow({
             onClick={onNavigate}
             title={collapsed ? n.label : undefined}
             aria-current={pathname === n.href ? 'page' : undefined}
-            data-tour={`nav-${n.key}`}
+            data-tour={sidebarNavTourTarget(n.key as AlmanacNavKey, calendarDayEnabled)}
+            className={iaOverlaysEnabled ? 'py-2 md:py-[10px]' : ''}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: collapsed ? 0 : 12,
               padding: collapsed
                 ? '10px 6px'
-                : collapsibleKey
-                  ? '10px 56px 10px 12px'
-                  : '10px 12px',
+                : iaOverlaysEnabled
+                  ? collapsibleKey
+                    ? '0 56px 0 12px'
+                    : '0 12px'
+                  : collapsibleKey
+                    ? '10px 56px 10px 12px'
+                    : '10px 12px',
               borderRadius: 10,
               border: `1px solid ${isActive ? `${n.tone}66` : 'transparent'}`,
               background: isActive ? `linear-gradient(to right, ${n.tone}1a, transparent)` : 'transparent',
@@ -410,6 +450,7 @@ function NavRow({
                   {n.label}
                 </div>
                 <div
+                  className={iaOverlaysEnabled ? 'hidden md:block' : ''}
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
@@ -439,7 +480,8 @@ function NavRow({
               style={{
                 position: 'absolute',
                 right: 3,
-                top: 3,
+                top: iaOverlaysEnabled ? '50%' : 3,
+                ...(iaOverlaysEnabled ? { transform: 'translateY(-50%)' } : {}),
                 width: 44,
                 height: 44,
                 border: 'none',
@@ -487,7 +529,7 @@ function NavRow({
                     aria-current={
                       subActive ? (subParts.hash ? 'location' : 'page') : undefined
                     }
-                    data-tour={sub.href === '/curriculum' ? 'nav-curriculum' : undefined}
+                    data-tour={sub.href === '/curriculum' ? NAV_CURRICULUM_TOUR_TARGET : undefined}
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
@@ -510,6 +552,7 @@ function NavRow({
                       {sub.label}
                     </span>
                     <span
+                      className={iaOverlaysEnabled ? 'hidden md:inline' : ''}
                       style={{
                         fontFamily: K.fMono,
                         fontSize: 12,
@@ -537,6 +580,7 @@ function SidebarBody({
   collapsed,
   onToggleDesktop,
   onNavigate,
+  hideBrandHeader,
   calendarDayEnabled,
   journalIaEnabled,
   goalsIaEnabled,
@@ -550,6 +594,8 @@ function SidebarBody({
   collapsed: boolean
   onToggleDesktop?: () => void
   onNavigate?: () => void
+  /** Mobile drawer already shows the brand row in the sticky header. */
+  hideBrandHeader?: boolean
   calendarDayEnabled: boolean
   journalIaEnabled: boolean
   goalsIaEnabled: boolean
@@ -578,11 +624,13 @@ function SidebarBody({
       <StarField count={20} seed={11} opacity={0.12} />
 
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 18, height: '100%' }}>
-        <div style={{ padding: '0 4px' }}>
-          <Link href="/today" onClick={onNavigate} style={{ textDecoration: 'none' }}>
-            <ChromeMark collapsed={collapsed} />
-          </Link>
-        </div>
+        {!hideBrandHeader ? (
+          <div style={{ padding: '0 4px' }}>
+            <Link href="/today" onClick={onNavigate} style={{ textDecoration: 'none' }}>
+              <ChromeMark collapsed={collapsed} />
+            </Link>
+          </div>
+        ) : null}
 
         {onToggleDesktop ? (
           <button
@@ -632,6 +680,7 @@ function SidebarBody({
             calendarDayEnabled={calendarDayEnabled}
             journalIaEnabled={journalIaEnabled}
             goalsIaEnabled={goalsIaEnabled}
+            iaOverlaysEnabled={iaOverlaysEnabled}
           />
         </div>
 
@@ -831,6 +880,7 @@ export function AlmanacSidebar({
   journalIaEnabled = false,
   goalsIaEnabled = false,
   iaOverlaysEnabled = false,
+  iaTourActive = false,
   showPatternDiscovery = false,
   patternScope = '',
   initialPatternIds = [],
@@ -840,6 +890,7 @@ export function AlmanacSidebar({
   journalIaEnabled?: boolean
   goalsIaEnabled?: boolean
   iaOverlaysEnabled?: boolean
+  iaTourActive?: boolean
   showPatternDiscovery?: boolean
   patternScope?: string
   initialPatternIds?: string[]
@@ -853,9 +904,16 @@ export function AlmanacSidebar({
   const { setMobileNavOpen } = useMobileNavOpen()
 
   useEffect(() => {
-    if (!iaOverlaysEnabled) return
     setMobileNavOpen(mobileOpen)
-  }, [iaOverlaysEnabled, mobileOpen, setMobileNavOpen])
+  }, [mobileOpen, setMobileNavOpen])
+
+  useEffect(() => {
+    function onTourOpenMobileNav() {
+      setMobileOpen(true)
+    }
+    window.addEventListener(TOUR_OPEN_MOBILE_NAV_EVENT, onTourOpenMobileNav)
+    return () => window.removeEventListener(TOUR_OPEN_MOBILE_NAV_EVENT, onTourOpenMobileNav)
+  }, [])
 
   useEffect(() => {
     const saved = window.localStorage.getItem(SIDEBAR_STORAGE_KEY)
@@ -887,6 +945,7 @@ export function AlmanacSidebar({
   return (
     <>
       <aside
+        id="almanac-desktop-sidebar"
         className={cn(
           'hidden shrink-0 border-r border-almanac-line transition-[width] duration-300 md:flex md:min-h-screen md:flex-col',
           collapsed ? 'w-[5.25rem]' : 'w-[19rem]'
@@ -920,27 +979,31 @@ export function AlmanacSidebar({
           <Link href="/today" style={{ textDecoration: 'none' }}>
             <ChromeMark />
           </Link>
-          <button
-            type="button"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
-            aria-expanded={mobileOpen}
-            aria-controls="almanac-mobile-nav"
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              border: `1px solid ${K.line}`,
-              background: K.bg,
-              color: K.ink,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            {mobileOpen ? <X size={16} /> : <Menu size={16} />}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {iaOverlaysEnabled ? <FeedbackMobileHeaderButton /> : null}
+            {iaOverlaysEnabled ? <StelloquyMobileHeaderButton /> : null}
+            <button
+              type="button"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={mobileOpen}
+              aria-controls="almanac-mobile-nav"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                border: `1px solid ${K.line}`,
+                background: K.bg,
+                color: K.ink,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              {mobileOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
+          </div>
         </div>
         {iaOverlaysEnabled ? (
           <div style={{ marginTop: 10 }}>
@@ -970,7 +1033,8 @@ export function AlmanacSidebar({
               width: 'min(20rem, 86vw)',
               borderRight: `1px solid ${K.line}`,
               overflowY: 'auto',
-              paddingBottom: 'env(safe-area-inset-bottom)',
+              ...(iaOverlaysEnabled ? { WebkitOverflowScrolling: 'touch' as const } : {}),
+              paddingBottom: iaOverlaysEnabled ? 'max(24px, env(safe-area-inset-bottom))' : 'env(safe-area-inset-bottom)',
               background: K.bg2,
             }}
           >
@@ -978,6 +1042,7 @@ export function AlmanacSidebar({
               navItems={navItems}
               pathname={pathname}
               collapsed={false}
+              hideBrandHeader={iaTourActive}
               onNavigate={() => setMobileOpen(false)}
               calendarDayEnabled={calendarDayEnabled}
               journalIaEnabled={journalIaEnabled}

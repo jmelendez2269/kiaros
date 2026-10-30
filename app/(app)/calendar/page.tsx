@@ -6,18 +6,9 @@ import { todayISO } from '@/lib/today/get-today-context'
 import { getDayPlan } from '@/lib/planner/get-day-plan'
 import { PlannerDayShell } from '@/components/planner/PlannerDayShell'
 import { CalendarTabs } from '@/components/calendar/CalendarTabs'
-import { CalendarWeekViewPanel } from '@/components/calendar/CalendarWeekViewPanel'
-import { weekRangeLabel } from '@/lib/calendar/week-range-label'
-import { clampWeekToPlanYear } from '@/lib/calendar/load-week-chart-data'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-type View = 'day' | 'week'
-
-function parseView(raw: string | undefined): View {
-  if (raw === 'week') return 'week'
-  return 'day'
-}
 
 export default async function CalendarPage({
   searchParams,
@@ -28,6 +19,16 @@ export default async function CalendarPage({
     redirect('/year')
   }
 
+  const params = await searchParams
+  if (params.view === 'week') {
+    const sp = new URLSearchParams()
+    if (params.date && DATE_RE.test(params.date)) {
+      sp.set('date', params.date)
+    }
+    const qs = sp.toString()
+    redirect(qs ? `/calendar/week?${qs}` : '/calendar/week')
+  }
+
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
 
@@ -36,28 +37,8 @@ export default async function CalendarPage({
   if (profileResult.status === 'missing') redirect('/onboarding')
   const profile = profileResult.profile
 
-  const params = await searchParams
   const today = todayISO()
   const date = params.date && DATE_RE.test(params.date) ? params.date : today
-  const view = parseView(params.view)
-
-  if (view === 'week') {
-    const planYear = new Date().getFullYear()
-    const weekDate = clampWeekToPlanYear(date, planYear)
-    const rangeLabel = weekRangeLabel(weekDate)
-    return (
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-        <div className="flex flex-col gap-4">
-          <div>
-            <p className="shell-kicker mb-1">Calendar</p>
-            <h1 className="font-serif text-3xl text-bone">{rangeLabel}</h1>
-          </div>
-          <CalendarTabs />
-        </div>
-        <CalendarWeekViewPanel date={date} />
-      </div>
-    )
-  }
 
   const dayPlan = await getDayPlan(profile.id, date)
 

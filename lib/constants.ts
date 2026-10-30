@@ -7,16 +7,7 @@ export const APP_DESCRIPTION =
   "A personalized planning system built around your goals, timing, and natural cycles.";
 
 // Onboarding constants
-export const LIFE_CATEGORIES = [
-  "Work & Career",
-  "Relationships",
-  "Health & Wellness",
-  "Creative Projects",
-  "Personal Growth",
-  "Family",
-  "Financial",
-  "Spirituality",
-];
+export { LIFE_CATEGORY_LABELS as LIFE_CATEGORIES } from "@/lib/goal-categories";
 
 export const ENERGY_LEVELS = ["Low", "Medium", "High"];
 
@@ -59,21 +50,21 @@ export const THEMES: {
   {
     id: "obsidian",
     name: "Obsidian",
-    tagline: "Deep void & moonlit periwinkle",
+    tagline: "Deep void and moonlit periwinkle",
     description: "Cool near-black with layered lilac, periwinkle, and powder-blue accents. Precise, calm, and more atmospheric than stark.",
     swatches: ["#0c0b1f", "#9b86f7", "#84c4f2", "#c9b7ff"],
   },
   {
     id: "celestial",
     name: "Celestial",
-    tagline: "Deep navy, starlight gold & sky blue",
+    tagline: "Deep navy, starlight gold and sky blue",
     description: "The color language of star charts with more starlight in the mix: navy foundation, gold navigation marks, and luminous blue-violet atmosphere.",
     swatches: ["#050e1d", "#d8b266", "#84c2f2", "#9f92f7"],
   },
   {
     id: "dawn",
     name: "Dawn",
-    tagline: "Dusky stone & lavender sky",
+    tagline: "Dusky stone and lavender sky",
     description: "A warmer near-black, but with dawn-sky lilac, soft orchid, and pale blue threaded through the shadows.",
     swatches: ["#0e0804", "#a995f4", "#8fc6f2", "#d8a8d9"],
   },

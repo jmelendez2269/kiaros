@@ -20,6 +20,8 @@ interface YearViewProps {
   weeks: WeekBlueprint[]
   onMonthClick: (month: number) => void
   onDayClick?: (date: string) => void
+  /** Today IA overlay: shorter chart, no clipped planet labels. */
+  compact?: boolean
 }
 
 interface SunRange {
@@ -98,7 +100,7 @@ const MOON_PHASE_LABELS: Record<MoonPhaseEvent['phase'], string> = {
   'last-quarter': 'Last Quarter',
 }
 
-export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick }: YearViewProps) {
+export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick, compact = false }: YearViewProps) {
   const { year } = yearEphemeris
   const today = new Date().toISOString().slice(0, 10)
   const todayPercent = today.startsWith(String(year)) ? dateToPercent(today, year) : null
@@ -107,9 +109,19 @@ export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick }: Yea
   const transitsByPlanet = groupTransitsByPlanet(yearEphemeris)
 
   return (
-    <div className="shell-panel overflow-hidden">
-      <div className="grid grid-cols-[72px_minmax(0,1fr)] border-b border-border/75 bg-stone-950/55 sm:grid-cols-[92px_minmax(0,1fr)]">
-        <div className="flex items-center border-r border-border/70 px-2 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-bone-muted/55 sm:px-3">
+    <div className={cn('shell-panel overflow-hidden', compact && 'shadow-none')}>
+      <div
+        className={cn(
+          'grid border-b border-border/75 bg-stone-950/55',
+          compact ? 'grid-cols-[52px_minmax(0,1fr)]' : 'grid-cols-[72px_minmax(0,1fr)] sm:grid-cols-[92px_minmax(0,1fr)]',
+        )}
+      >
+        <div
+          className={cn(
+            'flex items-center border-r border-border/70 text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-bone-muted/55',
+            compact ? 'px-1.5 py-2' : 'px-2 py-3 sm:px-3',
+          )}
+        >
           Layer
         </div>
         <div className="grid grid-cols-12">
@@ -118,22 +130,26 @@ export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick }: Yea
               key={name}
               type="button"
               onClick={() => onMonthClick(index + 1)}
-              className="min-w-0 border-l border-border/45 px-0.5 py-3 text-center text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-bone-muted/60 transition-colors first:border-l-0 hover:bg-leather-500/10 hover:text-leather-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-leather-400/40 sm:text-[0.66rem]"
+              className={cn(
+                'min-w-0 border-l border-border/45 px-0.5 text-center font-semibold uppercase tracking-[0.12em] text-bone-muted/60 transition-colors first:border-l-0 hover:bg-leather-500/10 hover:text-leather-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-leather-400/40',
+                compact ? 'py-2 text-[0.52rem]' : 'py-3 text-[0.58rem] sm:text-[0.66rem]',
+              )}
               title={name}
             >
-              {name.slice(0, 3)}
+              {compact ? name.charAt(0) : name.slice(0, 3)}
             </button>
           ))}
         </div>
       </div>
 
-      <div>
+      <div className={cn(compact && 'max-h-[280px] overflow-y-auto overscroll-contain')}>
         {PLANET_ROWS.map((planet) => (
           <TimelineRow
             key={planet}
             label={planet}
             abbreviation={PLANET_ABBREVIATIONS[planet]}
             todayPercent={todayPercent}
+            compact={compact}
           >
             {planet === 'Sun' &&
               sunRanges.map((range) => (
@@ -166,7 +182,7 @@ export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick }: Yea
         ))}
 
         {weeks.length > 0 && (
-          <TimelineRow label="Plan" abbreviation="Pln" todayPercent={todayPercent}>
+          <TimelineRow label="Plan" abbreviation="Pln" todayPercent={todayPercent} compact={compact}>
             {weeks.map((week) => (
               <PlanSegment key={week.weekNumber} week={week} year={year} />
             ))}
@@ -181,24 +197,48 @@ function TimelineRow({
   label,
   abbreviation,
   todayPercent,
+  compact = false,
   children,
 }: {
   label: string
   abbreviation: string
   todayPercent: number | null
+  compact?: boolean
   children: ReactNode
 }) {
   return (
-    <div className="grid min-h-[48px] grid-cols-[72px_minmax(0,1fr)] border-b border-border/55 last:border-b-0 sm:grid-cols-[92px_minmax(0,1fr)]">
-      <div className="flex items-center gap-2 border-r border-border/65 bg-stone-950/35 px-2 sm:px-3">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-stone-900/75 text-[0.58rem] font-semibold uppercase text-bone-muted sm:h-8 sm:w-8">
+    <div
+      className={cn(
+        'grid border-b border-border/55 last:border-b-0',
+        compact
+          ? 'min-h-[36px] grid-cols-[52px_minmax(0,1fr)]'
+          : 'min-h-[48px] grid-cols-[72px_minmax(0,1fr)] sm:grid-cols-[92px_minmax(0,1fr)]',
+      )}
+    >
+      <div
+        className={cn(
+          'flex items-center border-r border-border/65 bg-stone-950/35',
+          compact ? 'justify-center px-1' : 'gap-2 px-2 sm:px-3',
+        )}
+      >
+        <span
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-xl border border-border/70 bg-stone-900/75 font-semibold uppercase text-bone-muted',
+            compact
+              ? 'h-7 w-7 text-[0.62rem]'
+              : 'h-7 w-7 text-[0.58rem] sm:h-8 sm:w-8',
+          )}
+          title={compact ? label : undefined}
+        >
           {abbreviation}
         </span>
-        <span className="hidden truncate text-[0.74rem] font-medium text-bone-muted sm:block">
-          {label}
-        </span>
+        {!compact ? (
+          <span className="hidden truncate text-[0.74rem] font-medium text-bone-muted sm:block">
+            {label}
+          </span>
+        ) : null}
       </div>
-      <div className="relative min-h-[48px] overflow-hidden bg-stone-950/25">
+      <div className={cn('relative overflow-hidden bg-stone-950/25', compact ? 'min-h-[36px]' : 'min-h-[48px]')}>
         <MonthGridLines />
         <span className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-border/60" />
         {todayPercent !== null && (

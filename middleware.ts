@@ -34,12 +34,76 @@ function iaJournalInsightsMapRedirect(req: NextRequest): NextResponse | null {
   return NextResponse.redirect(new URL("/journal/patterns", req.url), 307);
 }
 
+function calendarDayPlannerRedirects(req: NextRequest): NextResponse | null {
+  if (!featureFlagEnabled(process.env.KIAROS_CALENDAR_DAY)) return null;
+
+  const { pathname, searchParams } = req.nextUrl;
+
+  if (pathname === "/planner") {
+    const view = searchParams.get("view");
+    if (view === "week") {
+      const date = searchParams.get("date");
+      const url = new URL("/calendar/week", req.url);
+      if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        url.searchParams.set("date", date);
+      }
+      return NextResponse.redirect(url, 307);
+    }
+    if (view === "month") {
+      const date = searchParams.get("date");
+      const url = new URL("/calendar/month", req.url);
+      if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        url.searchParams.set("month", date.slice(0, 7));
+      }
+      return NextResponse.redirect(url, 307);
+    }
+  }
+
+  if (pathname === "/year") {
+    const view = searchParams.get("view");
+    if (view === "week") {
+      const date = searchParams.get("date");
+      const url = new URL("/calendar/week", req.url);
+      if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        url.searchParams.set("date", date);
+      }
+      return NextResponse.redirect(url, 307);
+    }
+    if (view === "month") {
+      const month = searchParams.get("month");
+      const url = new URL("/calendar/month", req.url);
+      if (month && /^\d{4}-\d{2}$/.test(month)) {
+        url.searchParams.set("month", month);
+      }
+      return NextResponse.redirect(url, 307);
+    }
+    const url = new URL("/calendar/year", req.url);
+    for (const [key, value] of searchParams.entries()) {
+      url.searchParams.set(key, value);
+    }
+    return NextResponse.redirect(url, 307);
+  }
+
+  if (pathname === "/blueprint") {
+    const url = new URL("/calendar/blueprint", req.url);
+    for (const [key, value] of searchParams.entries()) {
+      url.searchParams.set(key, value);
+    }
+    return NextResponse.redirect(url, 307);
+  }
+
+  return null;
+}
+
 export default clerkMiddleware(async (auth, req) => {
   const iaOnboardingRedirect = iaOnboarding5LegacyRedirect(req);
   if (iaOnboardingRedirect) return iaOnboardingRedirect;
 
   const iaJournalRedirect = iaJournalInsightsMapRedirect(req);
   if (iaJournalRedirect) return iaJournalRedirect;
+
+  const calendarDayRedirect = calendarDayPlannerRedirects(req);
+  if (calendarDayRedirect) return calendarDayRedirect;
 
   if (isPublicRoute(req)) return;
 

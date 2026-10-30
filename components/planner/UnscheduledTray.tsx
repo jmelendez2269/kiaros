@@ -8,12 +8,13 @@ interface Props {
   items: PlanItemRow[]
   isPlacing: boolean
   placeError: string | null
+  addError?: string | null
   onSchedule: (id: string) => void
   onAdd: (title: string) => void
   onSuggest: () => void
 }
 
-export function UnscheduledTray({ items, isPlacing, placeError, onSchedule, onAdd, onSuggest }: Props) {
+export function UnscheduledTray({ items, isPlacing, placeError, addError, onSchedule, onAdd, onSuggest }: Props) {
   const [newTitle, setNewTitle] = useState('')
 
   function submitAdd() {
@@ -65,25 +66,28 @@ export function UnscheduledTray({ items, isPlacing, placeError, onSchedule, onAd
           ))}
         </ul>
       )}
-      <div className="flex items-center gap-2 border-t border-border/50 pt-3">
-        <input
-          type="text"
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') submitAdd()
-          }}
-          placeholder="Add an unscheduled task..."
-          className="flex-1 rounded-md border border-bone-muted/20 bg-transparent px-3 py-1.5 text-sm text-bone placeholder:text-bone-muted/40 focus:border-leather-300 focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={submitAdd}
-          disabled={!newTitle.trim()}
-          className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone disabled:opacity-40"
-        >
-          Add
-        </button>
+      <div className="space-y-2 border-t border-border/50 pt-3">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitAdd()
+            }}
+            placeholder="Add an unscheduled task..."
+            className="flex-1 rounded-md border border-bone-muted/20 bg-transparent px-3 py-1.5 text-sm text-bone placeholder:text-bone-muted/40 focus:border-leather-300 focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={submitAdd}
+            disabled={!newTitle.trim()}
+            className="rounded-md border border-bone-muted/20 px-3 py-1.5 text-sm text-bone-muted hover:text-bone disabled:opacity-40"
+          >
+            Add
+          </button>
+        </div>
+        {addError && <p className="text-xs text-red-400">{addError}</p>}
       </div>
     </div>
   )

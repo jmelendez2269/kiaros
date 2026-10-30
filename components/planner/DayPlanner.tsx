@@ -45,6 +45,7 @@ export function DayPlanner({
   const [suggestions, setSuggestions] = useState<PlacementSuggestion[]>([])
   const [isPlacing, setIsPlacing] = useState(false)
   const [placeError, setPlaceError] = useState<string | null>(null)
+  const [addError, setAddError] = useState<string | null>(null)
   const [skyTimingVisible, setSkyTimingVisible] = useState(true)
 
   useEffect(() => {
@@ -95,19 +96,66 @@ export function DayPlanner({
   }
 
   async function addItem(title: string, startMinute: number | null) {
-    const res = await fetch('/api/plan-items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const isCalendarDay = dayGridScrollMode === 'calendar'
+
+    if (isCalendarDay) {
+      const optimisticId = `temp-${Date.now()}`
+      const optimisticItem: PlanItemRow = {
+        id: optimisticId,
+        user_id: '',
         item_date: date,
         title,
+        start_minute: startMinute,
         duration_minutes: 30,
-        ...(startMinute !== null ? { start_minute: startMinute } : {}),
-      }),
-    })
-    if (res.ok) {
-      const { item } = await res.json()
-      upsertItem(item)
+        completed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        area_goal_id: null,
+        sort_order: 0,
+        source: 'user',
+      }
+      setItems((prev) => [...prev, optimisticItem])
+
+      const res = await fetch('/api/plan-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_date: date,
+          title,
+          duration_minutes: 30,
+          ...(startMinute !== null ? { start_minute: startMinute } : {}),
+        }),
+      })
+
+      if (res.ok) {
+        const { item } = await res.json()
+        setItems((prev) => prev.map((i) => (i.id === optimisticId ? item : i)))
+        setAddError(null)
+      } else {
+        setItems((prev) => prev.filter((i) => i.id !== optimisticId))
+        if (res.status === 403) {
+          const body = await res.json().catch(() => ({}))
+          const errorMessage = body.message || body.error || 'Your current access doesn\'t cover planning. Upgrade to add items.'
+          setAddError(errorMessage)
+        } else {
+          setAddError('Could not add item. Please try again.')
+        }
+      }
+    } else {
+      const res = await fetch('/api/plan-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_date: date,
+          title,
+          duration_minutes: 30,
+          ...(startMinute !== null ? { start_minute: startMinute } : {}),
+        }),
+      })
+      if (res.ok) {
+        const { item } = await res.json()
+        upsertItem(item)
+      }
     }
   }
 
@@ -200,6 +248,7 @@ export function DayPlanner({
         items={unscheduled}
         isPlacing={isPlacing}
         placeError={placeError}
+        addError={dayGridScrollMode === 'calendar' ? addError : null}
         onSchedule={(id) => moveItem(id, DEFAULT_SLOT_MINUTE)}
         onAdd={(title) => addItem(title, null)}
         onSuggest={requestSuggestions}

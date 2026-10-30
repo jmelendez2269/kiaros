@@ -10,12 +10,11 @@ export default async function OnboardingLayout({
     <div className="page-wrapper flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-3xl">
         <div className="mb-10 text-center">
-          <p className="shell-kicker mb-3">Life OS Setup</p>
+          <p className="shell-kicker mb-3">Setting up {BRAND.product}</p>
           <h1 className="font-serif text-4xl text-bone md:text-5xl">Build your timing system.</h1>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-bone-muted">
-            This planner is meant to be personal. Not generic. Not one-size-fits-all. These next
-            steps help {BRAND.product} understand your timing, your focus, and what this season of life is
-            actually asking of you.
+            This planner is meant to be personal. These next steps help {BRAND.product} learn your
+            timing, your focus, and what this season of life is asking of you.
           </p>
           <OnboardingProgressBar />
         </div>

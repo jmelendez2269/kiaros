@@ -34,6 +34,8 @@ import { YearChartShell } from '@/components/year/YearChartShell'
 import { DeeperToday } from '@/components/today/DeeperToday'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
+import { isIaOverlaysEnabled } from '@/lib/ia-overlays-flag'
+import { calendarTabYearHref } from '@/lib/calendar/calendar-day-routes'
 import type { YearEphemeris } from '@/types/blueprint'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
 import {
@@ -45,6 +47,7 @@ import {
   MOCK_TODAY_QUERY_PARAM,
 } from '@/lib/today/mock-today-date'
 import { getMoonDayPhaseForLocalDate } from '@/lib/today/moon-day-phase'
+import { weekArcEphemerisFooterCopyForWeek } from '@/lib/today/week-arc-station-pattern'
 
 export default async function TodayPage({
   searchParams,
@@ -160,6 +163,55 @@ export default async function TodayPage({
     (w) => w.weekNumber === context.meta.isoWeek
   ) ?? null
   const calendarDayEnabled = isCalendarDayEnabled()
+  const iaOverlaysEnabled = isIaOverlaysEnabled()
+  const openFullYearHref = calendarDayEnabled ? calendarTabYearHref() : '/year'
+
+  const weekArcEphemerisCopy =
+    iaOverlaysEnabled && currentWeek
+      ? weekArcEphemerisFooterCopyForWeek(currentWeek.startDate, currentWeek.endDate, yearEphemeris)
+      : null
+
+  const weekArcBlock =
+    blueprintLoaded ? (
+      <Frame tone="umber" padding={20}>
+        <WeekArc
+          weeks={blueprintLoaded.blueprint.weeks}
+          currentWeekNumber={context.meta.isoWeek}
+          calendarDayEnabled={calendarDayEnabled}
+          iaOverlaysEnabled={iaOverlaysEnabled}
+          stationPattern={weekArcEphemerisCopy}
+        />
+      </Frame>
+    ) : null
+
+  const yearAtAGlanceBlock =
+    blueprintLoaded && yearEphemeris ? (
+      <Frame tone="umber" padding={20}>
+        <Kicker color={K.copper}>The year at a glance</Kicker>
+        <div style={{ marginTop: 12 }}>
+          <YearChartShell
+            yearEphemeris={yearEphemeris}
+            weeks={blueprintLoaded.blueprint.weeks}
+            compact={iaOverlaysEnabled}
+            openFullYearHref={iaOverlaysEnabled ? openFullYearHref : undefined}
+          />
+        </div>
+      </Frame>
+    ) : null
+
+  const deeperTodayInner = iaOverlaysEnabled ? (
+    <div className="grid gap-5">
+      {jupiterSeason.status === 'ok' ? <JupiterSeason data={jupiterSeason} /> : null}
+      {lifeArc.status === 'ok' ? <LifeArcRead data={lifeArc} /> : null}
+    </div>
+  ) : (
+    <div className="grid gap-5">
+      {weekArcBlock}
+      {jupiterSeason.status === 'ok' ? <JupiterSeason data={jupiterSeason} /> : null}
+      {yearAtAGlanceBlock}
+      {lifeArc.status === 'ok' ? <LifeArcRead data={lifeArc} /> : null}
+    </div>
+  )
 
   const moonDayPhase = getMoonDayPhaseForLocalDate(todayDate, timeZone)
   const moonDayNudge = moonDayPhase
@@ -172,7 +224,7 @@ export default async function TodayPage({
 
   return (
     <div
-      className="grid gap-5 p-4 sm:p-6 md:p-7"
+      className={`grid gap-5 p-4 sm:p-6 md:p-7${iaOverlaysEnabled ? ' md:pb-32' : ''}`}
       style={{
         fontFamily: K.fBody,
         color: K.ink,
@@ -251,34 +303,14 @@ export default async function TodayPage({
 
       <TodayCurriculum result={curriculum} />
 
-      <DeeperToday defaultOpen={deeperOpenByDefault}>
-        <div className="grid gap-5">
-          {blueprintLoaded ? (
-            <Frame tone="umber" padding={20}>
-              <WeekArc
-                weeks={blueprintLoaded.blueprint.weeks}
-                currentWeekNumber={context.meta.isoWeek}
-                calendarDayEnabled={calendarDayEnabled}
-              />
-            </Frame>
-          ) : null}
+      {iaOverlaysEnabled ? (
+        <>
+          {weekArcBlock}
+          {yearAtAGlanceBlock}
+        </>
+      ) : null}
 
-          {/* Jupiter season — changes ~yearly, sits between the daily and the era */}
-          {jupiterSeason.status === 'ok' ? <JupiterSeason data={jupiterSeason} /> : null}
-
-          {blueprintLoaded && yearEphemeris ? (
-            <Frame tone="umber" padding={20}>
-              <Kicker color={K.copper}>The year at a glance</Kicker>
-              <div style={{ marginTop: 12 }}>
-                <YearChartShell yearEphemeris={yearEphemeris} weeks={blueprintLoaded.blueprint.weeks} />
-              </div>
-            </Frame>
-          ) : null}
-
-          {/* Life arc — Saturn/Uranus/Neptune/Pluto; years-long eras */}
-          {lifeArc.status === 'ok' ? <LifeArcRead data={lifeArc} /> : null}
-        </div>
-      </DeeperToday>
+      <DeeperToday defaultOpen={deeperOpenByDefault}>{deeperTodayInner}</DeeperToday>
     </div>
   )
 }

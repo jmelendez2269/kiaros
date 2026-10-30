@@ -746,7 +746,7 @@ export default function SettingsPageIa() {
                   <ChevronDown
                     aria-hidden
                     size={15}
-                    className={`shrink-0 text-bone-muted transition-transform ${usageDetailsOpen ? "rotate-180" : ""}`}
+                    className={`shrink-0 text-[#A4A3B1] transition-transform ${usageDetailsOpen ? "rotate-180" : ""}`}
                   />
                 </button>
                 {usageDetailsOpen ? (
@@ -756,7 +756,7 @@ export default function SettingsPageIa() {
                       <p className="mt-2 text-lg font-medium text-bone">{Math.round(oracleUsage.cacheHitRate * 100)}%</p>
                     </div>
                     <p className="text-xs leading-6 text-bone-muted/75">
-                      Cached input tokens cost ~90% less — a high cache hit rate means your natal chart and permitted
+                      Cached input tokens cost ~90% less—a high cache hit rate means your natal chart and permitted
                       Blueprint context aren&apos;t being re-billed on every message.
                     </p>
                   </div>

@@ -8,6 +8,9 @@ interface Props {
   currentWeekNumber: number
   /** When true, week bars link to Calendar Week instead of Year week view. */
   calendarDayEnabled?: boolean
+  /** IA overlays: Stella ephemeris footer copy (station or overlapping retrogrades) instead of theme/cosmicContext. */
+  iaOverlaysEnabled?: boolean
+  stationPattern?: { headline: string; subline: string } | null
 }
 
 const RADIUS = 3
@@ -17,6 +20,13 @@ const ENERGY_TONE: Record<EnergyType, string> = {
   initiate: K.ember,
   reflect: K.plum,
   rest: K.sage,
+}
+
+const IA_REFLECT_TONE = '#C9B8F5'
+
+function energyTone(kind: EnergyType, iaOverlaysEnabled: boolean): string {
+  if (iaOverlaysEnabled && kind === 'reflect') return IA_REFLECT_TONE
+  return ENERGY_TONE[kind]
 }
 
 const ENERGY_LABEL: Record<EnergyType, string> = {
@@ -43,7 +53,13 @@ function rangeLabel(first: WeekBlueprint, last: WeekBlueprint): string {
   return `${start.toLocaleDateString('en-US', opts)} — ${end.toLocaleDateString('en-US', opts)}`
 }
 
-export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }: Props) {
+export function WeekArc({
+  weeks,
+  currentWeekNumber,
+  calendarDayEnabled = false,
+  iaOverlaysEnabled = false,
+  stationPattern = null,
+}: Props) {
   const window = weeks.filter(
     (w) => w.weekNumber >= currentWeekNumber - RADIUS && w.weekNumber <= currentWeekNumber + RADIUS
   )
@@ -76,7 +92,7 @@ export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10 }}>
         {window.map((w) => {
-          const tone = ENERGY_TONE[w.energyType]
+          const tone = energyTone(w.energyType, iaOverlaysEnabled)
           const isCurrent = w.weekNumber === currentWeekNumber
           return (
             <Link
@@ -136,7 +152,7 @@ export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }
                 width: 8,
                 height: 8,
                 borderRadius: 999,
-                background: ENERGY_TONE[kind],
+                background: energyTone(kind, iaOverlaysEnabled),
               }}
             />
             {ENERGY_LABEL[kind]}
@@ -145,21 +161,55 @@ export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }
       </div>
 
       {current ? (
-        <p
-          style={{
-            marginTop: 16,
-            paddingTop: 14,
-            borderTop: `1px solid ${K.line}`,
-            fontFamily: K.fSerif,
-            fontStyle: 'italic',
-            fontSize: 14.5,
-            lineHeight: 1.6,
-            color: K.starlight,
-          }}
-        >
-          <strong style={{ fontStyle: 'normal', color: K.ink }}>{current.theme}.</strong>{' '}
-          {current.cosmicContext}
-        </p>
+        iaOverlaysEnabled && stationPattern ? (
+          <div
+            style={{
+              marginTop: 16,
+              paddingTop: 14,
+              borderTop: `1px solid ${K.line}`,
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontFamily: K.fBody,
+                fontSize: 15,
+                lineHeight: 1.5,
+                color: K.ink,
+              }}
+            >
+              {stationPattern.headline}
+            </p>
+            <p
+              style={{
+                margin: '10px 0 0',
+                fontFamily: K.fSerif,
+                fontStyle: 'italic',
+                fontSize: 14.5,
+                lineHeight: 1.6,
+                color: K.starlight,
+              }}
+            >
+              {stationPattern.subline}
+            </p>
+          </div>
+        ) : (
+          <p
+            style={{
+              marginTop: 16,
+              paddingTop: 14,
+              borderTop: `1px solid ${K.line}`,
+              fontFamily: K.fSerif,
+              fontStyle: 'italic',
+              fontSize: 14.5,
+              lineHeight: 1.6,
+              color: K.starlight,
+            }}
+          >
+            <strong style={{ fontStyle: 'normal', color: K.ink }}>{current.theme}.</strong>{' '}
+            {current.cosmicContext}
+          </p>
+        )
       ) : null}
     </div>
   )

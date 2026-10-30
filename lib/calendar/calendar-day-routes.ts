@@ -52,15 +52,22 @@ export function buildCalendarDayRedirectFromPlanner(params: {
 
 export function weekArcHref(startDate: string, calendarDayEnabled: boolean): string {
   if (calendarDayEnabled) {
-    return `/calendar?view=week&date=${startDate}`
+    return `/calendar/week?date=${startDate}`
   }
   return `/year?view=week&date=${startDate}`
 }
 
-export type CalendarTabKey = 'day' | 'month' | 'year' | 'blueprint'
+export type CalendarTabKey = 'day' | 'week' | 'month' | 'year' | 'blueprint'
 
 export function calendarTabDayHref(): string {
   return '/calendar'
+}
+
+export function calendarTabWeekHref(date?: string): string {
+  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return `/calendar/week?date=${date}`
+  }
+  return '/calendar/week'
 }
 
 export function calendarTabMonthHref(month?: string): string {
@@ -71,11 +78,11 @@ export function calendarTabMonthHref(month?: string): string {
 }
 
 export function calendarTabYearHref(): string {
-  return '/year'
+  return '/calendar/year'
 }
 
 export function calendarTabBlueprintHref(): string {
-  return '/blueprint'
+  return '/calendar/blueprint'
 }
 
 /** Which top tab is active for the calendar tab row (flag-on routes). */
@@ -83,14 +90,12 @@ export function resolveCalendarTabKey(
   pathname: string,
   view: string | null | undefined
 ): CalendarTabKey {
-  if (pathname.startsWith('/blueprint')) return 'blueprint'
+  if (pathname.startsWith('/calendar/blueprint') || pathname.startsWith('/blueprint')) return 'blueprint'
+  if (pathname.startsWith('/calendar/year') || pathname.startsWith('/year')) return 'year'
   if (pathname.startsWith('/calendar/month')) return 'month'
+  if (pathname.startsWith('/calendar/week')) return 'week'
   if (pathname.startsWith('/calendar')) return 'day'
-  if (pathname.startsWith('/year')) {
-    if (view === 'month') return 'month'
-    return 'year'
-  }
-  return 'year'
+  return 'day'
 }
 
 export function monthChartNavHref(

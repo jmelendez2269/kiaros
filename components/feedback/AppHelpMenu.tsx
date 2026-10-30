@@ -95,8 +95,8 @@ export function AppHelpMenu({
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-haspopup="menu"
-          title="Help"
-          aria-label="Help"
+          title="Help and feedback"
+          aria-label="Help and feedback"
           style={{
             display: 'flex',
             alignItems: 'center',

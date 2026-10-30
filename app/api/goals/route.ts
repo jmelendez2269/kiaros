@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { dedupeGoalCategories } from "@/lib/goal-categories";
 
 interface GoalCategory {
   name: string;
@@ -37,7 +38,8 @@ export async function POST(req: Request) {
   // Delete existing categories then re-insert (clean replace)
   await admin.from("goal_categories").delete().eq("user_id", profile.id);
 
-  const rows = categories.map((c) => ({ ...c, user_id: profile.id }));
+  const deduped = dedupeGoalCategories(categories);
+  const rows = deduped.map((c) => ({ ...c, user_id: profile.id }));
   const { error } = await admin.from("goal_categories").insert(rows);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
