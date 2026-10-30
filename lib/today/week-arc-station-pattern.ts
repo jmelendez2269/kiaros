@@ -49,7 +49,8 @@ export function findStationDirectInRange(
     const currSet = new Set(day.retrogrades)
     for (const planet of prev.retrogrades) {
       if (!currSet.has(planet)) {
-        return { planet, date }
+        // Astrologers cite the last day of the retrograde span (still Rx), not the first direct day.
+        return { planet, date: prev.date }
       }
     }
   }

@@ -136,7 +136,7 @@ export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick, compa
               )}
               title={name}
             >
-              {name.slice(0, 3)}
+              {compact ? name.charAt(0) : name.slice(0, 3)}
             </button>
           ))}
         </div>
@@ -228,7 +228,7 @@ function TimelineRow({
               ? 'h-7 w-7 text-[0.62rem]'
               : 'h-7 w-7 text-[0.58rem] sm:h-8 sm:w-8',
           )}
-          title={label}
+          title={compact ? label : undefined}
         >
           {abbreviation}
         </span>
