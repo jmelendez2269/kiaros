@@ -17,8 +17,8 @@ export const clerkAppearance = {
     headerTitle: "font-display text-3xl text-bone tracking-tight",
     headerSubtitle: "text-bone-muted",
     socialButtonsBlockButton:
-      "border border-border bg-card/80 text-foreground hover:bg-secondary",
-    socialButtonsBlockButtonText: "text-foreground font-medium",
+      "!border !border-[rgba(164,163,177,0.57)] bg-card/80 !text-[#E3E2ED] hover:bg-secondary hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#0A0C14]",
+    socialButtonsBlockButtonText: "!text-[#E3E2ED] font-medium",
     dividerLine: "bg-border",
     dividerText: "text-bone-muted",
     formFieldLabel: "text-bone-muted font-medium",
@@ -27,8 +27,16 @@ export const clerkAppearance = {
     formButtonPrimary:
       "h-11 rounded-xl !bg-[#A98AEF] !text-[#0A0C14] !bg-none hover:!bg-[#A98AEF]/90 focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2",
     alternativeMethodsBlockButton:
-      "!text-[#E3E2ED] !bg-transparent !border !border-[rgba(164,163,177,0.45)] hover:!bg-[rgba(169,138,239,0.12)] hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#0A0C14]",
+      "!text-[#E3E2ED] !bg-transparent !border !border-[rgba(164,163,177,0.57)] hover:!bg-[rgba(169,138,239,0.12)] hover:!border-[#A98AEF] focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-[#A98AEF] focus-visible:!ring-offset-2 focus-visible:!ring-offset-[#0A0C14]",
     alternativeMethodsBlockButtonText: "!text-[#E3E2ED]",
+    phoneInputBox:
+      "!text-[#E3E2ED] !border !border-[rgba(164,163,177,0.57)]",
+    selectButton:
+      "!text-[#E3E2ED] !border !border-[rgba(164,163,177,0.57)]",
+    footer: "!text-[#A4A3B1] [&_svg]:fill-[#A4A3B1] [&_svg]:text-[#A4A3B1]",
+    footerPages: "!text-[#A4A3B1]",
+    logoBox: "!text-[#A4A3B1] [&_svg]:fill-[#A4A3B1]",
+    logoImage: "!opacity-100",
     footerActionText: "text-bone-muted",
     footerActionLink: "!text-[#A98AEF]",
     formResendCodeLink: "!text-[#A98AEF]",
