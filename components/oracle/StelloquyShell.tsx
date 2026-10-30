@@ -10,6 +10,7 @@ import { StelloquyOrb } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
 import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
 import { isIaOverlaysEnabled } from '@/lib/ia-overlays-flag'
+import { useHideOnEditableFocus } from '@/lib/ia-overlays/use-hide-on-editable-focus'
 
 interface Props {
   /** Localized date string to pass into OracleChat's header. */
@@ -33,6 +34,7 @@ export function StelloquyShell({ today }: Props) {
   const sharedConversation = isIaOverlaysEnabled()
   const iaOverlays = sharedConversation
   const { mobileNavOpen } = useMobileNavOpen()
+  const hideStelloquyChrome = useHideOnEditableFocus(iaOverlays)
 
   // ⌘K / Ctrl+K from anywhere. Skip when an input is focused so we don't
   // hijack the journal composer.
@@ -83,6 +85,8 @@ export function StelloquyShell({ today }: Props) {
   const showDock =
     !pathname?.startsWith('/oracle') && !(iaOverlays && mobileNavOpen)
 
+  const stelloDockHidden = iaOverlays && hideStelloquyChrome
+
   return (
     <>
       {showDock ? (
@@ -94,6 +98,8 @@ export function StelloquyShell({ today }: Props) {
             aria-label={hasOracleAccess ? `Open ${BRAND.oracle}` : `Learn about ${BRAND.oracle}`}
             aria-expanded={hasOracleAccess ? open : undefined}
             aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
+            aria-hidden={stelloDockHidden || undefined}
+            tabIndex={stelloDockHidden ? -1 : 0}
             className={iaOverlays ? 'hidden md:flex' : ''}
             style={{
               position: 'fixed',
@@ -103,6 +109,8 @@ export function StelloquyShell({ today }: Props) {
               right: iaOverlays ? 'max(16px, env(safe-area-inset-right))' : 22,
               zIndex: 40,
               ...(iaOverlays ? {} : { display: 'flex' }),
+              visibility: stelloDockHidden ? 'hidden' : 'visible',
+              pointerEvents: stelloDockHidden ? 'none' : 'auto',
               alignItems: 'center',
               gap: 12,
               background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
@@ -151,6 +159,8 @@ export function StelloquyShell({ today }: Props) {
               aria-label="Open Stelloquy"
               aria-expanded={hasOracleAccess ? open : undefined}
               aria-controls={hasOracleAccess ? 'stelloquy-drawer' : undefined}
+              aria-hidden={stelloDockHidden || undefined}
+              tabIndex={stelloDockHidden ? -1 : 0}
               style={{
                 position: 'fixed',
                 bottom: 'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))',
@@ -161,6 +171,8 @@ export function StelloquyShell({ today }: Props) {
                 padding: 0,
                 alignItems: 'center',
                 justifyContent: 'center',
+                visibility: stelloDockHidden ? 'hidden' : 'visible',
+                pointerEvents: stelloDockHidden ? 'none' : 'auto',
                 background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
                 border: `1px solid ${K.kairos}55`,
                 borderRadius: 999,

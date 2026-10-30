@@ -1,7 +1,7 @@
 'use client'
 
 import { MessageSquareText } from 'lucide-react'
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { FeedbackFloatingTrigger, FeedbackModal } from './FeedbackModal'
 
 type FeedbackContextValue = {
@@ -26,7 +26,24 @@ export function FeedbackProvider({
   iaOverlaysEnabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const openFeedback = useCallback(() => setOpen(true), [])
+  const restoreFocusRef = useRef<HTMLElement | null>(null)
+
+  const openFeedback = useCallback(() => {
+    const active = document.activeElement
+    restoreFocusRef.current = active instanceof HTMLElement ? active : null
+    setOpen(true)
+  }, [])
+
+  const handleOpenChange = useCallback((next: boolean) => {
+    setOpen(next)
+    if (!next) {
+      const target = restoreFocusRef.current
+      restoreFocusRef.current = null
+      queueMicrotask(() => {
+        if (target?.isConnected) target.focus()
+      })
+    }
+  }, [])
 
   const value = useMemo(() => ({ openFeedback }), [openFeedback])
 
@@ -34,7 +51,7 @@ export function FeedbackProvider({
     <FeedbackContext.Provider value={value}>
       {children}
       <FeedbackFloatingTrigger onClick={openFeedback} iaOverlaysEnabled={iaOverlaysEnabled} />
-      <FeedbackModal open={open} onOpenChange={setOpen} />
+      <FeedbackModal open={open} onOpenChange={handleOpenChange} />
     </FeedbackContext.Provider>
   )
 }

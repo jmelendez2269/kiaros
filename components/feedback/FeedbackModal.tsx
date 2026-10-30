@@ -1,8 +1,8 @@
 'use client'
 
-import { MessageSquareText } from 'lucide-react'
+import { MessageSquareText, X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 
 const CATEGORIES = [
@@ -36,24 +36,43 @@ export function FeedbackModal({
   const [subCategory, setSubCategory] = useState<FeelsOffSub | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (open && phase === 'idle') {
-      setCategory(null)
-      setSubCategory(null)
-      setMessage('')
-      setError('')
-      setPhase('open')
-    }
-    if (!open && (phase === 'open' || phase === 'submitting')) {
+    if (!open) {
       setPhase('idle')
+      return
     }
-  }, [open, phase])
+    setCategory(null)
+    setSubCategory(null)
+    setMessage('')
+    setError('')
+    setPhase('open')
+  }, [open])
 
-  function closeModal() {
-    setPhase('idle')
+  const closeModal = useCallback(() => {
     onOpenChange(false)
-  }
+  }, [onOpenChange])
+
+  useEffect(() => {
+    if (!open) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      closeModal()
+    }
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [open, closeModal])
+
+  useEffect(() => {
+    if (!open) return
+    const first = dialogRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
+    )
+    first?.focus()
+  }, [open])
 
   async function handleSubmit() {
     if (!category) {
@@ -82,22 +101,24 @@ export function FeedbackModal({
     }
   }
 
-  if (phase === 'idle') return null
+  if (!open) return null
 
   return (
     <>
       <div
         className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-sm"
         onClick={closeModal}
-        aria-hidden
+        aria-hidden="true"
       />
 
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="feedback-title"
         className="fixed inset-x-4 z-50 max-w-md rounded-2xl border border-border/70 bg-stone-950 shadow-2xl sm:inset-x-auto sm:left-5 sm:right-auto sm:w-[420px]"
         style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.75rem)' }}
+        onClick={(event) => event.stopPropagation()}
       >
         <div className="px-6 py-6">
           {phase === 'done' ? (
@@ -117,11 +138,21 @@ export function FeedbackModal({
             </div>
           ) : (
             <div className="space-y-5">
-              <div>
-                <p id="feedback-title" className="font-serif text-xl text-bone">Help us improve</p>
-                <p className="mt-1.5 text-xs leading-relaxed text-bone-muted">
-                  {BRAND.product} is built on real ephemeris data and AI synthesis. If a reading feels generic, inaccurate, or just off, we want to know. Your feedback directly shapes how we improve the generations.
-                </p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p id="feedback-title" className="font-serif text-xl text-bone">Help us improve</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-bone-muted">
+                    {BRAND.product} is built on real ephemeris data and AI synthesis. If a reading feels generic, inaccurate, or just off, we want to know. Your feedback directly shapes how we improve the generations.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  aria-label="Close feedback dialog"
+                  className="shrink-0 rounded-lg border border-border/60 p-2 text-bone-muted hover:text-bone"
+                >
+                  <X aria-hidden className="h-4 w-4" />
+                </button>
               </div>
 
               <div className="space-y-2">
