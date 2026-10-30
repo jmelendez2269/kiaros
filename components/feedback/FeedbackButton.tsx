@@ -1,15 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { FeedbackFloatingTrigger, FeedbackModal } from './FeedbackModal'
-
-export function FeedbackButton({ iaOverlaysEnabled = false }: { iaOverlaysEnabled?: boolean }) {
-  const [open, setOpen] = useState(false)
-
-  return (
-    <>
-      <FeedbackFloatingTrigger onClick={() => setOpen(true)} iaOverlaysEnabled={iaOverlaysEnabled} />
-      <FeedbackModal open={open} onOpenChange={setOpen} />
-    </>
-  )
-}
+/**
+ * @deprecated Use FeedbackProvider from ./FeedbackProvider
+ */
+export { FeedbackProvider as FeedbackButton, FeedbackProvider, useFeedback } from './FeedbackProvider'
+export { FeedbackMobileHeaderButton } from './FeedbackMobileHeaderButton'

@@ -10,7 +10,7 @@ import { StelloquyProvider } from '@/components/oracle/StelloquyProvider'
 import { TourOverlay } from '@/components/tour/TourOverlay'
 import { buildTourSteps } from '@/lib/tour/build-tour-steps'
 import { iaTourFlagsFromProcessEnv, isIaTourActive } from '@/lib/tour/ia-tour-flags'
-import { FeedbackButton } from '@/components/feedback/FeedbackButton'
+import { FeedbackProvider } from '@/components/feedback/FeedbackProvider'
 import { ReflectionNotification } from '@/components/reflections/ReflectionNotification'
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
 import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
@@ -159,6 +159,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       sharedConversationEnabled={iaOverlaysEnabled}
     >
       <MobileNavOpenProvider>
+      <FeedbackProvider iaOverlaysEnabled={iaOverlaysEnabled}>
       <div className="min-h-screen overflow-x-hidden bg-stone-950 bg-shell-glow text-bone">
         <div className="flex min-h-screen flex-col md:flex-row">
           <AlmanacSidebar
@@ -250,8 +251,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {!iaOverlaysEnabled && showPatternDiscovery ? (
           <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
         ) : null}
-        <FeedbackButton iaOverlaysEnabled={iaOverlaysEnabled} />
       </div>
+      </FeedbackProvider>
       </MobileNavOpenProvider>
     </StelloquyProvider>
   )

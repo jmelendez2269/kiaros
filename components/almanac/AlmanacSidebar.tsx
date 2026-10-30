@@ -17,6 +17,7 @@ import {
 import { K } from './tokens'
 import { StarField } from './StarField'
 import { AppHelpMenu } from '@/components/feedback/AppHelpMenu'
+import { FeedbackMobileHeaderButton } from '@/components/feedback/FeedbackMobileHeaderButton'
 import { IaOverlaysNoticeStack } from '@/components/overlays/IaOverlaysNoticeStack'
 import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
 import { TOUR_OPEN_MOBILE_NAV_EVENT } from '@/lib/tour/config'
@@ -977,27 +978,30 @@ export function AlmanacSidebar({
           <Link href="/today" style={{ textDecoration: 'none' }}>
             <ChromeMark />
           </Link>
-          <button
-            type="button"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
-            aria-expanded={mobileOpen}
-            aria-controls="almanac-mobile-nav"
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              border: `1px solid ${K.line}`,
-              background: K.bg,
-              color: K.ink,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-            }}
-          >
-            {mobileOpen ? <X size={16} /> : <Menu size={16} />}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {iaOverlaysEnabled ? <FeedbackMobileHeaderButton /> : null}
+            <button
+              type="button"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={mobileOpen}
+              aria-controls="almanac-mobile-nav"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                border: `1px solid ${K.line}`,
+                background: K.bg,
+                color: K.ink,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              {mobileOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
+          </div>
         </div>
         {iaOverlaysEnabled ? (
           <div style={{ marginTop: 10 }}>

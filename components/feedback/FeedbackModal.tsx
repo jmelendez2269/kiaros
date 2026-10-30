@@ -1,9 +1,8 @@
 'use client'
 
-import { MessageSquare, MessageSquareText } from 'lucide-react'
+import { MessageSquareText } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { K } from '@/components/almanac/tokens'
 import { BRAND } from '@/lib/brand'
 
 const CATEGORIES = [
@@ -207,49 +206,23 @@ export function FeedbackFloatingTrigger({
   onClick: () => void
   iaOverlaysEnabled?: boolean
 }) {
-  const iaBottom =
-    'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))'
-
   if (iaOverlaysEnabled) {
     return (
-      <>
-        <button
-          type="button"
-          onClick={onClick}
-          data-kiaros-floating-feedback=""
-          aria-label="Give feedback"
-          className="fixed z-40 flex md:hidden kiaros-stello-fab items-center justify-center"
-          style={{
-            left: 'max(16px, env(safe-area-inset-left))',
-            bottom: iaBottom,
-            width: 48,
-            height: 48,
-            padding: 0,
-            background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
-            border: `1px solid ${K.kairos}55`,
-            borderRadius: 999,
-            boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
-            color: K.starlight,
-            cursor: 'pointer',
-          }}
-        >
-          <MessageSquare aria-hidden="true" size={20} />
-        </button>
-        <button
-          type="button"
-          onClick={onClick}
-          data-kiaros-floating-feedback=""
-          aria-label="Give feedback"
-          className="fixed z-40 hidden md:flex min-h-11 items-center gap-2 rounded-full border border-border/60 bg-stone-900/90 px-4 py-2 text-xs font-medium text-bone-muted shadow-lg backdrop-blur-sm transition-colors hover:border-border hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400"
-          style={{
-            left: 'max(16px, env(safe-area-inset-left))',
-            bottom: iaBottom,
-          }}
-        >
-          <MessageSquareText aria-hidden="true" className="h-4 w-4" />
-          Feedback
-        </button>
-      </>
+      <button
+        type="button"
+        onClick={onClick}
+        data-kiaros-floating-feedback=""
+        aria-label="Give feedback"
+        className="fixed z-40 hidden md:flex min-h-11 items-center gap-2 rounded-full border border-border/60 bg-stone-900/90 px-4 py-2 text-xs font-medium text-bone-muted shadow-lg backdrop-blur-sm transition-colors hover:border-border hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400"
+        style={{
+          left: 'max(16px, env(safe-area-inset-left))',
+          bottom:
+            'calc(max(16px, env(safe-area-inset-bottom)) + var(--kiaros-settings-sticky-save-offset, 0px))',
+        }}
+      >
+        <MessageSquareText aria-hidden="true" className="h-4 w-4" />
+        Feedback
+      </button>
     )
   }
 

@@ -519,6 +519,11 @@ html[data-theme="dawn"] ::selection {
   outline-offset: 2px;
 }
 
+.kiaros-ia-focus-ring:focus-visible {
+  outline: 2px solid #a98aef;
+  outline-offset: 2px;
+}
+
 /* Marketing motion and the in-app orb share the same accessibility escape hatch. */
 @media (prefers-reduced-motion: reduce) {
   html {
