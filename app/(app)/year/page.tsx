@@ -12,7 +12,8 @@ import type { Tables } from '@/types/database'
 import { Frame, Kicker, K } from '@/components/almanac'
 import { YearPlannerPageHeader } from '@/components/year/YearPlannerPageHeader'
 import { MonthChartView } from '@/components/year/MonthChartView'
-import { isCalendarDayEnabled } from '@/lib/feature-flags'
+import { isCalendarDayEnabled, isPeriodReviewEnabled } from '@/lib/feature-flags'
+import { PeriodReviewLookBackLinks } from '@/components/period-review/PeriodReviewLookBackLinks'
 import { MonthGrid, type DayEvent } from '@/components/year/MonthGrid'
 import { MonthBriefPanel } from '@/components/year/MonthBriefPanel'
 import { QuarterReviewPanel } from '@/components/year/QuarterReviewPanel'
@@ -909,6 +910,10 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
             )
           })}
         </div>
+
+        {isPeriodReviewEnabled() ? (
+          <PeriodReviewLookBackLinks kind="quarter" planYear={loaded.planYear} selectedIndex={selectedQuarter} />
+        ) : null}
 
         {/* Quarter context + review form (form is the panel island, added next) */}
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: 16, alignItems: 'flex-start' }}>

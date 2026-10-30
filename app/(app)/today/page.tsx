@@ -32,6 +32,7 @@ import { getNowEnergyWindows } from '@/lib/today/get-now-energy'
 import { getHumanDesignWeather } from '@/lib/today/get-human-design-weather'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { DeeperToday } from '@/components/today/DeeperToday'
+import { PeriodReviewTodayCards } from '@/components/period-review/PeriodReviewTodayCards'
 import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import type { YearEphemeris } from '@/types/blueprint'
@@ -221,6 +222,7 @@ export default async function TodayPage({
           <Frame tone="umber" padding={20}>
             <WeekRibbon week={context.week} />
           </Frame>
+          <PeriodReviewTodayCards todayDate={todayDate} />
         </div>
 
         {/* Right column */}

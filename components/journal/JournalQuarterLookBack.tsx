@@ -6,7 +6,9 @@ import { loadCurrentBlueprint } from '@/lib/blueprint/load'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { appProfileId, getAppProfile } from '@/lib/app/get-app-profile'
 import { quarterlyReviewHref } from '@/lib/journal/ia-journal-routes'
-import { isIaJournalEnabled } from '@/lib/feature-flags'
+import { isIaJournalEnabled, isPeriodReviewEnabled } from '@/lib/feature-flags'
+import { formQuarterStatus, type FormQuarterStatus } from '@/lib/reviews/quarter-review-row'
+import { PeriodReviewLookBackLinks } from '@/components/period-review/PeriodReviewLookBackLinks'
 
 const QUARTER_MONTHS: Record<number, string> = {
   1: 'Jan – Mar',
@@ -33,17 +35,14 @@ function currentQuarter(month0: number): number {
   return Math.floor(month0 / 3) + 1
 }
 
-type QuarterStatus = 'complete' | 'draft' | 'future' | 'not-started'
+type QuarterStatus = FormQuarterStatus
 
 function quarterStatus(
-  row: { completed_at: string | null } | null,
+  row: { completed_at: string | null; wins?: unknown; challenges?: unknown; pivots?: string | null; next_quarter_intentions?: string | null } | null,
   quarter: number,
   currentQ: number,
 ): QuarterStatus {
-  if (quarter > currentQ) return 'future'
-  if (!row) return 'not-started'
-  if (row.completed_at) return 'complete'
-  return 'draft'
+  return formQuarterStatus(row, quarter, currentQ)
 }
 
 function statusLabel(status: QuarterStatus): { label: string; tone: string } {
@@ -307,6 +306,10 @@ export async function JournalQuarterLookBack({ quarterParam }: { quarterParam?: 
           )
         })}
       </div>
+
+      {isPeriodReviewEnabled() ? (
+        <PeriodReviewLookBackLinks kind="quarter" planYear={loaded.planYear} selectedIndex={selectedQuarter} />
+      ) : null}
 
       <Frame tone="raised" padding={20}>
         <QuarterReviewPanel

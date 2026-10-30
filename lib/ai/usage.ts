@@ -9,6 +9,7 @@ export type AIFeature =
   | "curriculum"
   | "curriculum_session"
   | "quarterly_review"
+  | "period_review"
   | "reflection"
   | "month_brief"
   | "journal_insight"
