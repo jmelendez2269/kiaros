@@ -169,8 +169,12 @@ for (const marker of layoutMarkers) {
 const weekArcIdx = todaySource.indexOf('<WeekArc')
 const intentionIdx = todaySource.indexOf('<TodayIntention')
 const skyBannerIdx = todaySource.indexOf('<SkyBanner')
+const curriculumIdx = todaySource.indexOf('<TodayCurriculum')
+const iaWeekArcSlotIdx = todaySource.indexOf('{weekArcBlock}')
 assert.ok(skyBannerIdx < intentionIdx, 'SkyBanner should precede TodayIntention')
-assert.ok(intentionIdx < weekArcIdx, 'TodayIntention should precede WeekArc (DeeperToday)')
+assert.ok(intentionIdx < curriculumIdx, 'TodayIntention should precede TodayCurriculum')
+assert.ok(curriculumIdx < iaWeekArcSlotIdx, 'TodayCurriculum should precede WeekArc when IA overlays on')
+assert.ok(weekArcIdx !== -1, 'Today page should render WeekArc')
 assert.ok(!todaySource.includes('calendarDayEnabled={true}'), 'Today should pass flag via variable, not hard-coded on')
 console.log('✓ Today layout markers and order\n')
 
