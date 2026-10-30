@@ -250,7 +250,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {!iaOverlaysEnabled && showPatternDiscovery ? (
           <PatternDiscoveryNotifier scope={profile.id} initialPatternIds={initialPatternIds} />
         ) : null}
-        {!iaOverlaysEnabled ? <FeedbackButton /> : null}
+        <FeedbackButton />
       </div>
       </MobileNavOpenProvider>
     </StelloquyProvider>

@@ -746,7 +746,7 @@ export default function SettingsPageIa() {
                   <ChevronDown
                     aria-hidden
                     size={15}
-                    className={`shrink-0 text-bone-muted transition-transform ${usageDetailsOpen ? "rotate-180" : ""}`}
+                    className={`shrink-0 text-[#A4A3B1] transition-transform ${usageDetailsOpen ? "rotate-180" : ""}`}
                   />
                 </button>
                 {usageDetailsOpen ? (

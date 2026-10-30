@@ -62,8 +62,9 @@ assert.ok(!todaySource.includes('IaOverlaysNoticeStack'))
 assert.ok(!todaySource.includes('AppNoticeArea'))
 console.log('✓ Notice stack in shell / sidebar only\n')
 
-console.log('Feedback: floating when flag off, help menu when flag on')
-assert.ok(layoutSource.includes('!iaOverlaysEnabled ? <FeedbackButton />'))
+console.log('Feedback: floating pill on all breakpoints when flag on; help menu in sidebar footer')
+assert.ok(layoutSource.includes('<FeedbackButton />'))
+assert.ok(!layoutSource.includes('!iaOverlaysEnabled ? <FeedbackButton />'))
 assert.ok(sidebarSource.includes('AppHelpMenu'))
 console.log('✓ Feedback placement\n')
 
