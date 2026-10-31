@@ -52,7 +52,7 @@ export function WeekRibbon({ week }: Props) {
           style={{
             fontFamily: K.fMono,
             fontSize: 11.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.14em',
           }}
         >
@@ -82,7 +82,7 @@ export function WeekRibbon({ week }: Props) {
                 style={{
                   fontFamily: K.fMono,
                   fontSize: 10.5,
-                  color: K.inkSoft,
+                  color: K.inkDim,
                   letterSpacing: '0.16em',
                 }}
               >
@@ -108,7 +108,7 @@ export function WeekRibbon({ week }: Props) {
                 style={{
                   fontFamily: K.fBody,
                   fontSize: 12,
-                  color: day.isToday ? K.copperHi : K.inkSoft,
+                  color: day.isToday ? K.copperHi : K.inkDim,
                   fontStyle: 'italic',
                 }}
               >

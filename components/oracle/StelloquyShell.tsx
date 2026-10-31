@@ -102,7 +102,7 @@ export function StelloquyShell({ today }: Props) {
             alignItems: 'center',
             gap: 12,
             background: `linear-gradient(135deg, ${K.bg3}, ${K.bg2})`,
-            border: `1px solid ${K.kairos}55`,
+            border: `1px solid ${K.borderStrong}`,
             borderRadius: 999,
             padding: '8px 18px 8px 8px',
             boxShadow: `0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px ${K.kairos}22, 0 0 32px ${K.kairos}33`,
@@ -130,7 +130,7 @@ export function StelloquyShell({ today }: Props) {
               style={{
                 fontFamily: K.fMono,
                 fontSize: 8.5,
-                color: K.inkSoft,
+                color: K.inkDim,
                 letterSpacing: '0.18em',
                 marginTop: 5,
               }}
