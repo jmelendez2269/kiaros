@@ -1,17 +1,36 @@
 const methodRowBorder = "1px solid rgba(164,163,177,0.61)";
 
-const focusVisibleRing = {
+const focusRingShadow =
+  "0 0 0 2px #090911, 0 0 0 4px #A98AEF !important";
+
+const methodRowFocusRing = {
+  "&:focus": {
+    boxShadow: focusRingShadow,
+    outline: "none",
+  },
   "&:focus-visible": {
-    boxShadow: "0 0 0 2px #090911, 0 0 0 4px #A98AEF",
+    boxShadow: focusRingShadow,
+    outline: "none",
+  },
+  "& *:focus": {
+    boxShadow: focusRingShadow,
+    outline: "none",
+  },
+  "& *:focus-visible": {
+    boxShadow: focusRingShadow,
     outline: "none",
   },
 };
 
-const securedByText = {
+const securedByBranding = {
   color: "#A4A3B1",
   "& span": { color: "#A4A3B1 !important" },
-  "& p": { color: "#A4A3B1 !important" },
   '& [class*="cl-internal"]': { color: "#A4A3B1 !important" },
+};
+
+const footerLinkViolet = {
+  color: "#A98AEF !important",
+  "&:hover": { color: "#A98AEF !important" },
 };
 
 const pickerLabelText = {
@@ -25,6 +44,7 @@ const pickerLabelText = {
 export const clerkAppearance = {
   variables: {
     colorPrimary: "#A98AEF",
+    colorRing: "#A98AEF",
     colorBackground: "transparent",
     colorText: "#E3E2ED",
     colorTextSecondary: "#A4A3B1",
@@ -44,11 +64,12 @@ export const clerkAppearance = {
       border: methodRowBorder,
       color: "#E3E2ED",
       backgroundColor: "hsla(237, 30%, 8%, 0.8)",
-      ...focusVisibleRing,
+      ...methodRowFocusRing,
     },
     socialButtonsBlockButtonText: {
       color: "#E3E2ED",
       fontWeight: 500,
+      ...methodRowFocusRing,
     },
     dividerLine: "bg-border",
     dividerText: "text-bone-muted",
@@ -61,10 +82,11 @@ export const clerkAppearance = {
       border: methodRowBorder,
       color: "#E3E2ED",
       backgroundColor: "transparent",
-      ...focusVisibleRing,
+      ...methodRowFocusRing,
     },
     alternativeMethodsBlockButtonText: {
       color: "#E3E2ED",
+      ...methodRowFocusRing,
     },
     phoneInputBox: {
       ...pickerLabelText,
@@ -79,18 +101,16 @@ export const clerkAppearance = {
         stroke: "#E3E2ED !important",
       },
     },
-    footer: securedByText,
-    footerPages: securedByText,
-    footerItem: securedByText,
-    logoBox: securedByText,
-    logoGroup: securedByText,
-    logoGroupItem: securedByText,
+    logoBox: securedByBranding,
+    logoGroup: securedByBranding,
+    logoGroupItem: securedByBranding,
     logoImage: {
       opacity: 1,
       filter: "none",
     },
     footerActionText: "text-bone-muted",
-    footerActionLink: "!text-[#A98AEF]",
+    footerActionLink: footerLinkViolet,
+    footerPagesLink: footerLinkViolet,
     formResendCodeLink: "!text-[#A98AEF]",
     identityPreviewText: "text-foreground",
     identityPreviewEditButton: "!text-[#A98AEF]",
