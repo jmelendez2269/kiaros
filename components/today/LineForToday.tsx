@@ -72,7 +72,7 @@ export function LineForToday({ streak = 0 }: Props) {
             style={{
               fontFamily: K.fMono,
               fontSize: 10.5,
-              color: K.inkSoft,
+              color: K.inkDim,
               letterSpacing: '0.14em',
             }}
           >
@@ -176,7 +176,7 @@ export function LineForToday({ streak = 0 }: Props) {
             style={{
               fontFamily: K.fMono,
               fontSize: 10.5,
-              color: K.inkSoft,
+              color: K.inkDim,
               letterSpacing: '0.14em',
               textDecoration: 'none',
               textTransform: 'uppercase',

@@ -193,7 +193,7 @@ export function SkyNow({ data }: Props) {
         const ma = (i * 30 + 15 - 90) * Math.PI / 180
         const mr = (Ro + Ri) / 2
         ctx.font = `${Math.max(11, S * 0.022)}px serif`
-        ctx.fillStyle = 'rgba(199, 179, 245, 0.7)'
+        ctx.fillStyle = K.violetDim
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText(ZODIAC_GLYPHS[i], cx + mr * Math.cos(ma), cy + mr * Math.sin(ma))
@@ -504,7 +504,7 @@ export function SkyNow({ data }: Props) {
           style={{
             fontFamily: K.fMono,
             fontSize: 10.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.14em',
           }}
         >
@@ -521,7 +521,7 @@ export function SkyNow({ data }: Props) {
           marginTop: 10,
           fontFamily: K.fBody,
           fontSize: 12.5,
-          color: K.inkSoft,
+          color: K.inkDim,
           textAlign: 'center',
           lineHeight: 1.5,
         }}

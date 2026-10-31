@@ -45,7 +45,7 @@ export function AppHelpMenu({
               maxWidth: '100%',
               minWidth: 0,
               borderRadius: 12,
-              border: `1px solid ${K.line}`,
+              border: `1px solid ${K.borderStrong}`,
               background: K.bg,
               boxShadow: '0 16px 40px rgba(0,0,0,0.45)',
               padding: 6,

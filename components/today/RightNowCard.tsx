@@ -61,7 +61,7 @@ export function RightNowCard({ windows }: Props) {
           style={{
             fontFamily: K.fMono,
             fontSize: 10.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.14em',
             textDecoration: 'none',
           }}
@@ -108,7 +108,7 @@ export function RightNowCard({ windows }: Props) {
                   marginTop: 4,
                   fontFamily: K.fBody,
                   fontSize: 12.5,
-                  color: K.inkSoft,
+                  color: K.inkDim,
                   fontStyle: 'italic',
                 }}
               >
