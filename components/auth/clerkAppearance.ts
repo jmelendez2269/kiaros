@@ -1,30 +1,13 @@
 const methodRowBorder = "1px solid rgba(164,163,177,0.61)";
 
-const focusRingShadow =
-  "0 0 0 2px #090911, 0 0 0 4px #A98AEF !important";
-
-const methodRowFocusRing = {
-  "&:focus": {
-    boxShadow: focusRingShadow,
-    outline: "none",
-  },
-  "&:focus-visible": {
-    boxShadow: focusRingShadow,
-    outline: "none",
-  },
-  "& *:focus": {
-    boxShadow: focusRingShadow,
-    outline: "none",
-  },
-  "& *:focus-visible": {
-    boxShadow: focusRingShadow,
-    outline: "none",
-  },
-};
-
 const securedByBranding = {
   color: "#A4A3B1",
   "& span": { color: "#A4A3B1 !important" },
+  '& [class*="cl-internal"]': { color: "#A4A3B1 !important" },
+};
+
+const footerMutedText = {
+  color: "#A4A3B1",
   '& [class*="cl-internal"]': { color: "#A4A3B1 !important" },
 };
 
@@ -64,12 +47,10 @@ export const clerkAppearance = {
       border: methodRowBorder,
       color: "#E3E2ED",
       backgroundColor: "hsla(237, 30%, 8%, 0.8)",
-      ...methodRowFocusRing,
     },
     socialButtonsBlockButtonText: {
       color: "#E3E2ED",
       fontWeight: 500,
-      ...methodRowFocusRing,
     },
     dividerLine: "bg-border",
     dividerText: "text-bone-muted",
@@ -82,11 +63,9 @@ export const clerkAppearance = {
       border: methodRowBorder,
       color: "#E3E2ED",
       backgroundColor: "transparent",
-      ...methodRowFocusRing,
     },
     alternativeMethodsBlockButtonText: {
       color: "#E3E2ED",
-      ...methodRowFocusRing,
     },
     phoneInputBox: {
       ...pickerLabelText,
@@ -101,6 +80,9 @@ export const clerkAppearance = {
         stroke: "#E3E2ED !important",
       },
     },
+    footer: footerMutedText,
+    footerPages: footerMutedText,
+    footerItem: footerMutedText,
     logoBox: securedByBranding,
     logoGroup: securedByBranding,
     logoGroupItem: securedByBranding,
