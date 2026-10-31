@@ -1,14 +1,22 @@
 const methodRowBorder = "1px solid rgba(164,163,177,0.61)";
 
+const methodRowFocusRing = {
+  "&:focus, &:focus-visible": {
+    boxShadow: "0 0 0 2px #090911, 0 0 0 4px #A98AEF !important",
+    outline: "none",
+  },
+};
+
 const securedByBranding = {
   color: "#A4A3B1",
   "& span": { color: "#A4A3B1 !important" },
   '& [class*="cl-internal"]': { color: "#A4A3B1 !important" },
 };
 
+/** Muted footer copy only — never style anchors (Sign up / Get help stay violet). */
 const footerMutedText = {
   color: "#A4A3B1",
-  '& [class*="cl-internal"]': { color: "#A4A3B1 !important" },
+  "& :not(a)": { color: "#A4A3B1" },
 };
 
 const footerLinkViolet = {
@@ -47,6 +55,10 @@ export const clerkAppearance = {
       border: methodRowBorder,
       color: "#E3E2ED",
       backgroundColor: "hsla(237, 30%, 8%, 0.8)",
+      ...methodRowFocusRing,
+    },
+    socialButtonsIconButton: {
+      ...methodRowFocusRing,
     },
     socialButtonsBlockButtonText: {
       color: "#E3E2ED",
@@ -63,6 +75,7 @@ export const clerkAppearance = {
       border: methodRowBorder,
       color: "#E3E2ED",
       backgroundColor: "transparent",
+      ...methodRowFocusRing,
     },
     alternativeMethodsBlockButtonText: {
       color: "#E3E2ED",
@@ -90,7 +103,7 @@ export const clerkAppearance = {
       opacity: 1,
       filter: "none",
     },
-    footerActionText: "text-bone-muted",
+    footerActionText: { color: "#A4A3B1" },
     footerActionLink: footerLinkViolet,
     footerPagesLink: footerLinkViolet,
     formResendCodeLink: "!text-[#A98AEF]",
