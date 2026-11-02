@@ -179,7 +179,8 @@ export function PlanImportModal() {
               type="button"
               onClick={handleParse}
               disabled={isParsing || (source === 'text' && !text.trim()) || (source === 'url' && !url.trim()) || (source === 'pdf' && !file)}
-              className="w-full rounded-md border border-leather-400/40 bg-leather-500/20 px-4 py-2 text-sm font-medium text-bone transition-colors hover:bg-leather-500/30 disabled:opacity-40"
+              className="w-full rounded-md bg-leather-500/20 px-4 py-2 text-sm font-medium text-bone transition-colors hover:bg-leather-500/30 disabled:opacity-40"
+              style={{ border: '1px solid var(--almanac-violet-outline)' }}
             >
               {isParsing ? 'Reading plan...' : 'Parse plan'}
             </button>
@@ -237,7 +238,8 @@ export function PlanImportModal() {
                 type="button"
                 onClick={handleCommit}
                 disabled={isCommitting || result.items.length === 0}
-                className="flex-1 rounded-md border border-leather-400/40 bg-leather-500/20 px-4 py-2 text-sm font-medium text-bone transition-colors hover:bg-leather-500/30 disabled:opacity-40"
+                className="flex-1 rounded-md bg-leather-500/20 px-4 py-2 text-sm font-medium text-bone transition-colors hover:bg-leather-500/30 disabled:opacity-40"
+                style={{ border: '1px solid var(--almanac-violet-outline)' }}
               >
                 {isCommitting ? 'Adding...' : `Add ${result.items.length} task${result.items.length === 1 ? '' : 's'}`}
               </button>

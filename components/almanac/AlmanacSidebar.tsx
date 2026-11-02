@@ -414,7 +414,7 @@ function NavRow({
                     fontFamily: K.fMono,
                     fontSize: 13,
                     letterSpacing: '0.1em',
-                    color: K.inkSoft,
+                    color: K.inkDim,
                     marginTop: 2,
                   }}
                 >
@@ -514,7 +514,7 @@ function NavRow({
                         fontFamily: K.fMono,
                         fontSize: 12,
                         letterSpacing: '0.1em',
-                        color: K.inkSoft,
+                        color: K.inkDim,
                       }}
                     >
                       {sub.hint}
@@ -680,7 +680,7 @@ function SidebarBody({
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
-                    color: K.inkSoft,
+                    color: K.inkDim,
                     letterSpacing: '0.16em',
                     textTransform: 'uppercase',
                     whiteSpace: 'nowrap',
@@ -765,7 +765,7 @@ function SidebarBody({
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
-                    color: K.inkSoft,
+                    color: K.inkDim,
                     letterSpacing: '0.16em',
                     textTransform: 'uppercase',
                   }}

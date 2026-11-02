@@ -476,7 +476,8 @@ function WindowedAccessNote({ windowEnd }: { windowEnd: string | null }) {
       </div>
       <Link
         href="/pricing"
-        className="shrink-0 rounded-xl border border-leather-400/50 bg-leather-500/30 px-4 py-2 text-center text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+        className="shrink-0 rounded-xl bg-leather-500/30 px-4 py-2 text-center text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+        style={{ border: '1px solid var(--almanac-violet-outline)' }}
       >
         See annual access
       </Link>

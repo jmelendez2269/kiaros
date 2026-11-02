@@ -203,7 +203,7 @@ export function StelloquyShell({ today }: Props) {
                     style={{
                       fontFamily: K.fMono,
                       fontSize: 9,
-                      color: K.inkSoft,
+                      color: K.inkDim,
                       letterSpacing: '0.16em',
                       marginTop: 3,
                     }}

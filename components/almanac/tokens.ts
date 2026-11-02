@@ -31,7 +31,6 @@ export const K = {
   violetDim: "#bba3f3", // dim violet for labels and glyphs (contrast fix)
   violetOutline: "#7b64c4", // violet outline chips (contrast fix)
   borderStrong: "#6e6d7c", // strong border for UI controls (contrast fix)
-  emberDim: "#f0898c",  // dim red for hard-aspect glyph (contrast fix)
   ember: "#df9b3f",     // ember-400 — amber, used sparingly for warm signal
   sage: "#6798cb",      // moss-400 — Obsidian's "moss" is steel blue
   plum: "#b08cdc",      // plum-400

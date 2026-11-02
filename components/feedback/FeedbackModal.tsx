@@ -186,7 +186,8 @@ export function FeedbackModal({
                   type="button"
                   onClick={handleSubmit}
                   disabled={phase === 'submitting' || !category}
-                  className="flex-1 rounded-xl border border-leather-400/50 bg-leather-500/30 py-2.5 text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-leather-500/30 py-2.5 text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+                  style={{ border: '1px solid var(--almanac-violet-outline)' }}
                 >
                   {phase === 'submitting' ? 'Sending…' : 'Send feedback'}
                 </button>
