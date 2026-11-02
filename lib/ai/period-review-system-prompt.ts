@@ -15,6 +15,7 @@ Rules:
 6. No ampersands and no em dashes. Avoid "actually", "genuinely", and tidy three-item lists.
 7. Keep it short. Use these section titles on their own lines when you have data for them: "The sky", "Your plans and goals", "In your words", "A question to carry". Omit any section with no data.
 8. No praise inflation, hype, or self-help language.
+9. When ingresses (planet sign changes) are provided with dates, you may note in "The sky" where a dated journal entry, task, or mood shift falls near an ingress date. State only the date proximity—pattern, not prophecy. No causal language.
 
 If there are zero journal entries in the user message, do not mention the absence of journal entries. Do not include "In your words". The app handles that case separately.
 
@@ -25,9 +26,31 @@ export function assemblePeriodReviewUserPrompt(sources: PeriodReviewSourceBundle
   const title = periodLabel(sources.period)
   const carryMonth = monthNameAfterPeriod(sources.period)
 
+  const ingressBlock =
+    sources.sky.ingresses.length > 0
+      ? sources.sky.ingresses.map((ing) => `  - ${ing.date}: ${ing.planet} → ${ing.sign}`).join('\n')
+      : '  (none)'
+
+  const checkInBlock =
+    sources.checkIns.length > 0
+      ? sources.checkIns
+          .map((c) => {
+            const parts = [c.date]
+            if (c.mood) parts.push(`mood: ${c.mood}`)
+            if (c.energy !== null && c.energy !== undefined) parts.push(`energy: ${c.energy}`)
+            return `  - ${parts.join(', ')}`
+          })
+          .join('\n')
+      : '  (none)'
+
+  const intentionsBlock =
+    sources.intentions.length > 0
+      ? sources.intentions.map((text, i) => `  ${i + 1}. ${text}`).join('\n')
+      : null
+
   const journalBlock =
     sources.journalEntryCount > 0
-      ? sources.journalExcerpts.map((excerpt, i) => `  ${i + 1}. ${excerpt}`).join('\n')
+      ? sources.journalExcerpts.map((e, i) => `  ${i + 1}. ${e.date}: ${e.excerpt}`).join('\n')
       : null
 
   const completedBlock =
@@ -40,6 +63,10 @@ export function assemblePeriodReviewUserPrompt(sources: PeriodReviewSourceBundle
       ? sources.planTasksOpen.map((t) => `  - ${t.date}: ${t.title}`).join('\n')
       : '  (none recorded)'
 
+  const goalsLabel = sources.goalsCompletedApproximate
+    ? 'Goals marked completed during period (approximate, based on last-updated date)'
+    : 'Goals marked completed during period'
+
   return `Write a period look back for ${title} (${sources.period.periodStart} through ${sources.period.periodEnd}).
 
 Member name: ${sources.displayName}
@@ -47,14 +74,18 @@ Member name: ${sources.displayName}
 Sky for the period (from ephemeris):
 ${sources.sky.text}
 
+Ingresses (planet sign changes):
+${ingressBlock}
+
 Blueprint context:
   Month theme: ${sources.monthBlueprintTheme ?? '(none)'}
   Quarter theme: ${sources.quarterBlueprintTheme ?? '(none)'}
 
 Check-ins:
   Daily check-in days: ${sources.dailyLogDays}
+${checkInBlock}
 
-Plans:
+${intentionsBlock ? `Intentions set during period:\n${intentionsBlock}\n\n` : ''}Plans:
   Plan items scheduled: ${sources.planTasksTotal}
   Completed tasks:
 ${completedBlock}
@@ -63,7 +94,7 @@ ${openBlock}
 
 Goals:
   Active goals now: ${sources.goalsActive}
-  Goals marked completed during period: ${sources.goalsCompletedInPeriod}
+  ${goalsLabel}: ${sources.goalsCompletedInPeriod}
 
 ${
   journalBlock
