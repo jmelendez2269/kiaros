@@ -6,7 +6,9 @@ const iaJournalOn = featureFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)
 const iaOverlaysOn = featureFlagEnabled(process.env.NEXT_PUBLIC_IA_OVERLAYS)
 
 const periodReviewPreviewBranch =
-  process.env.VERCEL_GIT_COMMIT_REF === 'cursor/period-review-01-3c9a' &&
+  ['cursor/period-review-01-3c9a', 'cursor/auto-open-period-review-91e3'].includes(
+    process.env.VERCEL_GIT_COMMIT_REF ?? '',
+  ) &&
   process.env.VERCEL_ENV === 'preview'
 
 /** @type {import('next').NextConfig} */
