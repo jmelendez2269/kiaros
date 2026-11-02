@@ -136,6 +136,7 @@ export async function MonthChartView({
           background: K.bg,
           minHeight: '100%',
           display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr)',
           gridTemplateRows: 'auto 1fr auto',
           gap: 16,
         }}

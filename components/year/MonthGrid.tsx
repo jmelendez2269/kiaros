@@ -55,7 +55,7 @@ export function MonthGrid({
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginBottom: 4 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 1, marginBottom: 4 }}>
         {DOW.map((d, i) => (
           <div
             key={i}
@@ -72,7 +72,7 @@ export function MonthGrid({
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: K.line }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 1, background: K.line }}>
         {Array.from({ length: cellCount }).map((_, i) => {
           const d = i - offset + 1
           const valid = d >= 1 && d <= days
@@ -130,7 +130,7 @@ export function MonthGrid({
                 >
                   {d}
                 </Link>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5" style={{ minWidth: 0, overflow: 'hidden' }}>
                   {character ? (
                     <span
                       title={`${character.label}${character.reason ? ` · ${character.reason}` : ''}`}
@@ -168,6 +168,10 @@ export function MonthGrid({
                     borderLeft: `2px solid ${event.tone}`,
                     paddingLeft: 5,
                     lineHeight: 1.3,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {event.tag}
