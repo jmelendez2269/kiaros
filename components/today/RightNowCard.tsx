@@ -50,7 +50,7 @@ export function RightNowCard({ windows }: Props) {
   }, [])
 
   const current = minute !== null ? windows.find((w) => minute >= w.startMinute && minute < w.endMinute) : null
-  const tone = current ? ENERGY_TONE[current.energyType] : K.inkSoft
+  const tone = current ? ENERGY_TONE[current.energyType] : K.inkDim
 
   return (
     <div>

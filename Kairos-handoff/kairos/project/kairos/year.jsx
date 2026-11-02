@@ -43,7 +43,7 @@ function YearStrip() {
           const tone = QUARTERS[q].tone;
           return (
             <div key={m} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: mi === 9 ? K.copperHi : K.inkSoft, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' }}>
+              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: mi === 9 ? K.copperHi : K.inkDim, letterSpacing: '0.14em', textTransform: 'uppercase', textAlign: 'center' }}>
                 {m}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1.5 }}>
@@ -78,7 +78,7 @@ function MonthGrid() {
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginBottom: 4 }}>
         {['S','M','T','W','T','F','S'].map((d, i) => (
-          <div key={i} style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft, letterSpacing: '0.16em', textAlign: 'center', padding: '4px 0' }}>{d}</div>
+          <div key={i} style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim, letterSpacing: '0.16em', textAlign: 'center', padding: '4px 0' }}>{d}</div>
         ))}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: K.line }}>
@@ -193,7 +193,7 @@ function YearArtboard() {
           <Frame tone="umber" padding={18}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
               <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 26, color: K.ink }}>October</div>
-              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, letterSpacing: '0.14em' }}>WK 40 — WK 44</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, letterSpacing: '0.14em' }}>WK 40 — WK 44</div>
             </div>
             <MonthGrid />
           </Frame>
@@ -218,7 +218,7 @@ function YearArtboard() {
               <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 16, color: K.ink, marginTop: 8, lineHeight: 1.3 }}>
                 "A drowning man being rescued."
               </div>
-              <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.14em', marginTop: 8 }}>SUN · 28° LIBRA</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.14em', marginTop: 8 }}>SUN · 28° LIBRA</div>
             </Frame>
 
             <Frame tone="umber" padding={16}>
@@ -231,7 +231,7 @@ function YearArtboard() {
                   <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: K.bg, border: `1px solid ${K.line}`, borderRadius: 8 }}>
                     <span style={{ color: c, fontSize: 14 }}>◐</span>
                     <span style={{ fontFamily: K.fBody, fontSize: 12, color: K.ink, flex: 1 }}>{t}</span>
-                    <span style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft }}>{m}</span>
+                    <span style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim }}>{m}</span>
                   </div>
                 ))}
               </div>
@@ -246,7 +246,7 @@ function YearArtboard() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
             <Kicker>Year's pulse · push / rest / edit</Kicker>
-            <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft, letterSpacing: '0.14em' }}>JAN — DEC</div>
+            <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim, letterSpacing: '0.14em' }}>JAN — DEC</div>
           </div>
           <PushRestRibbon />
         </div>

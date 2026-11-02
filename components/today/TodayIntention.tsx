@@ -19,17 +19,7 @@ export function TodayIntention({ result }: Props) {
   if (result.status === 'no-blueprint') {
     return (
       <Frame tone="umber" padding={22}>
-        <div
-          style={{
-            fontFamily: K.fMono,
-            fontSize: 15,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: K.violetDim,
-          }}
-        >
-          Today&rsquo;s intention
-        </div>
+        <Kicker color={K.violetDim} opacity={1}>Today&rsquo;s intention</Kicker>
         <p
           style={{
             marginTop: 10,
@@ -87,22 +77,12 @@ export function TodayIntention({ result }: Props) {
           marginBottom: 8,
         }}
       >
-        <div
-          style={{
-            fontFamily: K.fMono,
-            fontSize: 15,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: K.violetDim,
-          }}
-        >
-          Today&rsquo;s intention
-        </div>
+        <Kicker color={K.violetDim} opacity={1}>Today&rsquo;s intention</Kicker>
         <span
           style={{
             fontFamily: K.fMono,
             fontSize: 10.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
           }}
@@ -145,7 +125,7 @@ export function TodayIntention({ result }: Props) {
             marginTop: 10,
             fontFamily: K.fBody,
             fontSize: 15,
-            color: K.inkSoft,
+            color: K.inkDim,
             lineHeight: 1.55,
           }}
         >
@@ -159,7 +139,7 @@ export function TodayIntention({ result }: Props) {
             style={{
               fontFamily: K.fMono,
               fontSize: 11,
-              color: K.inkSoft,
+              color: K.inkDim,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
             }}

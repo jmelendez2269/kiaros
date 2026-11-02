@@ -96,7 +96,7 @@ export function LifeArcRead({ data }: Props) {
           style={{
             fontFamily: K.fMono,
             fontSize: 10.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
           }}
@@ -159,7 +159,7 @@ export function LifeArcRead({ data }: Props) {
         {data.heavy
           .filter((w) => w.rarity === 'once-in-lifetime')
           .map((w) => {
-            const tone = RARITY_TONE[w.rarity] ?? K.inkSoft
+            const tone = RARITY_TONE[w.rarity] ?? K.inkDim
             return (
               <div
                 key={w.technical}

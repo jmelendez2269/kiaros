@@ -445,7 +445,7 @@ function NavRow({
                 border: 'none',
                 borderRadius: 8,
                 background: 'transparent',
-                color: isActive ? n.tone : K.inkSoft,
+                color: isActive ? n.tone : K.inkDim,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -711,7 +711,7 @@ function SidebarBody({
                   justifyContent: 'center',
                   width: 44,
                   height: 44,
-                  color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
+                  color: pathname.startsWith('/settings') ? K.ink : K.inkDim,
                 }}
               >
                 <Settings size={14} />
@@ -732,7 +732,7 @@ function SidebarBody({
                     width: 44,
                     height: 44,
                     padding: 0,
-                    color: K.inkSoft,
+                    color: K.inkDim,
                   }}
                 >
                   <LogOut size={14} aria-hidden="true" />
@@ -785,7 +785,7 @@ function SidebarBody({
                 justifyContent: 'center',
                 width: 44,
                 height: 44,
-                color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
+                color: pathname.startsWith('/settings') ? K.ink : K.inkDim,
               }}
             >
               <Settings size={14} />
@@ -809,7 +809,7 @@ function SidebarBody({
                   fontSize: 12,
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  color: K.inkSoft,
+                  color: K.inkDim,
                 }}
               >
                 <LogOut size={14} />

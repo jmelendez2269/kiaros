@@ -171,7 +171,7 @@ export function MonthBriefPanel({
     ? new Date(stampDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
     : null
   const stampPrefix = editedAt ? 'EDITED' : 'GENERATED'
-  const stampColor = editedAt ? K.copperHi : K.inkSoft
+  const stampColor = editedAt ? K.copperHi : K.inkDim
 
   return (
     <div
@@ -183,17 +183,7 @@ export function MonthBriefPanel({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div
-          style={{
-            fontFamily: K.fMono,
-            fontSize: 15,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: K.violetDim,
-          }}
-        >
-          This month's brief · {monthName}
-        </div>
+        <Kicker color={K.violetDim} opacity={1}>This month&apos;s brief · {monthName}</Kicker>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {stampLabel && status === 'ready' && !editing ? (
             <span style={{ fontFamily: K.fMono, fontSize: 10, color: stampColor, letterSpacing: '0.14em' }}>
@@ -212,7 +202,7 @@ export function MonthBriefPanel({
                 fontFamily: K.fMono,
                 fontSize: 12,
                 lineHeight: 1,
-                color: pinned ? K.copperHi : K.inkSoft,
+                color: pinned ? K.copperHi : K.inkDim,
                 background: 'transparent',
                 border: `1px solid ${pinned ? K.copperHi : K.line}`,
                 borderRadius: 6,
@@ -320,7 +310,7 @@ export function MonthBriefPanel({
               }}
             />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <span style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, letterSpacing: '0.14em' }}>
+              <span style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, letterSpacing: '0.14em' }}>
                 {draft.trim().length}/{MAX_BRIEF_TEXT_LENGTH}
               </span>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -332,7 +322,7 @@ export function MonthBriefPanel({
                     fontFamily: K.fMono,
                     fontSize: 10,
                     letterSpacing: '0.14em',
-                    color: K.inkSoft,
+                    color: K.inkDim,
                     background: 'transparent',
                     border: `1px solid ${K.line}`,
                     borderRadius: 6,
@@ -409,7 +399,7 @@ function BriefSkeleton() {
           }}
         />
       ))}
-      <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, letterSpacing: '0.14em', marginTop: 6 }}>
+      <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, letterSpacing: '0.14em', marginTop: 6 }}>
         WRITING YOUR BRIEF…
       </div>
     </div>

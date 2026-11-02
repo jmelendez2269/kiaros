@@ -680,7 +680,7 @@ function statusLabel(status: QuarterStatus): { label: string; tone: string } {
     case 'draft':
       return { label: 'DRAFT', tone: K.copperHi }
     case 'future':
-      return { label: 'FUTURE QUARTER', tone: K.inkSoft }
+      return { label: 'FUTURE QUARTER', tone: K.inkDim }
     case 'not-started':
     default:
       return { label: 'NOT STARTED', tone: K.inkDim }
@@ -826,7 +826,7 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
               {selectedStatusMeta.label}
             </div>
             {completedDateLabel ? (
-              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft, marginTop: 4, letterSpacing: '0.14em' }}>
+              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim, marginTop: 4, letterSpacing: '0.14em' }}>
                 {completedDateLabel.toUpperCase()}
               </div>
             ) : null}

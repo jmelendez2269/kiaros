@@ -499,17 +499,7 @@ export function SkyNow({ data }: Props) {
   return (
     <Frame tone="cocoa" padding={20} stars>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <div
-          style={{
-            fontFamily: K.fMono,
-            fontSize: 15,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: K.violetDim,
-          }}
-        >
-          Sky now
-        </div>
+        <Kicker color={K.violetDim} opacity={1}>Sky now</Kicker>
         <span
           style={{
             fontFamily: K.fMono,

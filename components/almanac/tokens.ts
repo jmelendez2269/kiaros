@@ -20,7 +20,7 @@ export const K = {
   lineHi: "rgba(227, 226, 237, 0.18)",
   ink: "#e3e2ed",       // bone — cool near-white
   inkDim: "#a4a3b1",    // bone-muted
-  inkSoft: "#6e6d7c",   // pushed brighter than Warm Almanac for AA contrast
+  inkSoft: "#6e6d7c",   // borders and non-text only — use inkDim for text
   inkFaint: "rgba(227, 226, 237, 0.4)",
   // "copper" / "brick" keep their slot names but now resolve to Obsidian's
   // hero violet — same role (primary accent) as leather-* in /calendar.

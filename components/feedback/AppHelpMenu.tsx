@@ -103,7 +103,7 @@ export function AppHelpMenu({
             justifyContent: 'center',
             width: 44,
             height: 44,
-            color: menuOpen ? K.ink : K.inkSoft,
+            color: menuOpen ? K.ink : K.inkDim,
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',

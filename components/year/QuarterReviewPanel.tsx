@@ -332,7 +332,7 @@ export function QuarterReviewPanel({
       </Section>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', color: status === 'error' ? K.brick : K.inkSoft }}>
+        <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', color: status === 'error' ? K.brick : K.inkDim }}>
           {status === 'synthesizing'
             ? 'SAVING…'
             : status === 'streaming'
@@ -439,7 +439,7 @@ export function QuarterReviewPanel({
                 typeof priorValue === 'number' ? value - priorValue : null
               const deltaTone =
                 delta === null || delta === 0
-                  ? K.inkSoft
+                  ? K.inkDim
                   : delta > 0
                     ? K.sage
                     : K.copperHi
@@ -459,7 +459,7 @@ export function QuarterReviewPanel({
                     borderRadius: 8,
                   }}
                 >
-                  <div style={{ fontFamily: K.fMono, fontSize: 9, letterSpacing: '0.14em', color: K.inkSoft }}>
+                  <div style={{ fontFamily: K.fMono, fontSize: 9, letterSpacing: '0.14em', color: K.inkDim }}>
                     {label.toUpperCase()}
                   </div>
                   <div style={{ fontFamily: K.fSerif, fontSize: 22, color: K.ink, marginTop: 2 }}>
@@ -494,7 +494,7 @@ function Section({ label, hint, children }: { label: string; hint: string; child
       <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.16em', color: K.copperHi }}>
         {label.toUpperCase()}
       </div>
-      <div style={{ fontFamily: K.fBody, fontSize: 12, color: K.inkSoft, lineHeight: 1.5, marginBottom: 2 }}>
+      <div style={{ fontFamily: K.fBody, fontSize: 12, color: K.inkDim, lineHeight: 1.5, marginBottom: 2 }}>
         {hint}
       </div>
       {children}
@@ -538,7 +538,7 @@ function secondaryButtonStyle(disabled: boolean): React.CSSProperties {
     letterSpacing: '0.16em',
     padding: '10px 14px',
     background: 'transparent',
-    color: disabled ? K.inkDim : K.inkSoft,
+    color: disabled ? K.inkDim : K.inkDim,
     border: `1px solid ${K.line}`,
     borderRadius: 8,
     cursor: disabled ? 'not-allowed' : 'pointer',

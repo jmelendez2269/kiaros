@@ -66,17 +66,7 @@ export function LineForToday({ streak = 0 }: Props) {
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div
-          style={{
-            fontFamily: K.fMono,
-            fontSize: 15,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: K.violetDim,
-          }}
-        >
-          A line for today
-        </div>
+        <Kicker color={K.violetDim} opacity={1}>A line for today</Kicker>
         {streakNow > 0 ? (
           <span
             style={{

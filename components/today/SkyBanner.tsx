@@ -209,7 +209,7 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge
                 marginLeft: 'auto',
                 minWidth: 0,
                 maxWidth: 280,
-                color: K.inkSoft,
+                color: K.inkDim,
                 fontSize: 11.5,
                 letterSpacing: '0.04em',
                 textTransform: 'none',
@@ -235,7 +235,7 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge
                   fontFamily: K.fMono,
                   fontSize: 11.5,
                   letterSpacing: '0.06em',
-                  color: K.inkSoft,
+                  color: K.inkDim,
                 }}
               >
                 What is this?
@@ -382,7 +382,7 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge
                     fontSize: 11.5,
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
-                    color: K.inkSoft,
+                    color: K.inkDim,
                   }}
                 >
                   Holding
@@ -421,7 +421,7 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge
                     fontSize: 11.5,
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
-                    color: K.inkSoft,
+                    color: K.inkDim,
                   }}
                 >
                   Technical details

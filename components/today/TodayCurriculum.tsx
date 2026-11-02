@@ -24,7 +24,7 @@ const SESSION_TYPE_TONE: Record<TodayCurriculumSession['sessionType'], string> =
 const STATUS_TONE: Record<TodayCurriculumSession['status'], string> = {
   scheduled: K.copperHi,
   done: K.sage,
-  skipped: K.inkSoft,
+  skipped: K.inkDim,
 }
 
 function dayLabel(daysAway: number): string {
@@ -40,17 +40,7 @@ export function TodayCurriculum({ result }: Props) {
   if (result.status === 'none') {
     return (
       <Frame tone="umber" padding={22}>
-        <div
-          style={{
-            fontFamily: K.fMono,
-            fontSize: 15,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: K.violetDim,
-          }}
-        >
-          Next study
-        </div>
+        <Kicker color={K.violetDim} opacity={1}>Next study</Kicker>
         <p
           style={{
             marginTop: 10,
@@ -93,23 +83,13 @@ export function TodayCurriculum({ result }: Props) {
           marginBottom: 12,
         }}
       >
-        <div
-          style={{
-            fontFamily: K.fMono,
-            fontSize: 15,
-            letterSpacing: '0.22em',
-            textTransform: 'uppercase',
-            color: K.violetDim,
-          }}
-        >
-          Next study
-        </div>
+        <Kicker color={K.violetDim} opacity={1}>Next study</Kicker>
         <Link
           href="/curriculum"
           style={{
             fontFamily: K.fMono,
             fontSize: 10.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
             textDecoration: 'none',
@@ -164,7 +144,7 @@ function SessionCard({ session }: { session: TodayCurriculumSession }) {
           style={{
             fontFamily: K.fMono,
             fontSize: 12,
-            color: session.isToday ? K.copperHi : K.inkSoft,
+            color: session.isToday ? K.copperHi : K.inkDim,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             fontWeight: session.isToday ? 600 : 400,
@@ -223,7 +203,7 @@ function SessionCard({ session }: { session: TodayCurriculumSession }) {
           style={{
             fontFamily: K.fMono,
             fontSize: 12,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.1em',
           }}
         >

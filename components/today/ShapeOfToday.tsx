@@ -35,7 +35,7 @@ function ToneCard({ tone }: { tone: ShapeTone }) {
           style={{
             fontFamily: K.fMono,
             fontSize: 10.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
           }}
@@ -76,7 +76,7 @@ export function ShapeOfTodayCards({ shape, isoWeek, dayOfYear }: Props) {
           style={{
             fontFamily: K.fMono,
             fontSize: 11.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.14em',
           }}
         >
