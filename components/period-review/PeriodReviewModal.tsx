@@ -183,12 +183,17 @@ export function PeriodReviewModal({
   useEffect(() => {
     const node = dialogRef.current
     if (!node) return
+    
+    // Focus the title on mount so screen readers announce the modal, but don't show
+    // a focus ring (title has tabindex=-1 so it's not in the tab order)
+    const title = node.querySelector<HTMLElement>(`#${titleId}`)
+    title?.focus()
+    
     const focusables = node.querySelectorAll<HTMLElement>(
       'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
     )
     const first = focusables[0]
     const last = focusables[focusables.length - 1]
-    first?.focus()
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
@@ -208,7 +213,7 @@ export function PeriodReviewModal({
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose, payload, pending])
+  }, [onClose, payload, pending, titleId])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -313,6 +318,7 @@ export function PeriodReviewModal({
             <div>
               <h2
                 id={titleId}
+                tabIndex={-1}
                 style={{
                   margin: 0,
                   fontFamily: K.fSerif,
@@ -320,6 +326,7 @@ export function PeriodReviewModal({
                   fontSize: 28,
                   color: K.ink,
                   lineHeight: 1.2,
+                  outline: 'none',
                 }}
               >
                 {periodLabel(period)}
@@ -457,96 +464,98 @@ export function PeriodReviewModal({
           ) : null}
         </div>
 
-        <footer
-          style={{
-            padding: '14px 20px 20px',
-            borderTop: '1px solid rgba(164,163,177,0.2)',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <div style={{ position: 'relative' }}>
-            {payload && vaultAvailable ? (
-            <button
-              type="button"
-              disabled={pending || !payload}
-              onClick={() => setConfirmRegen(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                fontSize: 13,
-                color: '#A4A3B1',
-                textDecoration: 'underline',
-                textUnderlineOffset: 3,
-                cursor: pending ? 'wait' : 'pointer',
-              }}
-            >
-              Regenerate
-            </button>
-            ) : null}
-            {confirmRegen ? (
-              <div
+        {(payload && vaultAvailable) || payload?.generatedAt ? (
+          <footer
+            style={{
+              padding: '14px 20px 20px',
+              borderTop: '1px solid rgba(164,163,177,0.2)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              {payload && vaultAvailable ? (
+              <button
+                type="button"
+                disabled={pending || !payload}
+                onClick={() => setConfirmRegen(true)}
                 style={{
-                  position: 'absolute',
-                  bottom: '100%',
-                  left: 0,
-                  marginBottom: 8,
-                  padding: 12,
-                  background: '#141824',
-                  border: '1px solid rgba(164,163,177,0.35)',
-                  borderRadius: 8,
-                  width: 240,
-                  zIndex: 2,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: 13,
+                  color: '#A4A3B1',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 3,
+                  cursor: pending ? 'wait' : 'pointer',
                 }}
               >
-                <p style={{ margin: 0, fontSize: 13, color: K.ink, lineHeight: 1.5 }}>
-                  Replace this review with a fresh one?
-                </p>
-                <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
-                  <button
-                    type="button"
-                    onClick={regenerate}
-                    style={{
-                      fontSize: 12,
-                      padding: '6px 10px',
-                      borderRadius: 6,
-                      border: 'none',
-                      background: '#A98AEF',
-                      color: '#0A0C14',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Regenerate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmRegen(false)}
-                    style={{
-                      fontSize: 12,
-                      padding: '6px 10px',
-                      borderRadius: 6,
-                      border: '1px solid rgba(164,163,177,0.35)',
-                      background: 'transparent',
-                      color: '#A4A3B1',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancel
-                  </button>
+                Regenerate
+              </button>
+              ) : null}
+              {confirmRegen ? (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '100%',
+                    left: 0,
+                    marginBottom: 8,
+                    padding: 12,
+                    background: '#141824',
+                    border: '1px solid rgba(164,163,177,0.35)',
+                    borderRadius: 8,
+                    width: 240,
+                    zIndex: 2,
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: 13, color: K.ink, lineHeight: 1.5 }}>
+                    Replace this review with a fresh one?
+                  </p>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                    <button
+                      type="button"
+                      onClick={regenerate}
+                      style={{
+                        fontSize: 12,
+                        padding: '6px 10px',
+                        borderRadius: 6,
+                        border: 'none',
+                        background: '#A98AEF',
+                        color: '#0A0C14',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Regenerate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmRegen(false)}
+                      style={{
+                        fontSize: 12,
+                        padding: '6px 10px',
+                        borderRadius: 6,
+                        border: '1px solid rgba(164,163,177,0.35)',
+                        background: 'transparent',
+                        color: '#A4A3B1',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
+            </div>
+            {payload?.generatedAt ? (
+              <span style={{ fontSize: 12, color: '#A4A3B1' }}>
+                Generated {formatGeneratedTimestamp(payload.generatedAt)}
+              </span>
             ) : null}
-          </div>
-          {payload?.generatedAt ? (
-            <span style={{ fontSize: 12, color: '#A4A3B1' }}>
-              Generated {formatGeneratedTimestamp(payload.generatedAt)}
-            </span>
-          ) : null}
-        </footer>
+          </footer>
+        ) : null}
       </div>
     </div>
   )
