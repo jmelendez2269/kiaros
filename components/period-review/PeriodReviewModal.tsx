@@ -181,13 +181,17 @@ export function PeriodReviewModal({
   }
 
   useEffect(() => {
-    const node = dialogRef.current
-    if (!node) return
-    
     // Focus the title on mount so screen readers announce the modal, but don't show
     // a focus ring (title has tabindex=-1 so it's not in the tab order)
+    const node = dialogRef.current
+    if (!node) return
     const title = node.querySelector<HTMLElement>(`#${titleId}`)
     title?.focus()
+  }, [titleId])
+
+  useEffect(() => {
+    const node = dialogRef.current
+    if (!node) return
     
     const focusables = node.querySelectorAll<HTMLElement>(
       'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
@@ -213,7 +217,7 @@ export function PeriodReviewModal({
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose, payload, pending, titleId])
+  }, [onClose, payload, pending])
 
   useEffect(() => {
     const prev = document.body.style.overflow
