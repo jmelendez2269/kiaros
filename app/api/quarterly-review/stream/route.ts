@@ -22,6 +22,7 @@ import {
   quarterlyReviewModel,
 } from '@/lib/ai/quarterly-review-generator'
 import { updateQuarterlyReviewSynthesis } from '@/lib/reviews/save-review'
+import { isFormQuarterlyReviewRow } from '@/lib/reviews/quarter-review-row'
 
 export const maxDuration = 90
 
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
       .eq('quarter', quarter)
       .maybeSingle()
 
-    if (!existing) {
+    if (!existing || !isFormQuarterlyReviewRow(existing)) {
       return NextResponse.json({ error: 'No review exists for this quarter yet' }, { status: 404 })
     }
     if (!existing.completed_at) {

@@ -517,6 +517,56 @@ html[data-theme="dawn"] ::selection {
   animation: kairos-ticker 32s linear infinite;
 }
 
+@keyframes period-review-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.period-review-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(164, 163, 177, 0.08) 0%,
+    rgba(164, 163, 177, 0.22) 50%,
+    rgba(164, 163, 177, 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: period-review-shimmer 1.4s ease-in-out infinite;
+}
+@media (max-width: 639px) {
+  .period-review-modal-panel {
+    margin: 0;
+    max-width: none;
+    min-height: 100dvh;
+    max-height: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+}
+.period-review-modal-close {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  outline: none;
+  box-shadow: none;
+}
+.period-review-modal-close:focus {
+  outline: none;
+  box-shadow: none;
+}
+.period-review-modal-close:focus-visible {
+  outline: 2px solid #a98aef;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
 /* Clerk auth — method-row focus ring (fallback if emotion out-specifies element styles) */
 .cl-rootBox .cl-socialButtonsBlockButton:focus,
 .cl-rootBox .cl-socialButtonsBlockButton:focus-visible,
@@ -541,6 +591,7 @@ html[data-theme="dawn"] ::selection {
   .stelloquy-orb,
   .kairos-wheel-spin,
   .kairos-twinkle,
+  .period-review-shimmer,
   .kairos-rise,
   .kairos-ticker-track {
     animation: none !important;

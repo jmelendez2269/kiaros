@@ -8,6 +8,8 @@ import { getSabianForDegree } from '@/lib/ephemeris/sabian'
 import { derivePushRestArc } from '@/lib/year/push-rest-arc'
 import { todayISO } from '@/lib/today/get-today-context'
 import { monthChartNavHref } from '@/lib/calendar/calendar-day-routes'
+import { isPeriodReviewEnabled } from '@/lib/feature-flags'
+import { PeriodReviewLookBackLinks } from '@/components/period-review/PeriodReviewLookBackLinks'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import type { Tables } from '@/types/database'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
@@ -271,6 +273,14 @@ export async function MonthChartView({
               initialGeneratedAt={existingBrief?.generated_at ?? undefined}
               initialEditedAt={(existingBrief as { edited_at?: string | null } | null)?.edited_at ?? undefined}
               initialPinned={Boolean(existingBrief?.pinned)}
+            />
+          ) : null}
+
+          {isPeriodReviewEnabled() ? (
+            <PeriodReviewLookBackLinks
+              kind="month"
+              planYear={selected.year}
+              selectedIndex={selected.month + 1}
             />
           ) : null}
 

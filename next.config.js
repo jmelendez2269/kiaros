@@ -5,9 +5,21 @@ const calendarDayOn = featureFlagEnabled(process.env.KIAROS_CALENDAR_DAY)
 const iaJournalOn = featureFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)
 const iaOverlaysOn = featureFlagEnabled(process.env.NEXT_PUBLIC_IA_OVERLAYS)
 
+const periodReviewPreviewBranch =
+  process.env.VERCEL_GIT_COMMIT_REF === 'cursor/period-review-01-3c9a' &&
+  process.env.VERCEL_ENV === 'preview'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_KIAROS_PERIOD_REVIEW: periodReviewPreviewBranch
+      ? 'true'
+      : process.env.NEXT_PUBLIC_KIAROS_PERIOD_REVIEW ?? '',
+    KIAROS_PERIOD_REVIEW: periodReviewPreviewBranch
+      ? 'true'
+      : process.env.KIAROS_PERIOD_REVIEW ?? '',
+  },
   webpack: (config) => {
     config.module.rules.push({
       test: /\.md$/,

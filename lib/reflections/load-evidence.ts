@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { localBoundary, localDate, type ReflectionPeriod } from './periods'
 import { evidenceSchema, type Evidence } from './report-schema'
+import { hasAuthoredQuarterlyReviewContent } from '@/lib/reviews/quarter-review-row'
 const rowSchema = z.record(z.unknown())
 const string = (row: Record<string, unknown>, key: string) => typeof row[key] === 'string' ? row[key] as string : ''
 const textList = (value: unknown): string => Array.isArray(value) ? value.filter(v => typeof v === 'string').join('; ') : ''
@@ -50,6 +51,7 @@ export async function loadEvidence(userId: string, period: ReflectionPeriod): Pr
   for (const r of tasks) add('task', r, localDate(new Date(string(r, 'completed_at')), period.timezone), 'Completed planner item', string(r, 'title'), true, string(r, 'area_goal_id') || null)
   for (const r of sessions) add('session', r, string(r, 'scheduled_for').slice(0, 10), 'Learning session', string(r, 'title') + '. Recorded status: ' + string(r, 'status'))
   for (const r of reviews) {
+    if (!hasAuthoredQuarterlyReviewContent(r)) continue
     const qEnd = new Date(Date.UTC(Number(r.plan_year), Number(r.quarter) * 3, 0)).toISOString().slice(0, 10)
     add('review', r, qEnd, 'Your quarterly reflection', [
       textList(r.wins) && 'Wins: ' + textList(r.wins), textList(r.challenges) && 'Challenges: ' + textList(r.challenges),
