@@ -13,6 +13,8 @@ export interface PeriodReviewSourceBundle {
   sky: PeriodSkySummary
   planTasksCompleted: { title: string; date: string }[]
   planTasksOpen: { title: string; date: string }[]
+  planTasksCompletedCount: number
+  planTasksOpenCount: number
   planTasksTotal: number
   dailyLogDays: number
   goalsActive: number
@@ -38,6 +40,7 @@ export async function loadPeriodReviewSources(
     goalsActiveRes,
     goalsCompletedRes,
     journalRes,
+    journalCountRes,
     ephemerisRes,
   ] = await Promise.all([
     admin.from('user_profiles').select('display_name').eq('id', userId).maybeSingle(),
@@ -79,6 +82,16 @@ export async function loadPeriodReviewSources(
       if (consentV2) q = q.eq('include_in_insights', true)
       return q
     })(),
+    (() => {
+      let q = admin
+        .from('journal_entries')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('entry_date', period.periodStart)
+        .lte('entry_date', period.periodEnd)
+      if (consentV2) q = q.eq('include_in_insights', true)
+      return q
+    })(),
     admin
       .from('ephemeris_cache')
       .select('data')
@@ -91,6 +104,8 @@ export async function loadPeriodReviewSources(
   const sky = summarizeSkyForPeriod(ephemeris, period)
 
   const planRows = planItemsRes.data ?? []
+  const planTasksCompletedCount = planRows.filter((r) => r.completed_at).length
+  const planTasksOpenCount = planRows.filter((r) => !r.completed_at).length
   const completedTasks = planRows
     .filter((r) => r.completed_at)
     .map((r) => ({ title: r.title, date: r.item_date }))
@@ -118,6 +133,7 @@ export async function loadPeriodReviewSources(
   )
 
   const uniqueLogDays = new Set((dailyLogsRes.data ?? []).map((r) => r.log_date))
+  const journalEntryCount = journalCountRes.count ?? journalRows.length
 
   return {
     period,
@@ -125,11 +141,13 @@ export async function loadPeriodReviewSources(
     sky,
     planTasksCompleted: completedTasks,
     planTasksOpen: openTasks,
+    planTasksCompletedCount,
+    planTasksOpenCount,
     planTasksTotal: planRows.length,
     dailyLogDays: uniqueLogDays.size,
     goalsActive: goalsActiveRes.count ?? 0,
     goalsCompletedInPeriod: goalsCompletedRes.count ?? 0,
-    journalEntryCount: journalRows.length,
+    journalEntryCount,
     journalExcerpts,
     quarterBlueprintTheme: quarterBlueprint?.theme ?? null,
     monthBlueprintTheme: monthBlueprint?.theme ?? null,

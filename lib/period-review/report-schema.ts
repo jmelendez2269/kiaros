@@ -1,5 +1,15 @@
 import { z } from 'zod'
 import type { PeriodReviewSourceBundle } from './load-sources'
+import {
+  chipCheckIns,
+  chipEclipses,
+  chipGoals,
+  chipJournalEntries,
+  chipMoonPhases,
+  chipPlans,
+  chipRetrogrades,
+  chipSignChanges,
+} from './chip-copy'
 
 export const periodReviewSectionsSchema = z.object({
   sky: z.string().min(1).optional(),
@@ -16,33 +26,21 @@ export type PeriodReviewSourceChips = {
   journal: string[]
 }
 
-function chip(label: string, count: number): string | null {
-  if (count <= 0) return null
-  return label.replace('{n}', String(count))
-}
-
 export function buildSourceChips(sources: PeriodReviewSourceBundle): PeriodReviewSourceChips {
-  const retrogrades = sources.sky.retrogradePeriods.length
-  const lunations = sources.sky.moonPhases.length
-  const transits = sources.sky.significantTransits.length
-
   const sky = [
-    chip('{n} retrogrades', retrogrades),
-    chip('{n} lunations', lunations),
-    chip('{n} transits', transits),
+    chipRetrogrades(sources.sky.retrogradePeriods.length),
+    chipMoonPhases(sources.sky.moonPhases.length),
+    chipEclipses(sources.sky.eclipseCount),
+    chipSignChanges(sources.sky.signChangeCount),
   ].filter((c): c is string => Boolean(c))
 
-  const tasksDone = sources.planTasksCompleted.length
-  const tasksOpen = sources.planTasksOpen.length
   const plans = [
-    chip('{n} tasks done', tasksDone),
-    tasksOpen > 0 ? chip('{n} still open', tasksOpen) : null,
-    chip('{n} check-in days', sources.dailyLogDays),
-    sources.goalsCompletedInPeriod > 0 ? chip('{n} goals completed', sources.goalsCompletedInPeriod) : null,
+    chipPlans(sources.planTasksCompletedCount),
+    chipCheckIns(sources.dailyLogDays),
+    chipGoals(sources.goalsCompletedInPeriod),
   ].filter((c): c is string => Boolean(c))
 
-  const journal =
-    sources.journalEntryCount > 0 ? [chip('{n} entries', sources.journalEntryCount)].filter(Boolean) as string[] : []
+  const journal = [chipJournalEntries(sources.journalEntryCount)].filter((c): c is string => Boolean(c))
 
   return { sky, plans, journal }
 }

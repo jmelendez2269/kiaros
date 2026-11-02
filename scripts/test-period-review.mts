@@ -33,6 +33,14 @@ import {
   emptyJournalBanner,
 } from '../lib/period-review/copy.ts'
 import { sanitizePeriodReviewOutput } from '../lib/period-review/sanitize-output.ts'
+import {
+  chipCheckIns,
+  chipJournalEntries,
+  chipPlans,
+  chipRetrogrades,
+} from '../lib/period-review/chip-copy.ts'
+import { buildSourceChips } from '../lib/period-review/report-schema.ts'
+import type { PeriodReviewSourceBundle } from '../lib/period-review/load-sources.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -124,6 +132,45 @@ assert.equal(formMap.get(4), undefined)
 assert.equal(formMap.get(2)?.wins, formDraftRow.wins)
 assert.equal(formQuarterStatus(formMap.get(2) ?? null, 2, 3), 'draft')
 assert.equal(formQuarterStatus(formMap.get(4) ?? null, 4, 4), 'not-started')
+
+assert.equal(chipRetrogrades(1), '1 retrograde')
+assert.equal(chipRetrogrades(3), '3 retrogrades')
+assert.equal(chipRetrogrades(0), null)
+assert.equal(chipJournalEntries(1), '1 journal entry')
+assert.equal(chipJournalEntries(15), '15 journal entries')
+assert.equal(chipPlans(2), '2 plans')
+assert.equal(chipCheckIns(1), '1 check-in')
+
+const chipSources = {
+  period: oct,
+  displayName: 'Alex',
+  sky: {
+    moonPhases: [{}, {}, {}] as PeriodReviewSourceBundle['sky']['moonPhases'],
+    retrogradePeriods: [{}] as PeriodReviewSourceBundle['sky']['retrogradePeriods'],
+    significantTransits: [],
+    eclipseCount: 0,
+    signChangeCount: 0,
+    text: '',
+  },
+  planTasksCompleted: [],
+  planTasksOpen: [],
+  planTasksCompletedCount: 30,
+  planTasksOpenCount: 5,
+  planTasksTotal: 35,
+  dailyLogDays: 4,
+  goalsActive: 2,
+  goalsCompletedInPeriod: 1,
+  journalEntryCount: 20,
+  journalExcerpts: [],
+  quarterBlueprintTheme: null,
+  monthBlueprintTheme: null,
+} satisfies PeriodReviewSourceBundle
+
+const chips = buildSourceChips(chipSources)
+assert.ok(chips.plans.includes('30 plans'))
+assert.ok(chips.journal.includes('20 journal entries'))
+assert.equal(chips.sky.includes('1 retrograde'), true)
+assert.equal(chips.sky.some((c) => c.includes('moon phase')), true)
 
 assert.equal(todayCardHeadline(oct), 'October is wrapping up')
 assert.equal(todayCardSubline(oct), "Want to look back on it? We'll gather the sky, your plans, goals and check-ins into one view.")
