@@ -543,6 +543,13 @@ html[data-theme="dawn"] ::selection {
   }
 }
 .period-review-modal-close {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
   outline: none;
   box-shadow: none;
 }
@@ -551,8 +558,9 @@ html[data-theme="dawn"] ::selection {
   box-shadow: none;
 }
 .period-review-modal-close:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px #090911, 0 0 0 4px #a98aef;
+  outline: 2px solid #a98aef;
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 /* Marketing motion and the in-app orb share the same accessibility escape hatch. */

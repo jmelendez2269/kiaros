@@ -9,6 +9,9 @@ import {
   formatGeneratedTimestamp,
   formatPeriodDateRange,
   journalWritePrefillHref,
+  periodReviewStorageFullDismissLabel,
+  periodReviewStorageFullLine1,
+  periodReviewStorageFullLine2,
 } from '@/lib/period-review/copy'
 import { periodLabel, type PeriodReviewPeriod } from '@/lib/period-review/periods'
 import type { PeriodReviewSections, PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
@@ -74,10 +77,11 @@ async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
   return { payload: null, journalEntryCount: getData.journalEntryCount ?? 0 }
 }
 
-async function postGenerate(period: PeriodReviewPeriod, regenerate: boolean): Promise<{
-  payload: ReviewPayload
-  journalEntryCount: number
-}> {
+type PostGenerateResult =
+  | { ok: true; payload: ReviewPayload; journalEntryCount: number }
+  | { ok: false; reason: 'storage_full' }
+
+async function postGenerate(period: PeriodReviewPeriod, regenerate: boolean): Promise<PostGenerateResult> {
   const res = await fetch('/api/period-review', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -89,8 +93,14 @@ async function postGenerate(period: PeriodReviewPeriod, regenerate: boolean): Pr
     }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error ?? (regenerate ? 'Regeneration failed' : 'Generation failed'))
+  if (!res.ok) {
+    if (res.status === 409 && data.error === 'storage_full') {
+      return { ok: false, reason: 'storage_full' }
+    }
+    throw new Error(typeof data.error === 'string' ? data.error : regenerate ? 'Regeneration failed' : 'Generation failed')
+  }
   return {
+    ok: true,
     payload: {
       sections: data.sections,
       sourceChips: data.sourceChips,
@@ -116,6 +126,7 @@ export function PeriodReviewModal({
   const [needsGenerate, setNeedsGenerate] = useState(false)
   const [loadingCache, setLoadingCache] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [storageFullOpen, setStorageFullOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [confirmRegen, setConfirmRegen] = useState(false)
 
@@ -124,6 +135,7 @@ export function PeriodReviewModal({
     setNeedsGenerate(false)
     setLoadingCache(true)
     setError(null)
+    setStorageFullOpen(false)
     startTransition(async () => {
       try {
         const result = await loadCachedOnly(period)
@@ -140,9 +152,14 @@ export function PeriodReviewModal({
 
   function generateFirst() {
     setError(null)
+    setStorageFullOpen(false)
     startTransition(async () => {
       try {
         const result = await postGenerate(period, false)
+        if (!result.ok) {
+          setStorageFullOpen(true)
+          return
+        }
         setPayload(result.payload)
         setNeedsGenerate(false)
         setJournalEntryCount(result.journalEntryCount)
@@ -193,9 +210,14 @@ export function PeriodReviewModal({
   function regenerate() {
     setConfirmRegen(false)
     setPayload(null)
+    setStorageFullOpen(false)
     startTransition(async () => {
       try {
         const result = await postGenerate(period, true)
+        if (!result.ok) {
+          setStorageFullOpen(true)
+          return
+        }
         setPayload(result.payload)
         setNeedsGenerate(false)
         setJournalEntryCount(result.journalEntryCount)
@@ -306,7 +328,6 @@ export function PeriodReviewModal({
                 fontSize: 22,
                 lineHeight: 1,
                 cursor: 'pointer',
-                padding: 4,
               }}
             >
               ×
@@ -325,13 +346,50 @@ export function PeriodReviewModal({
             </p>
           ) : null}
 
-          {loadingCache || (pending && !payload) ? (
+          {storageFullOpen ? (
+            <div
+              role="status"
+              style={{
+                marginTop: 8,
+                marginBottom: 16,
+                padding: '16px 18px',
+                borderRadius: 8,
+                border: '1px solid rgba(164,163,177,0.35)',
+                background: '#141824',
+              }}
+            >
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65, color: K.ink }}>{periodReviewStorageFullLine1()}</p>
+              <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.65, color: '#A4A3B1' }}>
+                {periodReviewStorageFullLine2()}
+              </p>
+              <button
+                type="button"
+                onClick={() => setStorageFullOpen(false)}
+                style={{
+                  marginTop: 16,
+                  fontFamily: K.fMono,
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  padding: '10px 16px',
+                  borderRadius: 999,
+                  border: '1px solid rgba(164,163,177,0.45)',
+                  background: 'transparent',
+                  color: '#A4A3B1',
+                  cursor: 'pointer',
+                }}
+              >
+                {periodReviewStorageFullDismissLabel()}
+              </button>
+            </div>
+          ) : null}
+
+          {loadingCache || (pending && !payload && !storageFullOpen) ? (
             <div aria-busy="true" aria-label={needsGenerate ? 'Loading review' : 'Generating review'}>
               <ShimmerBlock height={88} />
               <ShimmerBlock height={64} />
               <ShimmerBlock height={64} />
             </div>
-          ) : needsGenerate && !payload ? (
+          ) : needsGenerate && !payload && !storageFullOpen ? (
             <div style={{ marginTop: 8 }}>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: '#A4A3B1', marginBottom: 16 }}>
                 No saved look back for this period yet.

@@ -11,6 +11,10 @@ import {
   periodReviewCacheEntryQuotesJournal,
 } from '../lib/period-review/cache-vault.ts'
 import {
+  consentStripJournalQuotesFromAuthoredRow,
+  relocatePeriodReviewCacheOffAuthoredRows,
+} from '../lib/period-review/cache-snapshot.ts'
+import {
   cacheKey,
   isPromoWindow,
   latestClosedMonth,
@@ -36,6 +40,9 @@ import {
   todayCardSubline,
   todayCardButtonLabel,
   emptyJournalBanner,
+  periodReviewStorageFullLine1,
+  periodReviewStorageFullLine2,
+  periodReviewStorageFullApiMessage,
 } from '../lib/period-review/copy.ts'
 import { sanitizePeriodReviewOutput } from '../lib/period-review/sanitize-output.ts'
 import {
@@ -191,6 +198,80 @@ assert.equal(periodReviewCacheEntryQuotesJournal({ sections: { inYourWords: 'Dea
 assert.equal(periodReviewCacheEntryQuotesJournal({ sourceChips: { journal: ['1 journal entry'] } }), true)
 assert.equal(periodReviewCacheEntryQuotesJournal({ sections: { sky: 'Only sky' } }), false)
 
+const authoredRowWithJournalCache = {
+  quarter: 2,
+  completed_at: '2026-06-30T00:00:00Z',
+  wins: ['Shipped the thing'],
+  challenges: ['Scope creep'],
+  pivots: 'Stay smaller',
+  next_quarter_intentions: 'Rest more',
+  stats_snapshot: {
+    journal_entries_count: 5,
+    periodReviewCache: {
+      'month:2026-10-01': {
+        summary: 'j',
+        generatedAt: '2026-10-31T12:00:00Z',
+        model: 'm',
+        regenerations: 0,
+        sections: { inYourWords: 'Dear diary' },
+      },
+      'month:2026-04-01': {
+        summary: 'sky only',
+        generatedAt: '2026-04-30T12:00:00Z',
+        model: 'm',
+        regenerations: 0,
+        sections: { sky: 'Calm skies' },
+      },
+    },
+  },
+}
+const authoredBefore = JSON.parse(JSON.stringify(authoredRowWithJournalCache))
+const { row: authoredAfter, removed: journalRemoved } = consentStripJournalQuotesFromAuthoredRow(authoredRowWithJournalCache)
+assert.equal(journalRemoved, 1)
+assert.equal(JSON.stringify(authoredAfter.wins), JSON.stringify(authoredBefore.wins))
+assert.equal(JSON.stringify(authoredAfter.challenges), JSON.stringify(authoredBefore.challenges))
+assert.equal(authoredAfter.pivots, authoredBefore.pivots)
+assert.equal(authoredAfter.next_quarter_intentions, authoredBefore.next_quarter_intentions)
+assert.equal(authoredAfter.completed_at, authoredBefore.completed_at)
+assert.equal(authoredAfter.quarter, authoredBefore.quarter)
+const beforeStats = authoredBefore.stats_snapshot as Record<string, unknown>
+const afterStats = authoredAfter.stats_snapshot as Record<string, unknown>
+for (const key of Object.keys(beforeStats)) {
+  if (key === PERIOD_REVIEW_CACHE_KEY) continue
+  assert.equal(JSON.stringify(afterStats[key]), JSON.stringify(beforeStats[key]), `stats key ${key} must be unchanged`)
+}
+const afterCache = readCacheFromStatsSnapshot(afterStats)
+assert.equal(afterCache['month:2026-10-01'], undefined)
+assert.ok(afterCache['month:2026-04-01'])
+
+const authoredWithCacheOnQ2 = {
+  quarter: 2,
+  completed_at: '2026-06-30T00:00:00Z',
+  wins: ['Win'],
+  challenges: [],
+  pivots: null,
+  next_quarter_intentions: null,
+  stats_snapshot: {
+    journal_entries_count: 3,
+    periodReviewCache: {
+      'month:2026-05-01': {
+        summary: 'May look back',
+        generatedAt: '2026-05-31T12:00:00Z',
+        model: 'm',
+        regenerations: 0,
+      },
+    },
+  },
+}
+const relocateResult = relocatePeriodReviewCacheOffAuthoredRows([authoredWithCacheOnQ2], 2)
+assert.equal(relocateResult.vaultQuarter, 1)
+assert.deepEqual(relocateResult.relocatedKeys, ['month:2026-05-01'])
+const q2AfterRelocate = relocateResult.updatedRows.find((r) => r.quarter === 2)!
+assert.equal(readCacheFromStatsSnapshot(q2AfterRelocate.stats_snapshot)['month:2026-05-01'], undefined)
+assert.equal((q2AfterRelocate.stats_snapshot as Record<string, unknown>).journal_entries_count, 3)
+const q1Vault = relocateResult.updatedRows.find((r) => r.quarter === 1)!
+assert.ok(readCacheFromStatsSnapshot(q1Vault.stats_snapshot)['month:2026-05-01'])
+
 assert.equal(chipRetrogrades(1), '1 retrograde')
 assert.equal(chipRetrogrades(3), '3 retrogrades')
 assert.equal(chipRetrogrades(0), null)
@@ -239,6 +320,10 @@ assert.equal(
 )
 
 assert.equal(sanitizePeriodReviewOutput('A & B—C'), 'A and B, C')
+
+assert.equal(periodReviewStorageFullLine1(), "We couldn't save this review yet. Your earlier reviews are all still here.")
+assert.equal(periodReviewStorageFullLine2(), "We're adding room for more. Check back soon to save this one.")
+assert.ok(periodReviewStorageFullApiMessage().includes(periodReviewStorageFullLine1()))
 
 const systemPrompt = readFileSync(join(root, 'lib/ai/period-review-system-prompt.ts'), 'utf8')
 assert.ok(systemPrompt.includes('workshop "we" voice'))

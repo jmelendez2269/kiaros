@@ -53,7 +53,8 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
       >
         Reviews
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+      <div className="period-review-reviews-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         {months.map((m) => (
           <button
             key={`m-${m.index}`}
@@ -66,7 +67,8 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
             {MONTH_SHORT[m.index - 1]}
           </button>
         ))}
-        <span style={{ width: 1, height: 20, background: 'rgba(164,163,177,0.35)', margin: '0 4px' }} aria-hidden />
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         {quarters.map((q) => (
           <button
             key={`q-${q.index}`}
@@ -79,6 +81,7 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
             Q{q.index}
           </button>
         ))}
+        </div>
       </div>
     </div>
   )
@@ -94,9 +97,8 @@ function chipStyle(filled: boolean, ended: boolean): CSSProperties {
       borderRadius: 999,
       cursor: 'not-allowed',
       background: 'transparent',
-      color: 'rgba(164,163,177,0.35)',
-      border: '1px solid rgba(164,163,177,0.2)',
-      opacity: 0.55,
+      color: '#6E6D7C',
+      border: '1px dashed #6E6D7C',
     }
   }
   return {

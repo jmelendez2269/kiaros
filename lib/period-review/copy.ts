@@ -71,3 +71,20 @@ export function journalWritePrefillHref(period: PeriodReviewPeriod): string {
   const prompt = encodeURIComponent(monthReflectionWritePrompt(period))
   return `/journal?prompt=${prompt}`
 }
+
+export function periodReviewStorageFullLine1(): string {
+  return "We couldn't save this review yet. Your earlier reviews are all still here."
+}
+
+export function periodReviewStorageFullLine2(): string {
+  return "We're adding room for more. Check back soon to save this one."
+}
+
+export function periodReviewStorageFullDismissLabel(): string {
+  return 'Okay'
+}
+
+/** Combined message for API JSON `message` field. */
+export function periodReviewStorageFullApiMessage(): string {
+  return `${periodReviewStorageFullLine1()}\n${periodReviewStorageFullLine2()}`
+}

@@ -6,7 +6,8 @@ import { getUserProfileId } from '@/lib/ai/usage'
 import { generatePeriodReviewSummary } from '@/lib/ai/period-review-generator'
 import { countPeriodJournalEntries } from '@/lib/period-review/load-sources'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
-import { loadCachedPeriodReview, saveCachedPeriodReview } from '@/lib/period-review/cache'
+import { loadCachedPeriodReview, PeriodReviewCacheStorageFullError, saveCachedPeriodReview } from '@/lib/period-review/cache'
+import { periodReviewStorageFullApiMessage } from '@/lib/period-review/copy'
 import { assertPeriodReviewRateLimit } from '@/lib/period-review/rate-limit'
 import { isPeriodEnded, periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
 import { todayISO } from '@/lib/today/get-today-context'
@@ -119,22 +120,32 @@ export async function POST(req: Request) {
 
   await assertPeriodReviewRateLimit(profileId)
 
-  const generated = await generatePeriodReviewSummary(profileId, period)
-  const entry = {
-    summary: generated.summary,
-    sections: generated.sections,
-    sourceChips: generated.sourceChips,
-    generatedAt: new Date().toISOString(),
-    model: generated.model,
-    regenerations: (existing?.regenerations ?? 0) + (existing ? 1 : 0),
+  try {
+    const generated = await generatePeriodReviewSummary(profileId, period)
+    const entry = {
+      summary: generated.summary,
+      sections: generated.sections,
+      sourceChips: generated.sourceChips,
+      generatedAt: new Date().toISOString(),
+      model: generated.model,
+      regenerations: (existing?.regenerations ?? 0) + (existing ? 1 : 0),
+    }
+    await saveCachedPeriodReview(profileId, period, entry)
+
+    const journalEntryCount = await countPeriodJournalEntries(profileId, period)
+
+    return NextResponse.json({
+      ...serializeCached(entry),
+      cached: false,
+      journalEntryCount,
+    })
+  } catch (e) {
+    if (e instanceof PeriodReviewCacheStorageFullError) {
+      return NextResponse.json(
+        { error: 'storage_full', message: periodReviewStorageFullApiMessage() },
+        { status: 409 },
+      )
+    }
+    throw e
   }
-  await saveCachedPeriodReview(profileId, period, entry)
-
-  const journalEntryCount = await countPeriodJournalEntries(profileId, period)
-
-  return NextResponse.json({
-    ...serializeCached(entry),
-    cached: false,
-    journalEntryCount,
-  })
 }
