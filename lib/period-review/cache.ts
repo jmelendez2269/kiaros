@@ -4,7 +4,6 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import {
   hasPeriodReviewCacheInSnapshot,
   isPeriodReviewCacheOnlyRow,
-  isFormQuarterlyReviewRow,
   hasAuthoredQuarterlyReviewContent,
 } from '@/lib/reviews/quarter-review-row'
 import {
@@ -22,9 +21,10 @@ import {
   stripJournalQuotesFromCacheMap,
 } from './cache-snapshot'
 import {
-  pickPeriodReviewVaultQuarter,
+  resolvePeriodReviewVaultForSave,
   type QuarterlyReviewRowSnapshot,
 } from './cache-vault'
+import { PeriodReviewCacheStorageFullError } from './cache-errors'
 
 export {
   PERIOD_REVIEW_CACHE_KEY,
@@ -38,16 +38,12 @@ export {
   statsSnapshotWithPeriodReviewCache,
   stripJournalQuotesFromCacheMap,
 } from './cache-snapshot'
-export { periodReviewCacheEntryQuotesJournal, pickPeriodReviewVaultQuarter } from './cache-vault'
-
-export class PeriodReviewCacheStorageFullError extends Error {
-  constructor() {
-    super(
-      'All four quarterly_reviews rows for this plan year contain authored quarterly review content; period-review cache needs a dedicated storage slot (schema change required).',
-    )
-    this.name = 'PeriodReviewCacheStorageFullError'
-  }
-}
+export {
+  periodReviewCacheEntryQuotesJournal,
+  pickPeriodReviewVaultQuarter,
+  resolvePeriodReviewVaultForSave,
+} from './cache-vault'
+export { PeriodReviewCacheStorageFullError } from './cache-errors'
 
 const ROW_SELECT =
   'quarter, stats_snapshot, wins, challenges, pivots, next_quarter_intentions, completed_at'
@@ -79,6 +75,17 @@ export async function loadCachedPeriodReview(
     if (hit) return hit
   }
   return null
+}
+
+export async function isPeriodReviewVaultAvailable(userId: string, period: PeriodReviewPeriod): Promise<boolean> {
+  const { planYear, quarter: calendarQuarter } = planYearQuarterForPeriodStart(period.periodStart)
+  const rows = await loadPlanYearReviewRows(userId, planYear)
+  return resolvePeriodReviewVaultForSave(rows, calendarQuarter).ok
+}
+
+export async function assertPeriodReviewVaultAvailable(userId: string, period: PeriodReviewPeriod): Promise<void> {
+  const available = await isPeriodReviewVaultAvailable(userId, period)
+  if (!available) throw new PeriodReviewCacheStorageFullError()
 }
 
 function cacheOnlyStatsSnapshot(cache: PeriodReviewCacheMap): Record<string, unknown> {
@@ -151,7 +158,7 @@ export async function saveCachedPeriodReview(
   const { planYear, quarter: calendarQuarter } = planYearQuarterForPeriodStart(period.periodStart)
   const admin = createAdminSupabase()
   const rows = await loadPlanYearReviewRows(userId, planYear)
-  const pick = pickPeriodReviewVaultQuarter(rows, calendarQuarter)
+  const pick = resolvePeriodReviewVaultForSave(rows, calendarQuarter)
   if (!pick.ok) throw new PeriodReviewCacheStorageFullError()
 
   const vaultQuarter = pick.vaultQuarter
@@ -161,9 +168,6 @@ export async function saveCachedPeriodReview(
   const stats_snapshot = cacheOnlyStatsSnapshot(cache)
 
   if (vaultRow) {
-    if (isFormQuarterlyReviewRow(vaultRow)) {
-      throw new PeriodReviewCacheStorageFullError()
-    }
     const { error } = await admin
       .from('quarterly_reviews')
       .update({ stats_snapshot })

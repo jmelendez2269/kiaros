@@ -9,7 +9,10 @@ import { dirname, join } from 'node:path'
 import {
   pickPeriodReviewVaultQuarter,
   periodReviewCacheEntryQuotesJournal,
+  resolvePeriodReviewVaultForSave,
 } from '../lib/period-review/cache-vault.ts'
+import { PeriodReviewCacheStorageFullError } from '../lib/period-review/cache-errors.ts'
+import { runPeriodReviewGeneration } from '../lib/period-review/generate-and-cache.ts'
 import {
   consentStripJournalQuotesFromAuthoredRow,
   relocatePeriodReviewCacheOffAuthoredRows,
@@ -186,6 +189,36 @@ const allAuthored = [1, 2, 3, 4].map((quarter) => ({
   stats_snapshot: null,
 }))
 assert.deepEqual(pickPeriodReviewVaultQuarter(allAuthored, 4), { ok: false, reason: 'migration_required' })
+assert.deepEqual(resolvePeriodReviewVaultForSave(allAuthored, 4), { ok: false, reason: 'migration_required' })
+
+let modelGenerateCalled = false
+const vaultFullRun = await runPeriodReviewGeneration({
+  assertVaultAvailable: async () => {
+    throw new PeriodReviewCacheStorageFullError()
+  },
+  generateSummary: async () => {
+    modelGenerateCalled = true
+    return {
+      summary: 'should not run',
+      sections: { sky: 'x' },
+      sourceChips: { sky: [], plans: [], journal: [] },
+      model: 'test',
+    }
+  },
+  saveEntry: async () => {
+    throw new Error('save should not run when vault full')
+  },
+  buildEntry: (generated) => ({
+    summary: generated.summary,
+    generatedAt: new Date().toISOString(),
+    model: generated.model,
+    regenerations: 0,
+    sections: generated.sections,
+    sourceChips: generated.sourceChips,
+  }),
+})
+assert.deepEqual(vaultFullRun, { ok: false, reason: 'storage_full' })
+assert.equal(modelGenerateCalled, false)
 
 const nov = periodFor('month', 2026, 11)
 assert.equal(isPeriodEnded('2026-11-30', nov), false)

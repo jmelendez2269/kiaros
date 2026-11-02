@@ -6,8 +6,15 @@ import { getUserProfileId } from '@/lib/ai/usage'
 import { generatePeriodReviewSummary } from '@/lib/ai/period-review-generator'
 import { countPeriodJournalEntries } from '@/lib/period-review/load-sources'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
-import { loadCachedPeriodReview, PeriodReviewCacheStorageFullError, saveCachedPeriodReview } from '@/lib/period-review/cache'
+import {
+  assertPeriodReviewVaultAvailable,
+  isPeriodReviewVaultAvailable,
+  loadCachedPeriodReview,
+  PeriodReviewCacheStorageFullError,
+  saveCachedPeriodReview,
+} from '@/lib/period-review/cache'
 import { periodReviewStorageFullApiMessage } from '@/lib/period-review/copy'
+import { runPeriodReviewGeneration } from '@/lib/period-review/generate-and-cache'
 import { assertPeriodReviewRateLimit } from '@/lib/period-review/rate-limit'
 import { isPeriodEnded, periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
 import { todayISO } from '@/lib/today/get-today-context'
@@ -24,6 +31,13 @@ const querySchema = z.object({
 
 function disabledResponse() {
   return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
+
+function storageFullResponse() {
+  return NextResponse.json(
+    { error: 'storage_full', message: periodReviewStorageFullApiMessage() },
+    { status: 409 },
+  )
 }
 
 function serializeCached(entry: NonNullable<Awaited<ReturnType<typeof loadCachedPeriodReview>>>) {
@@ -68,6 +82,7 @@ export async function GET(req: Request) {
 
   const cached = await loadCachedPeriodReview(profileId, period)
   const journalEntryCount = await countPeriodJournalEntries(profileId, period)
+  const vaultAvailable = await isPeriodReviewVaultAvailable(profileId, period)
   return NextResponse.json({
     period: {
       kind: period.kind,
@@ -78,6 +93,8 @@ export async function GET(req: Request) {
     },
     cached: cached ? serializeCached(cached) : null,
     journalEntryCount,
+    vaultAvailable,
+    storageFull: !vaultAvailable,
   })
 }
 
@@ -118,33 +135,38 @@ export async function POST(req: Request) {
     })
   }
 
-  await assertPeriodReviewRateLimit(profileId)
-
   try {
-    const generated = await generatePeriodReviewSummary(profileId, period)
-    const entry = {
-      summary: generated.summary,
-      sections: generated.sections,
-      sourceChips: generated.sourceChips,
-      generatedAt: new Date().toISOString(),
-      model: generated.model,
-      regenerations: (existing?.regenerations ?? 0) + (existing ? 1 : 0),
+    const genResult = await runPeriodReviewGeneration({
+      assertVaultAvailable: () => assertPeriodReviewVaultAvailable(profileId, period),
+      generateSummary: async () => {
+        await assertPeriodReviewRateLimit(profileId)
+        return generatePeriodReviewSummary(profileId, period)
+      },
+      saveEntry: (entry) => saveCachedPeriodReview(profileId, period, entry),
+      buildEntry: (generated) => ({
+        summary: generated.summary,
+        sections: generated.sections,
+        sourceChips: generated.sourceChips,
+        generatedAt: new Date().toISOString(),
+        model: generated.model,
+        regenerations: (existing?.regenerations ?? 0) + (existing ? 1 : 0),
+      }),
+    })
+
+    if (!genResult.ok) {
+      return storageFullResponse()
     }
-    await saveCachedPeriodReview(profileId, period, entry)
 
     const journalEntryCount = await countPeriodJournalEntries(profileId, period)
 
     return NextResponse.json({
-      ...serializeCached(entry),
+      ...serializeCached(genResult.entry),
       cached: false,
       journalEntryCount,
     })
   } catch (e) {
     if (e instanceof PeriodReviewCacheStorageFullError) {
-      return NextResponse.json(
-        { error: 'storage_full', message: periodReviewStorageFullApiMessage() },
-        { status: 409 },
-      )
+      return storageFullResponse()
     }
     throw e
   }

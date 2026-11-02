@@ -1,5 +1,6 @@
 import {
   hasAuthoredQuarterlyReviewContent,
+  isFormQuarterlyReviewRow,
   isPeriodReviewCacheOnlyRow,
   type QuarterlyReviewContentRow,
 } from '@/lib/reviews/quarter-review-row'
@@ -41,6 +42,20 @@ export function pickPeriodReviewVaultQuarter(
   }
 
   return { ok: true, vaultQuarter: calendarQuarter }
+}
+
+/** Same vault resolution as `saveCachedPeriodReview` (pick + reject authored form rows). */
+export function resolvePeriodReviewVaultForSave(
+  rows: QuarterlyReviewRowSnapshot[],
+  calendarQuarter: number,
+): PeriodReviewVaultPick {
+  const pick = pickPeriodReviewVaultQuarter(rows, calendarQuarter)
+  if (!pick.ok) return pick
+  const vaultRow = rows.find((r) => r.quarter === pick.vaultQuarter)
+  if (vaultRow && isFormQuarterlyReviewRow(vaultRow)) {
+    return { ok: false, reason: 'migration_required' }
+  }
+  return pick
 }
 
 export function periodReviewCacheEntryQuotesJournal(entry: {

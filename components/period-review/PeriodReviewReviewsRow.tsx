@@ -97,7 +97,7 @@ function chipStyle(filled: boolean, ended: boolean): CSSProperties {
       borderRadius: 999,
       cursor: 'not-allowed',
       background: 'transparent',
-      color: '#6E6D7C',
+      color: '#A4A3B1',
       border: '1px dashed #6E6D7C',
     }
   }

@@ -53,6 +53,7 @@ function ShimmerBlock({ height = 72 }: { height?: number }) {
 async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
   payload: ReviewPayload | null
   journalEntryCount: number
+  vaultAvailable: boolean
 }> {
   const sp = new URLSearchParams({
     kind: period.kind,
@@ -63,6 +64,8 @@ async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
   const getData = await getRes.json()
   if (!getRes.ok) throw new Error(getData.error ?? 'Could not load review')
 
+  const vaultAvailable = getData.vaultAvailable !== false
+
   if (getData.cached) {
     return {
       payload: {
@@ -71,10 +74,11 @@ async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
         generatedAt: getData.cached.generatedAt,
       },
       journalEntryCount: getData.journalEntryCount ?? 0,
+      vaultAvailable,
     }
   }
 
-  return { payload: null, journalEntryCount: getData.journalEntryCount ?? 0 }
+  return { payload: null, journalEntryCount: getData.journalEntryCount ?? 0, vaultAvailable }
 }
 
 type PostGenerateResult =
@@ -127,6 +131,7 @@ export function PeriodReviewModal({
   const [loadingCache, setLoadingCache] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [storageFullOpen, setStorageFullOpen] = useState(false)
+  const [vaultAvailable, setVaultAvailable] = useState(true)
   const [pending, startTransition] = useTransition()
   const [confirmRegen, setConfirmRegen] = useState(false)
 
@@ -136,12 +141,17 @@ export function PeriodReviewModal({
     setLoadingCache(true)
     setError(null)
     setStorageFullOpen(false)
+    setVaultAvailable(true)
     startTransition(async () => {
       try {
         const result = await loadCachedOnly(period)
         setPayload(result.payload)
         setNeedsGenerate(!result.payload)
         setJournalEntryCount(result.journalEntryCount)
+        setVaultAvailable(result.vaultAvailable)
+        if (!result.payload && !result.vaultAvailable) {
+          setStorageFullOpen(true)
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Something went wrong')
       } finally {
@@ -158,6 +168,7 @@ export function PeriodReviewModal({
         const result = await postGenerate(period, false)
         if (!result.ok) {
           setStorageFullOpen(true)
+          setVaultAvailable(false)
           return
         }
         setPayload(result.payload)
@@ -216,6 +227,7 @@ export function PeriodReviewModal({
         const result = await postGenerate(period, true)
         if (!result.ok) {
           setStorageFullOpen(true)
+          setVaultAvailable(false)
           return
         }
         setPayload(result.payload)
@@ -389,7 +401,7 @@ export function PeriodReviewModal({
               <ShimmerBlock height={64} />
               <ShimmerBlock height={64} />
             </div>
-          ) : needsGenerate && !payload && !storageFullOpen ? (
+          ) : needsGenerate && !payload && !storageFullOpen && vaultAvailable ? (
             <div style={{ marginTop: 8 }}>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: '#A4A3B1', marginBottom: 16 }}>
                 No saved look back for this period yet.
@@ -457,6 +469,7 @@ export function PeriodReviewModal({
           }}
         >
           <div style={{ position: 'relative' }}>
+            {payload && vaultAvailable ? (
             <button
               type="button"
               disabled={pending || !payload}
@@ -474,6 +487,7 @@ export function PeriodReviewModal({
             >
               Regenerate
             </button>
+            ) : null}
             {confirmRegen ? (
               <div
                 style={{
