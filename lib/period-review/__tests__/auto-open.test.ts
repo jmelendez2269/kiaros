@@ -2,7 +2,16 @@
  * Tests for period review auto-open behavior
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+import { choosePeriodToAutoOpen } from '@/lib/period-review/auto-open'
+import { periodReviewAutoOpenStorageKey } from '@/lib/period-review/auto-open-storage'
+
+// Run: npx tsx --test lib/period-review/__tests__/auto-open.test.ts
+const expect = (a: unknown) => ({
+  toBe: (b: unknown) => assert.equal(a, b),
+  not: { toBe: (b: unknown) => assert.notEqual(a, b) },
+})
 import {
   isPromoWindow,
   periodFor,
@@ -89,7 +98,7 @@ describe('Period Review Auto-Open Logic', () => {
       expect(isPromoWindow('2026-10-03', quarterPeriod)).toBe(true)
     })
 
-    it('identifies when only quarter is in window', () => {
+    it('identifies the Dec/Q4 overlap (both in window)', () => {
       // December 31 - January 7: both December month and Q4 are in window
       const monthPeriod = latestClosedMonth('2027-01-05')
       const quarterPeriod = latestClosedQuarter('2027-01-05')
@@ -117,25 +126,47 @@ describe('Period Review Auto-Open Logic', () => {
   describe('Auto-open storage keys', () => {
     it('generates unique keys for different users', () => {
       const period = periodFor('month', 2026, 10)
-      const key1 = `kiaros-period-review-auto-opened:user1:${period.kind}:${period.periodStart}`
-      const key2 = `kiaros-period-review-auto-opened:user2:${period.kind}:${period.periodStart}`
+      const key1 = periodReviewAutoOpenStorageKey('user1', period)
+      const key2 = periodReviewAutoOpenStorageKey('user2', period)
       expect(key1).not.toBe(key2)
     })
 
     it('generates unique keys for different periods', () => {
       const oct = periodFor('month', 2026, 10)
       const nov = periodFor('month', 2026, 11)
-      const key1 = `kiaros-period-review-auto-opened:user1:${oct.kind}:${oct.periodStart}`
-      const key2 = `kiaros-period-review-auto-opened:user1:${nov.kind}:${nov.periodStart}`
+      const key1 = periodReviewAutoOpenStorageKey('user1', oct)
+      const key2 = periodReviewAutoOpenStorageKey('user1', nov)
       expect(key1).not.toBe(key2)
     })
 
     it('generates unique keys for month vs quarter', () => {
       const month = periodFor('month', 2026, 10)
       const quarter = periodFor('quarter', 2026, 4)
-      const key1 = `kiaros-period-review-auto-opened:user1:${month.kind}:${month.periodStart}`
-      const key2 = `kiaros-period-review-auto-opened:user1:${quarter.kind}:${quarter.periodStart}`
+      const key1 = periodReviewAutoOpenStorageKey('user1', month)
+      const key2 = periodReviewAutoOpenStorageKey('user1', quarter)
       expect(key1).not.toBe(key2)
+    })
+  })
+
+  describe('choosePeriodToAutoOpen', () => {
+    it('opens the quarter first when both are due', () => {
+      const p = choosePeriodToAutoOpen('2026-10-03', () => false)
+      expect(p?.kind).toBe('quarter')
+      expect(p?.index).toBe(3)
+    })
+    it('opens the month next once the quarter was seen', () => {
+      const p = choosePeriodToAutoOpen('2026-10-03', (x) => x.kind === 'quarter')
+      expect(p?.kind).toBe('month')
+      expect(p?.index).toBe(9)
+    })
+    it('opens nothing once both were seen', () => {
+      expect(choosePeriodToAutoOpen('2026-10-03', () => true)).toBe(null)
+    })
+    it('opens only the month when only the month is due', () => {
+      expect(choosePeriodToAutoOpen('2026-11-05', () => false)?.kind).toBe('month')
+    })
+    it('opens nothing outside the window', () => {
+      expect(choosePeriodToAutoOpen('2026-11-15', () => false)).toBe(null)
     })
   })
 })
