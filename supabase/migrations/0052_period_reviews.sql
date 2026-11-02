@@ -1,10 +1,3 @@
--- =============================================================================
--- PROPOSAL ONLY — DO NOT RUN IN PRODUCTION OR PLACE IN supabase/migrations/
--- =============================================================================
--- Dedicated storage for REVIEW-01 period look-backs (month + quarter AI
--- summaries). Held indefinitely; PR #71 ships on quarterly_reviews vault fallback.
--- =============================================================================
-
 BEGIN;
 
 CREATE TABLE public.period_reviews (

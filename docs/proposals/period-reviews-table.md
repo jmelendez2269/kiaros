@@ -1,12 +1,11 @@
-# `period_reviews` table (held)
+# `period_reviews` table
 
-Jack approved the **shape** of this table; applying it is **held indefinitely**. PR #71 ships on the **`quarterly_reviews` vault fallback** only.
+**Applied to production:** November 2, 2026, ~10:10 AM ET (ledger entries `0051`, `0052` recorded on the Kairos database).
 
-- **Proposal SQL (not in migrations):** [`period-reviews-table.sql`](./period-reviews-table.sql)
-- **Runtime:** probes `period_reviews`; on missing table (42P01 / PGRST205), reads and writes `stats_snapshot.periodReviewCache` via the legacy vault path.
-- **Do not** add this file to `supabase/migrations/` until an explicit apply is approved.
+- **Migration file:** [`supabase/migrations/0052_period_reviews.sql`](../../supabase/migrations/0052_period_reviews.sql)
+- **Runtime:** REVIEW-01 reads/writes `period_reviews` when the table is present; falls back to `quarterly_reviews.stats_snapshot.periodReviewCache` if the relation is missing.
 
-**Undo (DDL only, if ever applied manually):**
+**Undo (DDL only):**
 
 ```sql
 BEGIN;
