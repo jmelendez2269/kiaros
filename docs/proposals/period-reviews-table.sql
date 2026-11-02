@@ -1,3 +1,10 @@
+-- =============================================================================
+-- PROPOSAL ONLY — DO NOT RUN IN PRODUCTION OR PLACE IN supabase/migrations/
+-- =============================================================================
+-- Dedicated storage for REVIEW-01 period look-backs (month + quarter AI
+-- summaries). Held indefinitely; PR #71 ships on quarterly_reviews vault fallback.
+-- =============================================================================
+
 BEGIN;
 
 CREATE TABLE public.period_reviews (
@@ -64,3 +71,13 @@ CREATE POLICY "own_period_reviews" ON public.period_reviews
   );
 
 COMMIT;
+
+-- =============================================================================
+-- ROLLBACK (manual, if this proposal is ever applied and must be reverted)
+-- =============================================================================
+-- BEGIN;
+-- DROP TRIGGER IF EXISTS period_reviews_set_updated_at ON public.period_reviews;
+-- DROP FUNCTION IF EXISTS public.set_period_reviews_updated_at();
+-- DROP POLICY IF EXISTS "own_period_reviews" ON public.period_reviews;
+-- DROP TABLE IF EXISTS public.period_reviews;
+-- COMMIT;

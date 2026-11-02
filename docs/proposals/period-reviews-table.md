@@ -1,12 +1,12 @@
-# `period_reviews` table
+# `period_reviews` table (held)
 
-Jack approved adding this table; **do not apply the migration until explicitly approved for production.**
+Jack approved the **shape** of this table; applying it is **held indefinitely**. PR #71 ships on the **`quarterly_reviews` vault fallback** only.
 
-- **Migration (not applied):** [`supabase/migrations/0052_period_reviews.sql`](../supabase/migrations/0052_period_reviews.sql)
-- **Runtime:** REVIEW-01 reads/writes `period_reviews` when the table exists; otherwise it quietly falls back to `quarterly_reviews.stats_snapshot.periodReviewCache` (vault path).
-- **No backfill** in the migration; optional data move is a separate job.
+- **Proposal SQL (not in migrations):** [`period-reviews-table.sql`](./period-reviews-table.sql)
+- **Runtime:** probes `period_reviews`; on missing table (42P01 / PGRST205), reads and writes `stats_snapshot.periodReviewCache` via the legacy vault path.
+- **Do not** add this file to `supabase/migrations/` until an explicit apply is approved.
 
-**Undo (DDL only):**
+**Undo (DDL only, if ever applied manually):**
 
 ```sql
 BEGIN;
