@@ -66,7 +66,7 @@ export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }
           style={{
             fontFamily: K.fMono,
             fontSize: 11.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.14em',
           }}
         >
@@ -106,7 +106,7 @@ export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }
                   fontFamily: K.fMono,
                   fontSize: 10,
                   letterSpacing: '0.1em',
-                  color: isCurrent ? K.ink : K.inkSoft,
+                  color: isCurrent ? K.ink : K.inkDim,
                 }}
               >
                 W{w.weekNumber}
@@ -128,7 +128,7 @@ export function WeekArc({ weeks, currentWeekNumber, calendarDayEnabled = false }
               fontSize: 10,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: K.inkSoft,
+              color: K.inkDim,
             }}
           >
             <span

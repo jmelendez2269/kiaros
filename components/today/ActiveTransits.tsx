@@ -37,14 +37,14 @@ const ASPECT_GLYPH: Record<AspectKind, string> = {
 const ASPECT_TONE: Record<AspectKind, string> = {
   conjunction: K.copper,
   opposition: K.brickHi,
-  square: K.brick,
+  square: K.aspectSquare,
   trine: K.sage,
   sextile: K.copperHi,
 }
 
 const RARITY_TONE: Record<string, string> = {
-  common: K.inkSoft,
-  frequent: K.inkSoft,
+  common: K.inkDim,
+  frequent: K.inkDim,
   uncommon: K.plum,
   rare: K.copperHi,
   'once-in-lifetime': K.ember,
@@ -57,7 +57,7 @@ export function ActiveTransits({ data }: Props) {
   if (data.status === 'no-chart') {
     return (
       <Frame tone="umber" padding={20}>
-        <Kicker color={K.copper}>Active transits</Kicker>
+        <Kicker color={K.violetDim} opacity={1}>Active transits</Kicker>
         <p
           style={{
             marginTop: 10,
@@ -81,7 +81,7 @@ export function ActiveTransits({ data }: Props) {
   if (!hasAny) {
     return (
       <Frame tone="umber" padding={20}>
-        <Kicker color={K.copper}>Active transits</Kicker>
+        <Kicker color={K.violetDim} opacity={1}>Active transits</Kicker>
         <p
           style={{
             marginTop: 10,
@@ -101,7 +101,7 @@ export function ActiveTransits({ data }: Props) {
 
   return (
     <Frame tone="umber" padding={20}>
-      <Kicker color={K.copper}>Active transits</Kicker>
+      <Kicker color={K.violetDim} opacity={1}>Active transits</Kicker>
 
       {/* Current / short-wave transits */}
       {current.length > 0 ? (
@@ -174,7 +174,7 @@ export function ActiveTransits({ data }: Props) {
                   fontFamily: K.fSerif,
                   fontStyle: 'italic',
                   fontSize: 16,
-                  color: K.inkSoft,
+                  color: K.inkDim,
                   lineHeight: 1.5,
                   marginBottom: 8,
                 }}
@@ -203,7 +203,7 @@ export function ActiveTransits({ data }: Props) {
 function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
   const aspectKey = row.aspect as AspectKind
   const tone = ASPECT_TONE[aspectKey] ?? K.copper
-  const rarityColor = RARITY_TONE[row.rarity] ?? K.inkSoft
+  const rarityColor = RARITY_TONE[row.rarity] ?? K.inkDim
 
   return (
     <div
@@ -266,7 +266,7 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         style={{
           fontFamily: K.fMono,
           fontSize: 11,
-          color: K.inkSoft,
+          color: K.inkDim,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',

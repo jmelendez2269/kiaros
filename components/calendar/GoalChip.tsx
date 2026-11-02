@@ -48,7 +48,7 @@ export function GoalChip({ goal, weekDates, defaultDate, alreadyAdded }: Props) 
 
   return (
     <div className="flex max-w-full flex-col gap-1">
-      <div className="inline-flex max-w-full items-center gap-2 rounded-2xl border border-leather-500/30 bg-leather-500/15 py-1 pl-3 pr-1 text-xs text-leather-200">
+      <div className="inline-flex max-w-full items-center gap-2 rounded-2xl bg-leather-500/15 py-1 pl-3 pr-1 text-xs text-leather-200" style={{ border: '1px solid var(--almanac-violet-outline)' }}>
         <span className="min-w-0 truncate">{goal.title}</span>
         {added ? (
           <span className="shrink-0 px-2 py-2 text-moss-300">✓ Planned</span>

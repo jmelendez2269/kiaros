@@ -74,12 +74,12 @@ export function JupiterSeason({ data }: Props) {
           flexWrap: 'wrap',
         }}
       >
-        <Kicker color={K.copper}>The season you&rsquo;re in</Kicker>
+        <Kicker color={K.violetDim} opacity={1}>The season you&rsquo;re in</Kicker>
         <span
           style={{
             fontFamily: K.fMono,
             fontSize: 10.5,
-            color: K.inkSoft,
+            color: K.inkDim,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
           }}
@@ -118,7 +118,7 @@ export function JupiterSeason({ data }: Props) {
                 fontFamily: K.fMono,
                 fontSize: 10,
                 fontStyle: 'normal',
-                color: K.inkSoft,
+                color: K.inkDim,
                 letterSpacing: '0.14em',
                 textTransform: 'uppercase',
                 verticalAlign: 'middle',
@@ -173,7 +173,7 @@ export function JupiterSeason({ data }: Props) {
             style={{
               fontFamily: K.fMono,
               fontSize: 10,
-              color: K.inkSoft,
+              color: K.inkDim,
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
               marginBottom: 6,

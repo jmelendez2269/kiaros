@@ -248,7 +248,7 @@ function InstrumentPanel() {
                   </span>
                 ) : null}
               </div>
-              <p className="mt-2 text-[0.85rem] leading-6 text-almanac-ink-soft">{item.body}</p>
+              <p className="mt-2 text-[0.85rem] leading-6 text-almanac-ink-dim">{item.body}</p>
             </div>
           ))}
         </div>
@@ -291,14 +291,14 @@ function BlueprintDeepDive() {
             reason for being what it is.
           </p>
           <Divider glyph="&#9737;" />
-          <p className="text-[0.95rem] leading-7 text-almanac-ink-soft">
+          <p className="text-[0.95rem] leading-7 text-almanac-ink-dim">
             Regenerate whenever your year changes shape. Nothing is overwritten — every version
             is kept, so your history stays intact.
           </p>
         </div>
 
         <div className="rounded-2xl border border-almanac-line-hi bg-almanac-bg2/70 p-6 md:p-8">
-          <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.16em] text-almanac-ink-soft">
+          <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.16em] text-almanac-ink-dim">
             Quarter 2 &middot; sample week arc
           </p>
           <div className="mt-5 flex items-end gap-2">
@@ -308,11 +308,11 @@ function BlueprintDeepDive() {
                   className={`w-full rounded-t-md ${toneColor[w.tone]}`}
                   style={{ height: w.tone === "push" ? 92 : w.tone === "rest" ? 40 : 64 }}
                 />
-                <span className="font-almanac-mono text-[0.62rem] text-almanac-ink-soft">{w.label}</span>
+                <span className="font-almanac-mono text-[0.62rem] text-almanac-ink-dim">{w.label}</span>
               </div>
             ))}
           </div>
-          <div className="mt-5 flex flex-wrap gap-4 font-almanac-mono text-[0.65rem] uppercase tracking-[0.1em] text-almanac-ink-soft">
+          <div className="mt-5 flex flex-wrap gap-4 font-almanac-mono text-[0.65rem] uppercase tracking-[0.1em] text-almanac-ink-dim">
             <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-almanac-kairos-hi" /> Push</span>
             <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[rgba(103,152,203,0.6)]" /> Steady</span>
             <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[rgba(223,155,63,0.7)]" /> Rest</span>
@@ -343,7 +343,7 @@ function OracleDeepDive() {
             week's transits, the goals you named, and whatever you've chosen to let it remember
             from your journal. Your conversation begins with that context already in place.
           </p>
-          <ul className="mt-6 space-y-3 text-[0.9rem] leading-6 text-almanac-ink-soft">
+          <ul className="mt-6 space-y-3 text-[0.9rem] leading-6 text-almanac-ink-dim">
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Grounded in your actual transits and chart placements.</li>
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Five interpretive lenses — evolutionary, karmic, psychological, traditional, synthesis.</li>
             <li className="flex gap-3"><span className="text-almanac-copper">&middot;</span> Capture a line or full exchange; you choose whether it feeds Insights, planning, or both.</li>
@@ -357,7 +357,7 @@ function OracleDeepDive() {
         </div>
 
         <div className="rounded-2xl border border-almanac-line-hi bg-[rgba(10,12,20,0.8)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] md:p-7">
-          <p className="font-almanac-mono text-[0.65rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+          <p className="font-almanac-mono text-[0.65rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
             Sample exchange
           </p>
           <div className="mt-4 space-y-4">
@@ -379,7 +379,7 @@ function OracleDeepDive() {
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
                 {["Saturn △ Midheaven", "Jupiter ☌ Moon", "Year Vision"].map((tag) => (
-                  <span key={tag} className="rounded-full border border-almanac-line-hi bg-[rgba(10,12,20,0.7)] px-2.5 py-0.5 text-[0.62rem] text-almanac-ink-soft">
+                  <span key={tag} className="rounded-full border border-almanac-line-hi bg-[rgba(10,12,20,0.7)] px-2.5 py-0.5 text-[0.62rem] text-almanac-ink-dim">
                     {tag}
                   </span>
                 ))}
@@ -443,9 +443,9 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
             </p>
             <div className="mt-6 flex items-baseline gap-2">
               <span className="font-almanac-display text-4xl text-almanac-ink">$0</span>
-              <span className="text-sm text-almanac-ink-soft">one persistent reading</span>
+              <span className="text-sm text-almanac-ink-dim">one persistent reading</span>
             </div>
-            <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-soft">
+            <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-dim">
               {["One dated birth-chart reading", "Seven daily sky notes", "Keep it and return whenever you like"].map((feature) => (
                 <li key={feature} className="flex gap-2">
                   <span className="mt-1 text-almanac-copper">&middot;</span>
@@ -485,16 +485,16 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
                 <span className="font-almanac-display text-4xl text-almanac-ink">
                   {formatUsd(tier.monthlyPriceCents)}
                 </span>
-                <span className="text-sm text-almanac-ink-soft">/mo, or {formatUsd(tier.annualPriceCents)}/yr</span>
+                <span className="text-sm text-almanac-ink-dim">/mo, or {formatUsd(tier.annualPriceCents)}/yr</span>
               </div>
 
-              <p className="mt-3 text-[0.78rem] leading-5 text-almanac-ink-soft">
+              <p className="mt-3 text-[0.78rem] leading-5 text-almanac-ink-dim">
                 Monthly shows your current Blueprint week plus the next four Blueprint weeks.
                 Annual unlocks the full canonical Blueprint.
                 {tier.oracleEnabled ? " Planner + Oracle includes Stelloquy." : null}
               </p>
 
-              <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-soft">
+              <ul className="mt-6 space-y-2 text-[0.85rem] leading-6 text-almanac-ink-dim">
                 {tier.features.slice(0, 4).map((f) => (
                   <li key={f} className="flex gap-2">
                     <span className="mt-1 text-almanac-copper">&middot;</span>
@@ -521,7 +521,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
                 )}
                 <Link
                   href="/pricing"
-                  className="text-sm text-almanac-ink-soft underline decoration-almanac-line-hi underline-offset-4 transition-colors hover:text-almanac-ink"
+                  className="text-sm text-almanac-ink-dim underline decoration-almanac-line-hi underline-offset-4 transition-colors hover:text-almanac-ink"
                 >
                   Full plan comparison
                 </Link>
@@ -545,7 +545,7 @@ function MarketingFooter() {
             {BRAND.product.toUpperCase()}
           </span>
         </div>
-        <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.7rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+        <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.7rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
           <Link href="/stelloquy" className="transition-colors hover:text-almanac-ink">Stelloquy</Link>
           <Link href="/contact" className="transition-colors hover:text-almanac-ink">Contact</Link>
           <Link href="/privacy" className="transition-colors hover:text-almanac-ink">Privacy</Link>

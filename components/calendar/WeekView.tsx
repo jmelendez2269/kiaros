@@ -35,7 +35,7 @@ const ASPECT_GLYPH: Record<AspectType, string> = {
 }
 
 const ASPECT_TONE: Record<AspectType, string> = {
-  conjunction: 'text-leather-200',
+  conjunction: 'text-almanac-violet-dim',
   opposition: 'text-ember-300',
   square: 'text-ember-300',
   trine: 'text-moss-300',
@@ -179,7 +179,7 @@ function collectPlanetEvents(weekDates: string[], dayMap: Map<string, EphemerisD
 }
 
 const ENERGY_STYLES: Record<string, string> = {
-  push: 'border-leather-500/30 bg-leather-500/15 text-leather-200',
+  push: 'bg-leather-500/15 text-leather-200 border-[var(--almanac-violet-outline)]',
   rest: 'border-moss-500/30 bg-moss-500/15 text-moss-200',
   reflect: 'border-plum-400/30 bg-plum-400/15 text-plum-300',
   initiate: 'border-ember-400/30 bg-ember-400/15 text-ember-300',
@@ -275,7 +275,8 @@ export function WeekView({
               {weekBlueprint.goalCategoryFocus.map((area) => (
                 <span
                   key={area}
-                  className="rounded-full border border-leather-500/30 bg-leather-500/15 px-3 py-1 text-xs uppercase tracking-wider text-leather-200"
+                  className="rounded-full bg-leather-500/15 px-3 py-1 text-xs uppercase tracking-wider text-leather-200"
+                  style={{ border: '1px solid var(--almanac-violet-outline)' }}
                 >
                   {area}
                 </span>
@@ -467,7 +468,7 @@ export function WeekView({
                     icon = (
                       <span className="inline-flex items-center gap-1 text-base">
                         <span className="text-bone">{PLANET_GLYPH[evt.planet]}</span>
-                        <span className={cn('opacity-70', ASPECT_TONE[evt.aspect])}>
+                        <span className={ASPECT_TONE[evt.aspect]}>
                           {ASPECT_GLYPH[evt.aspect]}
                         </span>
                         <span className="text-bone">{PLANET_GLYPH[evt.natalPlanet]}</span>

@@ -204,7 +204,8 @@ export function AreaGoalsPanel({ slug, areaName, initialGoals, upcomingWindows }
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-leather-400/45 bg-leather-500/15 px-4 py-2.5 text-sm font-medium text-bone transition-colors hover:border-leather-300/65 hover:bg-leather-500/25"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-leather-500/15 px-4 py-2.5 text-sm font-medium text-bone transition-colors hover:bg-leather-500/25"
+            style={{ border: '1px solid var(--almanac-violet-outline)' }}
           >
             <Plus size={14} />
             Add a goal

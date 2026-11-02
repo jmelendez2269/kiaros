@@ -62,7 +62,7 @@ export function MonthGrid({
             style={{
               fontFamily: K.fMono,
               fontSize: 9.5,
-              color: K.inkSoft,
+              color: K.inkDim,
               letterSpacing: '0.16em',
               textAlign: 'center',
               padding: '4px 0',
@@ -148,7 +148,7 @@ export function MonthGrid({
                       />
                       <span
                         className="hidden xl:inline"
-                        style={{ fontFamily: K.fMono, fontSize: 8, color: K.inkSoft }}
+                        style={{ fontFamily: K.fMono, fontSize: 8, color: K.inkDim }}
                       >
                         {character.label}
                       </span>
@@ -211,7 +211,7 @@ export function MonthGrid({
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 8.5,
-                    color: doneCount === totalCount ? K.sage : K.inkSoft,
+                    color: doneCount === totalCount ? K.sage : K.inkDim,
                   }}
                 >
                   {doneCount}/{totalCount} planned

@@ -245,7 +245,8 @@ function OracleOverlay({
               {upgradeAvailable ? (
                 <a
                   href="/pricing#tiers"
-                  className="inline-flex items-center rounded-2xl border border-leather-400/50 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow transition-colors hover:bg-leather-500/45"
+                  className="inline-flex items-center rounded-2xl bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow transition-colors hover:bg-leather-500/45"
+                  style={{ border: '1px solid var(--almanac-violet-outline)' }}
                 >
                   See Planner + Oracle
                 </a>
@@ -260,7 +261,8 @@ function OracleOverlay({
               </p>
               <a
                 href="/pricing#tiers"
-                className="mt-3 inline-flex items-center rounded-2xl border border-leather-400/50 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow transition-colors hover:bg-leather-500/45"
+                className="mt-3 inline-flex items-center rounded-2xl bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow transition-colors hover:bg-leather-500/45"
+                style={{ border: '1px solid var(--almanac-violet-outline)' }}
               >
                 Continue with Stelloquy →
               </a>

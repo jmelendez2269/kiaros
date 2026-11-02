@@ -282,8 +282,8 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
               marginTop: 4,
             }}
           >
-            <span style={{ color: K.kairos }}>●</span>{' '}
-            <span style={{ color: K.copperHi }}>Almanac · {new Date().getFullYear()}</span>
+            <span style={{ color: K.violetDim }}>●</span>{' '}
+            <span style={{ color: K.violetDim }}>Almanac · {new Date().getFullYear()}</span>
           </div>
         </div>
       ) : null}
@@ -414,7 +414,7 @@ function NavRow({
                     fontFamily: K.fMono,
                     fontSize: 13,
                     letterSpacing: '0.1em',
-                    color: K.inkSoft,
+                    color: K.inkDim,
                     marginTop: 2,
                   }}
                 >
@@ -445,7 +445,7 @@ function NavRow({
                 border: 'none',
                 borderRadius: 8,
                 background: 'transparent',
-                color: isActive ? n.tone : K.inkSoft,
+                color: isActive ? n.tone : K.inkDim,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -514,7 +514,7 @@ function NavRow({
                         fontFamily: K.fMono,
                         fontSize: 12,
                         letterSpacing: '0.1em',
-                        color: K.inkSoft,
+                        color: K.inkDim,
                       }}
                     >
                       {sub.hint}
@@ -598,7 +598,7 @@ function SidebarBody({
               width: '100%',
               padding: collapsed ? 0 : '0 10px',
               borderRadius: 8,
-              border: `1px solid ${K.line}`,
+              border: `1px solid ${K.borderStrong}`,
               background: 'transparent',
               color: K.inkDim,
               fontFamily: K.fMono,
@@ -680,7 +680,7 @@ function SidebarBody({
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
-                    color: K.inkSoft,
+                    color: K.inkDim,
                     letterSpacing: '0.16em',
                     textTransform: 'uppercase',
                     whiteSpace: 'nowrap',
@@ -711,7 +711,7 @@ function SidebarBody({
                   justifyContent: 'center',
                   width: 44,
                   height: 44,
-                  color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
+                  color: pathname.startsWith('/settings') ? K.ink : K.inkDim,
                 }}
               >
                 <Settings size={14} />
@@ -732,7 +732,7 @@ function SidebarBody({
                     width: 44,
                     height: 44,
                     padding: 0,
-                    color: K.inkSoft,
+                    color: K.inkDim,
                   }}
                 >
                   <LogOut size={14} aria-hidden="true" />
@@ -765,7 +765,7 @@ function SidebarBody({
                   style={{
                     fontFamily: K.fMono,
                     fontSize: 13,
-                    color: K.inkSoft,
+                    color: K.inkDim,
                     letterSpacing: '0.16em',
                     textTransform: 'uppercase',
                   }}
@@ -785,7 +785,7 @@ function SidebarBody({
                 justifyContent: 'center',
                 width: 44,
                 height: 44,
-                color: pathname.startsWith('/settings') ? K.ink : K.inkSoft,
+                color: pathname.startsWith('/settings') ? K.ink : K.inkDim,
               }}
             >
               <Settings size={14} />
@@ -809,7 +809,7 @@ function SidebarBody({
                   fontSize: 12,
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  color: K.inkSoft,
+                  color: K.inkDim,
                 }}
               >
                 <LogOut size={14} />
@@ -930,7 +930,7 @@ export function AlmanacSidebar({
               width: 44,
               height: 44,
               borderRadius: 12,
-              border: `1px solid ${K.line}`,
+              border: `1px solid ${K.borderStrong}`,
               background: K.bg,
               color: K.ink,
               display: 'flex',

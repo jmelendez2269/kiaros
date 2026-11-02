@@ -541,7 +541,7 @@ export function PublicPricingPage({
                 <p className="shell-kicker">The Week Pulse</p>
                 <h4 className="mt-2 font-display text-[1.8rem] text-bone">Week of April 21 — Jupiter window</h4>
               </div>
-              <span className="shell-pill border-leather-500/30 bg-leather-500/15 text-leather-200">
+              <span className="shell-pill bg-leather-500/15 text-leather-200" style={{ border: '1px solid var(--almanac-violet-outline)' }}>
                 Primary lane rhythm
               </span>
             </div>
@@ -854,7 +854,7 @@ export function PublicPricingPage({
               <div className="space-y-4 px-5 py-5">
                 {/* User message */}
                 <div className="flex justify-end">
-                  <div className="max-w-[80%] rounded-[1rem] rounded-tr-sm bg-leather-500/20 border border-leather-500/30 px-4 py-3">
+                  <div className="max-w-[80%] rounded-[1rem] rounded-tr-sm bg-leather-500/20 px-4 py-3" style={{ border: '1px solid var(--almanac-violet-outline)' }}>
                     <p className="text-sm leading-6 text-bone">
                       I&apos;ve been feeling pulled in two directions about my creative work. Should I focus on one thing or keep both going?
                     </p>
