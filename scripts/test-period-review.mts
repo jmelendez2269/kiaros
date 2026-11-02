@@ -12,6 +12,15 @@ import {
   resolvePeriodReviewVaultForSave,
 } from '../lib/period-review/cache-vault.ts'
 import { PeriodReviewCacheStorageFullError } from '../lib/period-review/cache-errors.ts'
+import {
+  isMissingPeriodReviewsTableError,
+  periodReviewVaultAvailableForStorage,
+  resolvePeriodReviewStorageBackend,
+} from '../lib/period-review/period-reviews-table-errors.ts'
+import {
+  periodReviewEntryFromPayload,
+  periodReviewPayloadFromEntry,
+} from '../lib/period-review/period-reviews-payload.ts'
 import { runPeriodReviewGeneration } from '../lib/period-review/generate-and-cache.ts'
 import {
   consentStripJournalQuotesFromAuthoredRow,
@@ -190,6 +199,26 @@ const allAuthored = [1, 2, 3, 4].map((quarter) => ({
 }))
 assert.deepEqual(pickPeriodReviewVaultQuarter(allAuthored, 4), { ok: false, reason: 'migration_required' })
 assert.deepEqual(resolvePeriodReviewVaultForSave(allAuthored, 4), { ok: false, reason: 'migration_required' })
+
+assert.equal(isMissingPeriodReviewsTableError({ code: '42P01', message: 'undefined_table' }), true)
+assert.equal(isMissingPeriodReviewsTableError({ code: 'PGRST205', message: "Could not find the table 'public.period_reviews'" }), true)
+assert.equal(isMissingPeriodReviewsTableError({ code: '23505', message: 'duplicate key' }), false)
+assert.equal(resolvePeriodReviewStorageBackend({ code: 'PGRST205', message: 'period_reviews' }), 'legacy')
+assert.equal(resolvePeriodReviewStorageBackend(null), 'table')
+assert.equal(periodReviewVaultAvailableForStorage('table', false), true)
+assert.equal(periodReviewVaultAvailableForStorage('legacy', false), false)
+assert.equal(periodReviewVaultAvailableForStorage('legacy', true), true)
+
+const sampleEntry = {
+  summary: 'Hello',
+  generatedAt: '2026-10-31T12:00:00Z',
+  model: 'claude-sonnet-4-6',
+  regenerations: 1,
+  sections: { sky: 'Calm' },
+  sourceChips: { sky: ['1 retrograde'], plans: [], journal: [] },
+}
+const roundTrip = periodReviewEntryFromPayload(periodReviewPayloadFromEntry(sampleEntry))
+assert.deepEqual(roundTrip, sampleEntry)
 
 let modelGenerateCalled = false
 const vaultFullRun = await runPeriodReviewGeneration({
