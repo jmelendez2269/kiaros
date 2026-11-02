@@ -283,7 +283,17 @@ export async function MonthChartView({
             }}
           >
             <Frame tone="raised" padding={20} style={{ borderColor: `${K.brickHi}55` }}>
-              <Kicker color={K.brickHi}>Intentions</Kicker>
+              <div
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 15,
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: K.violetDim,
+                }}
+              >
+                Intentions
+              </div>
               {monthBlueprint && monthBlueprint.intentions.length > 0 ? (
                 <ul
                   style={{
@@ -328,7 +338,17 @@ export async function MonthChartView({
             </Frame>
 
             <Frame tone="umber" padding={20}>
-              <Kicker color={K.copper}>Key transits</Kicker>
+              <div
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 15,
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: K.violetDim,
+                }}
+              >
+                Key transits
+              </div>
               {monthBlueprint && monthBlueprint.keyTransits.length > 0 ? (
                 <ul
                   style={{
@@ -373,7 +393,17 @@ export async function MonthChartView({
             </Frame>
 
             <Frame tone="cocoa" padding={20} stars>
-              <Kicker color={K.copper}>Sabian symbol</Kicker>
+              <div
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 15,
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                  color: K.violetDim,
+                }}
+              >
+                Sabian symbol
+              </div>
               {sabian ? (
                 <>
                   <div

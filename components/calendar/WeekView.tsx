@@ -35,7 +35,7 @@ const ASPECT_GLYPH: Record<AspectType, string> = {
 }
 
 const ASPECT_TONE: Record<AspectType, string> = {
-  conjunction: 'text-leather-200',
+  conjunction: 'text-almanac-violet-dim',
   opposition: 'text-ember-300',
   square: 'text-ember-300',
   trine: 'text-moss-300',
@@ -468,7 +468,7 @@ export function WeekView({
                     icon = (
                       <span className="inline-flex items-center gap-1 text-base">
                         <span className="text-bone">{PLANET_GLYPH[evt.planet]}</span>
-                        <span className={cn('opacity-70', ASPECT_TONE[evt.aspect])}>
+                        <span className={ASPECT_TONE[evt.aspect]}>
                           {ASPECT_GLYPH[evt.aspect]}
                         </span>
                         <span className="text-bone">{PLANET_GLYPH[evt.natalPlanet]}</span>

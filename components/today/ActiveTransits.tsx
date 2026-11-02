@@ -35,11 +35,11 @@ const ASPECT_GLYPH: Record<AspectKind, string> = {
 }
 
 const ASPECT_TONE: Record<AspectKind, string> = {
-  conjunction: K.copper,
-  opposition: K.brickHi,
-  square: K.brick,
+  conjunction: K.violetDim,
+  opposition: K.violetDim,
+  square: K.violetDim,
   trine: K.sage,
-  sextile: K.copperHi,
+  sextile: K.violetDim,
 }
 
 const RARITY_TONE: Record<string, string> = {
@@ -57,7 +57,17 @@ export function ActiveTransits({ data }: Props) {
   if (data.status === 'no-chart') {
     return (
       <Frame tone="umber" padding={20}>
-        <Kicker color={K.copper}>Active transits</Kicker>
+        <div
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 15,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: K.violetDim,
+          }}
+        >
+          Active transits
+        </div>
         <p
           style={{
             marginTop: 10,
@@ -81,7 +91,17 @@ export function ActiveTransits({ data }: Props) {
   if (!hasAny) {
     return (
       <Frame tone="umber" padding={20}>
-        <Kicker color={K.copper}>Active transits</Kicker>
+        <div
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 15,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: K.violetDim,
+          }}
+        >
+          Active transits
+        </div>
         <p
           style={{
             marginTop: 10,
@@ -101,7 +121,17 @@ export function ActiveTransits({ data }: Props) {
 
   return (
     <Frame tone="umber" padding={20}>
-      <Kicker color={K.copper}>Active transits</Kicker>
+      <div
+        style={{
+          fontFamily: K.fMono,
+          fontSize: 15,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          color: K.violetDim,
+        }}
+      >
+        Active transits
+      </div>
 
       {/* Current / short-wave transits */}
       {current.length > 0 ? (

@@ -282,8 +282,8 @@ function ChromeMark({ collapsed = false }: { collapsed?: boolean }) {
               marginTop: 4,
             }}
           >
-            <span style={{ color: K.kairos }}>●</span>{' '}
-            <span style={{ color: K.copperHi }}>Almanac · {new Date().getFullYear()}</span>
+            <span style={{ color: K.violetDim }}>●</span>{' '}
+            <span style={{ color: K.violetDim }}>Almanac · {new Date().getFullYear()}</span>
           </div>
         </div>
       ) : null}

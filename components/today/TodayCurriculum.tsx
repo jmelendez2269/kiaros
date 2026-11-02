@@ -40,7 +40,17 @@ export function TodayCurriculum({ result }: Props) {
   if (result.status === 'none') {
     return (
       <Frame tone="umber" padding={22}>
-        <Kicker color={K.copper}>Next study</Kicker>
+        <div
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 15,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: K.violetDim,
+          }}
+        >
+          Next study
+        </div>
         <p
           style={{
             marginTop: 10,
@@ -83,7 +93,17 @@ export function TodayCurriculum({ result }: Props) {
           marginBottom: 12,
         }}
       >
-        <Kicker color={K.copper}>Next study</Kicker>
+        <div
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 15,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: K.violetDim,
+          }}
+        >
+          Next study
+        </div>
         <Link
           href="/curriculum"
           style={{

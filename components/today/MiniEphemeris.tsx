@@ -36,7 +36,17 @@ export function MiniEphemeris({ transit, natal }: Props) {
           marginBottom: 6,
         }}
       >
-        <Kicker color={K.copper}>Sky now</Kicker>
+        <div
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 15,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: K.violetDim,
+          }}
+        >
+          Sky now
+        </div>
         <div
           style={{
             fontFamily: K.fMono,

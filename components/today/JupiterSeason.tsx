@@ -74,7 +74,17 @@ export function JupiterSeason({ data }: Props) {
           flexWrap: 'wrap',
         }}
       >
-        <Kicker color={K.copper}>The season you&rsquo;re in</Kicker>
+        <div
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 15,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: K.violetDim,
+          }}
+        >
+          The season you&rsquo;re in
+        </div>
         <span
           style={{
             fontFamily: K.fMono,

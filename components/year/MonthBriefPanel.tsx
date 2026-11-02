@@ -183,7 +183,17 @@ export function MonthBriefPanel({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <Kicker color={K.copperHi}>This month's brief · {monthName}</Kicker>
+        <div
+          style={{
+            fontFamily: K.fMono,
+            fontSize: 15,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: K.violetDim,
+          }}
+        >
+          This month's brief · {monthName}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {stampLabel && status === 'ready' && !editing ? (
             <span style={{ fontFamily: K.fMono, fontSize: 10, color: stampColor, letterSpacing: '0.14em' }}>
