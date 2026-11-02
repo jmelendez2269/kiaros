@@ -4,9 +4,11 @@ import { K } from "./tokens";
 interface Props {
   children: ReactNode;
   color?: string;
+  /** Default 0.85 matches legacy kicker dimming; use 1 for solid contrast tokens. */
+  opacity?: number;
 }
 
-export function Kicker({ children, color = K.copperHi }: Props) {
+export function Kicker({ children, color = K.copperHi, opacity = 0.85 }: Props) {
   return (
     <div
       style={{
@@ -15,7 +17,7 @@ export function Kicker({ children, color = K.copperHi }: Props) {
         letterSpacing: "0.22em",
         textTransform: "uppercase",
         color,
-        opacity: 0.85,
+        opacity,
       }}
     >
       {children}

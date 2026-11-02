@@ -479,7 +479,8 @@ function WindowedAccessNote({ windowEnd }: { windowEnd: string | null }) {
       </div>
       <Link
         href="/pricing"
-        className="shrink-0 rounded-xl border border-leather-400/50 bg-leather-500/30 px-4 py-2 text-center text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+        className="shrink-0 rounded-xl bg-leather-500/30 px-4 py-2 text-center text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+        style={{ border: '1px solid var(--almanac-violet-outline)' }}
       >
         See annual access
       </Link>
@@ -681,7 +682,7 @@ function statusLabel(status: QuarterStatus): { label: string; tone: string } {
     case 'draft':
       return { label: 'DRAFT', tone: K.copperHi }
     case 'future':
-      return { label: 'FUTURE QUARTER', tone: K.inkSoft }
+      return { label: 'FUTURE QUARTER', tone: K.inkDim }
     case 'not-started':
     default:
       return { label: 'NOT STARTED', tone: K.inkDim }
@@ -832,7 +833,7 @@ async function QuarterReviewView({ searchParams }: { searchParams: SearchParams 
               {selectedStatusMeta.label}
             </div>
             {completedDateLabel ? (
-              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft, marginTop: 4, letterSpacing: '0.14em' }}>
+              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim, marginTop: 4, letterSpacing: '0.14em' }}>
                 {completedDateLabel.toUpperCase()}
               </div>
             ) : null}

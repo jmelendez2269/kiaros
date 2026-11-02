@@ -259,7 +259,7 @@ export function TourOverlay() {
             fontSize: 10.5,
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
-            color: K.inkSoft,
+            color: K.inkDim,
             background: 'none',
             border: 'none',
             cursor: 'pointer',

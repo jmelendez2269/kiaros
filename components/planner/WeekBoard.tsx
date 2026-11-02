@@ -117,14 +117,15 @@ export function WeekBoard({ days: initialDays, weekGoals, today }: Props) {
     <div className="space-y-4">
       {weekGoals.length > 0 && (
         <div className="shell-panel space-y-2.5 px-4 py-3.5">
-          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-bone-muted/60">This week&rsquo;s goals</p>
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-almanac-ink-dim">This week&rsquo;s goals</p>
           <div className="flex flex-wrap gap-2">
             {weekGoals.map((goal) => {
               const added = addedGoalIds.has(goal.id)
               return (
                 <div
                   key={goal.id}
-                  className="flex items-center gap-1.5 rounded-full border border-leather-500/30 bg-leather-500/15 py-1 pl-3 pr-1.5 text-xs text-leather-200"
+                  className="flex items-center gap-1.5 rounded-full bg-leather-500/15 py-1 pl-3 pr-1.5 text-xs text-leather-200"
+                  style={{ border: '1px solid var(--almanac-violet-outline)' }}
                 >
                   <span>{goal.title}</span>
                   {!added && (
@@ -174,13 +175,13 @@ export function WeekBoard({ days: initialDays, weekGoals, today }: Props) {
             className={cn('shell-panel flex min-h-[220px] flex-col gap-2 px-3 py-3', isToday && 'border-leather-400/60')}
           >
             <Link href={`/planner?date=${day.date}`} className="flex items-baseline justify-between gap-2 hover:opacity-80">
-              <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-bone-muted/60">{SHORT_DAY[i]}</span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-almanac-ink-dim">{SHORT_DAY[i]}</span>
               <span className={cn('text-lg font-semibold', isToday ? 'text-leather-200' : 'text-bone')}>{dayNum}</span>
             </Link>
 
             {character && (
               <div
-                className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-bone-muted/70"
+                className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-almanac-ink-dim"
                 title={character.reason}
               >
                 <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', ENERGY_DOT[character.energyType])} />
@@ -198,7 +199,7 @@ export function WeekBoard({ days: initialDays, weekGoals, today }: Props) {
                     className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-sm border-bone-muted/40 bg-transparent accent-leather-300"
                   />
                   <span className={cn('flex-1', item.completed_at && 'text-bone-muted/40 line-through')}>
-                    <span className="text-bone-muted/50">{formatTime(item.start_minute as number)}</span> {item.title}
+                    <span className="text-almanac-ink-dim">{formatTime(item.start_minute as number)}</span> {item.title}
                   </span>
                 </label>
               ))}
@@ -213,7 +214,7 @@ export function WeekBoard({ days: initialDays, weekGoals, today }: Props) {
                   <span className={cn('flex-1', item.completed_at && 'text-bone-muted/40 line-through')}>{item.title}</span>
                 </label>
               ))}
-              {day.planItems.length === 0 && <p className="text-[11px] text-bone-muted/35">Nothing yet</p>}
+              {day.planItems.length === 0 && <p className="text-[11px] text-almanac-ink-dim">Nothing yet</p>}
             </div>
 
             {addingFor === day.date ? (

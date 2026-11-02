@@ -195,7 +195,7 @@ function ContextOrbit() {
           <span className="mt-7 font-almanac-display text-[0.72rem] uppercase tracking-[0.34em] text-almanac-ink">
             {BRAND.oracle}
           </span>
-          <span className="mt-2 font-almanac-mono text-[0.58rem] uppercase tracking-[0.16em] text-almanac-ink-soft">
+          <span className="mt-2 font-almanac-mono text-[0.58rem] uppercase tracking-[0.16em] text-almanac-ink-dim">
             context assembled
           </span>
         </div>
@@ -238,7 +238,7 @@ function ContextSection() {
             <article key={label} className="bg-almanac-bg2 p-6 lg:min-h-[260px]">
               <Icon className={`h-5 w-5 ${tone}`} strokeWidth={1.5} aria-hidden />
               <h3 className="mt-8 font-almanac-serif text-xl text-almanac-ink">{label}</h3>
-              <p className="mt-3 text-[0.84rem] leading-6 text-almanac-ink-soft">{detail}</p>
+              <p className="mt-3 text-[0.84rem] leading-6 text-almanac-ink-dim">{detail}</p>
             </article>
           ))}
         </div>
@@ -271,7 +271,7 @@ function ConversationSection() {
             </p>
           </div>
           <div className="mt-6">
-            <p className="font-almanac-mono text-[0.58rem] uppercase tracking-[0.16em] text-almanac-ink-soft">
+            <p className="font-almanac-mono text-[0.58rem] uppercase tracking-[0.16em] text-almanac-ink-dim">
               Choose an interpretive lens
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -297,12 +297,12 @@ function ConversationSection() {
                 <p className="font-almanac-display text-[0.72rem] uppercase tracking-[0.22em] text-almanac-ink">
                   {BRAND.oracle}
                 </p>
-                <p className="mt-1 font-almanac-mono text-[0.58rem] uppercase tracking-[0.13em] text-almanac-ink-soft">
+                <p className="mt-1 font-almanac-mono text-[0.58rem] uppercase tracking-[0.13em] text-almanac-ink-dim">
                   Illustrative exchange
                 </p>
               </div>
             </div>
-            <span className="rounded-full border border-almanac-line-hi px-3 py-1 font-almanac-mono text-[0.56rem] uppercase tracking-[0.12em] text-almanac-ink-soft">
+            <span className="rounded-full border border-almanac-line-hi px-3 py-1 font-almanac-mono text-[0.56rem] uppercase tracking-[0.12em] text-almanac-ink-dim">
               Context ready
             </span>
           </div>
@@ -330,7 +330,7 @@ function ConversationSection() {
                   {["Saturn △ Midheaven", "Jupiter ☌ Moon", "Year Vision"].map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-almanac-line-hi bg-[rgba(10,12,20,0.72)] px-2.5 py-1 font-almanac-mono text-[0.56rem] uppercase tracking-[0.08em] text-almanac-ink-soft"
+                      className="rounded-full border border-almanac-line-hi bg-[rgba(10,12,20,0.72)] px-2.5 py-1 font-almanac-mono text-[0.56rem] uppercase tracking-[0.08em] text-almanac-ink-dim"
                     >
                       {tag}
                     </span>
@@ -378,7 +378,7 @@ function MemorySection() {
                     {step.number}
                   </span>
                   {index < MEMORY_STEPS.length - 1 ? (
-                    <ArrowRight className="h-4 w-4 text-almanac-ink-soft sm:hidden" aria-hidden />
+                    <ArrowRight className="h-4 w-4 text-almanac-ink-dim sm:hidden" aria-hidden />
                   ) : (
                     <Check className="h-4 w-4 text-almanac-sage" aria-hidden />
                   )}
@@ -386,7 +386,7 @@ function MemorySection() {
                 <h3 className="mt-8 font-almanac-serif text-2xl text-almanac-ink">
                   {step.label}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-almanac-ink-soft">{step.detail}</p>
+                <p className="mt-2 text-sm leading-6 text-almanac-ink-dim">{step.detail}</p>
               </article>
             ))}
           </div>
@@ -446,7 +446,7 @@ function QuestionsSection() {
               <p className="mt-8 font-almanac-serif text-xl italic leading-snug text-almanac-ink">
                 “{question}”
               </p>
-              <span className="mt-4 font-almanac-mono text-[0.56rem] uppercase tracking-[0.12em] text-almanac-ink-soft">
+              <span className="mt-4 font-almanac-mono text-[0.56rem] uppercase tracking-[0.12em] text-almanac-ink-dim">
                 Question {String(index + 1).padStart(2, "0")}
               </span>
             </article>
@@ -476,7 +476,7 @@ function ComparisonSection() {
 
         <div className="mt-12 grid gap-5 md:grid-cols-2">
           <article className="rounded-2xl border border-almanac-line bg-almanac-bg2/45 p-6 md:p-8">
-            <p className="font-almanac-mono text-[0.66rem] uppercase tracking-[0.16em] text-almanac-ink-soft">
+            <p className="font-almanac-mono text-[0.66rem] uppercase tracking-[0.16em] text-almanac-ink-dim">
               Core Planner · no Stelloquy generation
             </p>
             <ul className="mt-7 space-y-5 text-sm leading-6 text-almanac-ink-dim">
@@ -538,7 +538,7 @@ function SamplerSection({ isSignedIn }: Props) {
               </p>
               <div className="mt-3 flex items-end gap-2">
                 <span className="font-almanac-display text-5xl text-almanac-ink">$1</span>
-                <span className="pb-1 text-sm text-almanac-ink-soft">one-time</span>
+                <span className="pb-1 text-sm text-almanac-ink-dim">one-time</span>
               </div>
               <p className="mt-3 text-sm leading-6 text-almanac-ink-dim">
                 Three messages with chart and sky context. One sampler per account.
@@ -579,19 +579,19 @@ function SamplerSection({ isSignedIn }: Props) {
 
           <div className="mt-6 grid gap-3 border-t border-almanac-line-hi pt-6 sm:grid-cols-3">
             <div>
-              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
                 Included
               </p>
               <p className="mt-2 text-sm text-almanac-ink">Your natal chart</p>
             </div>
             <div>
-              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
                 Included
               </p>
               <p className="mt-2 text-sm text-almanac-ink">Current sky</p>
             </div>
             <div>
-              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+              <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
                 Messages
               </p>
               <p className="mt-2 text-sm text-almanac-ink">3 total</p>
@@ -599,7 +599,7 @@ function SamplerSection({ isSignedIn }: Props) {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-sm text-almanac-ink-soft">
+        <p className="mt-6 text-center text-sm text-almanac-ink-dim">
           Want ongoing Stelloquy with your planner?{" "}
           <Link
             href="/pricing#tiers"
@@ -642,7 +642,7 @@ function UpgradeSection({ isSignedIn }: Props) {
                   <p className="font-almanac-mono text-[0.66rem] uppercase tracking-[0.2em] text-almanac-copper-hi">
                     The premium layer
                   </p>
-                  <p className="mt-1 font-almanac-display text-[0.65rem] uppercase tracking-[0.24em] text-almanac-ink-soft">
+                  <p className="mt-1 font-almanac-display text-[0.65rem] uppercase tracking-[0.24em] text-almanac-ink-dim">
                     Included in Planner + Oracle
                   </p>
                 </div>
@@ -674,14 +674,14 @@ function UpgradeSection({ isSignedIn }: Props) {
             </div>
 
             <div className="rounded-2xl border border-almanac-line-hi bg-[rgba(10,12,20,0.72)] p-6">
-              <p className="font-almanac-mono text-[0.62rem] uppercase tracking-[0.16em] text-almanac-ink-soft">
+              <p className="font-almanac-mono text-[0.62rem] uppercase tracking-[0.16em] text-almanac-ink-dim">
                 Planner + Oracle
               </p>
               <div className="mt-4 flex items-end gap-3">
                 <span className="font-almanac-display text-5xl text-almanac-ink">
                   {formatUsd(premium.monthlyPriceCents)}
                 </span>
-                <span className="pb-1 text-sm text-almanac-ink-soft">per month</span>
+                <span className="pb-1 text-sm text-almanac-ink-dim">per month</span>
               </div>
               <p className="mt-2 text-sm leading-6 text-almanac-ink-dim">
                 Or {formatUsd(premium.annualPriceCents)} for the year.
@@ -733,7 +733,7 @@ function MarketingFooter() {
             {BRAND.product.toUpperCase()}
           </span>
         </Link>
-        <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+        <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
           <Link href="/" className="transition-colors hover:text-almanac-ink">
             Planner
           </Link>
@@ -813,7 +813,7 @@ export function StelloquyMarketingPage({ isSignedIn }: Props) {
                 </Link>
               </div>
 
-              <p className="mt-5 font-almanac-mono text-[0.62rem] uppercase tracking-[0.12em] text-almanac-ink-soft">
+              <p className="mt-5 font-almanac-mono text-[0.62rem] uppercase tracking-[0.12em] text-almanac-ink-dim">
                 Included in {premium.name} &middot; from {formatUsd(premium.monthlyPriceCents)}/month
               </p>
             </div>

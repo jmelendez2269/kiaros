@@ -100,7 +100,7 @@ export function MarketingAlmanacFooter() {
             {BRAND.product.toUpperCase()}
           </span>
         </Link>
-        <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-ink-soft">
+        <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.68rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
           <Link href="/guides" className="transition-colors hover:text-almanac-ink">
             Guides
           </Link>

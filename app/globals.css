@@ -76,6 +76,10 @@
     --almanac-brick-hi: #704bd2;
     --almanac-copper: #a98aef;
     --almanac-copper-hi: #c7b3f5;
+    --almanac-violet-dim: #bba3f3;
+    --almanac-violet-outline: #7b64c4;
+    --almanac-aspect-square: #8466e6;
+    --almanac-border-strong: #6e6d7c;
     --almanac-ember: #df9b3f;
     --almanac-sage: #6798cb;
     --almanac-plum: #b08cdc;
@@ -561,6 +565,21 @@ html[data-theme="dawn"] ::selection {
   outline: 2px solid #a98aef;
   outline-offset: 2px;
   box-shadow: none;
+}
+
+/* Clerk auth — method-row focus ring (fallback if emotion out-specifies element styles) */
+.cl-rootBox .cl-socialButtonsBlockButton:focus,
+.cl-rootBox .cl-socialButtonsBlockButton:focus-visible,
+.cl-rootBox [class*="cl-socialButtonsBlockButton"]:focus,
+.cl-rootBox [class*="cl-socialButtonsBlockButton"]:focus-visible,
+.cl-rootBox .cl-socialButtonsIconButton:focus,
+.cl-rootBox .cl-socialButtonsIconButton:focus-visible,
+.cl-rootBox [class*="cl-socialButtonsIconButton"]:focus-visible,
+.cl-rootBox .cl-alternativeMethodsBlockButton:focus,
+.cl-rootBox .cl-alternativeMethodsBlockButton:focus-visible,
+.cl-rootBox [class*="cl-alternativeMethodsBlockButton"]:focus-visible {
+  box-shadow: 0 0 0 2px #090911, 0 0 0 4px #A98AEF !important;
+  outline: none !important;
 }
 
 /* Marketing motion and the in-app orb share the same accessibility escape hatch. */

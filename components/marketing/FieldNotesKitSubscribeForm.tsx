@@ -22,7 +22,7 @@ interface Props {
 
 const inputClassByVariant: Record<VisualVariant, string> = {
   almanac:
-    "min-h-11 w-full rounded-full border border-almanac-line-hi bg-[rgba(10,12,20,0.6)] px-4 text-sm text-almanac-ink placeholder:text-almanac-ink-soft focus:border-[rgba(169,138,239,0.55)] focus:outline-none focus:ring-2 focus:ring-[rgba(112,75,210,0.35)]",
+    "min-h-11 w-full rounded-full border border-almanac-line-hi bg-[rgba(10,12,20,0.6)] px-4 text-sm text-almanac-ink placeholder:text-almanac-ink-dim focus:border-[rgba(169,138,239,0.55)] focus:outline-none focus:ring-2 focus:ring-[rgba(112,75,210,0.35)]",
   shell:
     "min-h-11 w-full rounded-full border border-border/80 bg-stone-900/60 px-4 text-sm text-bone placeholder:text-bone-muted/70 focus:border-leather-300/50 focus:outline-none focus:ring-2 focus:ring-leather-300/25",
 };

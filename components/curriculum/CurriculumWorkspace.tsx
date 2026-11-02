@@ -330,7 +330,8 @@ export function CurriculumWorkspace({
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 self-start rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow"
+          className="inline-flex items-center gap-2 self-start rounded-full bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow"
+          style={{ border: '1px solid var(--almanac-violet-outline)' }}
         >
           <Plus size={15} />
           New course
@@ -356,7 +357,8 @@ export function CurriculumWorkspace({
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone"
+            style={{ border: '1px solid var(--almanac-violet-outline)' }}
           >
             <Sparkles size={14} />
             Generate first course
@@ -503,7 +505,8 @@ export function CurriculumWorkspace({
                   <button
                     type="submit"
                     disabled={phase === 'detecting'}
-                    className="inline-flex items-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 rounded-full bg-leather-500/30 px-4 py-2 text-sm font-semibold text-bone shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
+                    style={{ border: '1px solid var(--almanac-violet-outline)' }}
                   >
                     {phase === 'detecting' ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                     {phase === 'detecting' ? 'Reading your prompt…' : 'Build my plan'}
@@ -533,7 +536,8 @@ export function CurriculumWorkspace({
                   <button
                     type="button"
                     onClick={handleGenerateBoth}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-leather-400/45 bg-leather-500/30 px-4 py-2.5 text-sm font-semibold text-bone shadow-glow"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-leather-500/30 px-4 py-2.5 text-sm font-semibold text-bone shadow-glow"
+                    style={{ border: '1px solid var(--almanac-violet-outline)' }}
                   >
                     <Sparkles size={14} />
                     Generate both separately

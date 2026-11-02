@@ -109,7 +109,7 @@ export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick }: Yea
   return (
     <div className="shell-panel overflow-hidden">
       <div className="grid grid-cols-[72px_minmax(0,1fr)] border-b border-border/75 bg-stone-950/55 sm:grid-cols-[92px_minmax(0,1fr)]">
-        <div className="flex items-center border-r border-border/70 px-2 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-bone-muted/55 sm:px-3">
+        <div className="flex items-center border-r border-border/70 px-2 py-3 text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-almanac-ink-dim sm:px-3">
           Layer
         </div>
         <div className="grid grid-cols-12">
@@ -118,7 +118,7 @@ export function YearView({ yearEphemeris, weeks, onMonthClick, onDayClick }: Yea
               key={name}
               type="button"
               onClick={() => onMonthClick(index + 1)}
-              className="min-w-0 border-l border-border/45 px-0.5 py-3 text-center text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-bone-muted/60 transition-colors first:border-l-0 hover:bg-leather-500/10 hover:text-leather-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-leather-400/40 sm:text-[0.66rem]"
+              className="min-w-0 border-l border-border/45 px-0.5 py-3 text-center text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-almanac-ink-dim transition-colors first:border-l-0 hover:bg-leather-500/10 hover:text-leather-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-leather-400/40 sm:text-[0.66rem]"
               title={name}
             >
               {name.slice(0, 3)}

@@ -186,7 +186,8 @@ export function FeedbackModal({
                   type="button"
                   onClick={handleSubmit}
                   disabled={phase === 'submitting' || !category}
-                  className="flex-1 rounded-xl border border-leather-400/50 bg-leather-500/30 py-2.5 text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-leather-500/30 py-2.5 text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45 disabled:opacity-50"
+                  style={{ border: '1px solid var(--almanac-violet-outline)' }}
                 >
                   {phase === 'submitting' ? 'Sending…' : 'Send feedback'}
                 </button>
@@ -204,11 +205,12 @@ export function FeedbackFloatingTrigger({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="fixed left-4 z-40 flex min-h-11 items-center gap-2 rounded-full border border-border/60 bg-stone-900/90 px-4 py-2 text-xs font-medium text-bone-muted shadow-lg backdrop-blur-sm transition-colors hover:border-border hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400 sm:left-5"
+      className="fixed left-4 z-40 flex min-h-11 items-center gap-2 rounded-full bg-stone-900/90 px-4 py-2 text-xs font-medium text-bone-muted shadow-lg backdrop-blur-sm transition-colors hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leather-400 sm:left-5"
       data-kiaros-floating-feedback=""
       style={{
         bottom:
           'calc(env(safe-area-inset-bottom, 0px) + 1rem + var(--kiaros-settings-sticky-save-offset, 0px))',
+        border: '1px solid var(--almanac-border-strong)',
       }}
       aria-label="Give feedback"
     >
