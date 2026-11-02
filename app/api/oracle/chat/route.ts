@@ -75,12 +75,26 @@ export async function POST(req: Request) {
     const latestQuestion = [...messages].reverse().find(m => m.role === 'user')?.parts.filter(p => p.type === 'text').map(p => p.text).join(' ') ?? ''
     const relevanceMemoryEnabled = isRelevanceMemoryEnabled()
     let recalledMemories: Awaited<ReturnType<typeof recallJournalMemories>> | null = null
+    let journalRecallOutcome: 'hit' | 'empty_fallback' | 'error_fallback' = 'empty_fallback'
+    let recalledCount = 0
+    let termCount = 0
+    
     if (relevanceMemoryEnabled) {
       try {
+        // Count terms in the built query for diagnostics
+        const { buildRecallQuery } = await import('@/lib/journal/recall-query')
+        const builtQuery = buildRecallQuery(latestQuestion)
+        termCount = builtQuery ? builtQuery.split(' or ').length : 0
+        
         recalledMemories = await recallJournalMemories(profileId, latestQuestion)
+        recalledCount = recalledMemories?.length ?? 0
+        if (recalledCount > 0) {
+          journalRecallOutcome = 'hit'
+        }
       } catch (recallError) {
         console.error('[oracle-chat] Journal relevance recall failed; using recent allowed entries:', recallError)
         recalledMemories = null
+        journalRecallOutcome = 'error_fallback'
       }
     }
     const journalRecallColumn = 'include_in_stelloquy'
@@ -198,6 +212,16 @@ export async function POST(req: Request) {
       recalledMemories,
       journalEntriesRes.data,
     )
+
+    // Log journal recall outcome
+    const fallbackCount = relevanceSources === null ? (journalEntriesRes.data?.length ?? 0) : 0
+    console.log(JSON.stringify({
+      event: 'journal_recall',
+      outcome: journalRecallOutcome,
+      recalled_count: recalledCount,
+      fallback_count: fallbackCount,
+      term_count: termCount,
+    }))
 
     const patternInsightsForPrompt = await loadStelloquyPatternInsightsForPrompt(
       supabase,

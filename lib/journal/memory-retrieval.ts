@@ -1,17 +1,32 @@
 import 'server-only'
 import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
+import { buildRecallQuery } from './recall-query'
+
 export interface RecalledMemory { id: string; entry_date: string; title: string | null; body: string; mood_tag: null; is_ritual: false }
+
+// Minimum ts_rank_cd score threshold for OR matches.
+// With OR semantics, loose matches will score lower. This threshold filters out
+// entries that match only on very common terms or have minimal overlap.
+// 0.05 balances recall (finding relevant entries) with precision (avoiding noise).
+const MIN_RECALL_RANK = 0.05
+
 const rowSchema = z.object({ id: z.string().uuid(), entry_date: z.string(), title: z.string().nullable(), body: z.string(), score: z.number() })
+
 export async function recallJournalMemories(userId: string, question: string): Promise<RecalledMemory[]> {
   if (!question.trim()) return []
-  const { data, error } = await createAdminSupabase().rpc('recall_journal_memories', { p_user_id: userId, p_query: question.slice(0,1000) })
+  
+  const query = buildRecallQuery(question)
+  if (!query) return []
+  
+  const { data, error } = await createAdminSupabase().rpc('recall_journal_memories', { p_user_id: userId, p_query: query })
   if (error) throw new Error('Journal memory retrieval is temporarily unavailable')
   const rows = z.array(rowSchema).parse(data)
   let remaining = 4200
   const selected: RecalledMemory[] = []
   for (const row of rows) {
-    if (row.score < 0.01 || remaining < 200 || selected.length >= 5) continue
+    if (row.score < MIN_RECALL_RANK) break
+    if (remaining < 200 || selected.length >= 5) break
     row.title = row.title?.slice(0,160) ?? null
     const body = row.body.slice(0, Math.min(850, remaining - (row.title?.length ?? 0) - 40))
     remaining -= body.length + (row.title?.length ?? 0) + 40
