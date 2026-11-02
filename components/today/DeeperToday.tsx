@@ -50,7 +50,7 @@ export function DeeperToday({ defaultOpen, children }: { defaultOpen: boolean; c
     >
       <ChevronRight size={16} color={K.copper} />
       <span>Go deeper into today &mdash; the year arc, your life arc, and the season you&rsquo;re in</span>
-      <ChevronDown size={14} color={K.inkSoft} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+      <ChevronDown size={14} color={K.inkDim} style={{ marginLeft: 'auto' }} />
     </button>
   )
 }

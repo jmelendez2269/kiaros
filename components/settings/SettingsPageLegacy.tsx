@@ -748,7 +748,8 @@ export default function SettingsPageLegacy() {
               type="button"
               onClick={handleSave}
               disabled={!hydrated || isPending}
-              className="rounded-xl border border-leather-400/50 bg-leather-500/30 px-5 py-2.5 text-sm font-medium text-bone shadow-glow transition hover:bg-leather-500/45 disabled:opacity-50"
+              className="rounded-xl bg-leather-500/30 px-5 py-2.5 text-sm font-medium text-bone shadow-glow transition hover:bg-leather-500/45 disabled:opacity-50"
+              style={{ border: '1px solid var(--almanac-violet-outline)' }}
             >
               {isPending ? "Saving…" : "Save settings"}
             </button>

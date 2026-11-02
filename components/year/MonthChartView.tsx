@@ -283,7 +283,7 @@ export async function MonthChartView({
             }}
           >
             <Frame tone="raised" padding={20} style={{ borderColor: `${K.brickHi}55` }}>
-              <Kicker color={K.brickHi}>Intentions</Kicker>
+              <Kicker color={K.violetDim} opacity={1}>Intentions</Kicker>
               {monthBlueprint && monthBlueprint.intentions.length > 0 ? (
                 <ul
                   style={{
@@ -328,7 +328,7 @@ export async function MonthChartView({
             </Frame>
 
             <Frame tone="umber" padding={20}>
-              <Kicker color={K.copper}>Key transits</Kicker>
+              <Kicker color={K.violetDim} opacity={1}>Key transits</Kicker>
               {monthBlueprint && monthBlueprint.keyTransits.length > 0 ? (
                 <ul
                   style={{
@@ -373,7 +373,7 @@ export async function MonthChartView({
             </Frame>
 
             <Frame tone="cocoa" padding={20} stars>
-              <Kicker color={K.copper}>Sabian symbol</Kicker>
+              <Kicker color={K.violetDim} opacity={1}>Sabian symbol</Kicker>
               {sabian ? (
                 <>
                   <div
@@ -405,7 +405,7 @@ export async function MonthChartView({
                     style={{
                       fontFamily: K.fMono,
                       fontSize: 10,
-                      color: K.inkSoft,
+                      color: K.inkDim,
                       letterSpacing: '0.14em',
                       marginTop: 10,
                     }}
@@ -450,7 +450,7 @@ export async function MonthChartView({
                       <span style={{ fontFamily: K.fBody, fontSize: 14, color: K.ink, flex: 1, lineHeight: 1.3 }}>
                         {session.title}
                       </span>
-                      <span style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkSoft }}>
+                      <span style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkDim }}>
                         {session.estimated_minutes}m
                       </span>
                     </div>
@@ -503,7 +503,7 @@ export async function MonthChartView({
                 style={{
                   fontFamily: K.fMono,
                   fontSize: 11,
-                  color: K.inkSoft,
+                  color: K.inkDim,
                   letterSpacing: '0.14em',
                 }}
               >
@@ -537,7 +537,7 @@ export async function MonthChartView({
               style={{
                 fontFamily: K.fMono,
                 fontSize: 9.5,
-                color: K.inkSoft,
+                color: K.inkDim,
                 letterSpacing: '0.14em',
               }}
             >

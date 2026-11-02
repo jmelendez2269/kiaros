@@ -62,7 +62,7 @@ export default async function PreviewPage() {
             KAIROS
           </Link>
           <div className="text-right">
-            <p className="font-almanac-mono text-[0.62rem] uppercase tracking-[0.16em] text-almanac-ink-soft">
+            <p className="font-almanac-mono text-[0.62rem] uppercase tracking-[0.16em] text-almanac-ink-dim">
               Personalized Birth-Chart Week Reading
             </p>
             <p className="mt-1 text-sm text-almanac-ink-dim">
@@ -97,10 +97,10 @@ export default async function PreviewPage() {
               <p className="mt-4 font-almanac-serif text-xl italic text-almanac-ink">{day.title}</p>
               <p className="mt-3 text-sm leading-6 text-almanac-ink-dim">{day.invitation}</p>
               <div className="mt-5 border-t border-almanac-line pt-4">
-                <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.12em] text-almanac-ink-soft">
+                <p className="font-almanac-mono text-[0.6rem] uppercase tracking-[0.12em] text-almanac-ink-dim">
                   {ENERGY_LABELS[day.energyType]}
                 </p>
-                <p className="mt-2 text-xs leading-5 text-almanac-ink-soft">{day.skyNote}</p>
+                <p className="mt-2 text-xs leading-5 text-almanac-ink-dim">{day.skyNote}</p>
               </div>
             </article>
           ))}
@@ -163,7 +163,7 @@ export default async function PreviewPage() {
                 </p>
                 <h3 className="mt-3 font-almanac-serif text-2xl text-almanac-ink">{tier.name}</h3>
                 <p className="mt-3 text-sm leading-6 text-almanac-ink-dim">{tier.tagline}</p>
-                <p className="mt-5 text-sm text-almanac-ink-soft">
+                <p className="mt-5 text-sm text-almanac-ink-dim">
                   <strong className="font-almanac-display text-3xl text-almanac-ink">
                     {formatUsd(tier.monthlyPriceCents)}
                   </strong>{" "}

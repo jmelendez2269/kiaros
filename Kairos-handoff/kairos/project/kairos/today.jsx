@@ -24,7 +24,7 @@ function Shell({ active = 'today', children }) {
           <div style={{ flex: 1 }} />
           {/* Areas in sidebar — pinned shortcuts */}
           <div>
-            <Kicker color={K.inkSoft}>Pinned areas</Kicker>
+            <Kicker color={K.inkDim}>Pinned areas</Kicker>
             <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
               {[
                 ['Body', '◉', K.ember],
@@ -44,7 +44,7 @@ function Shell({ active = 'today', children }) {
             <div style={{ width: 30, height: 30, borderRadius: '50%', background: K.bg3, border: `1px solid ${K.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: K.fSerif, fontStyle: 'italic', color: K.copperHi, fontSize: 14 }}>e</div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontFamily: K.fBody, fontSize: 12, color: K.ink }}>Elise</div>
-              <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.1em' }}>5/1 GENERATOR</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.1em' }}>5/1 GENERATOR</div>
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ function StelloquyOrb() {
       }} />
       <div>
         <div style={{ fontFamily: K.fDisplay, fontSize: 11, color: K.ink, lineHeight: 1, letterSpacing: '0.24em', fontWeight: 500 }}>STELLOQUY</div>
-        <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: K.inkSoft, letterSpacing: '0.18em', marginTop: 5 }}>⌘ K · ANYWHERE</div>
+        <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: K.inkDim, letterSpacing: '0.18em', marginTop: 5 }}>⌘ K · ANYWHERE</div>
       </div>
     </div>
   );
@@ -184,7 +184,7 @@ function TodayArtboard() {
           <Frame tone="umber" padding={22}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
               <Kicker>The shape of today</Kicker>
-              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, letterSpacing: '0.14em' }}>WEEK 43 · DAY 295</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, letterSpacing: '0.14em' }}>WEEK 43 · DAY 295</div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 18 }}>
@@ -199,7 +199,7 @@ function TodayArtboard() {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ color: s.color, fontSize: 18, fontFamily: K.fSerif }}>{s.glyph}</span>
-                    <span style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{s.label}</span>
+                    <span style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{s.label}</span>
                   </div>
                   <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 22, color: K.ink, lineHeight: 1, marginTop: 2 }}>{s.value}</div>
                   <div style={{ fontFamily: K.fBody, fontSize: 11.5, color: K.inkDim }}>{s.note}</div>
@@ -218,7 +218,7 @@ function TodayArtboard() {
                   <div style={{ fontFamily: K.fSerif, fontSize: 22, color: t.tone, letterSpacing: '0.1em' }}>{t.l}</div>
                   <div style={{ fontFamily: K.fBody, fontSize: 13, color: K.ink }}>{t.r}</div>
                   <div style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkDim }}>{t.orb}</div>
-                  <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: K.inkSoft, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{t.state}</div>
+                  <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: K.inkDim, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{t.state}</div>
                 </div>
               ))}
             </div>
@@ -239,7 +239,7 @@ function TodayArtboard() {
                 ]}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.14em' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.14em' }}>
               <span style={{ color: K.copperHi }}>◯ NATAL</span>
               <span style={{ color: K.starlight }}>◌ TRANSIT</span>
               <span style={{ color: K.sage }}>— ASPECT</span>
@@ -252,7 +252,7 @@ function TodayArtboard() {
           <Frame tone="umber" padding={20}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
               <Kicker>The week ahead</Kicker>
-              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, letterSpacing: '0.14em' }}>OCT 20 — 26</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, letterSpacing: '0.14em' }}>OCT 20 — 26</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
               {[
@@ -270,10 +270,10 @@ function TodayArtboard() {
                   borderRadius: 10, padding: '10px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                   position: 'relative',
                 }}>
-                  <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.16em' }}>{day.d}</div>
+                  <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.16em' }}>{day.d}</div>
                   <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 24, color: day.active ? K.ink : K.inkDim, lineHeight: 1 }}>{day.n}</div>
                   <MoonGlyph phase={day.ph} size={14} color={day.hot ? K.copperHi : K.inkDim} />
-                  <div style={{ fontFamily: K.fBody, fontSize: 10.5, color: day.active ? K.copperHi : K.inkSoft, fontStyle: 'italic' }}>{day.t}</div>
+                  <div style={{ fontFamily: K.fBody, fontSize: 10.5, color: day.active ? K.copperHi : K.inkDim, fontStyle: 'italic' }}>{day.t}</div>
                 </div>
               ))}
             </div>
@@ -306,7 +306,7 @@ function TodayArtboard() {
           <Frame tone="raised" padding={20} style={{ borderColor: K.brick + '55' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Kicker color={K.brickHi}>A line for today</Kicker>
-              <span style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.14em' }}>3-DAY STREAK</span>
+              <span style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.14em' }}>3-DAY STREAK</span>
             </div>
             <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 19, color: K.ink, marginTop: 8, lineHeight: 1.25 }}>
               What did the day try to teach me?

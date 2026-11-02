@@ -9,7 +9,7 @@ function PatternRow({ pattern, count, confidence, evidence, tone = K.copper }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
         <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 18, color: K.ink, lineHeight: 1.2, flex: 1 }}>{pattern}</div>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexShrink: 0 }}>
-          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, letterSpacing: '0.1em' }}>{count} entries</div>
+          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, letterSpacing: '0.1em' }}>{count} entries</div>
           {/* confidence dots */}
           <div style={{ display: 'flex', gap: 2 }}>
             {[0,1,2,3,4].map(i => (
@@ -39,7 +39,7 @@ function EntryCard({ date, title, body, mood, sky, ritual = false }) {
         {ritual && <span style={{ fontFamily: K.fMono, fontSize: 8.5, color: K.brickHi, letterSpacing: '0.18em', border: `1px solid ${K.brickHi}55`, padding: '2px 8px', borderRadius: 999 }}>RITUAL</span>}
       </div>
       <div style={{ fontFamily: K.fBody, fontSize: 13, color: K.inkDim, lineHeight: 1.6 }}>{body}</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft, letterSpacing: '0.1em' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim, letterSpacing: '0.1em' }}>
         <span>{sky}</span>
         <span style={{ color: K.copperHi }}>{mood}</span>
       </div>
@@ -66,7 +66,7 @@ function TrackerStrip() {
           </div>
         ))}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.1em' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.1em' }}>
         <span>30 DAYS AGO</span>
         <span>TODAY</span>
       </div>
@@ -106,7 +106,7 @@ function JournalArtboard() {
           <Frame tone="cocoa" padding={28} stars>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
               <Kicker color={K.copperHi}>Thursday, October 22 · Moon 14° ♏</Kicker>
-              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft }}>WK 43 · DAY 295</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim }}>WK 43 · DAY 295</div>
             </div>
             <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 26, color: K.ink, marginTop: 4, lineHeight: 1.2 }}>
               What did the day try to teach me?
@@ -123,7 +123,7 @@ function JournalArtboard() {
               <p style={{ marginTop: 12 }}>
                 Body felt heavy this morning. Walked instead of ran. I think that was right — sacral didn't lean toward the run.
               </p>
-              <p style={{ marginTop: 12, color: K.inkSoft }}>
+              <p style={{ marginTop: 12, color: K.inkDim }}>
                 <span style={{ color: K.copperHi }}>|</span>
               </p>
             </div>
@@ -134,7 +134,7 @@ function JournalArtboard() {
                 {['craft', 'body', 'mercury-retro'].map(t => (
                   <span key={t} style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.copperHi, border: `1px solid ${K.copper}55`, borderRadius: 999, padding: '4px 10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t}</span>
                 ))}
-                <span style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, padding: '4px 6px' }}>+ tag</span>
+                <span style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, padding: '4px 6px' }}>+ tag</span>
               </div>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontFamily: K.fMono, fontSize: 10, color: K.kairos, letterSpacing: '0.08em' }}>
@@ -162,8 +162,8 @@ function JournalArtboard() {
                 ].map(m => (
                   <div key={m.l}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                      <span style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft, letterSpacing: '0.16em', textTransform: 'uppercase' }}>{m.l}</span>
-                      <span style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 14, color: K.ink }}>{m.v} <span style={{ color: K.inkSoft }}>/ {m.max}</span></span>
+                      <span style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim, letterSpacing: '0.16em', textTransform: 'uppercase' }}>{m.l}</span>
+                      <span style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 14, color: K.ink }}>{m.v} <span style={{ color: K.inkDim }}>/ {m.max}</span></span>
                     </div>
                     <div style={{ display: 'flex', gap: 2 }}>
                       {Array.from({ length: m.max }).map((_, i) => (
@@ -194,7 +194,7 @@ function JournalArtboard() {
           <Frame tone="umber" padding={20}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
               <Kicker>Recent entries</Kicker>
-              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft }}>42 TOTAL · 14 TEACHING STELLOQUY</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim }}>42 TOTAL · 14 TEACHING STELLOQUY</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <EntryCard
@@ -225,7 +225,7 @@ function JournalArtboard() {
           <Frame tone="cocoa" padding={20} stars style={{ borderColor: K.kairos + '44' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
               <Kicker color={K.kairos}>Patterns Stelloquy is learning</Kicker>
-              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft }}>FROM YOUR ENTRIES · NEVER YOUR DATA</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim }}>FROM YOUR ENTRIES · NEVER YOUR DATA</div>
             </div>
             <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 18, color: K.ink, marginTop: 6, marginBottom: 4, lineHeight: 1.3 }}>
               What you keep teaching me about yourself.

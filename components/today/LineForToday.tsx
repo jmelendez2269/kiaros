@@ -66,13 +66,13 @@ export function LineForToday({ streak = 0 }: Props) {
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Kicker color={K.brickHi}>A line for today</Kicker>
+        <Kicker color={K.violetDim} opacity={1}>A line for today</Kicker>
         {streakNow > 0 ? (
           <span
             style={{
               fontFamily: K.fMono,
               fontSize: 10.5,
-              color: K.inkSoft,
+              color: K.inkDim,
               letterSpacing: '0.14em',
             }}
           >
@@ -176,7 +176,7 @@ export function LineForToday({ streak = 0 }: Props) {
             style={{
               fontFamily: K.fMono,
               fontSize: 10.5,
-              color: K.inkSoft,
+              color: K.inkDim,
               letterSpacing: '0.14em',
               textDecoration: 'none',
               textTransform: 'uppercase',

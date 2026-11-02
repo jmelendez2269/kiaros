@@ -76,7 +76,7 @@ function ChannelChip({ name, gates, defined }) {
       background: defined ? `linear-gradient(to right, ${K.copper}1a, transparent)` : K.bg3,
       border: `1px solid ${defined ? K.copper + '55' : K.line}`, borderRadius: 8,
     }}>
-      <div style={{ fontFamily: K.fMono, fontSize: 10, color: defined ? K.copperHi : K.inkSoft, letterSpacing: '0.06em', minWidth: 40 }}>{gates}</div>
+      <div style={{ fontFamily: K.fMono, fontSize: 10, color: defined ? K.copperHi : K.inkDim, letterSpacing: '0.06em', minWidth: 40 }}>{gates}</div>
       <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 14, color: K.ink, lineHeight: 1.2, flex: 1 }}>{name}</div>
     </div>
   );
@@ -144,7 +144,7 @@ function SelfArtboard() {
           <Frame tone="cocoa" padding={20} stars>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Kicker color={K.copper}>Natal · the sky at birth</Kicker>
-              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft }}>15:42 · 40.66°N 73.94°W</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim }}>15:42 · 40.66°N 73.94°W</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
               <EphemerisWheel
@@ -169,7 +169,7 @@ function SelfArtboard() {
           <Frame tone="umber" padding={20}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Kicker color={K.copper}>Human Design · the body graph</Kicker>
-              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkSoft }}>5 DEFINED · 4 OPEN</div>
+              <div style={{ fontFamily: K.fMono, fontSize: 9.5, color: K.inkDim }}>5 DEFINED · 4 OPEN</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 6 }}>
               <BodyGraph size={240} />

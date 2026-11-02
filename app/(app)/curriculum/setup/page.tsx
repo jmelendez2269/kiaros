@@ -276,7 +276,7 @@ export default function CurriculumSetupPage() {
               opacity: loading ? 0.5 : 1,
             }}
           />
-          <span style={{ fontSize: 10, color: K.inkSoft, textAlign: "right" }}>
+          <span style={{ fontSize: 10, color: K.inkDim, textAlign: "right" }}>
             {prompt.length}/2000
           </span>
         </div>
@@ -330,7 +330,7 @@ export default function CurriculumSetupPage() {
                     <span
                       style={{
                         fontSize: 13.5,
-                        color: isDone ? K.inkDim : isActive ? K.ink : K.inkSoft,
+                        color: isDone ? K.inkDim : isActive ? K.ink : K.inkDim,
                         fontWeight: isActive ? 500 : 400,
                         opacity: isPending ? 0.45 : 1,
                       }}
@@ -338,7 +338,7 @@ export default function CurriculumSetupPage() {
                       {step.label}
                     </span>
                     {isActive && step.key === "generating" && elapsed >= 10 && (
-                      <span style={{ fontSize: 11.5, color: K.inkSoft, lineHeight: 1.55 }}>
+                      <span style={{ fontSize: 11.5, color: K.inkDim, lineHeight: 1.55 }}>
                         {elapsed < 45
                           ? "This usually takes 1–2 minutes for longer courses…"
                           : `Still working — ${Math.floor(elapsed / 60)}m ${String(elapsed % 60).padStart(2, "0")}s`}

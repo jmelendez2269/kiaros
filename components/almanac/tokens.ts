@@ -20,7 +20,7 @@ export const K = {
   lineHi: "rgba(227, 226, 237, 0.18)",
   ink: "#e3e2ed",       // bone — cool near-white
   inkDim: "#a4a3b1",    // bone-muted
-  inkSoft: "#6e6d7c",   // pushed brighter than Warm Almanac for AA contrast
+  inkSoft: "#6e6d7c",   // borders and non-text only — use inkDim for text
   inkFaint: "rgba(227, 226, 237, 0.4)",
   // "copper" / "brick" keep their slot names but now resolve to Obsidian's
   // hero violet — same role (primary accent) as leather-* in /calendar.
@@ -28,6 +28,10 @@ export const K = {
   brickHi: "#704bd2",   // leather-500
   copper: "#a98aef",    // leather-400
   copperHi: "#c7b3f5",  // leather-300
+  violetDim: "#bba3f3", // dim violet for labels and glyphs (contrast fix)
+  violetOutline: "#7b64c4", // violet outline chips (contrast fix)
+  aspectSquare: "#8466e6", // square aspect glyph (design)
+  borderStrong: "#6e6d7c", // strong border for UI controls (contrast fix)
   ember: "#df9b3f",     // ember-400 — amber, used sparingly for warm signal
   sage: "#6798cb",      // moss-400 — Obsidian's "moss" is steel blue
   plum: "#b08cdc",      // plum-400

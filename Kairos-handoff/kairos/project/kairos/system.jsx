@@ -62,7 +62,7 @@ function NavRow({ active = 'today', collapsed = false }) {
             {!collapsed && (
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: K.fBody, fontSize: 14, fontWeight: 500, color: isActive ? K.ink : K.inkDim }}>{n.label}</div>
-                <div style={{ fontFamily: K.fMono, fontSize: 9.5, letterSpacing: '0.1em', color: K.inkSoft, marginTop: 2 }}>{n.hint}</div>
+                <div style={{ fontFamily: K.fMono, fontSize: 9.5, letterSpacing: '0.1em', color: K.inkDim, marginTop: 2 }}>{n.hint}</div>
               </div>
             )}
           </div>
@@ -99,7 +99,7 @@ function SystemArtboard() {
           </div>
           <NavRow active="today" />
           <Divider glyph="✦" />
-          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, lineHeight: 1.6 }}>
+          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, lineHeight: 1.6 }}>
             <div><span style={{ color: K.copperHi }}>Today</span> ← Dashboard</div>
             <div><span style={{ color: K.copperHi }}>Year</span> ← Calendar + Blueprint + Curriculum (nested)</div>
             <div><span style={{ color: K.copperHi }}>Self</span> ← Human Design + Blueprint chart + Areas</div>
@@ -133,7 +133,7 @@ function SystemArtboard() {
                   <div style={{ width: 28, height: 28, borderRadius: 6, background: hex, border: `1px solid ${K.line}`, boxShadow: isBrand ? `0 0 12px ${K.kairos}88` : 'none' }} />
                   <div>
                     <div style={{ fontFamily: K.fBody, fontSize: 11, color: K.ink, textTransform: 'capitalize' }}>{name}</div>
-                    <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: isBrand ? K.kairos : K.inkSoft, letterSpacing: '0.08em' }}>{role.toUpperCase()}</div>
+                    <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: isBrand ? K.kairos : K.inkDim, letterSpacing: '0.08em' }}>{role.toUpperCase()}</div>
                   </div>
                 </div>
               );
@@ -153,10 +153,10 @@ function SystemArtboard() {
           <div style={{ fontFamily: K.fBody, fontSize: 12, color: K.inkDim, marginTop: 2 }}>body · UI · running text</div>
 
           <div style={{ fontFamily: K.fMono, fontSize: 18, color: K.copperHi, marginTop: 18, letterSpacing: '0.04em' }}>JetBrains Mono</div>
-          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, marginTop: 4, letterSpacing: '0.12em' }}>ALMANAC · DATA · TICKERS</div>
+          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, marginTop: 4, letterSpacing: '0.12em' }}>ALMANAC · DATA · TICKERS</div>
 
           <div style={{ fontFamily: K.fDisplay, fontWeight: 600, fontSize: 14, color: K.kairos, marginTop: 18, letterSpacing: '0.32em' }}>STELLOQUY</div>
-          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkSoft, marginTop: 4, letterSpacing: '0.12em' }}>CINZEL · BRAND DISPLAY · STELLOQUY ONLY</div>
+          <div style={{ fontFamily: K.fMono, fontSize: 10, color: K.inkDim, marginTop: 4, letterSpacing: '0.12em' }}>CINZEL · BRAND DISPLAY · STELLOQUY ONLY</div>
 
           <Divider glyph="☽" />
 
@@ -181,7 +181,7 @@ function SystemArtboard() {
         <Frame tone="cocoa" padding={28} stars style={{ borderColor: K.copper + '44' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
             <Kicker color={K.copper}>Sabian symbol · Moon 14° Scorpio</Kicker>
-            <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkSoft }}>oct 22 · 7:14pm est</div>
+            <div style={{ fontFamily: K.fMono, fontSize: 9, color: K.inkDim }}>oct 22 · 7:14pm est</div>
           </div>
           <div style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 32, color: K.ink, lineHeight: 1.2, maxWidth: 720, textWrap: 'balance' }}>
             "Telephone linemen at work installing new connections."

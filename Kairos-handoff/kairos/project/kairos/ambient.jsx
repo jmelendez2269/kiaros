@@ -73,7 +73,7 @@ function AmbientArtboard() {
             border: `1px solid ${K.line}`, overflow: 'hidden',
           }}>
             <StarField count={20} seed={2} opacity={0.35} />
-            <div style={{ position: 'absolute', top: 14, left: 14, fontFamily: K.fMono, fontSize: 9, color: K.inkSoft, letterSpacing: '0.18em' }}>YOUR SCREEN</div>
+            <div style={{ position: 'absolute', top: 14, left: 14, fontFamily: K.fMono, fontSize: 9, color: K.inkDim, letterSpacing: '0.18em' }}>YOUR SCREEN</div>
             {/* the floating bar */}
             <div style={{
               position: 'absolute', bottom: 16, right: 16,
@@ -86,7 +86,7 @@ function AmbientArtboard() {
               <Orb size={32} kind="speaking" glow={false} />
               <div>
                 <div style={{ fontFamily: K.fDisplay, fontWeight: 500, fontSize: 11, color: K.ink, lineHeight: 1, letterSpacing: '0.24em' }}>STELLOQUY</div>
-                <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: K.inkSoft, letterSpacing: '0.18em', marginTop: 5 }}>⌘ K · ANYWHERE</div>
+                <div style={{ fontFamily: K.fMono, fontSize: 8.5, color: K.inkDim, letterSpacing: '0.18em', marginTop: 5 }}>⌘ K · ANYWHERE</div>
               </div>
             </div>
           </div>

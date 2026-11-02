@@ -16,7 +16,7 @@ export function Stat({ label, value, mono = true }: Props) {
           fontSize: 9,
           letterSpacing: "0.18em",
           textTransform: "uppercase",
-          color: K.inkSoft,
+          color: K.inkDim,
         }}
       >
         {label}

@@ -53,7 +53,7 @@ function statusLabel(status: QuarterStatus): { label: string; tone: string } {
     case 'draft':
       return { label: 'DRAFT', tone: K.copperHi }
     case 'future':
-      return { label: 'FUTURE QUARTER', tone: K.inkSoft }
+      return { label: 'FUTURE QUARTER', tone: K.inkDim }
     case 'not-started':
     default:
       return { label: 'NOT STARTED', tone: K.inkDim }
@@ -207,7 +207,7 @@ export async function JournalQuarterLookBack({ quarterParam }: { quarterParam?: 
               style={{
                 fontFamily: K.fMono,
                 fontSize: 9.5,
-                color: K.inkSoft,
+                color: K.inkDim,
                 marginTop: 4,
                 letterSpacing: '0.14em',
               }}
