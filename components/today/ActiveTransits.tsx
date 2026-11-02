@@ -37,7 +37,7 @@ const ASPECT_GLYPH: Record<AspectKind, string> = {
 const ASPECT_TONE: Record<AspectKind, string> = {
   conjunction: K.copper,
   opposition: K.brickHi,
-  square: K.brick,
+  square: K.aspectSquare,
   trine: K.sage,
   sextile: K.copperHi,
 }

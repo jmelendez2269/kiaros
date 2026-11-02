@@ -95,6 +95,7 @@ const config: Config = {
           "copper-hi": "var(--almanac-copper-hi)",
           "violet-dim": "var(--almanac-violet-dim)",
           "violet-outline": "var(--almanac-violet-outline)",
+          "aspect-square": "var(--almanac-aspect-square)",
           "border-strong": "var(--almanac-border-strong)",
           ember: "var(--almanac-ember)",
           sage: "var(--almanac-sage)",
