@@ -130,7 +130,7 @@ export function MonthGrid({
                 >
                   {d}
                 </Link>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5" style={{ minWidth: 0, overflow: 'hidden' }}>
                   {character ? (
                     <span
                       title={`${character.label}${character.reason ? ` · ${character.reason}` : ''}`}
@@ -171,6 +171,7 @@ export function MonthGrid({
                     minWidth: 0,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {event.tag}
