@@ -542,6 +542,18 @@ html[data-theme="dawn"] ::selection {
     border-top: none;
   }
 }
+.period-review-modal-close {
+  outline: none;
+  box-shadow: none;
+}
+.period-review-modal-close:focus {
+  outline: none;
+  box-shadow: none;
+}
+.period-review-modal-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #090911, 0 0 0 4px #a98aef;
+}
 
 /* Marketing motion and the in-app orb share the same accessibility escape hatch. */
 @media (prefers-reduced-motion: reduce) {

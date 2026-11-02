@@ -35,7 +35,6 @@ export function PeriodReviewTodayCard({ period, lookBackHref, showEarlierLink }:
         background: '#0A0C14',
         borderRadius: 4,
         padding: '12px 14px',
-        minHeight: 96,
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
@@ -128,21 +127,6 @@ export function PeriodReviewTodayCard({ period, lookBackHref, showEarlierLink }:
           See earlier months
         </Link>
       ) : null}
-
-      <style jsx>{`
-        @media (min-width: 1440px) {
-          .period-review-promo-card__row {
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-          }
-          .period-review-promo-card__row button {
-            align-self: center;
-            flex-shrink: 0;
-          }
-        }
-      `}</style>
     </div>
   )
 }

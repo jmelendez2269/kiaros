@@ -5,7 +5,8 @@ import { z } from 'zod'
 import { getUserProfileId } from '@/lib/ai/usage'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { loadPeriodReviewCacheStatus } from '@/lib/period-review/cache'
-import { cacheKey, periodFor } from '@/lib/period-review/periods'
+import { cacheKey, isPeriodEnded, periodFor } from '@/lib/period-review/periods'
+import { todayISO } from '@/lib/today/get-today-context'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,17 +29,26 @@ export async function GET(req: Request) {
   if (!profileId) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
   const status = await loadPeriodReviewCacheStatus(profileId, planYear)
+  const today = todayISO()
 
   const months = Array.from({ length: 12 }, (_, i) => {
     const index = i + 1
     const period = periodFor('month', planYear, index)
-    return { index, cached: Boolean(status[cacheKey(period)]) }
+    return {
+      index,
+      cached: Boolean(status[cacheKey(period)]),
+      ended: isPeriodEnded(today, period),
+    }
   })
 
   const quarters = Array.from({ length: 4 }, (_, i) => {
     const index = i + 1
     const period = periodFor('quarter', planYear, index)
-    return { index, cached: Boolean(status[cacheKey(period)]) }
+    return {
+      index,
+      cached: Boolean(status[cacheKey(period)]),
+      ended: isPeriodEnded(today, period),
+    }
   })
 
   return NextResponse.json({ planYear, months, quarters })

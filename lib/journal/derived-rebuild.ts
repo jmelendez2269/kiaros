@@ -3,6 +3,7 @@ import 'server-only'
 import { resyncPatternSynthesisForTargets } from '@/lib/ai/journal-insight-synthesis'
 import type { PatternRefreshTarget } from '@/lib/journal/intelligence'
 import { createAdminSupabase } from '@/lib/supabase/admin'
+import { clearPeriodReviewJournalQuotes } from '@/lib/period-review/cache'
 
 const ENTRY_BATCH_SIZE = 200
 
@@ -38,6 +39,7 @@ export async function invalidateJournalDerivedContent(userProfileId: string): Pr
       .update({ ai_summary: null })
       .eq('user_id', userProfileId),
   ])
+  await clearPeriodReviewJournalQuotes(userProfileId)
 
   const error = patternsResult.error ?? briefsResult.error ?? reviewsResult.error
   if (error) throw new Error('Failed to invalidate journal-derived content')

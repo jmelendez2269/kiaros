@@ -8,7 +8,8 @@ import { countPeriodJournalEntries } from '@/lib/period-review/load-sources'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { loadCachedPeriodReview, saveCachedPeriodReview } from '@/lib/period-review/cache'
 import { assertPeriodReviewRateLimit } from '@/lib/period-review/rate-limit'
-import { periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
+import { isPeriodEnded, periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
+import { todayISO } from '@/lib/today/get-today-context'
 import { parseLegacySummarySections } from '@/lib/period-review/report-schema'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
 
@@ -60,6 +61,10 @@ export async function GET(req: Request) {
   const profileId = await getUserProfileId(userId)
   if (!profileId) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
+  if (!isPeriodEnded(todayISO(), period)) {
+    return NextResponse.json({ error: 'This period has not ended yet' }, { status: 400 })
+  }
+
   const cached = await loadCachedPeriodReview(profileId, period)
   const journalEntryCount = await countPeriodJournalEntries(profileId, period)
   return NextResponse.json({
@@ -97,6 +102,10 @@ export async function POST(req: Request) {
 
   const profileId = await getUserProfileId(userId)
   if (!profileId) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+
+  if (!isPeriodEnded(todayISO(), period)) {
+    return NextResponse.json({ error: 'This period has not ended yet' }, { status: 400 })
+  }
 
   const existing = await loadCachedPeriodReview(profileId, period)
   if (existing && !body.regenerate) {

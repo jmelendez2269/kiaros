@@ -47,33 +47,10 @@ function ShimmerBlock({ height = 72 }: { height?: number }) {
   return <div className="period-review-shimmer" style={{ height, borderRadius: 8, marginTop: 12 }} aria-hidden />
 }
 
-async function fetchReview(period: PeriodReviewPeriod, regenerate: boolean): Promise<{
-  payload: ReviewPayload
+async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
+  payload: ReviewPayload | null
   journalEntryCount: number
 }> {
-  if (regenerate) {
-    const res = await fetch('/api/period-review', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        kind: period.kind,
-        year: period.planYear,
-        index: period.index,
-        regenerate: true,
-      }),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error ?? 'Regeneration failed')
-    return {
-      payload: {
-        sections: data.sections,
-        sourceChips: data.sourceChips,
-        generatedAt: data.generatedAt,
-      },
-      journalEntryCount: data.journalEntryCount ?? 0,
-    }
-  }
-
   const sp = new URLSearchParams({
     kind: period.kind,
     year: String(period.planYear),
@@ -94,24 +71,32 @@ async function fetchReview(period: PeriodReviewPeriod, regenerate: boolean): Pro
     }
   }
 
-  const postRes = await fetch('/api/period-review', {
+  return { payload: null, journalEntryCount: getData.journalEntryCount ?? 0 }
+}
+
+async function postGenerate(period: PeriodReviewPeriod, regenerate: boolean): Promise<{
+  payload: ReviewPayload
+  journalEntryCount: number
+}> {
+  const res = await fetch('/api/period-review', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       kind: period.kind,
       year: period.planYear,
       index: period.index,
+      regenerate,
     }),
   })
-  const postData = await postRes.json()
-  if (!postRes.ok) throw new Error(postData.error ?? 'Generation failed')
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? (regenerate ? 'Regeneration failed' : 'Generation failed'))
   return {
     payload: {
-      sections: postData.sections,
-      sourceChips: postData.sourceChips,
-      generatedAt: postData.generatedAt,
+      sections: data.sections,
+      sourceChips: data.sourceChips,
+      generatedAt: data.generatedAt,
     },
-    journalEntryCount: postData.journalEntryCount ?? 0,
+    journalEntryCount: data.journalEntryCount ?? 0,
   }
 }
 
@@ -128,21 +113,44 @@ export function PeriodReviewModal({
   const dialogRef = useRef<HTMLDivElement>(null)
   const [payload, setPayload] = useState<ReviewPayload | null>(null)
   const [journalEntryCount, setJournalEntryCount] = useState<number | null>(null)
+  const [needsGenerate, setNeedsGenerate] = useState(false)
+  const [loadingCache, setLoadingCache] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const [confirmRegen, setConfirmRegen] = useState(false)
 
   useEffect(() => {
+    setPayload(null)
+    setNeedsGenerate(false)
+    setLoadingCache(true)
+    setError(null)
     startTransition(async () => {
       try {
-        const result = await fetchReview(period, false)
+        const result = await loadCachedOnly(period)
         setPayload(result.payload)
+        setNeedsGenerate(!result.payload)
         setJournalEntryCount(result.journalEntryCount)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Something went wrong')
+      } finally {
+        setLoadingCache(false)
       }
     })
   }, [period])
+
+  function generateFirst() {
+    setError(null)
+    startTransition(async () => {
+      try {
+        const result = await postGenerate(period, false)
+        setPayload(result.payload)
+        setNeedsGenerate(false)
+        setJournalEntryCount(result.journalEntryCount)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Generation failed')
+      }
+    })
+  }
 
   useEffect(() => {
     const node = dialogRef.current
@@ -187,8 +195,9 @@ export function PeriodReviewModal({
     setPayload(null)
     startTransition(async () => {
       try {
-        const result = await fetchReview(period, true)
+        const result = await postGenerate(period, true)
         setPayload(result.payload)
+        setNeedsGenerate(false)
         setJournalEntryCount(result.journalEntryCount)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Regeneration failed')
@@ -289,6 +298,7 @@ export function PeriodReviewModal({
               type="button"
               onClick={onClose}
               aria-label="Close"
+              className="period-review-modal-close"
               style={{
                 background: 'none',
                 border: 'none',
@@ -315,11 +325,35 @@ export function PeriodReviewModal({
             </p>
           ) : null}
 
-          {pending || !payload ? (
-            <div aria-busy="true" aria-label="Generating review">
+          {loadingCache || (pending && !payload) ? (
+            <div aria-busy="true" aria-label={needsGenerate ? 'Loading review' : 'Generating review'}>
               <ShimmerBlock height={88} />
               <ShimmerBlock height={64} />
               <ShimmerBlock height={64} />
+            </div>
+          ) : needsGenerate && !payload ? (
+            <div style={{ marginTop: 8 }}>
+              <p style={{ fontSize: 14, lineHeight: 1.65, color: '#A4A3B1', marginBottom: 16 }}>
+                No saved look back for this period yet.
+              </p>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={generateFirst}
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  padding: '10px 16px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: '#A98AEF',
+                  color: '#0A0C14',
+                  cursor: pending ? 'wait' : 'pointer',
+                }}
+              >
+                Generate
+              </button>
             </div>
           ) : (
             sectionBlocks.map((block) => (

@@ -64,6 +64,11 @@ export function addDays(iso: string, days: number): string {
   return new Date(t).toISOString().slice(0, 10)
 }
 
+/** True when the calendar period has fully ended (day after periodEnd). */
+export function isPeriodEnded(today: string, period: PeriodReviewPeriod): boolean {
+  return today > period.periodEnd
+}
+
 /** True when `today` is on or after the last day of the period and on or before day 7 of the following period. */
 export function isPromoWindow(today: string, period: PeriodReviewPeriod): boolean {
   const windowStart = period.periodEnd

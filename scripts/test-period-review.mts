@@ -7,11 +7,16 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 import {
+  pickPeriodReviewVaultQuarter,
+  periodReviewCacheEntryQuotesJournal,
+} from '../lib/period-review/cache-vault.ts'
+import {
   cacheKey,
   isPromoWindow,
   latestClosedMonth,
   periodFor,
   addDays,
+  isPeriodEnded,
 } from '../lib/period-review/periods.ts'
 import {
   mergeStatsSnapshotPreserveCache,
@@ -132,6 +137,59 @@ assert.equal(formMap.get(4), undefined)
 assert.equal(formMap.get(2)?.wins, formDraftRow.wins)
 assert.equal(formQuarterStatus(formMap.get(2) ?? null, 2, 3), 'draft')
 assert.equal(formQuarterStatus(formMap.get(4) ?? null, 4, 4), 'not-started')
+
+const authoredQ2 = {
+  quarter: 2,
+  completed_at: '2026-06-30T00:00:00Z',
+  wins: ['Win'],
+  challenges: [],
+  pivots: null,
+  next_quarter_intentions: null,
+  stats_snapshot: { journal_entries_count: 3 },
+}
+const cacheQ4 = {
+  quarter: 4,
+  completed_at: null,
+  wins: [],
+  challenges: [],
+  pivots: null,
+  next_quarter_intentions: null,
+  stats_snapshot: { periodReviewCache: { 'month:2026-10-01': { summary: 'x', generatedAt: 't', model: 'm', regenerations: 0 } } },
+}
+const cacheQ2 = {
+  quarter: 2,
+  completed_at: null,
+  wins: [],
+  challenges: [],
+  pivots: null,
+  next_quarter_intentions: null,
+  stats_snapshot: { periodReviewCache: { 'month:2026-04-01': { summary: 'x', generatedAt: 't', model: 'm', regenerations: 0 } } },
+}
+assert.deepEqual(pickPeriodReviewVaultQuarter([authoredQ2], 2), { ok: true, vaultQuarter: 1 })
+assert.deepEqual(pickPeriodReviewVaultQuarter([authoredQ2, cacheQ4], 2), { ok: true, vaultQuarter: 1 })
+assert.deepEqual(pickPeriodReviewVaultQuarter([], 3), { ok: true, vaultQuarter: 3 })
+assert.deepEqual(pickPeriodReviewVaultQuarter([cacheQ2], 2), { ok: true, vaultQuarter: 2 })
+const allAuthored = [1, 2, 3, 4].map((quarter) => ({
+  quarter,
+  completed_at: '2026-01-01',
+  wins: ['a'],
+  challenges: [],
+  pivots: null,
+  next_quarter_intentions: null,
+  stats_snapshot: null,
+}))
+assert.deepEqual(pickPeriodReviewVaultQuarter(allAuthored, 4), { ok: false, reason: 'migration_required' })
+
+const nov = periodFor('month', 2026, 11)
+assert.equal(isPeriodEnded('2026-11-30', nov), false)
+assert.equal(isPeriodEnded('2026-12-01', nov), true)
+const decQ4 = periodFor('quarter', 2026, 4)
+assert.equal(isPeriodEnded('2026-12-31', decQ4), false)
+assert.equal(isPeriodEnded('2027-01-01', decQ4), true)
+
+assert.equal(periodReviewCacheEntryQuotesJournal({ sections: { inYourWords: 'Dear diary' } }), true)
+assert.equal(periodReviewCacheEntryQuotesJournal({ sourceChips: { journal: ['1 journal entry'] } }), true)
+assert.equal(periodReviewCacheEntryQuotesJournal({ sections: { sky: 'Only sky' } }), false)
 
 assert.equal(chipRetrogrades(1), '1 retrograde')
 assert.equal(chipRetrogrades(3), '3 retrogrades')

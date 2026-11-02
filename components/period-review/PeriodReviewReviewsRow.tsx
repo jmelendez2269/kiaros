@@ -7,7 +7,7 @@ import { usePeriodReview } from './PeriodReviewProvider'
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-type ChipState = { index: number; cached: boolean }
+type ChipState = { index: number; cached: boolean; ended: boolean }
 
 export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
   const { openPeriodReview, statusNonce } = usePeriodReview()
@@ -34,8 +34,9 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
 
   if (loading) return null
 
-  function onChip(kind: PeriodReviewKind, index: number, cached: boolean) {
-    openPeriodReview(kind, planYear, index, { autoGenerate: !cached })
+  function onChip(kind: PeriodReviewKind, index: number, ended: boolean) {
+    if (!ended) return
+    openPeriodReview(kind, planYear, index)
   }
 
   return (
@@ -57,8 +58,10 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
           <button
             key={`m-${m.index}`}
             type="button"
-            onClick={() => onChip('month', m.index, m.cached)}
-            style={chipStyle(m.cached)}
+            disabled={!m.ended}
+            aria-disabled={!m.ended}
+            onClick={() => onChip('month', m.index, m.ended)}
+            style={chipStyle(m.cached, m.ended)}
           >
             {MONTH_SHORT[m.index - 1]}
           </button>
@@ -68,8 +71,10 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
           <button
             key={`q-${q.index}`}
             type="button"
-            onClick={() => onChip('quarter', q.index, q.cached)}
-            style={chipStyle(q.cached)}
+            disabled={!q.ended}
+            aria-disabled={!q.ended}
+            onClick={() => onChip('quarter', q.index, q.ended)}
+            style={chipStyle(q.cached, q.ended)}
           >
             Q{q.index}
           </button>
@@ -79,7 +84,21 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
   )
 }
 
-function chipStyle(filled: boolean): CSSProperties {
+function chipStyle(filled: boolean, ended: boolean): CSSProperties {
+  if (!ended) {
+    return {
+      fontFamily: K.fMono,
+      fontSize: 11,
+      letterSpacing: '0.06em',
+      padding: '6px 12px',
+      borderRadius: 999,
+      cursor: 'not-allowed',
+      background: 'transparent',
+      color: 'rgba(164,163,177,0.35)',
+      border: '1px solid rgba(164,163,177,0.2)',
+      opacity: 0.55,
+    }
+  }
   return {
     fontFamily: K.fMono,
     fontSize: 11,

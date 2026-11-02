@@ -91,7 +91,7 @@ export function PeriodReviewDeepLink({
   useEffect(() => {
     if (opened.current) return
     opened.current = true
-    openPeriodReview(kind, year, index, { autoGenerate: true })
+    openPeriodReview(kind, year, index, { autoGenerate: false })
   }, [kind, year, index, openPeriodReview])
 
   return null
