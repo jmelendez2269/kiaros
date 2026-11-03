@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BRAND } from '@/lib/brand'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries'
@@ -160,6 +160,31 @@ export function JournalComposer({
   useEffect(() => {
     if (!isEditing) setEntryDate(todayISO())
   }, [isEditing])
+
+  // State above is seeded from initialPrompt only on mount. When the user is
+  // already on /journal and a link changes ?prompt= (e.g. from the period
+  // review modal), the page re-renders with the same composer, so apply the
+  // new prompt here. Untouched prefills are swapped; typed drafts are kept and
+  // the new prompt goes on top.
+  const appliedPromptRef = useRef(initialPrompt)
+  useEffect(() => {
+    if (isEditing) return
+    const prev = appliedPromptRef.current
+    if (prev === initialPrompt) return
+    appliedPromptRef.current = initialPrompt
+
+    const prevPrefill = prev ? `${prev}\n\n` : ''
+    const nextPrefill = initialPrompt ? `${initialPrompt}\n\n` : ''
+    setBody((current) => {
+      if (!current.trim() || current === prevPrefill) return nextPrefill
+      return initialPrompt ? `${nextPrefill}${current}` : current
+    })
+    setTitle((current) => {
+      const untouched = !current.trim() || (prev !== '' && current === truncate(prev, 120))
+      return untouched ? (initialPrompt ? truncate(initialPrompt, 120) : '') : current
+    })
+    if (initialPrompt) setIsRitual(true)
+  }, [initialPrompt, isEditing])
 
   const contextSummary = useMemo(() => {
     const parts: string[] = []
