@@ -25,15 +25,23 @@ export type PeriodReviewSourceChips = {
   sky: string[]
   plans: string[]
   journal: string[]
+  /** Major transits to the member's own chart. Absent on reviews saved before 2026-11. */
+  personal?: string[]
 }
 
 export function buildSourceChips(sources: PeriodReviewSourceBundle): PeriodReviewSourceChips {
-  const sky = [
-    chipRetrogrades(sources.sky.retrogradePeriods.length),
-    chipMoonPhases(sources.sky.moonPhases.length),
-    chipEclipses(sources.sky.eclipseCount),
-    chipSignChanges(sources.sky.signChangeCount),
-  ].filter((c): c is string => Boolean(c))
+  // Name the major collective transits when we have them; fall back to counts.
+  const sky = sources.majorTransits
+    ? [...sources.majorTransits.collective, chipMoonPhases(sources.sky.moonPhases.length)].filter(
+        (c): c is string => Boolean(c),
+      )
+    : [
+        chipRetrogrades(sources.sky.retrogradePeriods.length),
+        chipMoonPhases(sources.sky.moonPhases.length),
+        chipEclipses(sources.sky.eclipseCount),
+        chipSignChanges(sources.sky.signChangeCount),
+      ].filter((c): c is string => Boolean(c))
+  const personal = sources.majorTransits?.personal ?? []
 
   const plans = [
     chipPlans(sources.planTasksCompletedCount),
@@ -46,7 +54,7 @@ export function buildSourceChips(sources: PeriodReviewSourceBundle): PeriodRevie
     chipStelloquyCaptures(sources.captureCount ?? 0),
   ].filter((c): c is string => Boolean(c))
 
-  return { sky, plans, journal }
+  return { sky, plans, journal, personal }
 }
 
 export function flattenPeriodReviewSections(sections: PeriodReviewSections): string {

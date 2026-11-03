@@ -89,6 +89,7 @@ function chipsOrNull(value: unknown): PeriodReviewSourceChips | null {
     sky: Array.isArray(v.sky) ? v.sky : [],
     plans: Array.isArray(v.plans) ? v.plans : [],
     journal: Array.isArray(v.journal) ? v.journal : [],
+    personal: Array.isArray(v.personal) ? v.personal : [],
   }
 }
 
@@ -324,7 +325,11 @@ export function PeriodReviewModal({
 
   const sectionBlocks: { title: string; body?: string; chips: string[] }[] = []
   if (payload?.sections.sky) {
-    sectionBlocks.push({ title: 'The sky', body: payload.sections.sky, chips: payload.sourceChips.sky })
+    sectionBlocks.push({
+      title: 'The sky',
+      body: payload.sections.sky,
+      chips: [...(payload.sourceChips.personal ?? []), ...payload.sourceChips.sky],
+    })
   }
   if (payload?.sections.plansAndGoals) {
     sectionBlocks.push({

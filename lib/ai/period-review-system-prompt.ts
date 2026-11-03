@@ -101,7 +101,16 @@ ${sources.sky.text}
 
 Ingresses (planet sign changes):
 ${ingressBlock}
-
+${
+  sources.majorTransits
+    ? `
+Major transits during this period:
+  To the member's own chart: ${sources.majorTransits.personal.length ? sources.majorTransits.personal.join('; ') : '(none)'}
+  Collective: ${sources.majorTransits.collective.length ? sources.majorTransits.collective.join('; ') : '(none)'}
+In "The sky", name the transits to the member's own chart first when there are any, then the collective ones.
+`
+    : ''
+}
 Blueprint context:
   Month theme: ${sources.monthBlueprintTheme ?? '(none)'}
   Quarter theme: ${sources.quarterBlueprintTheme ?? '(none)'}

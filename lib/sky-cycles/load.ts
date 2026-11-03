@@ -180,3 +180,26 @@ export async function loadSkyCycleEmailSetting(profileId: string): Promise<boole
   if (error) return null
   return Boolean((data as { sky_cycle_emails?: boolean } | null)?.sky_cycle_emails)
 }
+
+export interface MajorTransits {
+  /** Slow transits to the member's own chart, e.g. "Pluto squares your Moon". */
+  personal: string[]
+  /** Big shared events: retrogrades, eclipse seasons, slow planets changing sign. */
+  collective: string[]
+}
+
+const COLLECTIVE_MAJOR_KINDS = new Set(['retrograde', 'eclipse', 'ingress'])
+
+/** Named major transits overlapping [from, to], personal and collective. */
+export async function majorTransitsForWindow(profileId: string, from: string, to: string): Promise<MajorTransits> {
+  const chart = await loadNatalChart(profileId)
+  const personal = chart
+    ? detectPersonalTransits(slowSeries(addDays(from, -400), addDays(to, 200)), natalPointsFromChart(chart))
+    : []
+  const overlaps = (c: SkyCycle) => c.startDate <= to && c.endDate >= from
+  const unique = (titles: string[]) => Array.from(new Set(titles))
+  return {
+    personal: unique(personal.filter(overlaps).map((c) => c.title)),
+    collective: unique(COLLECTIVE.filter((c) => COLLECTIVE_MAJOR_KINDS.has(c.kind) && overlaps(c)).map((c) => c.title)),
+  }
+}
