@@ -7,6 +7,7 @@ import type { BirthData } from "@/lib/ephemeris";
 import type { HouseSystem, NatalChart } from "@/types/blueprint";
 import { computeHumanDesign } from "@/lib/human-design";
 import { getAccessWindow } from "@/lib/commerce/get-access-window";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 export async function GET() {
   const { userId } = await auth();
@@ -24,7 +25,7 @@ export async function GET() {
   const astrologicalWord = deriveAstrologicalYearWord({
     birthDate: profile?.birth_date,
     natalChart: (profile?.natal_chart as NatalChart | null) ?? null,
-    planYear: profile?.plan_year ?? new Date().getFullYear(),
+    planYear: profile?.plan_year ?? getPlannerYearWithOverride(),
   });
 
   const accessWindow = profile?.id ? await getAccessWindow(profile.id) : null;
@@ -41,6 +42,11 @@ export async function PATCH(req: Request) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
+  // plan_year is server-authoritative: the client's calendar year is wrong from
+  // Dec 1 (planner year already rolled) and ignores PLANNER_YEAR_OVERRIDE.
+  if ("plan_year" in body) {
+    body.plan_year = getPlannerYearWithOverride();
+  }
   const admin = createAdminSupabase();
 
   // Ensure a profile row exists (webhook may not have fired in local dev).

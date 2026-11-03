@@ -6,6 +6,7 @@ import type { BlueprintOutput, HouseSystem, MoonPhase, Tradition } from '@/types
 import type { Json } from '@/types/database'
 import type { ArcPeriod } from '@/components/year/PushRestRibbon'
 import { sanitizePushRestArc } from '@/lib/year/push-rest-arc'
+import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { isMonthlyBlueprintWindowEnabled } from '@/lib/feature-flags'
 import {
   getBlueprintYearCapability,
@@ -205,9 +206,30 @@ async function loadBlueprintForYearUncached(
 
 export const loadBlueprintForYear = cache(loadBlueprintForYearUncached)
 
+/**
+ * The planner year that has rolled over (Dec 1) but whose calendar year has not
+ * started yet, e.g. 2027 during December 2026. `null` the rest of the year.
+ */
+export function getUpcomingPlanYear(now: Date = new Date()): number | null {
+  const plannerYear = getPlannerYearWithOverride(now)
+  return plannerYear > now.getFullYear() ? plannerYear : null
+}
+
+/**
+ * The Blueprint that covers today. This is the calendar year's Blueprint, which
+ * keeps Today / Calendar / emails date-accurate through December. Only when
+ * there is no calendar-year Blueprint at all (e.g. someone who joined after
+ * Dec 1 and only owns the upcoming year) do we fall back to the upcoming one.
+ */
 export const loadCurrentBlueprint = cache(
-  async (supabaseUserId: string, isAdmin = false): Promise<LoadedBlueprint | null> =>
-    loadBlueprintForYearUncached(supabaseUserId, new Date().getFullYear(), isAdmin),
+  async (supabaseUserId: string, isAdmin = false): Promise<LoadedBlueprint | null> => {
+    const now = new Date()
+    const current = await loadBlueprintForYearUncached(supabaseUserId, now.getFullYear(), isAdmin)
+    if (current) return current
+    const upcomingYear = getUpcomingPlanYear(now)
+    if (upcomingYear === null) return null
+    return loadBlueprintForYearUncached(supabaseUserId, upcomingYear, isAdmin)
+  },
 )
 
 /**
@@ -220,11 +242,15 @@ export const loadCurrentBlueprint = cache(
 export const currentBlueprintRowExists = cache(
   async (supabaseUserId: string): Promise<boolean> => {
     const admin = createAdminSupabase()
+    const now = new Date()
+    const years = [now.getFullYear(), getUpcomingPlanYear(now)].filter(
+      (year): year is number => year !== null,
+    )
     const { data, error } = await admin
       .from('blueprints')
       .select('id')
       .eq('user_id', supabaseUserId)
-      .eq('plan_year', new Date().getFullYear())
+      .in('plan_year', years)
       .eq('status', 'ready')
       .limit(1)
       .maybeSingle()

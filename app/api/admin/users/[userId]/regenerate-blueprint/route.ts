@@ -2,6 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse, after } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { runBlueprintGeneration } from "@/lib/ai/blueprint-generator";
+import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
 export const maxDuration = 300;
 
@@ -27,7 +28,7 @@ export async function POST(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const planYear = profile.plan_year ?? new Date().getFullYear();
+  const planYear = profile.plan_year ?? getPlannerYearWithOverride();
 
   const { data: latest } = await admin
     .from("blueprints")

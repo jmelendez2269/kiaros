@@ -4,7 +4,13 @@ import { createServerSupabase } from '@/lib/supabase/server'
 import { BlueprintView } from '@/components/blueprint/BlueprintView'
 import { getAppProfile, appProfileId } from '@/lib/app/get-app-profile'
 import { getAccessWindow } from '@/lib/commerce/get-access-window'
-import { currentBlueprintRowExists, loadCurrentBlueprint } from '@/lib/blueprint/load'
+import {
+  currentBlueprintRowExists,
+  getUpcomingPlanYear,
+  loadBlueprintForYear,
+  loadCurrentBlueprint,
+} from '@/lib/blueprint/load'
+import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import type { Tradition } from '@/types/blueprint'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 
@@ -16,9 +22,16 @@ const TRADITION_LABELS: Record<Tradition, string> = {
   synthesis: 'Synthesis',
 }
 
-export default async function BlueprintPage() {
+export default async function BlueprintPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ year?: string | string[] }>
+}) {
   const supabase = await createServerSupabase()
-  const currentYear = new Date().getFullYear()
+  const currentYear = getPlannerYearWithOverride()
+  const upcomingYear = getUpcomingPlanYear()
+  const yearParam = (await searchParams)?.year
+  const wantsUpcoming = upcomingYear !== null && String(Array.isArray(yearParam) ? yearParam[0] : yearParam) === String(upcomingYear)
 
   const { userId } = await auth()
   const [clerkUser, appProfile] = await Promise.all([
@@ -28,14 +41,29 @@ export default async function BlueprintPage() {
   const isAdmin = clerkUser?.publicMetadata?.isAdmin === true
   const appProfileUserId = appProfileId(appProfile)
 
-  const [loaded, accessWindow, { data: profile }] = await Promise.all([
+  // In December the planner year has rolled but today still belongs to the
+  // calendar year's Blueprint. Always load the calendar-year (current) one so we
+  // know whether an upcoming one exists, and let ?year= switch the view.
+  const [currentLoaded, upcomingLoaded, accessWindow, { data: profile }] = await Promise.all([
     appProfileUserId ? loadCurrentBlueprint(appProfileUserId, isAdmin) : Promise.resolve(null),
+    appProfileUserId && upcomingYear !== null
+      ? loadBlueprintForYear(appProfileUserId, upcomingYear, isAdmin)
+      : Promise.resolve(null),
     appProfileUserId ? getAccessWindow(appProfileUserId) : Promise.resolve(null),
     supabase
       .from('user_profiles')
       .select('tradition, house_system')
       .maybeSingle(),
   ])
+
+  const loaded = wantsUpcoming && upcomingLoaded ? upcomingLoaded : currentLoaded
+  const viewingUpcoming = !!loaded && upcomingLoaded !== null && loaded.planYear === upcomingLoaded.planYear
+  const otherYearLink =
+    upcomingLoaded && currentLoaded && upcomingLoaded.planYear !== currentLoaded.planYear
+      ? viewingUpcoming
+        ? { href: '/blueprint', year: currentLoaded.planYear }
+        : { href: `/blueprint?year=${upcomingLoaded.planYear}`, year: upcomingLoaded.planYear }
+      : null
 
   const needsRegeneration =
     !!loaded &&
@@ -114,6 +142,24 @@ export default async function BlueprintPage() {
               style={{ border: '1px solid var(--almanac-violet-outline)' }}
             >
               Regenerate
+            </Link>
+          </div>
+        </div>
+      )}
+      {otherYearLink && (
+        <div className="mx-auto mb-6 max-w-3xl rounded-2xl border border-leather-400/40 bg-leather-500/15 px-5 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-bone">
+              {viewingUpcoming
+                ? `You're reading your ${loaded.planYear} Blueprint. It begins January 1, and ${otherYearLink.year} is still your current year.`
+                : `Your ${otherYearLink.year} Blueprint is ready. It begins January 1.`}
+            </p>
+            <Link
+              href={otherYearLink.href}
+              className="shrink-0 rounded-xl bg-leather-500/30 px-4 py-2 text-sm font-medium text-bone shadow-glow hover:bg-leather-500/45"
+              style={{ border: '1px solid var(--almanac-violet-outline)' }}
+            >
+              {viewingUpcoming ? `Back to ${otherYearLink.year}` : `Read ${otherYearLink.year}`}
             </Link>
           </div>
         </div>

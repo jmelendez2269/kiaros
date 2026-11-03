@@ -28,6 +28,7 @@ import { appProfileId, getAppProfile } from '@/lib/app/get-app-profile'
 import { computeTransitWindows } from '@/lib/planetary/transit-windows'
 import type { EnergyWindow } from '@/lib/planetary/energy-windows'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
+import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 
 type View = 'year' | 'month' | 'week' | 'review'
 
@@ -191,17 +192,17 @@ async function loadYearOverview() {
   const supabaseUserId = await loadSupabaseUserId()
   if (!supabaseUserId) return { loaded: null, yearEphemeris: null, supabaseUserId: null }
 
-  const planYear = new Date().getFullYear()
   const admin = createAdminSupabase()
-  const [loaded, ephemerisRes] = await Promise.all([
-    loadCurrentBlueprint(supabaseUserId),
-    admin
-      .from('ephemeris_cache')
-      .select('data')
-      .eq('user_id', supabaseUserId)
-      .eq('year', planYear)
-      .maybeSingle(),
-  ])
+  const loaded = await loadCurrentBlueprint(supabaseUserId)
+  // Follow the Blueprint that was actually loaded (it can be the upcoming
+  // planner year in December for members who only own that year).
+  const planYear = loaded?.planYear ?? new Date().getFullYear()
+  const ephemerisRes = await admin
+    .from('ephemeris_cache')
+    .select('data')
+    .eq('user_id', supabaseUserId)
+    .eq('year', planYear)
+    .maybeSingle()
 
   return {
     loaded,
@@ -421,7 +422,7 @@ export default async function YearPage({ searchParams }: PageProps) {
 }
 
 async function NoBlueprintCard({ supabaseUserId }: { supabaseUserId: string | null }) {
-  const currentYear = new Date().getFullYear()
+  const currentYear = getPlannerYearWithOverride()
   // loadCurrentBlueprint() returns null both when nothing was ever generated
   // and when a Blueprint exists but the caller's access capability is 'none'
   // (ACCESS-02) — those need different messaging. See blueprint/page.tsx.

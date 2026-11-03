@@ -9,6 +9,7 @@ import type { JournalConsentState } from '@/lib/journal/consent'
 import { auth } from '@clerk/nextjs/server'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
 import { resolveMoonRitualPromptForJournal } from '@/lib/journal/resolve-moon-ritual-prompt'
+import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 
 export default async function JournalPage({
   searchParams,
@@ -103,7 +104,11 @@ export default async function JournalPage({
       initialContext={initialContext}
       journalEntriesCount={journalEntriesRes.error ? 0 : (journalEntriesRes.count ?? 0)}
       oracleMemoryCount={oracleMemoryRes.error ? 0 : (oracleMemoryRes.count ?? 0)}
-      blueprintYear={profileRes.data?.plan_year === currentYear ? currentYear : null}
+      blueprintYear={
+        profileRes.data?.plan_year === currentYear || profileRes.data?.plan_year === getPlannerYearWithOverride()
+          ? profileRes.data.plan_year
+          : null
+      }
       consentV2Enabled={consentV2Enabled}
       memoryDefaultsEnabled={memoryDefaultsEnabled}
       showMemoryPrompt={showMemoryPrompt}

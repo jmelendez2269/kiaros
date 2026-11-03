@@ -141,7 +141,7 @@ export default function OnboardingYearFocusPage() {
         year_vision: values.year_vision,
         word_of_year: values.word_of_year || null,
         what_to_release: values.what_to_release || null,
-        plan_year: new Date().getFullYear(),
+        plan_year: new Date().getFullYear(), // normalised to the planner year by PATCH /api/profile
         ...cyclePayload,
       }),
     });
