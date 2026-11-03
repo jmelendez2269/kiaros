@@ -136,3 +136,22 @@ export function periodReviewHref(kind: PeriodReviewKind, year: number, index: nu
   const sp = new URLSearchParams({ kind, year: String(year), index: String(index) })
   return `/period-review?${sp.toString()}`
 }
+
+/** The period immediately before this one (crosses year boundaries). */
+export function previousPeriod(period: PeriodReviewPeriod): PeriodReviewPeriod {
+  const max = period.kind === 'month' ? 12 : 4
+  if (period.index === 1) return periodFor(period.kind, period.planYear - 1, max)
+  return periodFor(period.kind, period.planYear, period.index - 1)
+}
+
+/** The period immediately after this one (crosses year boundaries). */
+export function nextPeriod(period: PeriodReviewPeriod): PeriodReviewPeriod {
+  const max = period.kind === 'month' ? 12 : 4
+  if (period.index === max) return periodFor(period.kind, period.planYear + 1, 1)
+  return periodFor(period.kind, period.planYear, period.index + 1)
+}
+
+/** Short nav label: "September" for months, "Q3" for quarters. */
+export function periodShortLabel(period: PeriodReviewPeriod): string {
+  return period.kind === 'month' ? periodMonthNameOnly(period) : `Q${period.index}`
+}

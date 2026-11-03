@@ -1,5 +1,5 @@
 import type { PeriodReviewPeriod } from './periods'
-import { periodMonthNameOnly } from './periods'
+import { periodLabel, periodMonthNameOnly } from './periods'
 
 export function periodReviewDismissStorageKey(period: Pick<PeriodReviewPeriod, 'kind' | 'periodStart'>): string {
   return `kiaros-period-review-dismiss:${period.kind}:${period.periodStart}`
@@ -70,6 +70,20 @@ export function monthReflectionWritePrompt(period: PeriodReviewPeriod): string {
 export function journalWritePrefillHref(period: PeriodReviewPeriod): string {
   const prompt = encodeURIComponent(monthReflectionWritePrompt(period))
   return `/journal?prompt=${prompt}`
+}
+
+export function continueWithStelloquyLabel(): string {
+  return 'Continue with Stelloquy'
+}
+
+/** First message sent to Stelloquy when the user continues from a look back. */
+export function periodReviewStelloquyPrompt(period: PeriodReviewPeriod, questionToCarry?: string | null): string {
+  const label = periodLabel(period)
+  const question = questionToCarry?.trim()
+  if (question) {
+    return `I just read my look back on ${label}. It left me with this question: "${question}" Can we sit with it together?`
+  }
+  return `I just read my look back on ${label}. Can we talk through what it brought up for me?`
 }
 
 export function periodReviewStorageFullLine1(): string {

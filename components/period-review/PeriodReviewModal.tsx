@@ -3,17 +3,26 @@
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState, useTransition } from 'react'
 import { K } from '@/components/almanac'
+import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import {
   emptyJournalBanner,
+  continueWithStelloquyLabel,
   emptyJournalClosingLinkLabel,
   formatGeneratedTimestamp,
   formatPeriodDateRange,
   journalWritePrefillHref,
   periodReviewStorageFullDismissLabel,
   periodReviewStorageFullLine1,
+  periodReviewStelloquyPrompt,
   periodReviewStorageFullLine2,
 } from '@/lib/period-review/copy'
-import { periodLabel, type PeriodReviewPeriod } from '@/lib/period-review/periods'
+import {
+  nextPeriod,
+  periodLabel,
+  periodShortLabel,
+  previousPeriod,
+  type PeriodReviewPeriod,
+} from '@/lib/period-review/periods'
 import type { PeriodReviewSections, PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 
 type ReviewPayload = {
@@ -49,6 +58,23 @@ function SourceChips({ chips }: { chips: string[] }) {
 function ShimmerBlock({ height = 72 }: { height?: number }) {
   return <div className="period-review-shimmer" style={{ height, borderRadius: 8, marginTop: 12 }} aria-hidden />
 }
+
+function localTodayIso(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const navButtonStyle = {
+  background: 'none',
+  border: '1px solid rgba(164,163,177,0.35)',
+  borderRadius: 999,
+  padding: '4px 10px',
+  fontFamily: K.fMono,
+  fontSize: 10,
+  letterSpacing: '0.08em',
+  color: '#A4A3B1',
+  cursor: 'pointer',
+} as const
 
 async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
   payload: ReviewPayload | null
@@ -118,11 +144,18 @@ export function PeriodReviewModal({
   period,
   autoGenerate: _autoGenerate,
   onClose,
+  onNavigate,
 }: {
   period: PeriodReviewPeriod
   autoGenerate: boolean
   onClose: () => void
+  onNavigate?: (period: PeriodReviewPeriod) => void
 }) {
+  const { openWith, hasOracleAccess } = useStelloquy()
+  const prev = previousPeriod(period)
+  const next = nextPeriod(period)
+  // Same rule as latestClosedMonth/Quarter: a period is reviewable from its last day on.
+  const canGoNext = localTodayIso() >= next.periodEnd
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const [payload, setPayload] = useState<ReviewPayload | null>(null)
@@ -137,6 +170,8 @@ export function PeriodReviewModal({
 
   useEffect(() => {
     setPayload(null)
+    setJournalEntryCount(null)
+    setConfirmRegen(false)
     setNeedsGenerate(false)
     setLoadingCache(true)
     setError(null)
@@ -248,6 +283,16 @@ export function PeriodReviewModal({
     })
   }
 
+  function continueWithStelloquy() {
+    const prompt = periodReviewStelloquyPrompt(period, payload?.sections.questionToCarry)
+    onClose()
+    if (hasOracleAccess) {
+      openWith(prompt)
+      return
+    }
+    window.location.assign('/oracle')
+  }
+
   const showEmptyJournal = journalEntryCount === 0
   const writeHref = journalWritePrefillHref(period)
 
@@ -338,6 +383,28 @@ export function PeriodReviewModal({
               <p style={{ margin: '6px 0 0', fontSize: 13, color: '#A4A3B1' }}>
                 {formatPeriodDateRange(period.periodStart, period.periodEnd)}
               </p>
+              {onNavigate ? (
+                <nav aria-label="Other reviews" style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => onNavigate(prev)}
+                    style={{ ...navButtonStyle, cursor: pending ? 'wait' : 'pointer' }}
+                  >
+                    ← {periodShortLabel(prev)}
+                  </button>
+                  {canGoNext ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => onNavigate(next)}
+                      style={{ ...navButtonStyle, cursor: pending ? 'wait' : 'pointer' }}
+                    >
+                      {periodShortLabel(next)} →
+                    </button>
+                  ) : null}
+                </nav>
+              ) : null}
             </div>
             <button
               type="button"
@@ -461,10 +528,36 @@ export function PeriodReviewModal({
 
           {showEmptyJournal && period.kind === 'month' && payload ? (
             <p style={{ marginTop: 20, fontSize: 14, color: '#A4A3B1', lineHeight: 1.65 }}>
-              <Link href={writeHref} style={{ color: '#A98AEF', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+              <Link
+                href={writeHref}
+                onClick={onClose}
+                style={{ color: '#A98AEF', textDecoration: 'underline', textUnderlineOffset: 3 }}
+              >
                 {emptyJournalClosingLinkLabel(period)}
               </Link>
             </p>
+          ) : null}
+
+          {payload ? (
+            <div style={{ marginTop: 24 }}>
+              <button
+                type="button"
+                onClick={continueWithStelloquy}
+                style={{
+                  fontFamily: K.fMono,
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  padding: '10px 16px',
+                  borderRadius: 999,
+                  border: '1px solid #A98AEF',
+                  background: 'transparent',
+                  color: '#A98AEF',
+                  cursor: 'pointer',
+                }}
+              >
+                {continueWithStelloquyLabel()} →
+              </button>
+            </div>
           ) : null}
         </div>
 

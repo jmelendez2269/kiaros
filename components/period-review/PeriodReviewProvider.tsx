@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { periodFor, type PeriodReviewKind } from '@/lib/period-review/periods'
+import { periodFor, type PeriodReviewKind, type PeriodReviewPeriod } from '@/lib/period-review/periods'
 import { PeriodReviewModal } from './PeriodReviewModal'
 
 export type PeriodReviewOpenOptions = {
@@ -59,6 +59,13 @@ export function PeriodReviewProvider({ children }: { children: ReactNode }) {
     setStatusNonce((n) => n + 1)
   }, [])
 
+  const navigateToPeriod = useCallback((p: PeriodReviewPeriod) => {
+    setKind(p.kind)
+    setYear(p.planYear)
+    setIndex(p.index)
+    setAutoGenerate(false)
+  }, [])
+
   const period = useMemo(() => periodFor(kind, year, index), [kind, year, index])
 
   const value = useMemo(
@@ -70,7 +77,12 @@ export function PeriodReviewProvider({ children }: { children: ReactNode }) {
     <PeriodReviewContext.Provider value={value}>
       {children}
       {open ? (
-        <PeriodReviewModal period={period} autoGenerate={autoGenerate} onClose={closePeriodReview} />
+        <PeriodReviewModal
+          period={period}
+          autoGenerate={autoGenerate}
+          onClose={closePeriodReview}
+          onNavigate={navigateToPeriod}
+        />
       ) : null}
     </PeriodReviewContext.Provider>
   )
