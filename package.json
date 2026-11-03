@@ -9,6 +9,7 @@
     "stripe:sync-catalog": "node scripts/sync-stripe-catalog.mjs",
     "build": "next build",
     "test:planner-year": "node scripts/run-planner-year-test.mjs",
+    "test:access-02-staging": "node scripts/run-access-02-staging.mjs",
     "test:hd-transits": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-human-design-transits.mts",
     "start": "next start --port 3699",
     "start:fresh": "npm run clean:next && next build && next start --port 3699",

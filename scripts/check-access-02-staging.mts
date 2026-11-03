@@ -17,7 +17,9 @@
 // its own seeded rows before and after.
 //
 // Usage: set -a && . ./.env.staging.local && set +a && \
-//   node --experimental-strip-types scripts/check-access-02-staging.mts
+//   npm run test:access-02-staging
+// (runs through scripts/run-access-02-staging.mjs; plain Node can't load the
+// app code this imports)
 
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
