@@ -6,7 +6,8 @@ import type { PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 const GROUPS: Array<{ key: keyof PeriodReviewSourceChips; label: string }> = [
   { key: 'journal', label: 'Your journal' },
   { key: 'plans', label: 'Your plans and check-ins' },
-  { key: 'sky', label: 'The sky' },
+  { key: 'personal', label: 'Transits to your chart' },
+  { key: 'sky', label: 'The collective sky' },
 ]
 
 /**
