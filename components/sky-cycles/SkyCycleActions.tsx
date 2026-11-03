@@ -60,11 +60,16 @@ export function SkyCycleActions({
           Read the look back →
         </button>
       ) : (
-        <button type="button" onClick={talk} style={{ ...PILL, background: 'transparent', color: '#A98AEF' }}>
+        <button
+          type="button"
+          data-sky-close
+          onClick={talk}
+          style={{ ...PILL, border: `1px solid ${K.stelloBlueSoft}`, background: `${K.stelloBlue}1f`, color: K.stelloBlueSoft }}
+        >
           {STELLOQUY_LABEL[phase]} →
         </button>
       )}
-      <Link href={journalHref} style={{ fontSize: 13, color: K.copperHi, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+      <Link href={journalHref} data-sky-close style={{ fontSize: 13, color: K.copperHi, textDecoration: 'underline', textUnderlineOffset: 3 }}>
         Write about it
       </Link>
       {reviewOpen ? (

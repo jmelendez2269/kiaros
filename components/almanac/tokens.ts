@@ -42,6 +42,10 @@ export const K = {
   kairosHi: "#a98aef",
   kairosLo: "#5a3eba",
   prism: "#4ee7fd",     // unchanged — distinct cyan accent
+  // Stelloquy orb blues — cool counterweight to the violet accents
+  stelloBlue: "#1a6ae8",
+  stelloBlueDeep: "#163a86",
+  stelloBlueSoft: "#8cc4f5", // readable blue for text/labels on dark
   chronos: "#df9b3f",   // amber
   // ── fonts ──
   fSerif: "var(--font-almanac-serif), \"EB Garamond\", Georgia, serif",

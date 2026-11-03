@@ -57,8 +57,8 @@ export function SkyBanner({ context, weekTheme, humanDesignWeather, moonDayNudge
         borderRadius: 14,
         padding: 28,
         minHeight: 220,
-        border: `1px solid ${K.copper}44`,
-        background: `linear-gradient(180deg, ${K.midnight} 0%, ${K.bg4} 35%, ${K.brick} 65%, ${K.copper} 90%, ${K.copperHi} 100%)`,
+        border: `1px solid ${K.stelloBlue}55`,
+        background: `linear-gradient(180deg, ${K.midnight} 0%, ${K.bg4} 30%, ${K.stelloBlueDeep} 58%, ${K.stelloBlue} 82%, ${K.brickHi} 100%)`,
       }}
     >
       <StarField count={28} seed={3} opacity={0.55} />
