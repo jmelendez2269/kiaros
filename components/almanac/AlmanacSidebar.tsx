@@ -20,10 +20,18 @@ import { AppHelpMenu } from '@/components/feedback/AppHelpMenu'
 import { IaOverlaysNoticeStack } from '@/components/overlays/IaOverlaysNoticeStack'
 import { useMobileNavOpen } from '@/components/app/MobileNavOpenContext'
 
-type NavKey = 'today' | 'week' | 'month' | 'year' | 'self' | 'journal' | 'goalsStudy' | 'stelloquy'
-type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal' | 'goalsStudy'>
+type NavKey = 'today' | 'journal' | 'stelloquy' | 'insights' | 'year' | 'blueprint' | 'self' | 'goalsStudy'
+type CollapsibleNavKey = Extract<NavKey, 'self' | 'journal' | 'goalsStudy' | 'insights' | 'year'>
 type SubNavItem = { label: string; href: string; hint: string }
 
+const COLLAPSIBLE_KEYS: ReadonlyArray<CollapsibleNavKey> = ['self', 'journal', 'goalsStudy', 'insights', 'year']
+
+/**
+ * Insight-first order: what Kairos notices (journal, Stelloquy, insights) sits
+ * above the calendar. Week, month and year share one Calendar item. The
+ * Calendar item keeps the 'year' key so the product tour's nav-year target and
+ * existing active-state rules keep working.
+ */
 const NAV: ReadonlyArray<{
   key: NavKey
   label: string
@@ -46,33 +54,56 @@ const NAV: ReadonlyArray<{
     ],
   },
   {
-    key: 'week',
-    label: 'Week',
-    hint: 'this week, day by day',
-    glyph: '◑',
-    tone: K.starlight,
-    href: '/year?view=week',
+    key: 'journal',
+    label: 'Journal',
+    hint: 'write · entries · from Stelloquy',
+    glyph: '✎',
+    tone: K.brickHi,
+    href: '/journal',
   },
   {
-    key: 'month',
-    label: 'Month',
-    hint: 'calendar grid · this month',
-    glyph: '▦',
-    tone: K.plum,
-    href: '/year?view=month',
+    key: 'stelloquy',
+    label: BRAND.oracle,
+    hint: 'ongoing conversation',
+    glyph: '✦',
+    tone: K.kairosHi,
+    href: '/oracle',
+  },
+  {
+    key: 'insights',
+    label: 'Insights',
+    hint: 'patterns · reviews · your year',
+    glyph: '◎',
+    tone: K.violetDim,
+    href: '/reviews',
+    collapsible: true,
+    subItems: [
+      { label: 'Reviews', href: '/reviews', hint: 'every month and quarter' },
+      { label: 'Patterns', href: '/insights/map', hint: 'what keeps coming up' },
+      { label: 'Yearly Unwrapped', href: '/year/unwrapped', hint: 'the story of your year' },
+    ],
   },
   {
     key: 'year',
-    label: 'Year',
-    hint: 'calendar · blueprint · arcs',
+    label: 'Calendar',
+    hint: 'week · month · year',
+    glyph: '▦',
+    tone: K.plum,
+    href: '/year',
+    collapsible: true,
+    subItems: [
+      { label: 'Week', href: '/year?view=week', hint: 'this week, day by day' },
+      { label: 'Month', href: '/year?view=month', hint: 'calendar grid · this month' },
+      { label: 'Year', href: '/year', hint: 'seasons · arcs' },
+    ],
+  },
+  {
+    key: 'blueprint',
+    label: 'Blueprint',
+    hint: 'the full 52-week read',
     glyph: '◐',
     tone: K.ember,
-    href: '/year',
-    subItems: [
-      { label: 'Blueprint',  href: '/blueprint',        hint: 'the full 52-week read' },
-      { label: 'Reflections', href: '/reflections', hint: 'your months and quarters' },
-      { label: 'Yearly Unwrapped', href: '/year/unwrapped', hint: 'the story of your year' },
-    ],
+    href: '/blueprint',
   },
   {
     key: 'self',
@@ -87,26 +118,6 @@ const NAV: ReadonlyArray<{
       { label: 'Life areas', href: '/areas', hint: 'goals mapped to your chart' },
       { label: 'Curriculum', href: '/curriculum', hint: 'study plans · sessions' },
     ],
-  },
-  {
-    key: 'journal',
-    label: 'Journal',
-    hint: 'entries · memory · patterns',
-    glyph: '✎',
-    tone: K.brickHi,
-    href: '/journal',
-    collapsible: true,
-    subItems: [
-      { label: 'Patterns', href: '/insights/map', hint: 'entries · captures · mind map' },
-    ],
-  },
-  {
-    key: 'stelloquy',
-    label: BRAND.oracle,
-    hint: 'ongoing conversation',
-    glyph: '✦',
-    tone: K.kairosHi,
-    href: '/oracle',
   },
 ]
 
@@ -126,18 +137,11 @@ const GOALS_STUDY_NAV: (typeof NAV)[number] = {
 
 function navForAccess(
   hasOracleAccess: boolean,
-  journalIaEnabled: boolean,
+  _journalIaEnabled: boolean,
   goalsIaEnabled: boolean,
+  calendarDayEnabled = false,
 ) {
   let items = NAV.map((item) => {
-    if (journalIaEnabled && item.key === 'year' && item.subItems) {
-      return {
-        ...item,
-        subItems: item.subItems.filter(
-          (sub) => sub.href !== '/reflections' && sub.href !== '/year/unwrapped',
-        ),
-      }
-    }
     if (goalsIaEnabled && item.key === 'self' && item.subItems) {
       return {
         ...item,
@@ -147,25 +151,26 @@ function navForAccess(
         ),
       }
     }
-    if (journalIaEnabled && item.key === 'journal') {
-      return {
-        ...item,
-        collapsible: false,
-        subItems: [],
-      }
-    }
-    if (!journalIaEnabled && item.key === 'journal' && item.subItems && !hasOracleAccess) {
+    if (item.key === 'insights' && item.subItems && !hasOracleAccess) {
       return {
         ...item,
         subItems: item.subItems.filter((sub) => sub.href !== '/insights/map'),
+      }
+    }
+    if (item.key === 'year' && item.subItems && calendarDayEnabled) {
+      return {
+        ...item,
+        subItems: item.subItems.map((sub) =>
+          sub.label === 'Month' ? { ...sub, href: '/calendar/month' } : sub,
+        ),
       }
     }
     return item
   })
 
   if (goalsIaEnabled) {
-    const stelloquyIndex = items.findIndex((item) => item.key === 'stelloquy')
-    items = [...items.slice(0, stelloquyIndex), GOALS_STUDY_NAV, ...items.slice(stelloquyIndex)]
+    const selfIndex = items.findIndex((item) => item.key === 'self')
+    items = [...items.slice(0, selfIndex), GOALS_STUDY_NAV, ...items.slice(selfIndex)]
   }
 
   return items
@@ -199,37 +204,17 @@ function isSectionActive(
       pathname.startsWith('/calendar')
     )
   }
-  if (key === 'week') {
-    if (calendarDayEnabled) {
-      return false
-    }
-    return pathname.startsWith('/year') && view === 'week'
+  if (key === 'insights') {
+    return isInsightsPath(pathname)
   }
-  if (key === 'month') {
-    if (calendarDayEnabled) {
-      return pathname.startsWith('/calendar/month')
-    }
-    return pathname.startsWith('/year') && view === 'month'
+  if (key === 'blueprint') {
+    return pathname.startsWith('/blueprint')
   }
   if (key === 'year') {
-    if (journalIaEnabled) {
-      return (
-        pathname.startsWith('/blueprint') ||
-        (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
-      )
-    }
-    if (calendarDayEnabled) {
-      return (
-        pathname.startsWith('/reflections') ||
-        pathname.startsWith('/blueprint') ||
-        (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
-      )
-    }
-    return (
-      pathname.startsWith('/reflections') ||
-      pathname.startsWith('/blueprint') ||
-      (pathname.startsWith('/year') && view !== 'week' && view !== 'month')
-    )
+    // Calendar: week, month and year views (and the calendar month page).
+    if (isInsightsPath(pathname)) return false
+    if (calendarDayEnabled && pathname.startsWith('/calendar/month')) return true
+    return pathname.startsWith('/year')
   }
   if (key === 'self') {
     if (goalsIaEnabled) {
@@ -248,10 +233,20 @@ function isSectionActive(
   if (key === 'stelloquy') {
     return pathname.startsWith('/oracle')
   }
-  if (journalIaEnabled) {
-    return pathname.startsWith('/journal')
-  }
-  return pathname.startsWith('/journal') || pathname.startsWith('/insights')
+  return pathname.startsWith('/journal') && !isInsightsPath(pathname)
+}
+
+/** Pages that belong to Insights: reviews, patterns, look back, unwrapped. */
+function isInsightsPath(pathname: string): boolean {
+  return (
+    pathname.startsWith('/reviews') ||
+    pathname.startsWith('/period-review') ||
+    pathname.startsWith('/insights') ||
+    pathname.startsWith('/reflections') ||
+    pathname.startsWith('/journal/patterns') ||
+    pathname.startsWith('/journal/look-back') ||
+    pathname.startsWith('/year/unwrapped')
+  )
 }
 
 const SIDEBAR_STORAGE_KEY = 'kiaros-desktop-sidebar-collapsed'
@@ -312,10 +307,14 @@ function NavRow({
   const searchParams = useSearchParams()
   const view = searchParams.get('view')
   const [currentHash, setCurrentHash] = useState('')
-  const [openSections, setOpenSections] = useState<Record<CollapsibleNavKey, boolean>>({
-    self: isSectionActive('self', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
-    journal: isSectionActive('journal', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
-    goalsStudy: isSectionActive('goalsStudy', pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
+  const [openSections, setOpenSections] = useState<Record<CollapsibleNavKey, boolean>>(() => {
+    const initial = {} as Record<CollapsibleNavKey, boolean>
+    for (const key of COLLAPSIBLE_KEYS) {
+      initial[key] = isSectionActive(key, pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled)
+    }
+    // Insights stays open by default so reviews and patterns are always one tap away.
+    initial.insights = true
+    return initial
   })
 
   useEffect(() => {
@@ -326,7 +325,7 @@ function NavRow({
   }, [pathname])
 
   useEffect(() => {
-    const activeKey = (['self', 'journal', 'goalsStudy'] as const).find((key) =>
+    const activeKey = COLLAPSIBLE_KEYS.find((key) =>
       isSectionActive(key, pathname, null, calendarDayEnabled, journalIaEnabled, goalsIaEnabled),
     )
     if (!activeKey) return
@@ -342,9 +341,8 @@ function NavRow({
         const isActive = isSectionActive(n.key, pathname, view, calendarDayEnabled, journalIaEnabled, goalsIaEnabled)
         const subItems = n.subItems ?? []
         const collapsibleKey: CollapsibleNavKey | null =
-          n.collapsible &&
-          (n.key === 'self' || n.key === 'journal' || n.key === 'goalsStudy')
-            ? n.key
+          n.collapsible && (COLLAPSIBLE_KEYS as ReadonlyArray<NavKey>).includes(n.key)
+            ? (n.key as CollapsibleNavKey)
             : null
         const isExpanded = collapsibleKey ? openSections[collapsibleKey] : isActive
         const renderSubItems =
@@ -477,8 +475,16 @@ function NavRow({
                   (subParts.pathname === '/planner' &&
                     pathname.startsWith('/calendar') &&
                     (!calendarDayEnabled || !pathname.startsWith('/calendar/month')))
+                const subView = new URLSearchParams(sub.href.split('?')[1]?.split('#')[0] ?? '').get('view')
+                // /year serves week, month and year: match the view, and keep
+                // Yearly Unwrapped (/year/unwrapped) out of the plain Year item.
+                const viewMatches =
+                  subParts.pathname !== '/year'
+                    ? true
+                    : pathname === '/year' &&
+                      (subView ? view === subView : view !== 'week' && view !== 'month')
                 const subActive =
-                  pathMatches && (!subParts.hash || currentHash === subParts.hash)
+                  pathMatches && viewMatches && (!subParts.hash || currentHash === subParts.hash)
                 return (
                   <Link
                     key={sub.href}
@@ -846,7 +852,7 @@ export function AlmanacSidebar({
 }) {
   const goalsIaOn =
     goalsIaEnabled || iaGoalsFlagEnabled(process.env.NEXT_PUBLIC_IA_GOALS)
-  const navItems = navForAccess(hasOracleAccess, journalIaEnabled, goalsIaOn)
+  const navItems = navForAccess(hasOracleAccess, journalIaEnabled, goalsIaOn, calendarDayEnabled)
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)

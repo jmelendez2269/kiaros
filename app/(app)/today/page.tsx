@@ -33,6 +33,7 @@ import { getHumanDesignWeather } from '@/lib/today/get-human-design-weather'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { DeeperToday } from '@/components/today/DeeperToday'
 import { PeriodReviewTodayCards } from '@/components/period-review/PeriodReviewTodayCards'
+import { TodayJournalMemoryNotice } from '@/components/today/TodayJournalMemoryNotice'
 import { PeriodReviewAutoOpenManager } from '@/components/period-review/PeriodReviewAutoOpenManager'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
@@ -190,6 +191,8 @@ export default async function TodayPage({
         humanDesignWeather={humanDesignWeather}
         moonDayNudge={moonDayNudge}
       />
+
+      <TodayJournalMemoryNotice profileId={supabaseUserId} />
 
       <Frame tone="umber" padding={18}>
         <RightNowCard windows={nowEnergyWindows} />

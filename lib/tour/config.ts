@@ -22,9 +22,9 @@ export const TOUR_STEPS: TourStep[] = [
     id: 'year',
     tourTarget: 'nav-year',
     requiredRoute: '/year',
-    title: 'Year',
-    body: `Your full year mapped to astronomical timing — the 52-week blueprint ${BRAND.product} built for you, cosmic weather by season, and the arc you're moving through.`,
-    cta: 'See Year view',
+    title: 'Calendar',
+    body: `Your week, month and year mapped to astronomical timing — cosmic weather by season and the arc you're moving through. Your 52-week Blueprint sits just below.`,
+    cta: 'See your calendar',
   },
   {
     id: 'curriculum',
@@ -49,6 +49,14 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Journal',
     body: "Every entry is stamped with the transits active when you wrote it. Over time, patterns surface through Insights — you'll start to see what's actually been moving.",
     cta: 'Open Journal',
+  },
+  {
+    id: 'insights',
+    tourTarget: 'nav-insights',
+    requiredRoute: '/reviews',
+    title: 'Insights',
+    body: 'Where your entries, conversations and the sky come together: a review at the end of every month and quarter, and the patterns that keep coming up.',
+    cta: 'See Insights',
   },
 ]
 

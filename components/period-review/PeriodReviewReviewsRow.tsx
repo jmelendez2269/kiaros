@@ -9,7 +9,7 @@ const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 type ChipState = { index: number; cached: boolean; ended: boolean }
 
-export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
+export function PeriodReviewReviewsRow({ planYear, label = 'Reviews' }: { planYear: number; label?: string }) {
   const { openPeriodReview, statusNonce } = usePeriodReview()
   const [months, setMonths] = useState<ChipState[]>([])
   const [quarters, setQuarters] = useState<ChipState[]>([])
@@ -51,7 +51,7 @@ export function PeriodReviewReviewsRow({ planYear }: { planYear: number }) {
           marginBottom: 10,
         }}
       >
-        Reviews
+        {label}
       </div>
       <div className="period-review-reviews-row" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>

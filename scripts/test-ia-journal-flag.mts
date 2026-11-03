@@ -73,24 +73,19 @@ assert.ok(middlewareSource.includes('"/journal/patterns"'))
 assert.ok(middlewareSource.includes('307'))
 console.log('✓ Middleware insights/map redirect wiring\n')
 
-console.log('Sidebar: no Patterns child when IA journal flag on')
+console.log('Sidebar: insight-first nav (Patterns and reviews live under Insights)')
 const sidebarSource = readFileSync(join(root, 'components/almanac/AlmanacSidebar.tsx'), 'utf8')
-assert.ok(sidebarSource.includes('journalIaEnabled && item.key === \'journal\''))
-assert.ok(sidebarSource.includes('subItems: []'))
-const journalIaNavBlock = sidebarSource.match(
-  /if \(journalIaEnabled && item\.key === 'journal'\)[\s\S]*?}\s*\n\s*if \(!journalIaEnabled/,
-)
-assert.ok(journalIaNavBlock, 'expected journal IA nav branch')
+assert.ok(sidebarSource.includes("key: 'insights'"), 'Insights must be a top-level nav item')
+assert.ok(sidebarSource.includes("href: '/reviews'"), 'Insights must link to Reviews')
+assert.ok(sidebarSource.includes("href: '/insights/map'"), 'Patterns must sit under Insights')
 assert.ok(
-  !journalIaNavBlock![0].includes('entries · captures · mind map'),
-  'stale Patterns sub-item hint must not appear in IA journal nav branch',
+  sidebarSource.includes("pathname.startsWith('/journal/patterns')") &&
+    sidebarSource.includes("pathname.startsWith('/journal/look-back')"),
+  'journal patterns and look back must highlight Insights',
 )
 assert.ok(
-  sidebarSource.includes('pathname.startsWith(\'/journal\')') &&
-    !sidebarSource.match(
-      /journalIaEnabled\)[\s\S]*?pathname\.startsWith\('\/journal'\) && !pathname\.startsWith\('\/journal\/patterns'\)/,
-    ),
-  'all /journal/* routes including patterns must highlight Journal',
+  sidebarSource.includes("return pathname.startsWith('/journal') && !isInsightsPath(pathname)"),
+  'other /journal routes highlight Journal',
 )
 console.log('✓ Sidebar IA journal nav\n')
 
