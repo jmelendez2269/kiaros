@@ -283,8 +283,11 @@ export function JournalComposer({
       {memoryDefaultsEnabled && memoryPromptOpen && !initialEntry ? (
         <JournalMemoryModePrompt
           hasOracleAccess={hasOracleAccess}
-          onComplete={() => {
+          hasPastEntries={entryCount > 0}
+          onComplete={(mode) => {
             setMemoryPromptOpen(false)
+            // The draft below was seeded with the included default; follow the choice.
+            if (mode === 'choose_each') setConsent({ ...PRIVATE_CONSENT })
             router.refresh()
           }}
         />

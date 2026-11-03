@@ -28,6 +28,20 @@ export const journalMemoryCopy = {
     },
     footer: 'You can change this anytime in Settings, and switch any entry on or off.',
   },
+  intro: {
+    heading: 'Your journal now feeds your year',
+    body(hasOracleAccess: boolean) {
+      return hasOracleAccess
+        ? 'New entries are now included in your monthly and quarterly reviews, Patterns, and Stelloquy, so they can reflect your own words back to you. You can keep any entry private with one switch.'
+        : 'New entries are now included in your monthly and quarterly reviews and Reflections, so they can reflect your own words back to you. You can keep any entry private with one switch.'
+    },
+    pastCheckbox: "Also include entries I've already written",
+    pastHelper:
+      "Nothing you've already written changes unless you tick this. Entries you set by hand stay as you left them.",
+    done: 'Sounds good',
+    chooseEach: "I'd rather choose each entry myself",
+    chooseEachHelper: 'New entries will start private, and you switch on the ones you want included.',
+  },
   pastEntries: {
     heading: "What about entries you've already written?",
     checkbox: "Also include entries I've already written",
