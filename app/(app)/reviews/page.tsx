@@ -1,5 +1,9 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { auth } from '@clerk/nextjs/server'
+import { getAppProfile } from '@/lib/app/get-app-profile'
+import { SkyCyclesYearList } from '@/components/sky-cycles/SkyCyclesYearList'
+import { todayISO } from '@/lib/today/get-today-context'
 import { Frame, K, Kicker } from '@/components/almanac'
 import { PeriodReviewReviewsRow } from '@/components/period-review/PeriodReviewReviewsRow'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
@@ -33,11 +37,17 @@ const OTHER_LINKS = [
  * Insights > Reviews: one place to open any month or quarter look back,
  * instead of waiting for the Today card in the week after a period ends.
  */
-export default function ReviewsPage() {
+export default async function ReviewsPage() {
   // The chips open the review modal, which only mounts with the public flag.
   if (!isPeriodReviewEnabled() || !periodReviewPublicFlagEnabled()) redirect('/reflections')
 
-  const year = new Date().getFullYear()
+  const { userId } = await auth()
+  if (!userId) redirect('/sign-in')
+  const profileResult = await getAppProfile(userId)
+  const profileId = profileResult.status === 'ok' ? profileResult.profile.id : null
+
+  const today = todayISO()
+  const year = Number(today.slice(0, 4))
 
   return (
     <div className="mx-auto grid max-w-3xl gap-5 p-4 sm:p-6 md:p-8" style={{ color: K.ink }}>
@@ -58,6 +68,12 @@ export default function ReviewsPage() {
         <PeriodReviewReviewsRow planYear={year} label={String(year)} />
         <PeriodReviewReviewsRow planYear={year - 1} label={String(year - 1)} />
       </Frame>
+
+      {profileId ? (
+        <Frame tone="umber" padding={20}>
+          <SkyCyclesYearList profileId={profileId} today={today} />
+        </Frame>
+      ) : null}
 
       <Frame tone="umber" padding={20}>
         <Kicker color={K.copper}>More ways to look back</Kicker>

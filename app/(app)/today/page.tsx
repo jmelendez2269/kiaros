@@ -34,6 +34,7 @@ import { YearChartShell } from '@/components/year/YearChartShell'
 import { DeeperToday } from '@/components/today/DeeperToday'
 import { PeriodReviewTodayCards } from '@/components/period-review/PeriodReviewTodayCards'
 import { TodayJournalMemoryNotice } from '@/components/today/TodayJournalMemoryNotice'
+import { SkyCyclesTodayCard } from '@/components/sky-cycles/SkyCyclesTodayCard'
 import { PeriodReviewAutoOpenManager } from '@/components/period-review/PeriodReviewAutoOpenManager'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
@@ -193,6 +194,8 @@ export default async function TodayPage({
       />
 
       <TodayJournalMemoryNotice profileId={supabaseUserId} />
+
+      <SkyCyclesTodayCard profileId={supabaseUserId} todayDate={todayDate} />
 
       <Frame tone="umber" padding={18}>
         <RightNowCard windows={nowEnergyWindows} />
