@@ -2,7 +2,8 @@ import 'server-only'
 
 import { Frame, K, Kicker } from '@/components/almanac'
 import { cycleMeaning, journalHrefFor, phaseKicker, phaseLabel, stelloquyPromptFor } from '@/lib/sky-cycles/copy'
-import { loadTodaySkyCycles, type SkyCycleItem } from '@/lib/sky-cycles/load'
+import { loadSkyCycleEmailSetting, loadTodaySkyCycles, type SkyCycleItem } from '@/lib/sky-cycles/load'
+import { SkyCycleEmailToggle } from './SkyCycleEmailToggle'
 import { SkyCycleActions } from './SkyCycleActions'
 
 function echoLines(item: SkyCycleItem): string[] {
@@ -37,8 +38,12 @@ function echoLines(item: SkyCycleItem): string[] {
  */
 export async function SkyCyclesTodayCard({ profileId, todayDate }: { profileId: string; todayDate: string }) {
   let items: SkyCycleItem[]
+  let emailsOn: boolean | null = null
   try {
-    items = await loadTodaySkyCycles(profileId, todayDate)
+    ;[items, emailsOn] = await Promise.all([
+      loadTodaySkyCycles(profileId, todayDate),
+      loadSkyCycleEmailSetting(profileId),
+    ])
   } catch (error) {
     console.error('[today] sky cycles unavailable:', error)
     return null
@@ -79,6 +84,7 @@ export async function SkyCyclesTodayCard({ profileId, todayDate }: { profileId: 
           </section>
         ))}
       </div>
+      {emailsOn === false ? <SkyCycleEmailToggle initialEnabled={false} /> : null}
     </Frame>
   )
 }

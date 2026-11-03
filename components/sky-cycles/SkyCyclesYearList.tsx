@@ -3,7 +3,8 @@ import 'server-only'
 import { K, Kicker } from '@/components/almanac'
 import { addDays } from '@/lib/sky-cycles/detect'
 import { journalHrefFor, phaseLabel, stelloquyPromptFor } from '@/lib/sky-cycles/copy'
-import { loadCyclesInRange } from '@/lib/sky-cycles/load'
+import { loadCyclesInRange, loadSkyCycleEmailSetting } from '@/lib/sky-cycles/load'
+import { SkyCycleEmailToggle } from './SkyCycleEmailToggle'
 import { savedSkyCycleReviewIds } from '@/lib/sky-cycles/review'
 import { statusForListing } from '@/lib/sky-cycles/status'
 import type { SkyCycleStatus } from '@/lib/sky-cycles/types'
@@ -40,7 +41,9 @@ function Row({ status, withActions, saved = false }: { status: SkyCycleStatus; w
 export async function SkyCyclesYearList({ profileId, today }: { profileId: string; today: string }) {
   let statuses: SkyCycleStatus[]
   let saved = new Set<string>()
+  let emailsOn: boolean | null = null
   try {
+    emailsOn = await loadSkyCycleEmailSetting(profileId)
     const year = today.slice(0, 4)
     const cycles = await loadCyclesInRange(profileId, `${year}-01-01`, addDays(today, 60), today)
     statuses = cycles.map((c) => statusForListing(c, today))
@@ -63,6 +66,7 @@ export async function SkyCyclesYearList({ profileId, today }: { profileId: strin
         Retrogrades, eclipses, seasons, slow planets changing sign, and the slow transits to your own chart. Each one
         gets a heads-up on Today, and a look back when it ends.
       </p>
+      {emailsOn !== null ? <SkyCycleEmailToggle initialEnabled={emailsOn} /> : null}
       {now.length > 0 ? (
         <>
           <h3 style={{ margin: '18px 0 10px', fontSize: 13, fontFamily: K.fMono, letterSpacing: '0.12em', textTransform: 'uppercase', color: K.inkDim }}>

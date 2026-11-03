@@ -165,3 +165,18 @@ export async function loadTodaySkyCycles(profileId: string, today: string, limit
   const chosen = statuses.slice(0, limit)
   return Promise.all(chosen.map(async (s) => ({ ...s, echo: await echoFor(profileId, s, all, today) })))
 }
+
+/**
+ * The member's sky cycle email opt-in. null when the setting isn't available
+ * yet (migration 0054 not applied), so the switch can stay hidden.
+ */
+export async function loadSkyCycleEmailSetting(profileId: string): Promise<boolean | null> {
+  const admin = createAdminSupabase()
+  const { data, error } = await admin
+    .from('user_settings')
+    .select('sky_cycle_emails')
+    .eq('user_id', profileId)
+    .maybeSingle()
+  if (error) return null
+  return Boolean((data as { sky_cycle_emails?: boolean } | null)?.sky_cycle_emails)
+}
