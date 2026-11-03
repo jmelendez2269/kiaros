@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { K } from '@/components/almanac'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
 import type { PeriodReviewSections, PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
+import { LookBackPreview } from '@/components/period-review/LookBackPreview'
 
 type Cached = {
   sections: PeriodReviewSections
@@ -19,8 +20,10 @@ const SECTION_TITLES: Array<{ key: keyof PeriodReviewSections; title: string }> 
   { key: 'questionToCarry', title: 'A question to carry' },
 ]
 
-async function readJson(res: Response): Promise<{ cached?: Cached | null; error?: string }> {
-  return (await res.json().catch(() => ({}))) as { cached?: Cached | null; error?: string }
+type ApiBody = { cached?: Cached | null; preview?: PeriodReviewSourceChips | null; error?: string }
+
+async function readJson(res: Response): Promise<ApiBody> {
+  return (await res.json().catch(() => ({}))) as ApiBody
 }
 
 export function SkyCycleReviewModal({
@@ -40,6 +43,7 @@ export function SkyCycleReviewModal({
   const dialogRef = useRef<HTMLDivElement>(null)
   const { openWith, hasOracleAccess } = useStelloquy()
   const [cached, setCached] = useState<Cached | null>(null)
+  const [preview, setPreview] = useState<PeriodReviewSourceChips | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -52,6 +56,7 @@ export function SkyCycleReviewModal({
         if (cancelled) return
         if (!res.ok) throw new Error(data.error ?? "We couldn't load this look back.")
         setCached(data.cached ?? null)
+        setPreview(data.preview ?? null)
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : "We couldn't load this look back.")
@@ -119,6 +124,7 @@ export function SkyCycleReviewModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        className="period-review-modal-panel"
         style={{
           position: 'relative',
           margin: 'auto',
@@ -128,6 +134,7 @@ export function SkyCycleReviewModal({
           overflow: 'auto',
           background: '#0A0C14',
           border: '1px solid rgba(164,163,177,0.35)',
+          borderRadius: 16,
           padding: '20px 20px 24px',
         }}
       >
@@ -168,9 +175,13 @@ export function SkyCycleReviewModal({
           </div>
         ) : !cached ? (
           <div style={{ marginTop: 16 }}>
-            <p style={{ fontSize: 14, lineHeight: 1.65, color: K.inkDim }}>
-              We&apos;ll gather the sky, your plans and goals, and what you wrote during this cycle into one look back.
-            </p>
+            {preview ? (
+              <LookBackPreview chips={preview} periodNoun="cycle" />
+            ) : (
+              <p style={{ fontSize: 14, lineHeight: 1.65, color: K.inkDim }}>
+                We&apos;ll gather the sky, your plans and goals, and what you wrote during this cycle into one look back.
+              </p>
+            )}
             <button
               type="button"
               disabled={pending}

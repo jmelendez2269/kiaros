@@ -5,7 +5,13 @@ import { z } from 'zod'
 import { getUserProfileId } from '@/lib/ai/usage'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
 import { assertPeriodReviewRateLimit } from '@/lib/period-review/rate-limit'
-import { findCycleForUser, generateSkyCycleReview, loadSkyCycleReview, saveSkyCycleReview } from '@/lib/sky-cycles/review'
+import {
+  findCycleForUser,
+  generateSkyCycleReview,
+  loadSkyCycleReview,
+  previewSkyCycleReview,
+  saveSkyCycleReview,
+} from '@/lib/sky-cycles/review'
 import { todayISO } from '@/lib/today/get-today-context'
 
 export const maxDuration = 120
@@ -43,7 +49,8 @@ export async function GET(req: Request) {
   if ('error' in r) return r.error
   try {
     const cached = await loadSkyCycleReview(r.profileId, r.cycle.id)
-    return NextResponse.json({ cycle: r.cycle, cached: cached ? serialize(cached) : null })
+    const preview = cached ? null : await previewSkyCycleReview(r.profileId, r.cycle)
+    return NextResponse.json({ cycle: r.cycle, cached: cached ? serialize(cached) : null, preview })
   } catch (error) {
     console.error('[sky-cycles/review] load failed:', error)
     return NextResponse.json({ error: "We couldn't load this look back. Please try again." }, { status: 503 })

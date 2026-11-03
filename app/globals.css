@@ -538,6 +538,7 @@ html[data-theme="dawn"] ::selection {
 @media (max-width: 639px) {
   .period-review-modal-panel {
     margin: 0;
+    border-radius: 0 !important;
     max-width: none;
     min-height: 100dvh;
     max-height: none;
