@@ -17,6 +17,7 @@ import {
   type PeriodReviewSourceChips,
 } from '@/lib/period-review/report-schema'
 import { sanitizePeriodReviewOutput } from '@/lib/period-review/sanitize-output'
+import { checkQuestionToCarry } from '@/lib/period-review/question-anchor'
 import { recordUsage } from './usage'
 
 const MODEL_ID = 'claude-sonnet-4-6'
@@ -60,6 +61,14 @@ Return JSON only with optional string fields: sky, plansAndGoals, inYourWords, q
   })
 
   const sections = sanitizeSections(output, includeJournal)
+  if (sections.questionToCarry) {
+    const check = checkQuestionToCarry(sections.questionToCarry, sources)
+    if (!check.ok) {
+      // A generic or predictive question is dropped rather than shown. Log outcome only.
+      console.info(JSON.stringify({ event: 'period_review_question', outcome: 'dropped', reason: check.reason }))
+      delete sections.questionToCarry
+    }
+  }
   if (!sections.sky && !sections.plansAndGoals && !sections.questionToCarry) {
     throw new Error('Empty period review returned from model')
   }

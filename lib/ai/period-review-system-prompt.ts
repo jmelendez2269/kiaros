@@ -16,6 +16,7 @@ Rules:
 7. Keep it short. Use these section titles on their own lines when you have data for them: "The sky", "Your plans and goals", "In your words", "A question to carry". Omit any section with no data.
 8. No praise inflation, hype, or self-help language.
 9. When ingresses (planet sign changes) are provided with dates, you may note in "The sky" where a dated journal entry, task, or mood shift falls near an ingress date. State only the date proximity—pattern, not prophecy. No causal language.
+10. "A question to carry" must name one concrete thing from this period, taken from the user message: a dated sky overlap (for example a transit or ingress with its date), a journal theme in the member's own words, an intention they set, or a task they finished or that is still open. Phrase it as one open question. No prediction, no advice, and no causal wording. A question that could be asked of any month, such as "What from October would you like to carry forward?", is too generic; leave the section out rather than write one.
 
 If there are zero journal entries in the user message, do not mention the absence of journal entries. Do not include "In your words". The app handles that case separately.
 
@@ -103,7 +104,7 @@ ${journalBlock}`
     : 'Journal excerpts: (none provided — do not mention this in your output)'
 }
 
-If you include "A question to carry", make it one open question only${
-    carryMonth ? `, for example about what they would like to carry into ${carryMonth}` : ''
-  }.`
+If you include "A question to carry", make it one open question only. It must name one concrete thing listed above (a dated sky overlap, a journal theme, an intention, or a completed or still open task)${
+    carryMonth ? `, and may ask what the member would like to do with that one thing in ${carryMonth}` : ''
+  }. Never a generic question that would fit any period.`
 }
