@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { JournalHistoryList, type RecentJournalEntry } from '@/components/insights/JournalHistoryList'
+import { CaptureHistoryList, type OracleCaptureRow } from '@/components/insights/CaptureHistoryList'
 import { memberHasOracleAccess } from '@/lib/commerce/member-oracle-access'
 import type { ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { isIaJournalEnabled, isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
@@ -37,23 +38,33 @@ export default async function JournalEntriesPage() {
     )
   }
 
-  const { data: entriesRes } = await supabase
-    .from('journal_entries')
-    .select(
-      'id, title, body, entry_date, is_ritual, created_at, oracle_memory, include_in_insights, include_in_stelloquy, memory_pinned, memory_importance, lunar_phase, lunar_sign, transit_context',
-    )
-    .order('entry_date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const [{ data: entriesRes }, { data: capturesRes }] = await Promise.all([
+    supabase
+      .from('journal_entries')
+      .select(
+        'id, title, body, entry_date, is_ritual, created_at, oracle_memory, include_in_insights, include_in_stelloquy, memory_pinned, memory_importance, lunar_phase, lunar_sign, transit_context',
+      )
+      .order('entry_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(50),
+    supabase
+      .from('oracle_captures')
+      .select(
+        'id, captured_text, source_role, include_in_insights, include_in_planner, thread_messages, tradition, created_at',
+      )
+      .order('created_at', { ascending: false })
+      .limit(30),
+  ])
 
   const recentEntries = (entriesRes ?? []) as RecentJournalEntry[]
+  const captures = (capturesRes ?? []) as OracleCaptureRow[]
 
   return (
     <div className="space-y-6">
       <header className="max-w-2xl space-y-2">
         <h2 className="font-display text-[1.4rem] text-bone">Your saved reflections</h2>
         <p className="shell-prose text-sm">
-          Revisit past entries, rituals, and timing-window notes in one place.
+          Revisit past entries, rituals, timing-window notes, and what you saved from Stelloquy, all in one place.
         </p>
       </header>
       <JournalHistoryList
@@ -70,6 +81,18 @@ export default async function JournalEntriesPage() {
           </div>
         }
       />
+      {captures.length > 0 ? (
+        <section className="space-y-2">
+          <header className="max-w-2xl space-y-2">
+            <h2 className="font-display text-[1.4rem] text-bone">From Stelloquy</h2>
+            <p className="shell-prose text-sm">
+              Moments you saved from your Stelloquy conversations. Unless you saved them privately, your
+              reviews and Stelloquy can draw on them, just like your entries.
+            </p>
+          </header>
+          <CaptureHistoryList captures={captures} memoryDefaultsEnabled={memoryDefaultsEnabled} />
+        </section>
+      ) : null}
     </div>
   )
 }

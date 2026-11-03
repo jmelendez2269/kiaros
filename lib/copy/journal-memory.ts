@@ -59,6 +59,17 @@ export const journalMemoryCopy = {
       'An included entry\'s full text feeds Reflections, and Patterns on Planner + Oracle. Quarterly Reviews only count included entries. Month briefs and your Blueprint only see patterns, never the entries themselves. On Planner + Oracle, Stelloquy can see pattern summaries, including the titles and dates of the entries behind them, even for entries you haven\'t set for recall.',
   },
   entryPanel: {
+    keepPrivate: {
+      label: 'Keep this entry private',
+      helperOff(hasOracleAccess: boolean) {
+        return hasOracleAccess
+          ? 'Your reviews, Patterns, and Stelloquy can draw on this entry.'
+          : 'Your reviews and Reflections can draw on this entry.'
+      },
+      helperOn: 'Only you will see this entry. Nothing in Kairos reads it.',
+      partial: 'Partly shared. Open More options to see how.',
+    },
+    moreOptions: 'More options',
     kairos: {
       label: 'Let Kairos draw on this entry',
       helper(hasOracleAccess: boolean) {
@@ -99,20 +110,16 @@ export const journalMemoryCopy = {
     applyPastEntries: 'Include past entries',
   },
   capture: {
-    rowHelper:
-      'Save this for later, for Stelloquy to remember, to shape your Planner, or both.',
+    rowHelper: 'Save this to your journal. It shows up there as "From Stelloquy".',
     exchangeHelper:
-      "Save your prompt and Stelloquy's full reply together. Keep it for later, for Stelloquy to remember, to shape your Planner, or both.",
-    threadHelper:
-      'Save the whole conversation. Keep it for later, for Stelloquy to remember, to shape your Planner, or both.',
-    justSave: 'Just save',
-    remember: 'Remember',
-    rememberHelper:
-      'Stelloquy can bring this up in future chats, and Reflections can use it.',
-    planner: 'Planner',
-    plannerHelper: 'Lets this shape future month briefs and your Blueprint.',
-    both: 'Both',
-    bothHelper:
-      'Stelloquy can remember it, Reflections can use it, and it can shape your Planner.',
+      "Save your prompt and Stelloquy's full reply together to your journal.",
+    threadHelper: 'Save the whole conversation to your journal.',
+    save: 'Save',
+    saveHelper:
+      'Your reviews, Reflections, and Stelloquy can draw on it, and it can shape your Planner.',
+    savePrivately: 'Save privately',
+    savePrivatelyHelper: 'Kept in your journal for you only. Nothing in Kairos reads it.',
+    saved: 'Saved to your journal',
+    savedPrivately: 'Saved privately',
   },
 } as const

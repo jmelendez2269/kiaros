@@ -52,6 +52,18 @@ function serializeCached(entry: NonNullable<Awaited<ReturnType<typeof loadCached
   }
 }
 
+const COUNT_FAILED_MESSAGE = "We couldn't check your journal for this period. Please try again."
+
+/** Count or null when the lookup fails, so a failure is never shown as "no entries". */
+async function safeJournalEntryCount(profileId: string, period: ReturnType<typeof periodFor>) {
+  try {
+    return await countPeriodJournalEntries(profileId, period)
+  } catch (error) {
+    console.error('[period-review] journal count failed:', error)
+    return null
+  }
+}
+
 export async function GET(req: Request) {
   if (!isPeriodReviewEnabled()) return disabledResponse()
 
@@ -81,7 +93,10 @@ export async function GET(req: Request) {
   }
 
   const cached = await loadCachedPeriodReview(profileId, period)
-  const journalEntryCount = await countPeriodJournalEntries(profileId, period)
+  const journalEntryCount = await safeJournalEntryCount(profileId, period)
+  if (journalEntryCount === null) {
+    return NextResponse.json({ error: COUNT_FAILED_MESSAGE }, { status: 503 })
+  }
   const vaultAvailable = await isPeriodReviewVaultAvailable(profileId, period)
   return NextResponse.json({
     period: {
@@ -127,7 +142,7 @@ export async function POST(req: Request) {
 
   const existing = await loadCachedPeriodReview(profileId, period)
   if (existing && !body.regenerate) {
-    const journalEntryCount = await countPeriodJournalEntries(profileId, period)
+    const journalEntryCount = await safeJournalEntryCount(profileId, period)
     return NextResponse.json({
       ...serializeCached(existing),
       cached: true,
@@ -157,7 +172,7 @@ export async function POST(req: Request) {
       return storageFullResponse()
     }
 
-    const journalEntryCount = await countPeriodJournalEntries(profileId, period)
+    const journalEntryCount = await safeJournalEntryCount(profileId, period)
 
     return NextResponse.json({
       ...serializeCached(genResult.entry),

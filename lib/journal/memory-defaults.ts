@@ -20,11 +20,16 @@ export const USE_ENTRIES_PRESET_DEFAULTS = {
   default_include_in_stelloquy: true,
 } as const
 
-/** NULL journal_memory_mode behaves as strict choose-each (all off for new entries). */
+/**
+ * NULL journal_memory_mode (never chosen) behaves as use-entries: new entries
+ * start included, and each entry can still be kept private. Users who chose
+ * "choose each" keep strict all-off defaults. Existing entries are never changed
+ * by this default; only the explicit past-entries prompt does that.
+ */
 export function effectiveJournalMemoryMode(
   mode: JournalMemoryMode | null | undefined,
 ): JournalMemoryMode {
-  return mode ?? 'choose_each'
+  return mode ?? 'use_entries'
 }
 
 export function resolvedDefaultToggles(
@@ -58,7 +63,8 @@ export function matchJournalMemoryPreset(
   >,
   hasOracleAccess: boolean,
 ): JournalMemoryPresetSelection {
-  if (settings.journal_memory_mode === null) return null
+  // Never chosen: behaves as use-entries (see effectiveJournalMemoryMode).
+  if (settings.journal_memory_mode === null) return 'use_entries'
 
   const toggles = {
     insights: settings.default_include_in_insights ?? false,

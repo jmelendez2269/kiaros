@@ -194,3 +194,45 @@ describe('Fixture: October non-journaler', () => {
     console.log('\n=== END FIXTURE ===\n')
   })
 })
+
+describe('Fixture: Stelloquy captures', () => {
+  const base: PeriodReviewSourceBundle = {
+    period: periodFor('month', 2026, 10),
+    displayName: 'Morgan',
+    sky: mockSky,
+    planTasksCompleted: [],
+    planTasksOpen: [],
+    planTasksCompletedCount: 0,
+    planTasksOpenCount: 0,
+    planTasksTotal: 0,
+    dailyLogDays: 0,
+    checkIns: [],
+    goalsActive: 0,
+    goalsCompletedInPeriod: 0,
+    goalsCompletedApproximate: false,
+    intentions: [],
+    journalEntryCount: 0,
+    journalExcerpts: [],
+    quarterBlueprintTheme: null,
+    monthBlueprintTheme: null,
+  }
+
+  it('labels whose words each saved capture is', () => {
+    const prompt = assemblePeriodReviewUserPrompt({
+      ...base,
+      captureCount: 2,
+      captureExcerpts: [
+        { date: '2026-10-12', whose: 'member', excerpt: 'I keep circling back to the studio idea.' },
+        { date: '2026-10-30', whose: 'stelloquy', excerpt: 'Rest can be the work this week.' },
+      ],
+    })
+    assert.ok(prompt.includes('Saved from Stelloquy (2 saved during the period):'))
+    assert.ok(prompt.includes("2026-10-12 (the member's own words): I keep circling back"))
+    assert.ok(prompt.includes("2026-10-30 (Stelloquy's words, saved by the member): Rest can be"))
+  })
+
+  it('adds nothing when there are no saved captures', () => {
+    const prompt = assemblePeriodReviewUserPrompt({ ...base, captureCount: 0, captureExcerpts: [] })
+    assert.ok(!prompt.includes('Saved from Stelloquy'))
+  })
+})

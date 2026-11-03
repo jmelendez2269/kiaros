@@ -46,7 +46,7 @@ export async function generatePeriodReviewSummary(
   model: string
 }> {
   const sources = await loadPeriodReviewSources(userId, period)
-  const includeJournal = sources.journalEntryCount > 0
+  const includeJournal = sources.journalEntryCount + (sources.captureCount ?? 0) > 0
 
   const { output, usage } = await generateText({
     model: periodReviewModel(),

@@ -21,11 +21,23 @@ import { readFile } from 'node:fs/promises'
 
 console.log('=== Journal memory defaults tests ===\n')
 
-assert.equal(effectiveJournalMemoryMode(null), 'choose_each')
-assert.equal(effectiveJournalMemoryMode(undefined), 'choose_each')
+assert.equal(effectiveJournalMemoryMode(null), 'use_entries')
+assert.equal(effectiveJournalMemoryMode(undefined), 'use_entries')
+
+const unsetOracle = resolvedDefaultToggles(
+  { journal_memory_mode: null, default_include_in_insights: null, default_include_in_stelloquy: null },
+  true,
+)
+assert.deepEqual(unsetOracle, { include_in_insights: true, include_in_stelloquy: true })
+
+const unsetPlanner = resolvedDefaultToggles(
+  { journal_memory_mode: null, default_include_in_insights: null, default_include_in_stelloquy: null },
+  false,
+)
+assert.deepEqual(unsetPlanner, { include_in_insights: true, include_in_stelloquy: false })
 
 const strict = resolvedDefaultToggles(
-  { journal_memory_mode: null, default_include_in_insights: null, default_include_in_stelloquy: null },
+  { journal_memory_mode: 'choose_each', default_include_in_insights: false, default_include_in_stelloquy: false },
   true,
 )
 assert.deepEqual(strict, { include_in_insights: false, include_in_stelloquy: false })

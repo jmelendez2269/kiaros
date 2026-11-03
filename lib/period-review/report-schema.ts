@@ -5,6 +5,7 @@ import {
   chipEclipses,
   chipGoals,
   chipJournalEntries,
+  chipStelloquyCaptures,
   chipMoonPhases,
   chipPlans,
   chipRetrogrades,
@@ -40,7 +41,10 @@ export function buildSourceChips(sources: PeriodReviewSourceBundle): PeriodRevie
     chipGoals(sources.goalsCompletedInPeriod),
   ].filter((c): c is string => Boolean(c))
 
-  const journal = [chipJournalEntries(sources.journalEntryCount)].filter((c): c is string => Boolean(c))
+  const journal = [
+    chipJournalEntries(sources.journalEntryCount),
+    chipStelloquyCaptures(sources.captureCount ?? 0),
+  ].filter((c): c is string => Boolean(c))
 
   return { sky, plans, journal }
 }

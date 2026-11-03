@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { journalMemoryCopy } from '@/lib/copy/journal-memory'
 import type { JournalConsentState } from '@/lib/journal/consent'
 
@@ -42,56 +43,14 @@ export function JournalConsentControls({
 
   if (simplifiedMemoryUi) {
     return (
-      <fieldset
+      <SimplifiedConsentControls
+        value={value}
+        onChange={onChange}
         disabled={disabled}
-        className={`rounded-[1.1rem] border border-border/70 bg-stone-950/45 ${compact ? 'p-4' : 'p-5'}`}
-      >
-        <legend className="px-2 text-xs font-medium uppercase tracking-[0.18em] text-bone-muted/70">
-          {copy.fieldsetLegend}
-        </legend>
-        <p className="text-sm leading-6 text-bone-muted">{copy.fieldsetIntro}</p>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/65 bg-stone-950/55 p-3.5 transition-colors hover:border-moss-400/35">
-            <input
-              type="checkbox"
-              checked={value.include_in_insights}
-              onChange={(event) =>
-                onChange({ ...value, include_in_insights: event.target.checked })
-              }
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-moss-300 focus:ring-moss-400"
-            />
-            <span>
-              <span className="block text-sm font-medium text-bone">{copy.kairos.label}</span>
-              <span className="mt-1 block text-xs leading-5 text-bone-muted">
-                {copy.kairos.helper(hasOracleAccess)}
-              </span>
-            </span>
-          </label>
-
-          {hasOracleAccess ? (
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/65 bg-stone-950/55 p-3.5 transition-colors hover:border-plum-400/35">
-              <input
-                type="checkbox"
-                checked={value.include_in_stelloquy}
-                onChange={(event) => setRecallAllowed(event.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
-              />
-              <span>
-                <span className="block text-sm font-medium text-bone">{copy.stelloquy.label}</span>
-                <span className="mt-1 block text-xs leading-5 text-bone-muted">
-                  {copy.stelloquy.helper}
-                </span>
-                {value.include_in_insights && !value.include_in_stelloquy ? (
-                  <span className="mt-2 block text-xs leading-5 text-bone-muted/90">
-                    {copy.stelloquy.patternSummaryNote}
-                  </span>
-                ) : null}
-              </span>
-            </label>
-          ) : null}
-        </div>
-      </fieldset>
+        compact={compact}
+        hasOracleAccess={hasOracleAccess}
+        setRecallAllowed={setRecallAllowed}
+      />
     )
   }
 
@@ -180,5 +139,130 @@ export function JournalConsentControls({
         </div>
       ) : null}
     </fieldset>
+  )
+}
+
+export function isPrivateConsent(value: Pick<JournalConsentState, 'include_in_insights' | 'include_in_stelloquy'>) {
+  return !value.include_in_insights && !value.include_in_stelloquy
+}
+
+/** Shared = everything this member can share with (Stelloquy needs Oracle access). */
+function isFullyShared(value: JournalConsentState, hasOracleAccess: boolean) {
+  return value.include_in_insights && (!hasOracleAccess || value.include_in_stelloquy)
+}
+
+function SimplifiedConsentControls({
+  value,
+  onChange,
+  disabled,
+  compact,
+  hasOracleAccess,
+  setRecallAllowed,
+}: {
+  value: JournalConsentState
+  onChange: (next: JournalConsentState) => void
+  disabled: boolean
+  compact: boolean
+  hasOracleAccess: boolean
+  setRecallAllowed: (includeInStelloquy: boolean) => void
+}) {
+  const copy = journalMemoryCopy.entryPanel
+  const isPrivate = isPrivateConsent(value)
+  const partial = !isPrivate && !isFullyShared(value, hasOracleAccess)
+  const [moreOpen, setMoreOpen] = useState(partial)
+
+  function setPrivate(nextPrivate: boolean) {
+    if (nextPrivate) {
+      onChange({
+        ...value,
+        include_in_insights: false,
+        include_in_stelloquy: false,
+        memory_pinned: false,
+        memory_importance: null,
+      })
+      return
+    }
+    onChange({ ...value, include_in_insights: true, include_in_stelloquy: hasOracleAccess })
+  }
+
+  return (
+    <div
+      className={`rounded-[1.1rem] border border-border/70 bg-stone-950/45 ${compact ? 'p-4' : 'p-5'}`}
+    >
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          role="switch"
+          aria-checked={isPrivate}
+          checked={isPrivate}
+          disabled={disabled}
+          onChange={(event) => setPrivate(event.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-moss-300 focus:ring-moss-400"
+        />
+        <span>
+          <span className="block text-sm font-medium text-bone">{copy.keepPrivate.label}</span>
+          <span className="mt-1 block text-xs leading-5 text-bone-muted">
+            {isPrivate
+              ? copy.keepPrivate.helperOn
+              : partial
+                ? copy.keepPrivate.partial
+                : copy.keepPrivate.helperOff(hasOracleAccess)}
+          </span>
+        </span>
+      </label>
+
+      <button
+        type="button"
+        onClick={() => setMoreOpen((open) => !open)}
+        aria-expanded={moreOpen}
+        className="mt-3 text-xs text-bone-muted underline-offset-2 hover:text-bone hover:underline"
+      >
+        {copy.moreOptions}
+      </button>
+
+      {moreOpen ? (
+        <fieldset disabled={disabled} className="mt-3 grid gap-3 md:grid-cols-2">
+          <legend className="sr-only">{copy.fieldsetLegend}</legend>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/65 bg-stone-950/55 p-3.5 transition-colors hover:border-moss-400/35">
+            <input
+              type="checkbox"
+              checked={value.include_in_insights}
+              onChange={(event) =>
+                onChange({ ...value, include_in_insights: event.target.checked })
+              }
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-moss-300 focus:ring-moss-400"
+            />
+            <span>
+              <span className="block text-sm font-medium text-bone">{copy.kairos.label}</span>
+              <span className="mt-1 block text-xs leading-5 text-bone-muted">
+                {copy.kairos.helper(hasOracleAccess)}
+              </span>
+            </span>
+          </label>
+
+          {hasOracleAccess ? (
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/65 bg-stone-950/55 p-3.5 transition-colors hover:border-plum-400/35">
+              <input
+                type="checkbox"
+                checked={value.include_in_stelloquy}
+                onChange={(event) => setRecallAllowed(event.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
+              />
+              <span>
+                <span className="block text-sm font-medium text-bone">{copy.stelloquy.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-bone-muted">
+                  {copy.stelloquy.helper}
+                </span>
+                {value.include_in_insights && !value.include_in_stelloquy ? (
+                  <span className="mt-2 block text-xs leading-5 text-bone-muted/90">
+                    {copy.stelloquy.patternSummaryNote}
+                  </span>
+                ) : null}
+              </span>
+            </label>
+          ) : null}
+        </fieldset>
+      ) : null}
+    </div>
   )
 }

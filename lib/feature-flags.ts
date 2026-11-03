@@ -13,8 +13,15 @@ export function isJournalConsentV2Enabled(): boolean {
   return enabled(process.env.KIAROS_JOURNAL_CONSENT_V2);
 }
 
+/**
+ * Journal memory defaults (entries start included, one-time past-entries prompt,
+ * simplified per-entry control). On unless explicitly disabled, so it acts as a
+ * kill switch: set KIAROS_MEMORY_DEFAULTS=false to turn it off.
+ */
 export function isMemoryDefaultsEnabled(): boolean {
-  return enabled(process.env.KIAROS_MEMORY_DEFAULTS);
+  const value = process.env.KIAROS_MEMORY_DEFAULTS;
+  if (value === undefined || value.trim() === "") return true;
+  return enabled(value);
 }
 
 export function isFunnelEventsEnabled(): boolean {

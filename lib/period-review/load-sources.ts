@@ -57,6 +57,19 @@ function sampleEntriesEvenly<T extends { entry_date: string; body: string }>(
     }))
 }
 
+export interface PeriodCaptureExcerpt {
+  date: string
+  /** Whose words: the member's own message, or a Stelloquy reply they chose to save. */
+  whose: 'member' | 'stelloquy'
+  excerpt: string
+}
+
+const MAX_CAPTURE_EXCERPTS = 6
+
+function periodTimestampBounds(period: PeriodReviewPeriod): { from: string; to: string } {
+  return { from: `${period.periodStart}T00:00:00Z`, to: `${period.periodEnd}T23:59:59Z` }
+}
+
 export interface CheckInSummary {
   date: string
   mood?: string | null
@@ -80,6 +93,9 @@ export interface PeriodReviewSourceBundle {
   intentions: string[]
   journalEntryCount: number
   journalExcerpts: Array<{ date: string; excerpt: string }>
+  /** Stelloquy captures saved (not privately) during the period. */
+  captureCount?: number
+  captureExcerpts?: PeriodCaptureExcerpt[]
   quarterBlueprintTheme: string | null
   monthBlueprintTheme: string | null
 }
@@ -103,6 +119,7 @@ export async function loadPeriodReviewSources(
     journalCountRes,
     intentionsRes,
     ephemerisRes,
+    capturesRes,
   ] = await Promise.all([
     admin.from('user_profiles').select('display_name').eq('id', userId).maybeSingle(),
     loadBlueprintForYear(userId, period.planYear, false),
@@ -173,6 +190,14 @@ export async function loadPeriodReviewSources(
       .eq('user_id', userId)
       .eq('year', period.planYear)
       .maybeSingle(),
+    admin
+      .from('oracle_captures')
+      .select('captured_text, source_role, created_at')
+      .eq('user_id', userId)
+      .eq('include_in_insights', true)
+      .gte('created_at', periodTimestampBounds(period).from)
+      .lte('created_at', periodTimestampBounds(period).to)
+      .order('created_at', { ascending: true }),
   ])
 
   const ephemeris = (ephemerisRes.data?.data ?? null) as import('@/types/blueprint').YearEphemeris | null
@@ -211,6 +236,18 @@ export async function loadPeriodReviewSources(
     period.kind === 'quarter' ? q.quarter === period.index : q.quarter === quarterForMonth(period.index),
   )
 
+  const captureRows = capturesRes.data ?? []
+  const captureExcerpts: PeriodCaptureExcerpt[] = captureRows
+    .slice(-MAX_CAPTURE_EXCERPTS)
+    .map((row) => {
+      const text = row.captured_text.trim()
+      return {
+        date: row.created_at.slice(0, 10),
+        whose: row.source_role === 'user' ? 'member' : 'stelloquy',
+        excerpt: text.length > 400 ? `${text.slice(0, 397)}…` : text,
+      }
+    })
+
   const uniqueLogDays = new Set((dailyLogsRes.data ?? []).map((r) => r.log_date))
   const journalEntryCount = journalCountRes.count ?? journalRows.length
 
@@ -236,24 +273,42 @@ export async function loadPeriodReviewSources(
     intentions,
     journalEntryCount,
     journalExcerpts,
+    captureCount: captureRows.length,
+    captureExcerpts,
     quarterBlueprintTheme: quarterBlueprint?.theme ?? null,
     monthBlueprintTheme: monthBlueprint?.theme ?? null,
   }
 }
 
+/**
+ * What the review shows as "your journal" for the period: included journal
+ * entries plus Stelloquy captures saved (not privately) during it. Captures
+ * appear in the journal as "From Stelloquy", so they count here too.
+ */
 export async function countPeriodJournalEntries(
   userId: string,
   period: PeriodReviewPeriod,
 ): Promise<number> {
   const admin = createAdminSupabase()
-  const { count, error } = await admin
-    .from('journal_entries')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('include_in_insights', true)
-    .gte('entry_date', period.periodStart)
-    .lte('entry_date', period.periodEnd)
-  if (error) return 0
-  return count ?? 0
+  const { from, to } = periodTimestampBounds(period)
+  const [entries, captures] = await Promise.all([
+    admin
+      .from('journal_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('include_in_insights', true)
+      .gte('entry_date', period.periodStart)
+      .lte('entry_date', period.periodEnd),
+    admin
+      .from('oracle_captures')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('include_in_insights', true)
+      .gte('created_at', from)
+      .lte('created_at', to),
+  ])
+  if (entries.error || captures.error) {
+    throw new Error('Could not count journal entries for this period')
+  }
+  return (entries.count ?? 0) + (captures.count ?? 0)
 }
-

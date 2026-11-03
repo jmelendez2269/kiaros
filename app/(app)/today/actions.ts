@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { privateJournalConsentInput } from '@/lib/journal/consent'
 import { createJournalEntry } from '@/lib/journal/entry-service'
 
 const MIN_BODY_LEN = 1
@@ -13,7 +12,7 @@ export type SaveLineResult =
   | { ok: true; entryId: string }
   | { ok: false; error: string }
 
-/** Server action for Today's private quick-line composer. */
+/** Server action for Today's quick-line composer. */
 export async function saveLineForToday(
   rawBody: string,
   tags: string[],
@@ -46,7 +45,8 @@ export async function saveLineForToday(
     isRitual: false,
     transitContext:
       normalizedTags.length > 0 ? { context: `tags: ${normalizedTags.join(', ')}` } : null,
-    consent: privateJournalConsentInput(),
+    // No explicit consent: the entry starts with the user's journal defaults
+    // (included unless they chose "choose each").
     source: 'today_quick_entry',
   })
 

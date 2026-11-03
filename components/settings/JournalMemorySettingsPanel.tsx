@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { journalMemoryCopy } from '@/lib/copy/journal-memory'
 import {
   matchJournalMemoryPreset,
+  resolvedDefaultToggles,
   type JournalMemoryMode,
   type JournalMemorySettings,
 } from '@/lib/journal/memory-defaults'
@@ -154,7 +155,7 @@ export function JournalMemorySettingsPanel() {
           <label className="flex cursor-pointer items-start gap-3">
             <input
               type="checkbox"
-              checked={settings.default_include_in_insights ?? false}
+              checked={resolvedDefaultToggles(settings, hasOracleAccess).include_in_insights}
               onChange={(event) =>
                 savePatch({ default_include_in_insights: event.target.checked })
               }
@@ -175,7 +176,7 @@ export function JournalMemorySettingsPanel() {
             <label className="flex cursor-pointer items-start gap-3">
               <input
                 type="checkbox"
-                checked={settings.default_include_in_stelloquy ?? false}
+                checked={resolvedDefaultToggles(settings, hasOracleAccess).include_in_stelloquy}
                 onChange={(event) =>
                   savePatch({ default_include_in_stelloquy: event.target.checked })
                 }

@@ -10,7 +10,7 @@ import { StelloquyOrb, type OrbState } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
 import { useStelloquySharedChat } from './StelloquySharedChat'
 import { consumeOraclePreseed } from '@/lib/oracle/preseed'
-import { buildCaptureOptions, capturePanelCopy, type CaptureMode as ThreadCaptureMode } from '@/lib/oracle/capture-options'
+import { buildCaptureOptions, capturePanelCopy, captureSavedLabel, type CaptureMode as ThreadCaptureMode } from '@/lib/oracle/capture-options'
 
 const ROLE_LABEL: Record<string, string> = {
   user: 'YOU',
@@ -320,7 +320,7 @@ export function OracleConversation({
             {threadSavedMode ? (
               <span className="inline-flex items-center gap-1.5 text-xs text-moss-100">
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                Thread saved
+                {captureSavedLabel(memoryDefaultsCaptureEnabled, threadSavedMode, 'Thread saved')}
               </span>
             ) : null}
             <button

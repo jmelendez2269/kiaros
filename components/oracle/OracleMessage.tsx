@@ -3,7 +3,7 @@
 import { BookmarkPlus, Check, MessageSquarePlus, X } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import type { UIMessage } from 'ai'
-import { buildCaptureOptions, capturePanelCopy, type CaptureMode } from '@/lib/oracle/capture-options'
+import { buildCaptureOptions, capturePanelCopy, captureSavedLabel, type CaptureMode } from '@/lib/oracle/capture-options'
 import { StelloquyOrb } from './StelloquyOrb'
 import { useStelloquy } from './StelloquyProvider'
 
@@ -160,13 +160,13 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border/70 bg-stone-950/70 px-2.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
               >
                 <BookmarkPlus className="h-3.5 w-3.5" aria-hidden="true" />
-                Capture
+                {memoryDefaultsCaptureEnabled ? 'Save to journal' : 'Capture'}
               </button>
               {hint ? <p className="max-w-xs text-right text-xs leading-5 text-bone-muted">{hint}</p> : null}
               {savedMode ? (
                 <p className="inline-flex items-center gap-1.5 text-xs text-moss-100">
                   <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                  {savedKind === 'exchange' ? 'Exchange saved' : 'Captured'}
+                  {captureSavedLabel(memoryDefaultsCaptureEnabled, savedMode, savedKind === 'exchange' ? 'Exchange saved' : 'Captured')}
                 </p>
               ) : null}
               {showCapturePanel ? (
@@ -228,7 +228,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border/70 bg-stone-950/70 px-2.5 text-[0.72rem] font-medium text-bone-muted transition-colors hover:border-leather-400/45 hover:text-bone"
               >
                 <BookmarkPlus className="h-3.5 w-3.5" aria-hidden="true" />
-                Capture
+                {memoryDefaultsCaptureEnabled ? 'Save to journal' : 'Capture'}
               </button>
               {precedingUserText ? (
                 <button
@@ -246,7 +246,7 @@ export function OracleMessage({ message, precedingUserText, onCapture }: Props) 
             {savedMode ? (
               <p className="inline-flex items-center gap-1.5 text-xs text-moss-100">
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                {savedKind === 'exchange' ? 'Exchange saved' : 'Captured'}
+                {captureSavedLabel(memoryDefaultsCaptureEnabled, savedMode, savedKind === 'exchange' ? 'Exchange saved' : 'Captured')}
               </p>
             ) : null}
             {showExchangePanel ? (

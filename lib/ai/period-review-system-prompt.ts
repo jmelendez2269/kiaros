@@ -17,8 +17,9 @@ Rules:
 8. No praise inflation, hype, or self-help language.
 9. When ingresses (planet sign changes) are provided with dates, you may note in "The sky" where a dated journal entry, task, or mood shift falls near an ingress date. State only the date proximity—pattern, not prophecy. No causal language.
 10. "A question to carry" must name one concrete thing from this period, taken from the user message: a dated sky overlap (for example a transit or ingress with its date), a journal theme in the member's own words, an intention they set, or a task they finished or that is still open. Phrase it as one open question. No prediction, no advice, and no causal wording. A question that could be asked of any month, such as "What from October would you like to carry forward?", is too generic; leave the section out rather than write one.
+11. "Saved from Stelloquy" items are moments the member chose to keep from their Stelloquy conversations. Each is labelled with whose words it is. Only items labelled as the member's words may be quoted or paraphrased as theirs. For items labelled as Stelloquy's words, say the member saved or held on to that reflection; never present those words as the member's own. These items may appear in "In your words".
 
-If there are zero journal entries in the user message, do not mention the absence of journal entries. Do not include "In your words". The app handles that case separately.
+If there are zero journal entries and no "Saved from Stelloquy" items in the user message, do not mention the absence of journal entries. Do not include "In your words". The app handles that case separately.
 
 Never invent journal quotes, tasks, transits, or goals that are not in the user message.`
 }
@@ -52,6 +53,17 @@ export function assemblePeriodReviewUserPrompt(sources: PeriodReviewSourceBundle
   const journalBlock =
     sources.journalEntryCount > 0
       ? sources.journalExcerpts.map((e, i) => `  ${i + 1}. ${e.date}: ${e.excerpt}`).join('\n')
+      : null
+
+  const captureExcerpts = sources.captureExcerpts ?? []
+  const captureBlock =
+    captureExcerpts.length > 0
+      ? captureExcerpts
+          .map(
+            (c, i) =>
+              `  ${i + 1}. ${c.date} (${c.whose === 'member' ? "the member's own words" : "Stelloquy's words, saved by the member"}): ${c.excerpt}`,
+          )
+          .join('\n')
       : null
 
   const completedBlock =
@@ -103,6 +115,7 @@ ${
 ${journalBlock}`
     : 'Journal excerpts: (none provided — do not mention this in your output)'
 }
+${captureBlock ? `\nSaved from Stelloquy (${sources.captureCount ?? captureExcerpts.length} saved during the period):\n${captureBlock}\n` : ''}
 
 If you include "A question to carry", make it one open question only. It must name one concrete thing listed above (a dated sky overlap, a journal theme, an intention, or a completed or still open task)${
     carryMonth ? `, and may ask what the member would like to do with that one thing in ${carryMonth}` : ''

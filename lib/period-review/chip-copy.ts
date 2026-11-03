@@ -17,6 +17,10 @@ export function chipJournalEntries(count: number): string | null {
   return countLabel(count, '1 journal entry', '{n} journal entries')
 }
 
+export function chipStelloquyCaptures(count: number): string | null {
+  return countLabel(count, '1 saved from Stelloquy', '{n} saved from Stelloquy')
+}
+
 export function chipPlans(count: number): string | null {
   return countLabel(count, '1 plan', '{n} plans')
 }

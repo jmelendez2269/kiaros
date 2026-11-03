@@ -76,9 +76,14 @@ const navButtonStyle = {
   cursor: 'pointer',
 } as const
 
+/** Unknown counts stay null so a failed lookup never reads as an empty journal. */
+function countOrNull(value: unknown): number | null {
+  return typeof value === 'number' ? value : null
+}
+
 async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
   payload: ReviewPayload | null
-  journalEntryCount: number
+  journalEntryCount: number | null
   vaultAvailable: boolean
 }> {
   const sp = new URLSearchParams({
@@ -99,16 +104,16 @@ async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
         sourceChips: getData.cached.sourceChips,
         generatedAt: getData.cached.generatedAt,
       },
-      journalEntryCount: getData.journalEntryCount ?? 0,
+      journalEntryCount: countOrNull(getData.journalEntryCount),
       vaultAvailable,
     }
   }
 
-  return { payload: null, journalEntryCount: getData.journalEntryCount ?? 0, vaultAvailable }
+  return { payload: null, journalEntryCount: countOrNull(getData.journalEntryCount), vaultAvailable }
 }
 
 type PostGenerateResult =
-  | { ok: true; payload: ReviewPayload; journalEntryCount: number }
+  | { ok: true; payload: ReviewPayload; journalEntryCount: number | null }
   | { ok: false; reason: 'storage_full' }
 
 async function postGenerate(period: PeriodReviewPeriod, regenerate: boolean): Promise<PostGenerateResult> {
@@ -136,7 +141,7 @@ async function postGenerate(period: PeriodReviewPeriod, regenerate: boolean): Pr
       sourceChips: data.sourceChips,
       generatedAt: data.generatedAt,
     },
-    journalEntryCount: data.journalEntryCount ?? 0,
+    journalEntryCount: countOrNull(data.journalEntryCount),
   }
 }
 
@@ -307,7 +312,8 @@ export function PeriodReviewModal({
       chips: payload.sourceChips.plans,
     })
   }
-  if (payload?.sections.inYourWords && (journalEntryCount ?? 0) > 0) {
+  // null = count unavailable; trust the saved review rather than hiding the section.
+  if (payload?.sections.inYourWords && journalEntryCount !== 0) {
     sectionBlocks.push({
       title: 'In your words',
       body: payload.sections.inYourWords,

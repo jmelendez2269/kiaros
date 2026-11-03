@@ -46,17 +46,21 @@ export function CaptureHistoryList({
                   })}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {capture.include_in_insights ? (
-                    <span className="channel-pill">
-                      {memoryDefaultsEnabled
-                        ? journalMemoryCopy.capture.remember
-                        : 'Insights'}
+                  {memoryDefaultsEnabled ? (
+                    <span className="shell-pill">
+                      {capture.include_in_insights || capture.include_in_planner
+                        ? 'From Stelloquy'
+                        : 'From Stelloquy · private'}
                     </span>
-                  ) : null}
-                  {capture.include_in_planner ? <span className="channel-pill">Planner</span> : null}
-                  {!capture.include_in_insights && !capture.include_in_planner ? (
-                    <span className="shell-pill">Saved</span>
-                  ) : null}
+                  ) : (
+                    <>
+                      {capture.include_in_insights ? <span className="channel-pill">Insights</span> : null}
+                      {capture.include_in_planner ? <span className="channel-pill">Planner</span> : null}
+                      {!capture.include_in_insights && !capture.include_in_planner ? (
+                        <span className="shell-pill">Saved</span>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </div>
               <p className="mt-3 text-sm leading-7 text-bone-muted">{truncate(capture.captured_text, 220)}</p>
