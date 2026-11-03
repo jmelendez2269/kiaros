@@ -3,7 +3,9 @@ import 'server-only'
 import { generateLookBackFromSources, type GeneratedLookBack } from '@/lib/ai/period-review-generator'
 import type { PeriodReviewCacheEntry } from '@/lib/period-review/cache-schema'
 import { periodReviewCacheEntryQuotesJournal } from '@/lib/period-review/cache-vault'
-import { loadPeriodReviewSources } from '@/lib/period-review/load-sources'
+import { loadPeriodReviewSources, type PeriodReviewSourceBundle } from '@/lib/period-review/load-sources'
+import { loadLookBackPreview } from '@/lib/period-review/preview'
+import type { PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 import { periodReviewEntryFromPayload, periodReviewPayloadFromEntry } from '@/lib/period-review/period-reviews-payload'
 import type { PeriodReviewPeriod } from '@/lib/period-review/periods'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -38,6 +40,17 @@ function windowFor(cycle: SkyCycle): PeriodReviewPeriod {
 
 const SYSTEM_ADDENDUM = `This look back covers one sky cycle (a retrograde, eclipse season, sign change, season, or a slow transit to the member's chart), not a calendar month. In "The sky", centre the cycle itself and its key dates, and mention other sky events only where they overlap it. Treat the cycle as a lens, never a cause.`
 
+const withoutCalendarThemes = (sources: PeriodReviewSourceBundle): PeriodReviewSourceBundle => ({
+  ...sources,
+  monthBlueprintTheme: null,
+  quarterBlueprintTheme: null,
+})
+
+/** What a cycle's look back will draw on, before it is written. */
+export function previewSkyCycleReview(profileId: string, cycle: SkyCycle): Promise<PeriodReviewSourceChips | null> {
+  return loadLookBackPreview(profileId, windowFor(cycle), withoutCalendarThemes)
+}
+
 export async function generateSkyCycleReview(profileId: string, cycle: SkyCycle): Promise<GeneratedLookBack> {
   const sources = await loadPeriodReviewSources(profileId, windowFor(cycle))
   const context = [
@@ -47,7 +60,7 @@ export async function generateSkyCycleReview(profileId: string, cycle: SkyCycle)
   ].join('\n')
   return generateLookBackFromSources(
     profileId,
-    { ...sources, monthBlueprintTheme: null, quarterBlueprintTheme: null },
+    withoutCalendarThemes(sources),
     { title: `${cycle.title} (${cycle.subtitle})`, carryLabel: null, context },
     SYSTEM_ADDENDUM,
   )
