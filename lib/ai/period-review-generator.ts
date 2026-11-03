@@ -6,8 +6,9 @@ import { anthropic } from '@ai-sdk/anthropic'
 import {
   assemblePeriodReviewSystemPrompt,
   assemblePeriodReviewUserPrompt,
+  type LookBackPromptOptions,
 } from './period-review-system-prompt'
-import { loadPeriodReviewSources } from '@/lib/period-review/load-sources'
+import { loadPeriodReviewSources, type PeriodReviewSourceBundle } from '@/lib/period-review/load-sources'
 import type { PeriodReviewPeriod } from '@/lib/period-review/periods'
 import {
   buildSourceChips,
@@ -36,25 +37,41 @@ function sanitizeSections(raw: PeriodReviewSections, includeJournal: boolean): P
   return out
 }
 
-export async function generatePeriodReviewSummary(
-  userId: string,
-  period: PeriodReviewPeriod,
-): Promise<{
+export type GeneratedLookBack = {
   summary: string
   sections: PeriodReviewSections
   sourceChips: PeriodReviewSourceChips
   model: string
-}> {
+}
+
+export async function generatePeriodReviewSummary(
+  userId: string,
+  period: PeriodReviewPeriod,
+): Promise<GeneratedLookBack> {
   const sources = await loadPeriodReviewSources(userId, period)
+  return generateLookBackFromSources(userId, sources)
+}
+
+/**
+ * Shared core for month/quarter reviews and sky cycle look backs: same voice,
+ * output schema, sanitising, question check and usage accounting (one shared
+ * daily cap under the 'period_review' feature).
+ */
+export async function generateLookBackFromSources(
+  userId: string,
+  sources: PeriodReviewSourceBundle,
+  promptOptions: LookBackPromptOptions = {},
+  systemAddendum = '',
+): Promise<GeneratedLookBack> {
   const includeJournal = sources.journalEntryCount + (sources.captureCount ?? 0) > 0
 
   const { output, usage } = await generateText({
     model: periodReviewModel(),
     output: Output.object({ schema: periodReviewSectionsSchema }),
-    system: `${assemblePeriodReviewSystemPrompt()}
+    system: `${assemblePeriodReviewSystemPrompt()}${systemAddendum ? `\n\n${systemAddendum}` : ''}
 
 Return JSON only with optional string fields: sky, plansAndGoals, inYourWords, questionToCarry. Omit empty sections.`,
-    prompt: assemblePeriodReviewUserPrompt(sources),
+    prompt: assemblePeriodReviewUserPrompt(sources, promptOptions),
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     temperature: 0.72,
     abortSignal: AbortSignal.timeout(90_000),

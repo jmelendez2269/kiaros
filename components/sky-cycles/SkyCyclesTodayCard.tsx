@@ -72,6 +72,9 @@ export async function SkyCyclesTodayCard({ profileId, todayDate }: { profileId: 
               phase={item.phase}
               stelloquyPrompt={stelloquyPromptFor(item)}
               journalHref={journalHrefFor(item)}
+              cycleId={item.cycle.id}
+              title={item.cycle.title}
+              subtitle={item.cycle.subtitle}
             />
           </section>
         ))}

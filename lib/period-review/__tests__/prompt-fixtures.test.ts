@@ -236,3 +236,38 @@ describe('Fixture: Stelloquy captures', () => {
     assert.ok(!prompt.includes('Saved from Stelloquy'))
   })
 })
+
+describe('Fixture: sky cycle look back options', () => {
+  it('uses the cycle title and context and omits the next-month carry', () => {
+    const prompt = assemblePeriodReviewUserPrompt(
+      {
+        period: periodFor('month', 2026, 10),
+        displayName: 'Morgan',
+        sky: mockSky,
+        planTasksCompleted: [],
+        planTasksOpen: [],
+        planTasksCompletedCount: 0,
+        planTasksOpenCount: 0,
+        planTasksTotal: 0,
+        dailyLogDays: 0,
+        checkIns: [],
+        goalsActive: 0,
+        goalsCompletedInPeriod: 0,
+        goalsCompletedApproximate: false,
+        intentions: [],
+        journalEntryCount: 0,
+        journalExcerpts: [],
+        quarterBlueprintTheme: null,
+        monthBlueprintTheme: null,
+      },
+      {
+        title: 'Mercury retrograde (in Scorpio, Oct 25 to Nov 14)',
+        carryLabel: null,
+        context: 'The cycle: Mercury retrograde, in Scorpio.',
+      },
+    )
+    assert.ok(prompt.includes('Write a period look back for Mercury retrograde (in Scorpio, Oct 25 to Nov 14)'))
+    assert.ok(prompt.includes('The cycle: Mercury retrograde, in Scorpio.'))
+    assert.ok(!prompt.includes('may ask what the member would like to do with that one thing in'))
+  })
+})

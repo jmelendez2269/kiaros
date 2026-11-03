@@ -24,9 +24,21 @@ If there are zero journal entries and no "Saved from Stelloquy" items in the use
 Never invent journal quotes, tasks, transits, or goals that are not in the user message.`
 }
 
-export function assemblePeriodReviewUserPrompt(sources: PeriodReviewSourceBundle): string {
-  const title = periodLabel(sources.period)
-  const carryMonth = monthNameAfterPeriod(sources.period)
+export interface LookBackPromptOptions {
+  /** Replaces the calendar label, e.g. "Mercury retrograde (in Scorpio, Oct 25 to Nov 14)". */
+  title?: string
+  /** What comes next, for "A question to carry". null leaves it out. */
+  carryLabel?: string | null
+  /** Extra facts about the window, placed before the sky block. */
+  context?: string
+}
+
+export function assemblePeriodReviewUserPrompt(
+  sources: PeriodReviewSourceBundle,
+  options: LookBackPromptOptions = {},
+): string {
+  const title = options.title ?? periodLabel(sources.period)
+  const carryMonth = options.carryLabel === undefined ? monthNameAfterPeriod(sources.period) : options.carryLabel
 
   const ingressBlock =
     sources.sky.ingresses.length > 0
@@ -83,7 +95,7 @@ export function assemblePeriodReviewUserPrompt(sources: PeriodReviewSourceBundle
   return `Write a period look back for ${title} (${sources.period.periodStart} through ${sources.period.periodEnd}).
 
 Member name: ${sources.displayName}
-
+${options.context ? `\n${options.context}\n` : ''}
 Sky for the period (from ephemeris):
 ${sources.sky.text}
 
