@@ -10,6 +10,39 @@ import { checkQuestionToCarry } from '@/lib/period-review/question-anchor'
 import { assemblePeriodReviewSystemPrompt, assemblePeriodReviewUserPrompt } from '@/lib/ai/period-review-system-prompt'
 import type { PeriodReviewSourceBundle } from '@/lib/period-review/load-sources'
 
+/** Rule 3 example in assemblePeriodReviewSystemPrompt — keep in sync with the prompt. */
+const RULE_3_EXAMPLE_QUESTION =
+  'You wrote about feeling stuck at work the same week Saturn crossed your Jupiter. What steadied you, if anything?'
+
+const rule3ExampleSources: PeriodReviewSourceBundle = {
+  period: periodFor('month', 2026, 10),
+  displayName: 'Test User',
+  sky: {
+    moonPhases: [],
+    retrogradePeriods: [],
+    significantTransits: [],
+    ingresses: [],
+    eclipseCount: 0,
+    signChangeCount: 0,
+    text: 'Saturn conjunct natal Jupiter, Oct 8 to 12.',
+  },
+  planTasksCompleted: [],
+  planTasksOpen: [],
+  planTasksCompletedCount: 0,
+  planTasksOpenCount: 0,
+  planTasksTotal: 0,
+  dailyLogDays: 0,
+  checkIns: [],
+  goalsActive: 0,
+  goalsCompletedInPeriod: 0,
+  goalsCompletedApproximate: false,
+  intentions: [],
+  journalEntryCount: 1,
+  journalExcerpts: [{ date: '2026-10-10', excerpt: 'Feeling stuck at work all week; nothing moved.' }],
+  quarterBlueprintTheme: null,
+  monthBlueprintTheme: null,
+}
+
 const sources: PeriodReviewSourceBundle = {
   period: periodFor('month', 2026, 10),
   displayName: 'Test User',
@@ -83,6 +116,14 @@ describe('Period Review: question to carry anchor', () => {
       checkQuestionToCarry('Did the Saturn trine cause the stretched thin feeling?', sources),
       { ok: false, reason: 'predictive' },
     )
+    assert.deepEqual(
+      checkQuestionToCarry('Did feeling stuck at work trigger the Saturn and Jupiter overlap?', sources),
+      { ok: false, reason: 'predictive' },
+    )
+    assert.deepEqual(
+      checkQuestionToCarry('What from Saturn crossing Jupiter led to feeling stuck at work?', sources),
+      { ok: false, reason: 'predictive' },
+    )
   })
 
   it('rejects a statement that is not a question', () => {
@@ -97,10 +138,18 @@ describe('Period Review: question to carry anchor', () => {
     assert.ok(system.includes('You are Stella'))
     assert.ok(system.includes('Pattern, not prophecy'))
     assert.ok(system.includes('must name one concrete thing from this period'))
+    assert.ok(system.includes(RULE_3_EXAMPLE_QUESTION))
+    assert.ok(!system.includes('What would you like to carry into November?'))
     assert.ok(!system.includes('&'))
     assert.ok(!/weird/i.test(system))
     const user = assemblePeriodReviewUserPrompt(sources)
     assert.ok(user.includes('It must name one concrete thing listed above'))
     assert.ok(!user.includes('what they would like to carry into November'))
+  })
+
+  it('rule 3 example question is anchored and passes checkQuestionToCarry', () => {
+    const system = assemblePeriodReviewSystemPrompt()
+    assert.ok(system.includes(RULE_3_EXAMPLE_QUESTION))
+    assert.equal(checkQuestionToCarry(RULE_3_EXAMPLE_QUESTION, rule3ExampleSources).ok, true)
   })
 })

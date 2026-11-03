@@ -30,8 +30,9 @@ const STOP = new Set([
 ])
 
 const PREDICTIVE = [
-  /\bwill\b/i, /\bgoing to\b/i, /\bdestined\b/i, /\bmeant to\b/i, /\bthe universe\b/i,
-  /\bbecause of\b/i, /\bcaused?\b/i, /\bbrings?\b/i, /\bbrought\b/i, /\bdue to\b/i,
+  /\bwill\b/i, /\bgoing to\b/i, /\bdestined\b/i, /\bmeant to\b/i, /\bmeant\b/i, /\bthe universe\b/i,
+  /\bbecause of\b/i, /\bbecause\b/i, /\bcaused?\b/i, /\bbrings?\b/i, /\bbrought\b/i, /\bdue to\b/i,
+  /\bled to\b/i, /\btrigger(?:ed)?\b/i, /\bexpect\b/i, /\bsign\b/i,
   /\bforces?\b/i, /\bmakes? you\b/i, /\bneed to\b/i, /\bmust\b/i, /\bshould\b/i,
 ]
 
