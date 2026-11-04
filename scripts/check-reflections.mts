@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { periodFor, latestClosed, assertClosed, localBoundary, localDate, periodLabel, weekOf, weeksInYear } from '../lib/reflections/periods.ts'
+import { periodFor, latestClosed, assertClosed, localBoundary, localDate, periodLabel, weekOf, weeksInYear, closedPeriodsSince, catchUpOrder } from '../lib/reflections/periods.ts'
 import { analyzePeriod } from '../lib/reflections/analyze-period.ts'
 import { reportSchema, validateReport, type Evidence } from '../lib/reflections/report-schema.ts'
 import { reflectionShareCard } from '../lib/reflections/share-card.ts'
@@ -17,6 +17,17 @@ assert.equal(latestClosed('week',tz,new Date('2026-11-09T04:59:59Z')).start,'202
 assert.equal(latestClosed('week',tz,new Date('2026-11-09T05:00:00Z')).start,'2026-11-02')
 assert.equal(periodLabel(periodFor('week',2025,32,tz)),'Week of Aug 4, 2025')
 assert.throws(()=>assertClosed(periodFor('week',2026,45,tz),new Date('2026-11-08T12:00:00Z')))
+// Catch-up: every ended period since joining, newest first, interleaved across kinds.
+const nowNov=new Date('2026-11-04T17:00:00Z')
+const months=closedPeriodsSince('month','2026-05-20',tz,nowNov)
+assert.deepEqual(months.map(m=>m.start),['2026-10-01','2026-09-01','2026-08-01','2026-07-01','2026-06-01','2026-05-01'])
+const weeks=closedPeriodsSince('week','2026-05-20',tz,nowNov)
+assert.equal(weeks[0].start,'2026-10-26'); assert.equal(weeks.at(-1)!.start,'2026-05-18'); assert.equal(weeks.length,24)
+assert.deepEqual(closedPeriodsSince('quarter','2026-05-20',tz,nowNov).map(q=>q.start),['2026-07-01','2026-04-01'])
+assert.equal(closedPeriodsSince('year','2026-05-20',tz,nowNov).length,0,'a year that has not ended is not prepared')
+assert.deepEqual(closedPeriodsSince('week','1999-01-01',tz,new Date('2000-01-20T12:00:00Z')).map(w=>w.start),['2000-01-10','2000-01-03'],'stops at the supported range')
+const order=catchUpOrder([weeks.slice(0,2),months.slice(0,2)])
+assert.deepEqual(order.map(p=>p.kind+':'+p.start),['week:2026-10-26','month:2026-10-01','week:2026-10-19','month:2026-09-01'])
 assert.equal(latestClosed('quarter',tz,new Date('2026-01-01T06:00:00Z')).start,'2025-10-01')
 assert.equal(latestClosed('month',tz,new Date('2026-09-01T03:59:59Z')).start,'2026-07-01')
 assert.equal(latestClosed('year',tz,new Date('2026-01-01T06:00:00Z')).start,'2025-01-01')

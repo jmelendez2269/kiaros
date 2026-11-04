@@ -221,7 +221,7 @@ export function ReflectionsHub({
           {cards.map(card => {
             const selected = focusCard ? focusCard.key === card.key : !!report && report.period_start === card.start
             const preparing = busy && pendingStart === card.start
-            const status = preparing ? 'Preparing…' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
+            const status = preparing ? 'Preparing…' : card.state === 'available' && data.settings.automatic ? 'On its way · or prepare now' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
             const clickable = !!card.report || card.state === 'available'
             const tone = card.state === 'ready' ? 'border-amber-200/40 bg-amber-100/[.06]' : card.state === 'available' ? 'border-white/25' : clickable ? 'border-white/15' : 'border-white/10 opacity-50'
             return <li key={card.key}>
@@ -237,14 +237,14 @@ export function ReflectionsHub({
         </ul>
         <p className="text-sm text-bone-muted">
           A {unit} can be prepared once it has ended{kind === 'week' || kind === 'month' ? '' : ', and a rich one may take a few minutes'}.{' '}
-          {data.settings.automatic ? 'New reflections are prepared for you automatically.' : 'You choose when each one is prepared.'}
+          {data.settings.automatic ? 'Reflections are prepared for you each morning, including any you missed, a few at a time.' : 'You choose when each one is prepared.'}
           {' '}Times follow <span className="text-bone">{activeTimezone}</span>.{' '}
           <button type="button" aria-expanded={prefsOpen} className={linkButtonClass} onClick={() => setPrefsOpen(!prefsOpen)}>Preferences</button>
         </p>
         {prefsOpen && <form aria-label="Reflection preferences" className="space-y-4 rounded-xl border border-white/15 p-5" onSubmit={e => { e.preventDefault(); void action({ action: 'preferences', timezone, automatic, include_goals: includeGoals }, 'Your reflection preferences are saved.').then(ok => { if (ok) setPrefsOpen(false) }) }}>
           <label className="block space-y-2"><span>Timezone</span><input required value={timezone} onChange={e => setTimezone(e.target.value)} placeholder="America/New_York" className={inputClass} /></label>
           <p className="text-sm text-bone-muted">Your months and quarters close at midnight in this timezone.</p>
-          <label className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={automatic} onChange={e => setAutomatic(e.target.checked)} /><span>Prepare reflections automatically after each month, quarter, and year ends.</span></label>
+          <label className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={automatic} onChange={e => setAutomatic(e.target.checked)} /><span>Prepare reflections automatically after each week, month, quarter and year ends, including any you missed since you joined.</span></label>
           <label className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={includeGoals} onChange={e => setIncludeGoals(e.target.checked)} /><span>Include a little goal context when it connects to my experience.</span></label>
           <p className="text-sm text-bone-muted">Only journal entries and saved conversations you allow in Insights are included. Your reports stay private.</p>
           <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Save preferences</button><button type="button" className={buttonClass} onClick={() => setPrefsOpen(false)}>Cancel</button></div>

@@ -5,7 +5,7 @@ const db=new PGlite()
 const u1='11111111-1111-4111-8111-111111111111',u2='22222222-2222-4222-8222-222222222222'
 await db.exec(`
 CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
-CREATE TABLE user_profiles(id uuid PRIMARY KEY,clerk_user_id text);
+CREATE TABLE user_profiles(id uuid PRIMARY KEY,clerk_user_id text,created_at timestamptz DEFAULT '2025-06-15T12:00:00Z',planner_tz text,birth_tz text);
 CREATE FUNCTION app_current_clerk_user_id() RETURNS text LANGUAGE sql STABLE AS $$ SELECT current_setting('test.clerk_id',true) $$;
 GRANT SELECT ON user_profiles TO authenticated;
 CREATE TABLE journal_entries(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES user_profiles ON DELETE CASCADE,title text,body text,entry_date date,include_in_insights boolean,include_in_stelloquy boolean,memory_pinned boolean DEFAULT false,memory_importance int);
@@ -15,10 +15,23 @@ CREATE TABLE daily_logs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uu
 CREATE TABLE oracle_captures(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES user_profiles ON DELETE CASCADE);
 CREATE TABLE curriculum_sessions(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES user_profiles ON DELETE CASCADE);
 CREATE TABLE plan_items(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES user_profiles ON DELETE CASCADE);
-INSERT INTO user_profiles VALUES('${u1}','user_one'),('${u2}','user_two');
+INSERT INTO user_profiles(id,clerk_user_id) VALUES('${u1}','user_one'),('${u2}','user_two');
+INSERT INTO user_profiles(id,clerk_user_id,planner_tz,birth_tz) VALUES('33333333-3333-4333-8333-333333333333','planner_tz','Europe/London','America/Chicago'),('44444444-4444-4444-8444-444444444444','bad_tz','Not/AZone',NULL);
 `)
 await db.exec(await readFile(new URL('../supabase/migrations/0047_reflections.sql',import.meta.url),'utf8'))
 await db.exec(await readFile(new URL('../supabase/migrations/0055_weekly_reflections.sql',import.meta.url),'utf8'))
+await db.query("insert into reflection_preferences(user_id,automatic) values($1,false)",[u2])
+await db.exec(await readFile(new URL('../supabase/migrations/0056_reflections_automatic_default.sql',import.meta.url),'utf8'))
+{
+  const prefs=Object.fromEntries((await db.query('select user_id,automatic,timezone from reflection_preferences')).rows.map(r=>[r.user_id,r]))
+  assert.equal(Object.keys(prefs).length,4,'every member gets a preferences row')
+  assert.ok(Object.values(prefs).every(r=>r.automatic),'automatic preparation is on for everyone, including members who had it off')
+  assert.equal(prefs['33333333-3333-4333-8333-333333333333'].timezone,'Europe/London','planner timezone fills a missing one')
+  assert.equal(prefs['44444444-4444-4444-8444-444444444444'].timezone,null,'an invalid zone name is not copied')
+  await db.query("insert into user_profiles(id,clerk_user_id) values('55555555-5555-4555-8555-555555555555','new')")
+  await db.query("insert into reflection_preferences(user_id) values('55555555-5555-4555-8555-555555555555')")
+  assert.equal((await db.query("select automatic from reflection_preferences where user_id='55555555-5555-4555-8555-555555555555'")).rows[0].automatic,true,'new members start with it on')
+}
 const query=async(sql,params=[]) => (await db.query(sql,params)).rows
 for(const id of [u1,u2]) await query("select save_reflection_preferences($1,'America/New_York',true,true)",[id])
 await query("insert into journal_entries(user_id,title,body,entry_date,include_in_insights,include_in_stelloquy) values($1,'Old relevant memory','Gardening with my sister','2020-01-02',true,true),($1,'New unrelated entry','Train schedules','2025-01-03',true,true),($1,'Private garden','Gardening secret','2025-01-04',false,false),($2,'Other user','Gardening secret too','2025-01-04',true,true)",[u1,u2])

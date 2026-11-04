@@ -71,3 +71,26 @@ export function periodLabel(period: ReflectionPeriod): string {
   if (period.kind === 'quarter') return `Q${Math.ceil(month / 3)} ${year}`
   return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(period.start + 'T12:00:00Z'))
 }
+/** The period of this kind holding a calendar date. */
+export function periodContaining(kind: PeriodKind, date: string, timezone: string): ReflectionPeriod {
+  if (kind === 'week') { const w = weekOf(date); return periodFor(kind, w.year, w.index, timezone) }
+  const year = Number(date.slice(0, 4)), month = Number(date.slice(5, 7))
+  return periodFor(kind, year, kind === 'month' ? month : kind === 'quarter' ? Math.ceil(month / 3) : 1, timezone)
+}
+/** Every ended period of this kind that overlaps [since, now], newest first. */
+export function closedPeriodsSince(kind: PeriodKind, since: string, timezone: string, now = new Date()): ReflectionPeriod[] {
+  const out: ReflectionPeriod[] = []
+  let period = latestClosed(kind, timezone, now)
+  while (period.end > since) {
+    out.push(period)
+    try { period = periodContaining(kind, addDays(period.start, -1), timezone) }
+    catch { break } // before 2000: outside the supported range
+  }
+  return out
+}
+/** Newest of each kind first, then the next newest of each, and so on. */
+export function catchUpOrder(lists: ReflectionPeriod[][]): ReflectionPeriod[] {
+  const out: ReflectionPeriod[] = []
+  for (let i = 0; i < Math.max(0, ...lists.map(l => l.length)); i++) for (const list of lists) if (list[i]) out.push(list[i])
+  return out
+}

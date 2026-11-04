@@ -15,7 +15,7 @@ const uid='11111111-1111-4111-8111-111111111111'
 globalThis.__reflectionTestUser=uid
 await db.exec(`
 CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
-CREATE TABLE user_profiles(id uuid PRIMARY KEY,clerk_user_id text);
+CREATE TABLE user_profiles(id uuid PRIMARY KEY,clerk_user_id text,created_at timestamptz DEFAULT '2025-06-15T12:00:00Z',planner_tz text,birth_tz text);
 CREATE FUNCTION app_current_clerk_user_id() RETURNS text LANGUAGE sql STABLE AS $$ SELECT current_setting('test.clerk_id',true) $$;
 CREATE TABLE journal_entries(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES user_profiles ON DELETE CASCADE,title text,body text,entry_date date,created_at timestamptz DEFAULT now(),include_in_insights boolean,include_in_stelloquy boolean,memory_pinned boolean DEFAULT false,memory_importance int);
 CREATE TABLE area_goals(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES user_profiles ON DELETE CASCADE,title text,status text);
@@ -30,6 +30,7 @@ INSERT INTO product_entitlements(user_id) VALUES('${uid}');
 `)
 await db.exec(await readFile('supabase/migrations/0047_reflections.sql','utf8'))
 await db.exec(await readFile('supabase/migrations/0055_weekly_reflections.sql','utf8'))
+await db.exec(await readFile('supabase/migrations/0056_reflections_automatic_default.sql','utf8'))
 await db.query("select save_reflection_preferences($1,'America/New_York',false,true)",[uid])
 await db.query(`insert into journal_entries(user_id,title,body,entry_date,include_in_insights,include_in_stelloquy) values
 ($1,'A quiet evening','I rested with a book and felt settled.','2025-08-02',true,true),
