@@ -25,6 +25,38 @@ const POINT_THEMES: Record<NatalPoint, string> = {
   Midheaven: 'your work and direction',
 }
 
+const ASPECT_LENS: Record<string, string> = {
+  conjunction: 'merges with and intensifies',
+  square: 'presses on, often read as friction that asks for an adjustment in',
+  opposition: 'pulls against, often felt through other people, around',
+  trine: 'flows easily with, a quiet support for',
+}
+
+const HOUSE_AREAS: Record<number, string> = {
+  1: 'self, body and first impressions', 2: 'money, values and self-worth', 3: 'everyday thinking, siblings and neighbourhood',
+  4: 'home, roots and family', 5: 'creativity, play and romance', 6: 'daily work, health and routines',
+  7: 'partnerships and close one-to-one ties', 8: 'shared resources, intimacy and what lies underneath',
+  9: 'beliefs, study and travel', 10: 'work, reputation and public direction', 11: 'friends, community and hopes',
+  12: 'solitude, rest and the unseen',
+}
+
+/**
+ * One plain line on what a major transit is often read as being about, for
+ * the AI writing a look back. Definitions only (planet, aspect, chart point,
+ * house), so the reading itself stays the model's offer to the member.
+ */
+export function transitLens(cycle: SkyCycle, natal?: { sign?: string; house?: number }): string {
+  if (cycle.kind !== 'personal_transit' || !cycle.planet || !cycle.natalPoint) {
+    return `${cycle.title} (${cycle.subtitle}): ${cycleMeaning(cycle)}`
+  }
+  const planetTheme = PLANET_THEMES[cycle.planet] ?? 'its themes'
+  const how = ASPECT_LENS[cycle.aspect ?? ''] ?? 'meets'
+  const where = natal?.house && HOUSE_AREAS[natal.house]
+    ? ` It sits${natal.sign ? ` in ${natal.sign}` : ''} in your ${natal.house}${['th', 'st', 'nd', 'rd'][natal.house % 10 > 3 || [11, 12, 13].includes(natal.house) ? 0 : natal.house % 10]} house, the area of ${HOUSE_AREAS[natal.house]}.`
+    : ''
+  return `${cycle.title} (${cycle.subtitle}): ${cycle.planet}, ${planetTheme}, ${how} ${POINT_THEMES[cycle.natalPoint]}.${where}`
+}
+
 const SEASON_LINES: Record<string, string> = {
   spring: 'a natural moment to start something and notice what wants to grow',
   summer: 'a natural moment to tend what is already growing',

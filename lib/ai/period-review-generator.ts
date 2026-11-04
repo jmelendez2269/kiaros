@@ -22,7 +22,7 @@ import { checkQuestionToCarry } from '@/lib/period-review/question-anchor'
 import { recordUsage } from './usage'
 
 const MODEL_ID = 'claude-sonnet-4-6'
-const MAX_OUTPUT_TOKENS = 900
+const MAX_OUTPUT_TOKENS = 1200
 
 export function periodReviewModel() {
   return anthropic(MODEL_ID)
@@ -30,6 +30,7 @@ export function periodReviewModel() {
 
 function sanitizeSections(raw: PeriodReviewSections, includeJournal: boolean): PeriodReviewSections {
   const out: PeriodReviewSections = {}
+  if (raw.thread?.trim()) out.thread = sanitizePeriodReviewOutput(raw.thread)
   if (raw.sky?.trim()) out.sky = sanitizePeriodReviewOutput(raw.sky)
   if (raw.plansAndGoals?.trim()) out.plansAndGoals = sanitizePeriodReviewOutput(raw.plansAndGoals)
   if (includeJournal && raw.inYourWords?.trim()) out.inYourWords = sanitizePeriodReviewOutput(raw.inYourWords)
@@ -70,7 +71,7 @@ export async function generateLookBackFromSources(
     output: Output.object({ schema: periodReviewSectionsSchema }),
     system: `${assemblePeriodReviewSystemPrompt()}${systemAddendum ? `\n\n${systemAddendum}` : ''}
 
-Return JSON only with optional string fields: sky, plansAndGoals, inYourWords, questionToCarry. Omit empty sections.`,
+Return JSON only with optional string fields: thread, sky, plansAndGoals, questionToCarry. Omit empty sections.`,
     prompt: assemblePeriodReviewUserPrompt(sources, promptOptions),
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     temperature: 0.72,
@@ -86,7 +87,7 @@ Return JSON only with optional string fields: sky, plansAndGoals, inYourWords, q
       delete sections.questionToCarry
     }
   }
-  if (!sections.sky && !sections.plansAndGoals && !sections.questionToCarry) {
+  if (!sections.thread && !sections.sky && !sections.plansAndGoals && !sections.questionToCarry) {
     throw new Error('Empty period review returned from model')
   }
 

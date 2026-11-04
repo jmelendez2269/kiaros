@@ -14,6 +14,7 @@ type Cached = {
 }
 
 const SECTION_TITLES: Array<{ key: keyof PeriodReviewSections; title: string }> = [
+  { key: 'thread', title: 'What it was about' },
   { key: 'sky', title: 'The sky' },
   { key: 'plansAndGoals', title: 'Your plans and goals' },
   { key: 'inYourWords', title: 'In your words' },
@@ -206,7 +207,7 @@ export function SkyCycleReviewModal({
           sections.map(({ key, title: sectionTitle }) => (
             <section key={key} style={{ marginTop: 20 }}>
               <h3 style={{ margin: 0, fontFamily: K.fMono, fontSize: 11, letterSpacing: '0.14em', color: '#A98AEF', textTransform: 'uppercase' }}>
-                {sectionTitle}
+                {key === 'sky' && cached.sections.thread ? 'How the sky sat with it' : sectionTitle}
               </h3>
               <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.75, color: K.ink, whiteSpace: 'pre-wrap' }}>
                 {cached.sections[key]}

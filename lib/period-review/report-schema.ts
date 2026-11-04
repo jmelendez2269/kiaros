@@ -13,8 +13,11 @@ import {
 } from './chip-copy'
 
 export const periodReviewSectionsSchema = z.object({
+  /** What the period was about: the thread across entries, check-ins, plans and sky. */
+  thread: z.string().min(1).optional(),
   sky: z.string().min(1).optional(),
   plansAndGoals: z.string().min(1).optional(),
+  /** Saved reviews from before 2026-11 only; new look backs weave the member's words into thread. */
   inYourWords: z.string().min(1).optional(),
   questionToCarry: z.string().min(1).optional(),
 })
@@ -59,7 +62,8 @@ export function buildSourceChips(sources: PeriodReviewSourceBundle): PeriodRevie
 
 export function flattenPeriodReviewSections(sections: PeriodReviewSections): string {
   const parts: string[] = []
-  if (sections.sky?.trim()) parts.push(`The sky\n\n${sections.sky.trim()}`)
+  if (sections.thread?.trim()) parts.push(`What it was about\n\n${sections.thread.trim()}`)
+  if (sections.sky?.trim()) parts.push(`${sections.thread?.trim() ? 'How the sky sat with it' : 'The sky'}\n\n${sections.sky.trim()}`)
   if (sections.plansAndGoals?.trim()) parts.push(`Your plans and goals\n\n${sections.plansAndGoals.trim()}`)
   if (sections.inYourWords?.trim()) parts.push(`In your words\n\n${sections.inYourWords.trim()}`)
   if (sections.questionToCarry?.trim()) parts.push(`A question to carry\n\n${sections.questionToCarry.trim()}`)
@@ -67,8 +71,8 @@ export function flattenPeriodReviewSections(sections: PeriodReviewSections): str
 }
 
 export function parseLegacySummarySections(summary: string): PeriodReviewSections {
-  const headers = ['The sky', 'Your plans and goals', 'In your words', 'A question to carry'] as const
-  const keys: (keyof PeriodReviewSections)[] = ['sky', 'plansAndGoals', 'inYourWords', 'questionToCarry']
+  const headers = ['What it was about', 'How the sky sat with it', 'The sky', 'Your plans and goals', 'In your words', 'A question to carry'] as const
+  const keys: (keyof PeriodReviewSections)[] = ['thread', 'sky', 'sky', 'plansAndGoals', 'inYourWords', 'questionToCarry']
   const out: PeriodReviewSections = {}
   for (let i = 0; i < headers.length; i++) {
     const header = headers[i]

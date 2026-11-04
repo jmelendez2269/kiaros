@@ -324,9 +324,18 @@ export function PeriodReviewModal({
   const writeHref = journalWritePrefillHref(period)
 
   const sectionBlocks: { title: string; body?: string; chips: string[] }[] = []
+  // A thread that drew on journal entries hides once no entries are included, like "In your words".
+  const threadQuotesJournal = (payload?.sourceChips.journal.length ?? 0) > 0
+  if (payload?.sections.thread && !(threadQuotesJournal && journalEntryCount === 0)) {
+    sectionBlocks.push({
+      title: 'What it was about',
+      body: payload.sections.thread,
+      chips: [...payload.sourceChips.journal, ...payload.sourceChips.plans],
+    })
+  }
   if (payload?.sections.sky) {
     sectionBlocks.push({
-      title: 'The sky',
+      title: payload.sections.thread ? 'How the sky sat with it' : 'The sky',
       body: payload.sections.sky,
       chips: [...(payload.sourceChips.personal ?? []), ...payload.sourceChips.sky],
     })
@@ -335,7 +344,7 @@ export function PeriodReviewModal({
     sectionBlocks.push({
       title: 'Your plans and goals',
       body: payload.sections.plansAndGoals,
-      chips: payload.sourceChips.plans,
+      chips: payload.sections.thread ? [] : payload.sourceChips.plans,
     })
   }
   // null = count unavailable; trust the saved review rather than hiding the section.

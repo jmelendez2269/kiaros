@@ -59,10 +59,11 @@ export function resolvePeriodReviewVaultForSave(
 }
 
 export function periodReviewCacheEntryQuotesJournal(entry: {
-  sections?: { inYourWords?: string }
+  sections?: { inYourWords?: string; thread?: string }
   sourceChips?: { journal?: string[] }
 }): boolean {
   if (entry.sections?.inYourWords?.trim()) return true
+  if (entry.sections?.thread?.trim() && entry.sourceChips?.journal?.length) return true
   if (entry.sourceChips?.journal?.length) return true
   return false
 }
