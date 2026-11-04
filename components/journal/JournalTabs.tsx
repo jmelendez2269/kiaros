@@ -32,6 +32,7 @@ const PATTERNS_SUB: { key: PatternsSubView; label: string }[] = [
 ]
 
 const LOOK_BACK_SUB: { key: LookBackSubView; label: string }[] = [
+  { key: 'week', label: 'Week' },
   { key: 'month', label: 'Month' },
   { key: 'quarter', label: 'Quarter' },
   { key: 'year', label: 'Year' },

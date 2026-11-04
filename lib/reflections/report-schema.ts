@@ -72,6 +72,6 @@ export function validateReport(content: ReflectionContent, evidence: Evidence[],
     if (!relevant || words(goal.text) > 60 || words(goal.text) / Math.max(1, nonGoalWords + words(goal.text)) > 0.15) content.goalThread = null
   }
   if (period.kind !== 'year') { content.letter = null; content.rhythms = null; content.turningPoints = null; content.discoveries = null }
-  content.lookingAhead.experiments = content.lookingAhead.experiments.slice(0, period.kind === 'month' ? 2 : 3)
+  content.lookingAhead.experiments = content.lookingAhead.experiments.slice(0, period.kind === 'week' ? 1 : period.kind === 'month' ? 2 : 3)
   return content
 }

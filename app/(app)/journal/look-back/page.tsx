@@ -9,7 +9,7 @@ import type { PeriodKind } from '@/lib/reflections/periods'
 
 export const metadata = {
   title: `Look back — ${BRAND.product}`,
-  description: 'Monthly and quarterly reflections and your year in review.',
+  description: 'Weekly, monthly and quarterly reflections and your year in review.',
 }
 
 export default async function JournalLookBackPage({
@@ -34,7 +34,7 @@ export default async function JournalLookBackPage({
     )
   }
 
-  const kind: PeriodKind = subView === 'year' ? 'year' : 'month'
+  const kind: PeriodKind = subView === 'year' ? 'year' : subView === 'week' ? 'week' : 'month'
   const monthRaw = Array.isArray(params.month) ? params.month[0] : params.month
   const monthMatch = typeof monthRaw === 'string' ? monthRaw.match(/^(\d{4})-(\d{2})$/) : null
   const planYear = monthMatch ? Number(monthMatch[1]) : new Date().getFullYear()
@@ -45,7 +45,7 @@ export default async function JournalLookBackPage({
       {isPeriodReviewEnabled() && subView === 'month' ? (
         <PeriodReviewLookBackLinks kind="month" planYear={planYear} selectedIndex={monthIndex} />
       ) : null}
-      <ReflectionsHub initialKind={kind} journalIaEmbed />
+      <ReflectionsHub key={kind} initialKind={kind} journalIaEmbed />
     </div>
   )
 }

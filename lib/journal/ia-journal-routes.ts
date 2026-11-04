@@ -8,7 +8,7 @@ export type JournalTabKey = 'write' | 'entries' | 'patterns' | 'look-back'
 
 export type PatternsSubView = 'patterns' | 'map' | 'captures'
 
-export type LookBackSubView = 'month' | 'quarter' | 'year'
+export type LookBackSubView = 'week' | 'month' | 'quarter' | 'year'
 
 export function iaJournalFlagEnabled(value: string | undefined): boolean {
   return featureFlagEnabled(value)
@@ -51,7 +51,7 @@ export function resolvePatternsSubView(raw: string | null | undefined): Patterns
 }
 
 export function resolveLookBackSubView(raw: string | null | undefined): LookBackSubView {
-  if (raw === 'quarter' || raw === 'year') return raw
+  if (raw === 'week' || raw === 'quarter' || raw === 'year') return raw
   return 'month'
 }
 

@@ -11,7 +11,7 @@ import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 const schema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('generate'), kind: z.enum(['month', 'quarter', 'year']), year: z.number().int().min(2000).max(2100), index: z.number().int().min(1).max(12), force: z.boolean().optional() }),
+  z.object({ action: z.literal('generate'), kind: z.enum(['week', 'month', 'quarter', 'year']), year: z.number().int().min(2000).max(2100), index: z.number().int().min(1).max(53), force: z.boolean().optional() }),
   z.object({ action: z.literal('preferences'), timezone: z.string().refine(validTimezone, 'Please enter a valid timezone'), automatic: z.boolean(), include_goals: z.boolean() }),
   feedbackSchema.extend({ action: z.literal('feedback') }),
   z.object({ action: z.literal('intention'), report_id: z.string().uuid(), suggestion_index: z.number().int().min(0).max(2), text: z.string().trim().min(1).max(1000) }),

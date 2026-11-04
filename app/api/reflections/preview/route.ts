@@ -3,17 +3,23 @@ import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { getUserProfileId } from '@/lib/ai/usage'
 import { periodFor, type PeriodReviewPeriod } from '@/lib/period-review/periods'
+import { addDays, periodFor as reflectionPeriodFor } from '@/lib/reflections/periods'
 import { loadLookBackPreview } from '@/lib/period-review/preview'
 import { todayISO } from '@/lib/today/get-today-context'
 
 const querySchema = z.object({
-  kind: z.enum(['month', 'quarter', 'year']),
+  kind: z.enum(['week', 'month', 'quarter', 'year']),
   year: z.coerce.number().int().min(2000).max(2100),
-  index: z.coerce.number().int().min(1).max(12),
+  index: z.coerce.number().int().min(1).max(53),
 })
 
-/** The window a reflection covers. A year uses the whole calendar year. */
-function windowFor(kind: 'month' | 'quarter' | 'year', year: number, index: number): PeriodReviewPeriod {
+/** The window a reflection covers. A year uses the whole calendar year; a week runs Monday to Sunday. */
+function windowFor(kind: 'week' | 'month' | 'quarter' | 'year', year: number, index: number): PeriodReviewPeriod {
+  if (kind === 'week') {
+    // The preview only reads counts and named transits over the date range.
+    const week = reflectionPeriodFor('week', year, index, 'UTC')
+    return { kind: 'month', periodStart: week.start, periodEnd: addDays(week.end, -1), planYear: year, index: 1 }
+  }
   if (kind === 'year') {
     // The preview only reads counts and named transits over the date range.
     return { kind: 'month', periodStart: `${year}-01-01`, periodEnd: `${year}-12-31`, planYear: year, index: 1 }
@@ -37,7 +43,9 @@ export async function GET(req: Request) {
   const profileId = await getUserProfileId(userId)
   if (!profileId) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
-  const window = windowFor(parsed.data.kind, parsed.data.year, parsed.data.index)
+  let window: PeriodReviewPeriod
+  try { window = windowFor(parsed.data.kind, parsed.data.year, parsed.data.index) }
+  catch { return NextResponse.json({ error: 'Invalid period' }, { status: 400 }) }
   if (window.periodEnd >= todayISO()) {
     return NextResponse.json({ ended: false, preview: null })
   }

@@ -18,6 +18,7 @@ CREATE TABLE plan_items(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uu
 INSERT INTO user_profiles VALUES('${u1}','user_one'),('${u2}','user_two');
 `)
 await db.exec(await readFile(new URL('../supabase/migrations/0047_reflections.sql',import.meta.url),'utf8'))
+await db.exec(await readFile(new URL('../supabase/migrations/0055_weekly_reflections.sql',import.meta.url),'utf8'))
 const query=async(sql,params=[]) => (await db.query(sql,params)).rows
 for(const id of [u1,u2]) await query("select save_reflection_preferences($1,'America/New_York',true,true)",[id])
 await query("insert into journal_entries(user_id,title,body,entry_date,include_in_insights,include_in_stelloquy) values($1,'Old relevant memory','Gardening with my sister','2020-01-02',true,true),($1,'New unrelated entry','Train schedules','2025-01-03',true,true),($1,'Private garden','Gardening secret','2025-01-04',false,false),($2,'Other user','Gardening secret too','2025-01-04',true,true)",[u1,u2])
@@ -25,6 +26,9 @@ const recalled=await query("select * from recall_journal_memories($1,'gardening'
 assert.equal(recalled.length,1); assert.equal(recalled[0].title,'Old relevant memory')
 assert.equal((await query("select * from recall_journal_memories($1,'volcano')",[u1])).length,0)
 const claim=async(id=u1,force=false) => (await query("select claim_reflection($1,'month','2025-01-01','2025-02-01','America/New_York',$2) as result",[id,force]))[0].result
+const weekly=(await db.query("select claim_reflection($1,'week','2025-01-06','2025-01-13','America/New_York',false) as result",[u1])).rows[0].result
+assert.ok(weekly.id,'weekly periods are accepted')
+await assert.rejects(db.query("insert into reflection_reports(user_id,kind,period_start,period_end,timezone) values($1,'fortnight','2025-01-06','2025-01-20','America/New_York')",[u1]),/check/)
 const first=await claim()
 await assert.rejects(claim(),/generation_in_progress/)
 await assert.rejects(query("select claim_reflection($1,'month','2099-01-01','2099-02-01','America/New_York',false)",[u1]),/period_not_closed/)

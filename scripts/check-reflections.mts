@@ -1,10 +1,22 @@
 import assert from 'node:assert/strict'
-import { periodFor, latestClosed, assertClosed, localBoundary, localDate } from '../lib/reflections/periods.ts'
+import { periodFor, latestClosed, assertClosed, localBoundary, localDate, periodLabel, weekOf, weeksInYear } from '../lib/reflections/periods.ts'
 import { analyzePeriod } from '../lib/reflections/analyze-period.ts'
 import { reportSchema, validateReport, type Evidence } from '../lib/reflections/report-schema.ts'
 import { reflectionShareCard } from '../lib/reflections/share-card.ts'
 const tz='America/New_York'
 assert.equal(periodFor('month',2024,2,tz).end,'2024-03-01')
+// Weeks run Monday to Sunday, numbered as ISO weeks.
+assert.deepEqual(periodFor('week',2026,1,tz),{kind:'week',start:'2025-12-29',end:'2026-01-05',timezone:tz})
+assert.equal(weeksInYear(2026),53); assert.equal(weeksInYear(2025),52)
+assert.throws(()=>periodFor('week',2025,53,tz))
+assert.deepEqual(weekOf('2027-01-01'),{year:2026,index:53})
+assert.deepEqual(weekOf('2025-12-29'),{year:2026,index:1})
+assert.deepEqual(weekOf('2026-11-08'),weekOf('2026-11-02'))
+assert.equal(latestClosed('week',tz,new Date('2026-11-04T17:00:00Z')).start,'2026-10-26')
+assert.equal(latestClosed('week',tz,new Date('2026-11-09T04:59:59Z')).start,'2026-10-26')
+assert.equal(latestClosed('week',tz,new Date('2026-11-09T05:00:00Z')).start,'2026-11-02')
+assert.equal(periodLabel(periodFor('week',2025,32,tz)),'Week of Aug 4, 2025')
+assert.throws(()=>assertClosed(periodFor('week',2026,45,tz),new Date('2026-11-08T12:00:00Z')))
 assert.equal(latestClosed('quarter',tz,new Date('2026-01-01T06:00:00Z')).start,'2025-10-01')
 assert.equal(latestClosed('month',tz,new Date('2026-09-01T03:59:59Z')).start,'2026-07-01')
 assert.equal(latestClosed('year',tz,new Date('2026-01-01T06:00:00Z')).start,'2025-01-01')
@@ -31,6 +43,7 @@ const base=()=>reportSchema.parse({opening:passage,moments:[passage],observation
 assert.equal(validateReport(base(),analysis.evidence,p,[],[]).observations[0].kind,'observation')
 assert.equal(validateReport(base(),analysis.evidence,p,[],['rest']).observations.length,0)
 assert.equal(validateReport(base(),analysis.evidence,p,[],[]).lookingAhead.experiments.length,2)
+assert.equal(validateReport(base(),analysis.evidence,{...p,kind:'week'},[],[]).lookingAhead.experiments.length,1)
 const invalid=base(); invalid.opening.sources=['unowned']; assert.throws(()=>validateReport(invalid,analysis.evidence,p,[],[]))
 const withGoal=base(); withGoal.goalThread={text:'This helped your writing.',sources:['a'],goalIds:['goal-1']}
 assert.equal(validateReport(withGoal,analysis.evidence,p,[],[]).goalThread,null)

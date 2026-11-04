@@ -29,6 +29,7 @@ INSERT INTO user_profiles VALUES('${uid}','fixture'),('22222222-2222-4222-8222-2
 INSERT INTO product_entitlements(user_id) VALUES('${uid}');
 `)
 await db.exec(await readFile('supabase/migrations/0047_reflections.sql','utf8'))
+await db.exec(await readFile('supabase/migrations/0055_weekly_reflections.sql','utf8'))
 await db.query("select save_reflection_preferences($1,'America/New_York',false,true)",[uid])
 await db.query(`insert into journal_entries(user_id,title,body,entry_date,include_in_insights,include_in_stelloquy) values
 ($1,'A quiet evening','I rested with a book and felt settled.','2025-08-02',true,true),

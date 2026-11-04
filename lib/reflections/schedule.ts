@@ -14,7 +14,7 @@ export async function runReflectionSchedule() {
     await admin.from('reflection_preferences').update({ checked_at: new Date().toISOString() }).eq('user_id', userId)
     checked++
     if (!await hasReflectionAccess(userId)) continue
-    for (const kind of ['month', 'quarter', 'year'] as const) {
+    for (const kind of ['week', 'month', 'quarter', 'year'] as const) {
       if (Date.now() - started > 20000) break
       try { await generateReflection(userId, latestClosed(kind, timezone)); completed++ }
       catch { failed++ }
