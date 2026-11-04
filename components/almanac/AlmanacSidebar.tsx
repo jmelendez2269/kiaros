@@ -410,8 +410,8 @@ function NavRow({
                 <div
                   style={{
                     fontFamily: K.fMono,
-                    fontSize: 13,
-                    letterSpacing: '0.1em',
+                    fontSize: 10.5,
+                    letterSpacing: '0.08em',
                     color: K.inkDim,
                     marginTop: 2,
                   }}
@@ -518,8 +518,8 @@ function NavRow({
                     <span
                       style={{
                         fontFamily: K.fMono,
-                        fontSize: 12,
-                        letterSpacing: '0.1em',
+                        fontSize: 10,
+                        letterSpacing: '0.08em',
                         color: K.inkDim,
                       }}
                     >

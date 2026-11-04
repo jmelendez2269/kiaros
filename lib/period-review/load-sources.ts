@@ -3,6 +3,7 @@ import 'server-only'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { loadBlueprintForYear } from '@/lib/blueprint/load'
 import { summarizeSkyForPeriod } from './sky-for-period'
+import { majorTransitsForWindow, type MajorTransits } from '@/lib/sky-cycles/load'
 import { quarterForMonth, type PeriodReviewPeriod } from './periods'
 import type { PeriodSkySummary } from './sky-for-period'
 
@@ -96,6 +97,8 @@ export interface PeriodReviewSourceBundle {
   /** Stelloquy captures saved (not privately) during the period. */
   captureCount?: number
   captureExcerpts?: PeriodCaptureExcerpt[]
+  /** Named major transits in the window: to the member's chart, and collective. */
+  majorTransits?: MajorTransits
   quarterBlueprintTheme: string | null
   monthBlueprintTheme: string | null
 }
@@ -200,6 +203,11 @@ export async function loadPeriodReviewSources(
       .order('created_at', { ascending: true }),
   ])
 
+  const majorTransits = await majorTransitsForWindow(userId, period.periodStart, period.periodEnd).catch((error) => {
+    console.error('[period-review] major transits unavailable:', error)
+    return undefined
+  })
+
   const ephemeris = (ephemerisRes.data?.data ?? null) as import('@/types/blueprint').YearEphemeris | null
   const sky = summarizeSkyForPeriod(ephemeris, period)
 
@@ -275,6 +283,7 @@ export async function loadPeriodReviewSources(
     journalExcerpts,
     captureCount: captureRows.length,
     captureExcerpts,
+    majorTransits,
     quarterBlueprintTheme: quarterBlueprint?.theme ?? null,
     monthBlueprintTheme: monthBlueprint?.theme ?? null,
   }

@@ -24,6 +24,7 @@ import {
   type PeriodReviewPeriod,
 } from '@/lib/period-review/periods'
 import type { PeriodReviewSections, PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
+import { LookBackPreview } from './LookBackPreview'
 
 type ReviewPayload = {
   sections: PeriodReviewSections
@@ -81,10 +82,22 @@ function countOrNull(value: unknown): number | null {
   return typeof value === 'number' ? value : null
 }
 
+function chipsOrNull(value: unknown): PeriodReviewSourceChips | null {
+  if (!value || typeof value !== 'object') return null
+  const v = value as Partial<PeriodReviewSourceChips>
+  return {
+    sky: Array.isArray(v.sky) ? v.sky : [],
+    plans: Array.isArray(v.plans) ? v.plans : [],
+    journal: Array.isArray(v.journal) ? v.journal : [],
+    personal: Array.isArray(v.personal) ? v.personal : [],
+  }
+}
+
 async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
   payload: ReviewPayload | null
   journalEntryCount: number | null
   vaultAvailable: boolean
+  preview: PeriodReviewSourceChips | null
 }> {
   const sp = new URLSearchParams({
     kind: period.kind,
@@ -106,10 +119,16 @@ async function loadCachedOnly(period: PeriodReviewPeriod): Promise<{
       },
       journalEntryCount: countOrNull(getData.journalEntryCount),
       vaultAvailable,
+      preview: null,
     }
   }
 
-  return { payload: null, journalEntryCount: countOrNull(getData.journalEntryCount), vaultAvailable }
+  return {
+    payload: null,
+    journalEntryCount: countOrNull(getData.journalEntryCount),
+    vaultAvailable,
+    preview: chipsOrNull(getData.preview),
+  }
 }
 
 type PostGenerateResult =
@@ -172,9 +191,11 @@ export function PeriodReviewModal({
   const [vaultAvailable, setVaultAvailable] = useState(true)
   const [pending, startTransition] = useTransition()
   const [confirmRegen, setConfirmRegen] = useState(false)
+  const [preview, setPreview] = useState<PeriodReviewSourceChips | null>(null)
 
   useEffect(() => {
     setPayload(null)
+    setPreview(null)
     setJournalEntryCount(null)
     setConfirmRegen(false)
     setNeedsGenerate(false)
@@ -186,6 +207,7 @@ export function PeriodReviewModal({
       try {
         const result = await loadCachedOnly(period)
         setPayload(result.payload)
+        setPreview(result.preview)
         setNeedsGenerate(!result.payload)
         setJournalEntryCount(result.journalEntryCount)
         setVaultAvailable(result.vaultAvailable)
@@ -303,7 +325,11 @@ export function PeriodReviewModal({
 
   const sectionBlocks: { title: string; body?: string; chips: string[] }[] = []
   if (payload?.sections.sky) {
-    sectionBlocks.push({ title: 'The sky', body: payload.sections.sky, chips: payload.sourceChips.sky })
+    sectionBlocks.push({
+      title: 'The sky',
+      body: payload.sections.sky,
+      chips: [...(payload.sourceChips.personal ?? []), ...payload.sourceChips.sky],
+    })
   }
   if (payload?.sections.plansAndGoals) {
     sectionBlocks.push({
@@ -364,6 +390,7 @@ export function PeriodReviewModal({
           overflow: 'auto',
           background: '#0A0C14',
           border: '1px solid rgba(164,163,177,0.35)',
+          borderRadius: 16,
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -487,9 +514,13 @@ export function PeriodReviewModal({
             </div>
           ) : needsGenerate && !payload && !storageFullOpen && vaultAvailable ? (
             <div style={{ marginTop: 8 }}>
-              <p style={{ fontSize: 14, lineHeight: 1.65, color: '#A4A3B1', marginBottom: 16 }}>
-                No saved look back for this period yet.
-              </p>
+              {preview ? (
+                <LookBackPreview chips={preview} periodNoun={period.kind === 'quarter' ? 'quarter' : 'month'} />
+              ) : (
+                <p style={{ fontSize: 14, lineHeight: 1.65, color: '#A4A3B1', marginBottom: 16 }}>
+                  No saved look back for this period yet.
+                </p>
+              )}
               <button
                 type="button"
                 disabled={pending}
@@ -506,7 +537,7 @@ export function PeriodReviewModal({
                   cursor: pending ? 'wait' : 'pointer',
                 }}
               >
-                Generate
+                Write my look back
               </button>
             </div>
           ) : (

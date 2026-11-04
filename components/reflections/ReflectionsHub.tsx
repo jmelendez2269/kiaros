@@ -5,6 +5,8 @@ import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflec
 import { latestClosed, localDate, periodFor, periodLabel, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { LookBackPreview } from '@/components/period-review/LookBackPreview'
+import type { PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number }
 type Passage = { text: string; sources: string[] }
 type Payload = Record<string, unknown>
@@ -49,6 +51,7 @@ export function ReflectionsHub({
   const [selectedId, setSelectedId] = useState<string | null>(null), [prefsOpen, setPrefsOpen] = useState(false)
   const [timezone, setTimezone] = useState(''), [automatic, setAutomatic] = useState(false), [includeGoals, setIncludeGoals] = useState(true)
   const [shareText, setShareText] = useState(''), [shareOpen, setShareOpen] = useState(false)
+  const [focusStart, setFocusStart] = useState<string | null>(null), [preview, setPreview] = useState<PeriodReviewSourceChips | null>(null)
   const load = useCallback(async (initialize = false) => {
     const response = await fetch('/api/reflections', { cache: 'no-store' })
     if (response.redirected) throw new Error('Please sign in again to view your reflections.')
@@ -93,15 +96,34 @@ export function ReflectionsHub({
   const cards = data ? buildCards(kind, year, activeTimezone, data.reports, today) : []
   const filtered = data?.reports.filter(r => r.kind === kind) ?? []
   const shownInYear = kind === 'year' ? filtered : filtered.filter(r => r.period_start.startsWith(String(year)))
-  const report = filtered.find(r => r.id === selectedId) ?? shownInYear[0]
+  const latestStart = latestClosed(kind, activeTimezone).start
+  // A period that has ended but has no reflection yet: the one the member picked, else the latest one when nothing else is chosen.
+  const focusCard = cards.find(c => c.state === 'available' && c.key === focusStart)
+    ?? (!selectedId && !shownInYear.length ? cards.find(c => c.state === 'available' && c.key === latestStart) : undefined)
+  const report = focusCard ? undefined : filtered.find(r => r.id === selectedId) ?? shownInYear[0]
+  const focusYear = focusCard?.year, focusIndex = focusCard?.index
+  // What the focused period's reflection will draw on, before it is prepared.
+  useEffect(() => {
+    if (!data || focusYear === undefined || focusIndex === undefined) { setPreview(null); return }
+    let cancelled = false
+    setPreview(null)
+    const timer = setTimeout(() => {
+      const sp = new URLSearchParams({ kind, year: String(focusYear), index: String(focusIndex) })
+      fetch(`/api/reflections/preview?${sp.toString()}`, { cache: 'no-store' })
+        .then(res => (res.ok ? res.json() : null))
+        .then((body: { preview?: PeriodReviewSourceChips | null } | null) => { if (!cancelled) setPreview(body?.preview ?? null) })
+        .catch(() => { if (!cancelled) setPreview(null) })
+    }, 250)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [data, kind, focusYear, focusIndex])
   const period = report ? { kind: report.kind, start: report.period_start, end: report.period_end, timezone: report.timezone } : null
   const title = period ? periodLabel(period) : 'Your reflection'
   const unit = kind === 'month' ? 'month' : kind === 'quarter' ? 'quarter' : 'year'
   function changeKind(next: PeriodKind) {
-    setKind(next); setSelectedId(null); setShareOpen(false)
+    setKind(next); setSelectedId(null); setFocusStart(null); setShareOpen(false)
     setYear(Number(latestClosed(next, activeTimezone).start.slice(0, 4)))
   }
-  function changeYear(next: number) { setYear(next); setSelectedId(null); setShareOpen(false) }
+  function changeYear(next: number) { setYear(next); setSelectedId(null); setFocusStart(null); setShareOpen(false) }
   // Saves the detected timezone first when the member has never confirmed one, so the first click just works.
   function withTimezone(payload: Payload): Payload[] {
     return data?.settings.timezone ? [payload] : [{ action: 'preferences', timezone: activeTimezone, automatic, include_goals: includeGoals }, payload]
@@ -112,8 +134,8 @@ export function ReflectionsHub({
   }
   function openCard(card: PeriodCard) {
     setShareOpen(false)
-    if (card.report) setSelectedId(card.report.id)
-    else if (card.state === 'available') prepare({ kind, ...card })
+    if (card.report) { setSelectedId(card.report.id); setFocusStart(null) }
+    else if (card.state === 'available') setFocusStart(card.start)
   }
   async function downloadCard() {
     const svgUrl = URL.createObjectURL(new Blob([reflectionShareCard(title, shareText)], { type: 'image/svg+xml' }))
@@ -173,7 +195,7 @@ export function ReflectionsHub({
         </div>}
         <ul className={'grid gap-3 ' + (kind === 'month' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : kind === 'quarter' ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3')}>
           {cards.map(card => {
-            const selected = !!report && report.period_start === card.start
+            const selected = focusCard ? focusCard.key === card.key : !!report && report.period_start === card.start
             const preparing = busy && pendingStart === card.start
             const status = preparing ? 'Preparing…' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
             const clickable = !!card.report || card.state === 'available'
@@ -204,7 +226,16 @@ export function ReflectionsHub({
           <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Save preferences</button><button type="button" className={buttonClass} onClick={() => setPrefsOpen(false)}>Cancel</button></div>
         </form>}
       </section>
-      {!showEmptyState && !report && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once a ${unit} has ended, it will be ready to prepare here.`} We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
+      {!showEmptyState && focusCard && (() => {
+        const label = periodLabel({ kind, start: focusCard.start, end: focusCard.end, timezone: activeTimezone })
+        return <section aria-label={`Prepare ${label}`} className="space-y-5 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9">
+          <header><p className="text-xs uppercase tracking-widest text-amber-200/70">Ready to prepare</p><h2 className="mt-2 font-display text-3xl">{label}</h2>
+            <p className="mt-3 text-bone-muted">This {unit} has ended. Kairos can bring together what you chose to share from it, with space for your own perspective.</p></header>
+          {preview ? <LookBackPreview chips={preview} periodNoun={kind} /> : null}
+          <button type="button" disabled={busy} className={buttonClass} onClick={() => prepare({ kind, ...focusCard })}>{busy && pendingStart === focusCard.start ? 'Preparing your reflection…' : `Reflect on ${label}`}</button>
+        </section>
+      })()}
+      {!showEmptyState && !report && !focusCard && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once a ${unit} has ended, it will be ready to prepare here.`} We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
       {!showEmptyState && report && <article className="space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
         <header><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'Your lived year' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
           {report.analysis && <p className="mt-3 text-sm text-bone-muted">Based on {report.analysis.observedDays} recorded days across {report.analysis.totalDays} calendar days. Unrecorded days are unknown.</p>}

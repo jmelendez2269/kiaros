@@ -339,7 +339,7 @@ assert.equal(chipRetrogrades(3), '3 retrogrades')
 assert.equal(chipRetrogrades(0), null)
 assert.equal(chipJournalEntries(1), '1 journal entry')
 assert.equal(chipJournalEntries(15), '15 journal entries')
-assert.equal(chipPlans(2), '2 plans')
+assert.equal(chipPlans(2), '2 plans done')
 assert.equal(chipCheckIns(1), '1 check-in')
 
 const chipSources = {
@@ -368,7 +368,7 @@ const chipSources = {
 } satisfies PeriodReviewSourceBundle
 
 const chips = buildSourceChips(chipSources)
-assert.ok(chips.plans.includes('30 plans'))
+assert.ok(chips.plans.includes('30 plans done'))
 assert.ok(chips.journal.includes('20 journal entries'))
 assert.equal(chips.sky.includes('1 retrograde'), true)
 assert.equal(chips.sky.some((c) => c.includes('moon phase')), true)

@@ -165,3 +165,41 @@ export async function loadTodaySkyCycles(profileId: string, today: string, limit
   const chosen = statuses.slice(0, limit)
   return Promise.all(chosen.map(async (s) => ({ ...s, echo: await echoFor(profileId, s, all, today) })))
 }
+
+/**
+ * The member's sky cycle email opt-in. null when the setting isn't available
+ * yet (migration 0054 not applied), so the switch can stay hidden.
+ */
+export async function loadSkyCycleEmailSetting(profileId: string): Promise<boolean | null> {
+  const admin = createAdminSupabase()
+  const { data, error } = await admin
+    .from('user_settings')
+    .select('sky_cycle_emails')
+    .eq('user_id', profileId)
+    .maybeSingle()
+  if (error) return null
+  return Boolean((data as { sky_cycle_emails?: boolean } | null)?.sky_cycle_emails)
+}
+
+export interface MajorTransits {
+  /** Slow transits to the member's own chart, e.g. "Pluto squares your Moon". */
+  personal: string[]
+  /** Big shared events: retrogrades, eclipse seasons, slow planets changing sign. */
+  collective: string[]
+}
+
+const COLLECTIVE_MAJOR_KINDS = new Set(['retrograde', 'eclipse', 'ingress'])
+
+/** Named major transits overlapping [from, to], personal and collective. */
+export async function majorTransitsForWindow(profileId: string, from: string, to: string): Promise<MajorTransits> {
+  const chart = await loadNatalChart(profileId)
+  const personal = chart
+    ? detectPersonalTransits(slowSeries(addDays(from, -400), addDays(to, 200)), natalPointsFromChart(chart))
+    : []
+  const overlaps = (c: SkyCycle) => c.startDate <= to && c.endDate >= from
+  const unique = (titles: string[]) => Array.from(new Set(titles))
+  return {
+    personal: unique(personal.filter(overlaps).map((c) => c.title)),
+    collective: unique(COLLECTIVE.filter((c) => COLLECTIVE_MAJOR_KINDS.has(c.kind) && overlaps(c)).map((c) => c.title)),
+  }
+}

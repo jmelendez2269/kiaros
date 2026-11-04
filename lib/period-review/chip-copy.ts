@@ -22,7 +22,7 @@ export function chipStelloquyCaptures(count: number): string | null {
 }
 
 export function chipPlans(count: number): string | null {
-  return countLabel(count, '1 plan', '{n} plans')
+  return countLabel(count, '1 plan done', '{n} plans done')
 }
 
 export function chipGoals(count: number): string | null {

@@ -182,7 +182,7 @@ export default async function TodayPage({
         fontFamily: K.fBody,
         color: K.ink,
         background: K.bg,
-        backgroundImage: `radial-gradient(ellipse at top, ${K.brick}26 0%, transparent 40%), radial-gradient(ellipse at bottom right, ${K.kairos}14 0%, transparent 50%)`,
+        backgroundImage: `radial-gradient(ellipse at top, ${K.stelloBlue}1f 0%, transparent 40%), radial-gradient(ellipse at bottom right, ${K.kairos}14 0%, transparent 50%)`,
         minHeight: '100%',
       }}
     >

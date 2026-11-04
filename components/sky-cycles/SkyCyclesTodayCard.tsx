@@ -1,9 +1,11 @@
 import 'server-only'
 
-import { Frame, K, Kicker } from '@/components/almanac'
+import { K } from '@/components/almanac'
 import { cycleMeaning, journalHrefFor, phaseKicker, phaseLabel, stelloquyPromptFor } from '@/lib/sky-cycles/copy'
-import { loadTodaySkyCycles, type SkyCycleItem } from '@/lib/sky-cycles/load'
+import { loadSkyCycleEmailSetting, loadTodaySkyCycles, type SkyCycleItem } from '@/lib/sky-cycles/load'
+import { SkyCycleEmailToggle } from './SkyCycleEmailToggle'
 import { SkyCycleActions } from './SkyCycleActions'
+import { SkyCyclesPopup, type SkyCycleSummary } from './SkyCyclesPopup'
 
 function echoLines(item: SkyCycleItem): string[] {
   const { echo, phase } = item
@@ -33,26 +35,38 @@ function echoLines(item: SkyCycleItem): string[] {
 
 /**
  * Today: sky happenings with a heads-up before, a check-in during, and a look
- * back after. Optional, so any failure renders nothing rather than breaking Today.
+ * back after. Renders as a compact strip; the full read opens in a popup.
+ * Optional, so any failure renders nothing rather than breaking Today.
  */
 export async function SkyCyclesTodayCard({ profileId, todayDate }: { profileId: string; todayDate: string }) {
   let items: SkyCycleItem[]
+  let emailsOn: boolean | null = null
   try {
-    items = await loadTodaySkyCycles(profileId, todayDate)
+    ;[items, emailsOn] = await Promise.all([
+      loadTodaySkyCycles(profileId, todayDate),
+      loadSkyCycleEmailSetting(profileId),
+    ])
   } catch (error) {
     console.error('[today] sky cycles unavailable:', error)
     return null
   }
   if (items.length === 0) return null
 
+  const summaries: SkyCycleSummary[] = items.map((item) => ({
+    id: item.cycle.id,
+    title: item.cycle.title,
+    kicker: phaseLabel(item),
+    personal: item.cycle.scope === 'personal',
+  }))
+
   return (
-    <Frame tone="umber" padding={18}>
-      <Kicker color={K.violetDim}>In the sky</Kicker>
-      <div style={{ display: 'grid', gap: 18, marginTop: 12 }}>
+    <SkyCyclesPopup summaries={summaries}>
+      <div style={{ display: 'grid', gap: 22 }}>
         {items.map((item) => (
           <section
             key={item.cycle.id}
-            style={{ borderLeft: `2px solid ${item.cycle.scope === 'personal' ? K.copper : K.violetDim}`, paddingLeft: 14 }}
+            data-sky-cycle={item.cycle.id}
+            style={{ borderLeft: `2px solid ${item.cycle.scope === 'personal' ? K.copper : K.stelloBlue}`, paddingLeft: 14 }}
           >
             <div style={{ fontFamily: K.fMono, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim }}>
               {phaseKicker(item)} · {phaseLabel(item)}
@@ -72,10 +86,14 @@ export async function SkyCyclesTodayCard({ profileId, todayDate }: { profileId: 
               phase={item.phase}
               stelloquyPrompt={stelloquyPromptFor(item)}
               journalHref={journalHrefFor(item)}
+              cycleId={item.cycle.id}
+              title={item.cycle.title}
+              subtitle={item.cycle.subtitle}
             />
           </section>
         ))}
       </div>
-    </Frame>
+      {emailsOn === false ? <SkyCycleEmailToggle initialEnabled={false} /> : null}
+    </SkyCyclesPopup>
   )
 }

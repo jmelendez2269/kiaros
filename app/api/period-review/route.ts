@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { getUserProfileId } from '@/lib/ai/usage'
 import { generatePeriodReviewSummary } from '@/lib/ai/period-review-generator'
 import { countPeriodJournalEntries } from '@/lib/period-review/load-sources'
+import { loadLookBackPreview } from '@/lib/period-review/preview'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import {
   assertPeriodReviewVaultAvailable,
@@ -98,7 +99,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: COUNT_FAILED_MESSAGE }, { status: 503 })
   }
   const vaultAvailable = await isPeriodReviewVaultAvailable(profileId, period)
+  // Before the first look back, show what it will draw on.
+  const preview = cached ? null : await loadLookBackPreview(profileId, period)
   return NextResponse.json({
+    preview,
     period: {
       kind: period.kind,
       year: period.planYear,

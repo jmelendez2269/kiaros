@@ -236,3 +236,80 @@ describe('Fixture: Stelloquy captures', () => {
     assert.ok(!prompt.includes('Saved from Stelloquy'))
   })
 })
+
+describe('Fixture: sky cycle look back options', () => {
+  it('uses the cycle title and context and omits the next-month carry', () => {
+    const prompt = assemblePeriodReviewUserPrompt(
+      {
+        period: periodFor('month', 2026, 10),
+        displayName: 'Morgan',
+        sky: mockSky,
+        planTasksCompleted: [],
+        planTasksOpen: [],
+        planTasksCompletedCount: 0,
+        planTasksOpenCount: 0,
+        planTasksTotal: 0,
+        dailyLogDays: 0,
+        checkIns: [],
+        goalsActive: 0,
+        goalsCompletedInPeriod: 0,
+        goalsCompletedApproximate: false,
+        intentions: [],
+        journalEntryCount: 0,
+        journalExcerpts: [],
+        quarterBlueprintTheme: null,
+        monthBlueprintTheme: null,
+      },
+      {
+        title: 'Mercury retrograde (in Scorpio, Oct 25 to Nov 14)',
+        carryLabel: null,
+        context: 'The cycle: Mercury retrograde, in Scorpio.',
+      },
+    )
+    assert.ok(prompt.includes('Write a period look back for Mercury retrograde (in Scorpio, Oct 25 to Nov 14)'))
+    assert.ok(prompt.includes('The cycle: Mercury retrograde, in Scorpio.'))
+    assert.ok(!prompt.includes('may ask what the member would like to do with that one thing in'))
+  })
+})
+
+describe('Fixture: major transits', () => {
+  const base: PeriodReviewSourceBundle = {
+    period: periodFor('month', 2026, 8),
+    displayName: 'Morgan',
+    sky: mockSky,
+    planTasksCompleted: [],
+    planTasksOpen: [],
+    planTasksCompletedCount: 0,
+    planTasksOpenCount: 0,
+    planTasksTotal: 0,
+    dailyLogDays: 0,
+    checkIns: [],
+    goalsActive: 0,
+    goalsCompletedInPeriod: 0,
+    goalsCompletedApproximate: false,
+    intentions: [],
+    journalEntryCount: 0,
+    journalExcerpts: [],
+    quarterBlueprintTheme: null,
+    monthBlueprintTheme: null,
+    majorTransits: {
+      personal: ['Pluto squares your Moon'],
+      collective: ['Saturn retrograde', 'Eclipse season'],
+    },
+  }
+
+  it('names personal and collective transits in the prompt', () => {
+    const prompt = assemblePeriodReviewUserPrompt(base)
+    assert.ok(prompt.includes("To the member's own chart: Pluto squares your Moon"))
+    assert.ok(prompt.includes('Collective: Saturn retrograde; Eclipse season'))
+  })
+
+  it('puts named transits in the source chips', async () => {
+    const { buildSourceChips } = await import('@/lib/period-review/report-schema')
+    const chips = buildSourceChips(base)
+    assert.deepEqual(chips.personal, ['Pluto squares your Moon'])
+    assert.ok(chips.sky.includes('Saturn retrograde'))
+    assert.ok(chips.sky.includes('Eclipse season'))
+    assert.ok(!chips.sky.some((c) => /retrogrades$/.test(c)), 'named, not counted')
+  })
+})
