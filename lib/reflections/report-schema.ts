@@ -47,7 +47,7 @@ export const feedbackSchema = z.object({
   verdict: z.enum(['confirmed', 'corrected', 'dismissed']), note: z.string().max(1000),
 })
 export type Feedback = z.infer<typeof feedbackSchema>
-export interface Intention { id: string; report_id: string; text: string; outcome: string | null; created_at: string; updated_at: string }
+export interface Intention { id: string; report_id: string; suggestion_index: number; text: string; outcome: string | null; created_at: string; updated_at: string }
 export const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length
 export function validateReport(content: ReflectionContent, evidence: Evidence[], period: ReflectionPeriod, goalIds: string[], blockedKeys: string[]): ReflectionContent {
   if (period.kind !== 'year') { content.letter = null; content.rhythms = null; content.turningPoints = null; content.discoveries = null }

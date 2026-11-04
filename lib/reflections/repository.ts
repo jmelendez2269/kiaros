@@ -26,7 +26,7 @@ export async function feedback(userId: string): Promise<Feedback[]> {
   return (data ?? []) as Feedback[]
 }
 export async function intentions(userId: string): Promise<Intention[]> {
-  const { data, error } = await createAdminSupabase().from('reflection_intentions').select('id,report_id,text,outcome,created_at,updated_at').eq('user_id', userId).order('updated_at', { ascending: false }).limit(100)
+  const { data, error } = await createAdminSupabase().from('reflection_intentions').select('id,report_id,suggestion_index,text,outcome,created_at,updated_at').eq('user_id', userId).order('updated_at', { ascending: false }).limit(100)
   if (error) throw new Error('Reflection intentions could not be loaded')
   return (data ?? []) as Intention[]
 }

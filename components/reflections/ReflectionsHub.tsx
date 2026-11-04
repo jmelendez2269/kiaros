@@ -2,13 +2,40 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflections/report-schema'
-import { latestClosed, periodLabel, type PeriodKind } from '@/lib/reflections/periods'
+import { latestClosed, localDate, periodFor, periodLabel, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number }
 type Passage = { text: string; sources: string[] }
+type Payload = Record<string, unknown>
+type CardState = 'ready' | 'empty' | 'stale' | 'failed' | 'generating' | 'available' | 'open' | 'future'
+type PeriodCard = { key: string; label: string; year: number; index: number; start: string; end: string; state: CardState; report?: SavedReport }
 const inputClass = 'w-full rounded-lg border border-white/20 bg-transparent p-3 text-bone focus:outline-none focus:ring-2 focus:ring-amber-200/60'
 const buttonClass = 'rounded-lg border border-white/20 px-4 py-2 text-sm transition hover:bg-white/10 disabled:cursor-wait disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4'
+const pillClass = 'rounded-full border border-white/15 px-3 py-1 text-xs transition hover:bg-white/10 disabled:cursor-wait disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
+const linkButtonClass = 'text-sm underline underline-offset-4 hover:text-amber-100 disabled:opacity-50'
+const monthName = (i: number, style: 'long' | 'short' = 'long') => new Intl.DateTimeFormat('en-US', { month: style, timeZone: 'UTC' }).format(new Date(Date.UTC(2026, i - 1, 1)))
+const dayLabel = (iso: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(iso + 'T12:00:00Z'))
+function lastDay(end: string) { const d = new Date(end + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10) }
+const CARD_COPY: Record<CardState, string> = {
+  ready: 'Ready to read', empty: 'Not much recorded', stale: 'New entries · refresh', failed: 'Couldn’t finish · try again',
+  generating: 'Being prepared…', available: 'Ready to prepare', open: '', future: 'Not yet',
+}
+function buildCards(kind: PeriodKind, year: number, timezone: string, reports: SavedReport[], today: string): PeriodCard[] {
+  const thisYear = Number(today.slice(0, 4))
+  const slots: { year: number; index: number; label: string }[] = kind === 'year'
+    ? Array.from({ length: thisYear - Math.min(thisYear - 2, ...reports.filter(r => r.kind === 'year').map(r => Number(r.period_start.slice(0, 4)))) + 1 }, (_, i) => {
+        const y = thisYear - i
+        return { year: y, index: 1, label: String(y) }
+      })
+    : Array.from({ length: kind === 'month' ? 12 : 4 }, (_, i) => ({ year, index: i + 1, label: kind === 'month' ? monthName(i + 1) : `Q${i + 1}` }))
+  return slots.map(slot => {
+    const p = periodFor(kind, slot.year, slot.index, timezone)
+    const report = reports.find(r => r.kind === kind && r.period_start === p.start)
+    const state: CardState = p.start > today ? 'future' : p.end > today ? 'open' : report ? report.status : 'available'
+    return { key: p.start, label: slot.label, year: slot.year, index: slot.index, start: p.start, end: p.end, state, report }
+  })
+}
 export function ReflectionsHub({
   initialKind = 'month',
   journalIaEmbed = false,
@@ -17,9 +44,9 @@ export function ReflectionsHub({
   journalIaEmbed?: boolean
 }) {
   const [data, setData] = useState<State | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState('')
-  const [busy, setBusy] = useState(false), [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false), [loading, setLoading] = useState(true), [pendingStart, setPendingStart] = useState<string | null>(null)
   const [kind, setKind] = useState<PeriodKind>(initialKind), [year, setYear] = useState(new Date().getFullYear())
-  const [index, setIndex] = useState(1), [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null), [prefsOpen, setPrefsOpen] = useState(false)
   const [timezone, setTimezone] = useState(''), [automatic, setAutomatic] = useState(false), [includeGoals, setIncludeGoals] = useState(true)
   const [shareText, setShareText] = useState(''), [shareOpen, setShareOpen] = useState(false)
   const load = useCallback(async (initialize = false) => {
@@ -32,9 +59,7 @@ export function ReflectionsHub({
     if (initialize) {
       const tz = state.settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
       setTimezone(tz); setAutomatic(state.settings.automatic); setIncludeGoals(state.settings.include_goals)
-      const period = latestClosed(initialKind, tz)
-      setYear(Number(period.start.slice(0, 4)))
-      setIndex(initialKind === 'quarter' ? Math.ceil(Number(period.start.slice(5, 7)) / 3) : initialKind === 'month' ? Number(period.start.slice(5, 7)) : 1)
+      setYear(Number(latestClosed(initialKind, tz).start.slice(0, 4)))
     }
   }, [initialKind])
   useEffect(() => { load(true).catch(e => setError(e.message)).finally(() => setLoading(false)) }, [load])
@@ -44,26 +69,51 @@ export function ReflectionsHub({
     document.addEventListener('visibilitychange', refresh)
     return () => document.removeEventListener('visibilitychange', refresh)
   }, [load])
-  async function action(payload: Record<string, unknown>, message: string) {
+  async function action(payloads: Payload | Payload[], message: string): Promise<boolean> {
     setBusy(true); setError(''); setNotice('')
     try {
-      const response = await fetch('/api/reflections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Please try again')
+      let id: string | undefined
+      for (const payload of Array.isArray(payloads) ? payloads : [payloads]) {
+        const response = await fetch('/api/reflections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Please try again')
+        if (result.id) id = result.id
+      }
       setData(null); await load()
-      if (result.id) setSelectedId(result.id)
+      if (id) setSelectedId(id)
       setNotice(message)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Please try again') }
-    finally { setBusy(false) }
+      return true
+    } catch (e) { setError(e instanceof Error ? e.message : 'Please try again'); return false }
+    finally { setBusy(false); setPendingStart(null) }
   }
+  // Never the half-typed preferences field: an invalid zone would make the period maths throw.
+  const activeTimezone = data?.settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  const today = localDate(new Date(), activeTimezone)
+  const thisYear = Number(today.slice(0, 4))
+  const cards = data ? buildCards(kind, year, activeTimezone, data.reports, today) : []
   const filtered = data?.reports.filter(r => r.kind === kind) ?? []
-  const report = filtered.find(r => r.id === selectedId) ?? filtered[0]
+  const shownInYear = kind === 'year' ? filtered : filtered.filter(r => r.period_start.startsWith(String(year)))
+  const report = filtered.find(r => r.id === selectedId) ?? shownInYear[0]
   const period = report ? { kind: report.kind, start: report.period_start, end: report.period_end, timezone: report.timezone } : null
   const title = period ? periodLabel(period) : 'Your reflection'
+  const unit = kind === 'month' ? 'month' : kind === 'quarter' ? 'quarter' : 'year'
   function changeKind(next: PeriodKind) {
     setKind(next); setSelectedId(null); setShareOpen(false)
-    const p = latestClosed(next, data?.settings.timezone || timezone || 'UTC')
-    setYear(Number(p.start.slice(0,4))); setIndex(next === 'month' ? Number(p.start.slice(5,7)) : next === 'quarter' ? Math.ceil(Number(p.start.slice(5,7))/3) : 1)
+    setYear(Number(latestClosed(next, activeTimezone).start.slice(0, 4)))
+  }
+  function changeYear(next: number) { setYear(next); setSelectedId(null); setShareOpen(false) }
+  // Saves the detected timezone first when the member has never confirmed one, so the first click just works.
+  function withTimezone(payload: Payload): Payload[] {
+    return data?.settings.timezone ? [payload] : [{ action: 'preferences', timezone: activeTimezone, automatic, include_goals: includeGoals }, payload]
+  }
+  function prepare(card: { kind: PeriodKind; year: number; index: number; start: string }) {
+    setPendingStart(card.start)
+    void action(withTimezone({ action: 'generate', kind: card.kind, year: card.year, index: card.index }), 'Your reflection is ready.')
+  }
+  function openCard(card: PeriodCard) {
+    setShareOpen(false)
+    if (card.report) setSelectedId(card.report.id)
+    else if (card.state === 'available') prepare({ kind, ...card })
   }
   async function downloadCard() {
     const svgUrl = URL.createObjectURL(new Blob([reflectionShareCard(title, shareText)], { type: 'image/svg+xml' }))
@@ -87,26 +137,21 @@ export function ReflectionsHub({
   const content = report?.content
   const quarterlyReviewHref = journalIaEmbed ? '/journal/look-back?view=quarter' : '/year?view=review'
   const reflectionsHomeHref = journalIaEmbed ? '/journal/look-back' : '/reflections'
+  const explainer = <p className={(journalIaEmbed ? 'shell-prose text-sm ' : '') + 'leading-relaxed text-bone-muted'}>
+    Kairos writes these for you from the journal entries and conversations you’ve chosen to include. Your Quarterly Review is different: that’s the one you write yourself.{' '}
+    <Link href={quarterlyReviewHref} className="whitespace-nowrap text-bone underline underline-offset-4">Write your Quarterly Review</Link>
+  </p>
   return <div className={journalIaEmbed ? 'space-y-8 text-bone' : 'mx-auto max-w-5xl space-y-8 px-5 py-10 text-bone sm:px-8'}>
     {!journalIaEmbed ? (
       <header className="max-w-2xl space-y-3">
         <p className="text-xs uppercase tracking-[.24em] text-amber-200/70">Your lived year</p>
         <h1 className="font-display text-4xl sm:text-5xl">{kind === 'year' ? 'Yearly Unwrapped' : 'A little space to look back'}</h1>
-        <p className="leading-relaxed text-bone-muted">The moments, changes, and quiet discoveries that made this time yours. A gentle direction for what comes next.</p>
-        <Link href={quarterlyReviewHref} className="inline-block text-sm underline underline-offset-4">Write your own quarterly reflection</Link>
+        {explainer}
       </header>
     ) : (
       <header className="max-w-2xl space-y-2">
-        <h2 className="font-display text-[1.4rem] text-bone">
-          {kind === 'year' ? 'Yearly Unwrapped' : 'A little space to look back'}
-        </h2>
-        <p className="shell-prose text-sm text-bone-muted">
-          The moments, changes, and quiet discoveries that made this time yours. A gentle direction for what comes
-          next.
-        </p>
-        <Link href={quarterlyReviewHref} className="inline-block text-sm underline underline-offset-4">
-          Write your own quarterly reflection
-        </Link>
+        <h2 className="font-display text-[1.4rem] text-bone">{kind === 'year' ? 'Yearly Unwrapped' : 'A little space to look back'}</h2>
+        {explainer}
       </header>
     )}
     {showEmptyState && <ConsentEmptyState variant="reflections" />}
@@ -120,31 +165,46 @@ export function ReflectionsHub({
     {error && <div role="alert" className="rounded-xl border border-rose-200/30 p-4"><p>{error}</p><button type="button" className={buttonClass + ' mt-3'} onClick={() => { setError(''); load(true).catch(e => setError(e.message)) }}>Try again</button></div>}
     {notice && <p role="status" className="rounded-xl bg-emerald-100/10 p-4">{notice}</p>}
     {data && <>
-      <details className="rounded-xl border border-white/15 p-5" open={!data.settings.timezone}>
-        <summary className="cursor-pointer font-medium">Reflection preferences</summary>
-        <form className="mt-5 space-y-4" onSubmit={e => { e.preventDefault(); void action({ action: 'preferences', timezone, automatic, include_goals: includeGoals }, 'Your reflection preferences are saved.') }}>
+      <section aria-label="Choose a period" className="space-y-4">
+        {kind !== 'year' && <div className="flex items-center gap-3">
+          <button type="button" aria-label="Previous year" className={pillClass} disabled={year <= 2000} onClick={() => changeYear(year - 1)}>←</button>
+          <h2 className="font-display text-2xl tabular-nums">{year}</h2>
+          <button type="button" aria-label="Next year" className={pillClass} disabled={year >= thisYear} onClick={() => changeYear(year + 1)}>→</button>
+        </div>}
+        <ul className={'grid gap-3 ' + (kind === 'month' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4' : kind === 'quarter' ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3')}>
+          {cards.map(card => {
+            const selected = !!report && report.period_start === card.start
+            const preparing = busy && pendingStart === card.start
+            const status = preparing ? 'Preparing…' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
+            const clickable = !!card.report || card.state === 'available'
+            const tone = card.state === 'ready' ? 'border-amber-200/40 bg-amber-100/[.06]' : card.state === 'available' ? 'border-white/25' : clickable ? 'border-white/15' : 'border-white/10 opacity-50'
+            return <li key={card.key}>
+              <button type="button" disabled={!clickable || busy} aria-current={selected ? 'true' : undefined}
+                aria-label={`${kind === 'month' ? `${card.label} ${card.year}` : kind === 'quarter' ? `${card.label} ${card.year}` : `${card.label} Unwrapped`}: ${status}`}
+                onClick={() => openCard(card)}
+                className={`flex h-full w-full flex-col items-start gap-1 rounded-xl border p-4 text-left transition enabled:hover:bg-white/[.06] disabled:cursor-default focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${tone} ${selected ? 'ring-2 ring-amber-200/60' : ''}`}>
+                <span className="font-display text-lg">{card.label}</span>
+                <span className={'text-xs ' + (card.state === 'ready' ? 'text-amber-100/90' : 'text-bone-muted')}>{status}</span>
+              </button>
+            </li>
+          })}
+        </ul>
+        <p className="text-sm text-bone-muted">
+          A {unit} can be prepared once it has ended{kind === 'month' ? '' : ', and a rich one may take a few minutes'}.{' '}
+          {data.settings.automatic ? 'New reflections are prepared for you automatically.' : 'You choose when each one is prepared.'}
+          {' '}Times follow <span className="text-bone">{activeTimezone}</span>.{' '}
+          <button type="button" aria-expanded={prefsOpen} className={linkButtonClass} onClick={() => setPrefsOpen(!prefsOpen)}>Preferences</button>
+        </p>
+        {prefsOpen && <form aria-label="Reflection preferences" className="space-y-4 rounded-xl border border-white/15 p-5" onSubmit={e => { e.preventDefault(); void action({ action: 'preferences', timezone, automatic, include_goals: includeGoals }, 'Your reflection preferences are saved.').then(ok => { if (ok) setPrefsOpen(false) }) }}>
           <label className="block space-y-2"><span>Timezone</span><input required value={timezone} onChange={e => setTimezone(e.target.value)} placeholder="America/New_York" className={inputClass} /></label>
-          <p className="text-sm text-bone-muted">Your months and quarters close in this timezone. Confirm it before your first reflection.</p>
+          <p className="text-sm text-bone-muted">Your months and quarters close at midnight in this timezone.</p>
           <label className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={automatic} onChange={e => setAutomatic(e.target.checked)} /><span>Prepare reflections automatically after each month, quarter, and year ends.</span></label>
           <label className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={includeGoals} onChange={e => setIncludeGoals(e.target.checked)} /><span>Include a little goal context when it connects to my experience.</span></label>
           <p className="text-sm text-bone-muted">Only journal entries and saved conversations you allow in Insights are included. Your reports stay private.</p>
-          <button disabled={busy} className={buttonClass}>Save preferences</button>
-        </form>
-      </details>
-      <section aria-label="Create a reflection" className="rounded-xl border border-white/15 p-5">
-        <form className="flex flex-wrap items-end gap-4" onSubmit={e => { e.preventDefault(); void action({ action: 'generate', kind, year, index }, 'Your reflection is ready.') }}>
-          <label className="space-y-2"><span className="block text-sm">Year</span><input type="number" min="2000" max="2100" required value={year} onChange={e => setYear(Number(e.target.value))} className={inputClass + ' max-w-28'} /></label>
-          {kind !== 'year' && <label className="space-y-2"><span className="block text-sm">{kind === 'month' ? 'Month' : 'Quarter'}</span><select className={inputClass} value={index} onChange={e => setIndex(Number(e.target.value))}>
-            {Array.from({ length: kind === 'month' ? 12 : 4 }, (_, i) => <option className="bg-zinc-900" key={i+1} value={i+1}>{kind === 'quarter' ? 'Q' + (i+1) : new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2026,i,1)))}</option>)}
-          </select></label>}
-          <button className={buttonClass} disabled={busy || !data.settings.timezone}>{busy ? 'Preparing your reflection…' : 'Reflect on this period'}</button>
-        </form>
-        <p className="mt-3 text-sm text-bone-muted">Available once the period has ended. A rich quarter or year may take a few minutes.</p>
+          <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Save preferences</button><button type="button" className={buttonClass} onClick={() => setPrefsOpen(false)}>Cancel</button></div>
+        </form>}
       </section>
-      {filtered.length > 0 && <label className="block space-y-2"><span className="text-sm">Reflection history</span><select className={inputClass} value={report?.id ?? ''} onChange={e => { setSelectedId(e.target.value); setShareOpen(false) }}>
-        {filtered.map(r => <option key={r.id} value={r.id} className="bg-zinc-900">{periodLabel({ kind: r.kind, start: r.period_start, end: r.period_end, timezone: r.timezone })} · {r.status}</option>)}
-      </select></label>}
-      {!showEmptyState && !report && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">Choose a completed period above. We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
+      {!showEmptyState && !report && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once a ${unit} has ended, it will be ready to prepare here.`} We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
       {!showEmptyState && report && <article className="space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
         <header><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'Your lived year' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
           {report.analysis && <p className="mt-3 text-sm text-bone-muted">Based on {report.analysis.observedDays} recorded days across {report.analysis.totalDays} calendar days. Unrecorded days are unknown.</p>}
@@ -154,7 +214,7 @@ export function ReflectionsHub({
         {['stale','failed','generating'].includes(report.status) && <div className="space-y-3"><p>{report.status === 'generating' ? 'Your reflection is being prepared.' : report.status === 'stale' ? 'Your information has changed. Refresh this reflection to include your latest choices.' : 'This reflection could not be completed. You can try again.'}</p>
           <button type="button" disabled={busy} className={buttonClass} onClick={() => {
             const month = Number(report.period_start.slice(5,7))
-            void action({ action: 'generate', kind: report.kind, year: Number(report.period_start.slice(0,4)), index: report.kind === 'month' ? month : report.kind === 'quarter' ? Math.ceil(month/3) : 1 }, 'Your reflection is ready.')
+            prepare({ kind: report.kind, year: Number(report.period_start.slice(0,4)), index: report.kind === 'month' ? month : report.kind === 'quarter' ? Math.ceil(month/3) : 1, start: report.period_start })
           }}>Refresh reflection</button></div>}
         {content && <>
           <PassageView passage={content.opening} report={report} />
@@ -162,22 +222,18 @@ export function ReflectionsHub({
           {content.rhythms && <section className="space-y-3"><h3 className="font-display text-2xl">Rhythms and rest</h3><PassageView passage={content.rhythms} report={report} /></section>}
           {!!content.observations.length && <section className="space-y-5"><h3 className="font-display text-2xl">What showed up</h3>{content.observations.map(o => <div key={o.key} className="space-y-3 border-l border-amber-200/30 pl-4">
             <p className="text-xs uppercase tracking-widest text-bone-muted">{o.kind.replace(/_/g,' ')}</p><PassageView passage={{ text: o.text, sources: [...new Set([...o.sources, ...o.contradictingSources])] }} report={report} />
-            <details><summary className="cursor-pointer text-sm underline underline-offset-4">Does this feel accurate?</summary>
-              <form className="mt-3 space-y-3" onSubmit={e => { e.preventDefault(); const form = new FormData(e.currentTarget); void action({ action: 'feedback', report_id: report.id, claim_key: o.key, verdict: form.get('verdict'), note: form.get('note') }, 'Your perspective is saved. Refresh the reflection to include it.') }}>
-                <label className="block"><span className="sr-only">Your response to {o.key}</span><select name="verdict" className={inputClass}><option value="confirmed" className="bg-zinc-900">This feels accurate</option><option value="corrected" className="bg-zinc-900">I see it differently</option><option value="dismissed" className="bg-zinc-900">Leave this observation out</option></select></label>
-                <label className="block space-y-2"><span className="text-sm">Your perspective, if you’d like to add it</span><textarea name="note" maxLength={1000} rows={3} className={inputClass} /></label><button disabled={busy} className={buttonClass}>Save response</button>
-              </form>
-            </details>
+            <ObservationFeedback claim={o.key} existing={data.feedback.find(f => f.report_id === report.id && f.claim_key === o.key)} busy={busy}
+              onSave={(verdict, note) => action({ action: 'feedback', report_id: report.id, claim_key: o.key, verdict, note },
+                verdict === 'confirmed' ? 'Thank you. That’s noted.' : 'Your perspective is saved. Refresh the reflection to include it.')} />
           </div>)}</section>}
           {content.turningPoints && <section className="space-y-3"><h3 className="font-display text-2xl">Turning points</h3><PassageView passage={content.turningPoints} report={report} /></section>}
           {content.discoveries && <section className="space-y-3"><h3 className="font-display text-2xl">Connections and discoveries</h3><PassageView passage={content.discoveries} report={report} /></section>}
           {content.goalThread && data.settings.include_goals && <aside className="space-y-3 rounded-xl bg-amber-100/[.04] p-4"><h3 className="text-sm text-amber-100/80">A thread to something you care about</h3><PassageView passage={content.goalThread} report={report} /></aside>}
           <section className="space-y-4"><h3 className="font-display text-2xl">A little direction for what comes next</h3><PassageView passage={content.lookingAhead.focus} report={report} />
-            {content.lookingAhead.experiments.map((p,i) => <details key={i} className="rounded-xl border border-white/10 p-4"><summary className="cursor-pointer">{p.text}</summary><div className="mt-3"><EvidenceView ids={p.sources} report={report} /></div>
-              <form className="mt-3 space-y-3" onSubmit={e => { e.preventDefault(); const form = new FormData(e.currentTarget); void action({ action: 'intention', report_id: report.id, suggestion_index: i, text: form.get('text') }, 'Your intention is saved. You can record how it goes below.') }}>
-                <label className="block space-y-2"><span className="text-sm">Make this intention your own</span><textarea name="text" defaultValue={p.text} required maxLength={1000} rows={3} className={inputClass} /></label><button disabled={busy} className={buttonClass}>Carry this forward</button>
-              </form>
-            </details>)}
+            {!!content.lookingAhead.experiments.length && <p className="text-sm text-bone-muted">Small things you could try. Carry forward any that feel right, and you can note how they went later.</p>}
+            {content.lookingAhead.experiments.map((p,i) => <ExperimentCard key={i} passage={p} report={report} busy={busy}
+              carried={data.intentions.some(item => item.report_id === report.id && item.suggestion_index === i)}
+              onCarry={text => action({ action: 'intention', report_id: report.id, suggestion_index: i, text }, 'Your intention is saved. You can note how it goes below.')} />)}
           </section>
           {content.letter && <section className="space-y-3 border-t border-white/10 pt-6"><h3 className="font-display text-2xl">A letter to carry with you</h3><PassageView passage={content.letter} report={report} /></section>}
           {kind === 'year' && report.analysis && <section className="space-y-4"><h3 className="font-display text-2xl">Chapters of your year</h3><p className="text-sm text-bone-muted">Recorded days show the shape of the information available, not a score for your year.</p><div className="grid grid-cols-3 gap-3 sm:grid-cols-6">{report.analysis.months.map(m => <div key={m.month} className="rounded-lg border border-white/10 p-3"><p className="text-xs">{m.month}</p><p className="mt-2 text-lg">{m.days} days</p></div>)}</div>
@@ -187,16 +243,58 @@ export function ReflectionsHub({
           </section>}
         </>}
       </article>}
-      {!!data.intentions.length && <section className="space-y-4"><h2 className="font-display text-2xl">What you’re carrying forward</h2><p className="text-bone-muted">A place to notice what helped, what changed, or what you chose to let go.</p>{data.intentions.map(item => <form key={item.id} className="space-y-3 rounded-xl border border-white/15 p-5" onSubmit={e => { e.preventDefault(); const form = new FormData(e.currentTarget); void action({ action: 'outcome', id: item.id, text: form.get('text'), outcome: form.get('outcome') }, 'Your experience is saved for future reflections.') }}>
-        <label className="block space-y-2"><span className="text-sm">Your intention</span><textarea name="text" defaultValue={item.text} maxLength={1000} required rows={2} className={inputClass} /></label>
-        <label className="block space-y-2"><span className="text-sm">How has it gone?</span><textarea name="outcome" defaultValue={item.outcome ?? ''} maxLength={1000} rows={3} className={inputClass} placeholder="No result is required. You can simply describe what you noticed." /></label><button disabled={busy} className={buttonClass}>Save what I noticed</button>
-      </form>)}</section>}
+      {!!data.intentions.length && <section className="space-y-4"><h2 className="font-display text-2xl">What you’re carrying forward</h2><p className="text-bone-muted">A place to notice what helped, what changed, or what you chose to let go.</p>
+        <ul className="space-y-3">{data.intentions.map(item => <IntentionItem key={item.id} item={item} busy={busy}
+          onSave={(text, outcome) => action({ action: 'outcome', id: item.id, text, outcome }, 'Your experience is saved for future reflections.')} />)}</ul>
+      </section>}
     </>}
   </div>
 }
+function ObservationFeedback({ claim, existing, busy, onSave }: { claim: string; existing?: Feedback; busy: boolean; onSave: (verdict: Feedback['verdict'], note: string) => Promise<boolean> }) {
+  const [differently, setDifferently] = useState(false)
+  return <div className="space-y-3">
+    <div role="group" aria-label={`Does this feel accurate? (${claim})`} className="flex flex-wrap items-center gap-2">
+      <span className="text-sm text-bone-muted">Does this feel accurate?</span>
+      <button type="button" disabled={busy} aria-pressed={existing?.verdict === 'confirmed'} className={pillClass + (existing?.verdict === 'confirmed' ? ' bg-emerald-100/10 text-emerald-100' : '')} onClick={() => { setDifferently(false); void onSave('confirmed', '') }}>Feels true</button>
+      <button type="button" disabled={busy} aria-expanded={differently} aria-pressed={existing?.verdict === 'corrected'} className={pillClass + (differently || existing?.verdict === 'corrected' ? ' bg-amber-100/10 text-amber-100' : '')} onClick={() => setDifferently(!differently)}>I see it differently</button>
+      <button type="button" disabled={busy} aria-pressed={existing?.verdict === 'dismissed'} className={pillClass} onClick={() => { setDifferently(false); void onSave('dismissed', '') }}>Leave this out</button>
+    </div>
+    {differently && <form className="space-y-3" onSubmit={e => { e.preventDefault(); void onSave('corrected', String(new FormData(e.currentTarget).get('note') ?? '')) }}>
+      <label className="block space-y-2"><span className="text-sm">How do you see it?</span><textarea name="note" defaultValue={existing?.verdict === 'corrected' ? existing.note : ''} maxLength={1000} rows={3} className={inputClass} /></label>
+      <button disabled={busy} className={buttonClass}>Save response</button>
+    </form>}
+  </div>
+}
+function ExperimentCard({ passage, report, carried, busy, onCarry }: { passage: Passage; report: SavedReport; carried: boolean; busy: boolean; onCarry: (text: string) => Promise<boolean> }) {
+  const [editing, setEditing] = useState(false)
+  return <div className="space-y-3 rounded-xl border border-white/10 p-4">
+    <p className="leading-7">{passage.text}</p>
+    <EvidenceView ids={passage.sources} report={report} />
+    {carried ? <p className="text-sm text-emerald-100/80">You’re carrying this forward. It’s waiting for you below.</p>
+      : editing ? <form className="space-y-3" onSubmit={e => { e.preventDefault(); void onCarry(String(new FormData(e.currentTarget).get('text') ?? '')) }}>
+          <label className="block space-y-2"><span className="text-sm">In your own words</span><textarea name="text" defaultValue={passage.text} required maxLength={1000} rows={3} className={inputClass} /></label>
+          <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Carry this forward</button><button type="button" className={buttonClass} onClick={() => setEditing(false)}>Cancel</button></div>
+        </form>
+      : <div className="flex flex-wrap items-center gap-4"><button type="button" disabled={busy} className={buttonClass} onClick={() => void onCarry(passage.text)}>Carry this forward</button><button type="button" className={linkButtonClass} onClick={() => setEditing(true)}>Put it in my own words</button></div>}
+  </div>
+}
+function IntentionItem({ item, busy, onSave }: { item: Intention; busy: boolean; onSave: (text: string, outcome: string) => Promise<boolean> }) {
+  const [editing, setEditing] = useState(false)
+  if (!editing) return <li className="space-y-2 rounded-xl border border-white/15 p-5">
+    <p className="leading-7">{item.text}</p>
+    {item.outcome ? <p className="whitespace-pre-line text-sm text-bone-muted"><span className="text-bone">What you noticed:</span> {item.outcome}</p> : null}
+    <button type="button" className={linkButtonClass} onClick={() => setEditing(true)}>{item.outcome ? 'Edit' : 'Add how it went'}</button>
+  </li>
+  return <li><form className="space-y-3 rounded-xl border border-white/15 p-5" onSubmit={e => { e.preventDefault(); const form = new FormData(e.currentTarget); void onSave(String(form.get('text') ?? ''), String(form.get('outcome') ?? '')).then(ok => { if (ok) setEditing(false) }) }}>
+    <label className="block space-y-2"><span className="text-sm">Your intention</span><textarea name="text" defaultValue={item.text} maxLength={1000} required rows={2} className={inputClass} /></label>
+    <label className="block space-y-2"><span className="text-sm">How has it gone?</span><textarea name="outcome" defaultValue={item.outcome ?? ''} maxLength={1000} rows={3} className={inputClass} placeholder="No result is required. You can simply describe what you noticed." /></label>
+    <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Save what I noticed</button><button type="button" className={buttonClass} onClick={() => setEditing(false)}>Cancel</button></div>
+  </form></li>
+}
 function EvidenceView({ ids, report }: { ids: string[]; report: SavedReport }) {
   const sources = report.sources.filter(e => ids.includes(e.id))
-  return <details className="text-sm text-bone-muted"><summary className="cursor-pointer underline underline-offset-4">Why am I seeing this?</summary><ul className="mt-3 space-y-3">{sources.map(e => <li key={e.id} className="rounded-lg border border-white/10 p-3"><p className="font-medium text-bone">{e.title} · {e.date}</p><p className="mt-2 whitespace-pre-line">{e.text}</p>{!e.authored && <p className="mt-2 text-xs">Saved AI guidance, not a recorded life event.</p>}{e.kind === 'journal' && <Link href={`/journal?entry=${encodeURIComponent(e.id.slice('journal:'.length))}`} className="mt-2 inline-block underline">Open journal</Link>}</li>)}</ul></details>
+  if (!sources.length) return null
+  return <details className="text-sm text-bone-muted"><summary className="w-fit cursor-pointer text-xs tracking-wide text-bone-muted/80 hover:text-bone">Where this comes from ({sources.length})</summary><ul className="mt-3 space-y-3">{sources.map(e => <li key={e.id} className="rounded-lg border border-white/10 p-3"><p className="font-medium text-bone">{e.title} · {e.date}</p><p className="mt-2 whitespace-pre-line">{e.text}</p>{!e.authored && <p className="mt-2 text-xs">Saved AI guidance, not a recorded life event.</p>}{e.kind === 'journal' && <Link href={`/journal?entry=${encodeURIComponent(e.id.slice('journal:'.length))}`} className="mt-2 inline-block underline">Open journal</Link>}</li>)}</ul></details>
 }
 function PassageView({ passage, report }: { passage: Passage; report: SavedReport }) {
   return <div className="space-y-2"><p className="whitespace-pre-line text-base leading-8">{passage.text}</p><EvidenceView ids={passage.sources} report={report} /></div>
