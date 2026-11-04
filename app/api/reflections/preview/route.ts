@@ -1,0 +1,50 @@
+import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import { z } from 'zod'
+import { getUserProfileId } from '@/lib/ai/usage'
+import { periodFor, type PeriodReviewPeriod } from '@/lib/period-review/periods'
+import { loadLookBackPreview } from '@/lib/period-review/preview'
+import { todayISO } from '@/lib/today/get-today-context'
+
+const querySchema = z.object({
+  kind: z.enum(['month', 'quarter', 'year']),
+  year: z.coerce.number().int().min(2000).max(2100),
+  index: z.coerce.number().int().min(1).max(12),
+})
+
+/** The window a reflection covers. A year uses the whole calendar year. */
+function windowFor(kind: 'month' | 'quarter' | 'year', year: number, index: number): PeriodReviewPeriod {
+  if (kind === 'year') {
+    // The preview only reads counts and named transits over the date range.
+    return { kind: 'month', periodStart: `${year}-01-01`, periodEnd: `${year}-12-31`, planYear: year, index: 1 }
+  }
+  return periodFor(kind, year, kind === 'quarter' ? Math.min(index, 4) : index)
+}
+
+/** What a reflection will draw on, before it's prepared. No model call. */
+export async function GET(req: Request) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const url = new URL(req.url)
+  const parsed = querySchema.safeParse({
+    kind: url.searchParams.get('kind'),
+    year: url.searchParams.get('year'),
+    index: url.searchParams.get('index'),
+  })
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid period' }, { status: 400 })
+
+  const profileId = await getUserProfileId(userId)
+  if (!profileId) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+
+  const window = windowFor(parsed.data.kind, parsed.data.year, parsed.data.index)
+  if (window.periodEnd >= todayISO()) {
+    return NextResponse.json({ ended: false, preview: null })
+  }
+  const preview = await loadLookBackPreview(profileId, window, (sources) => ({
+    ...sources,
+    monthBlueprintTheme: null,
+    quarterBlueprintTheme: null,
+  }))
+  return NextResponse.json({ ended: true, preview })
+}

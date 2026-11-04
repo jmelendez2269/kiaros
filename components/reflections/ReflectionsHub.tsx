@@ -5,6 +5,8 @@ import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflec
 import { latestClosed, periodLabel, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { LookBackPreview } from '@/components/period-review/LookBackPreview'
+import type { PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number }
 type Passage = { text: string; sources: string[] }
 const inputClass = 'w-full rounded-lg border border-white/20 bg-transparent p-3 text-bone focus:outline-none focus:ring-2 focus:ring-amber-200/60'
@@ -22,6 +24,7 @@ export function ReflectionsHub({
   const [index, setIndex] = useState(1), [selectedId, setSelectedId] = useState<string | null>(null)
   const [timezone, setTimezone] = useState(''), [automatic, setAutomatic] = useState(false), [includeGoals, setIncludeGoals] = useState(true)
   const [shareText, setShareText] = useState(''), [shareOpen, setShareOpen] = useState(false)
+  const [preview, setPreview] = useState<PeriodReviewSourceChips | null>(null)
   const load = useCallback(async (initialize = false) => {
     const response = await fetch('/api/reflections', { cache: 'no-store' })
     if (response.redirected) throw new Error('Please sign in again to view your reflections.')
@@ -44,6 +47,20 @@ export function ReflectionsHub({
     document.addEventListener('visibilitychange', refresh)
     return () => document.removeEventListener('visibilitychange', refresh)
   }, [load])
+  // What the selected period's reflection will draw on, once it has ended.
+  useEffect(() => {
+    if (!data) return
+    let cancelled = false
+    setPreview(null)
+    const timer = setTimeout(() => {
+      const sp = new URLSearchParams({ kind, year: String(year), index: String(index) })
+      fetch(`/api/reflections/preview?${sp.toString()}`, { cache: 'no-store' })
+        .then(res => (res.ok ? res.json() : null))
+        .then((body: { preview?: PeriodReviewSourceChips | null } | null) => { if (!cancelled) setPreview(body?.preview ?? null) })
+        .catch(() => { if (!cancelled) setPreview(null) })
+    }, 250)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [data, kind, year, index])
   async function action(payload: Record<string, unknown>, message: string) {
     setBusy(true); setError(''); setNotice('')
     try {
@@ -139,6 +156,7 @@ export function ReflectionsHub({
           </select></label>}
           <button className={buttonClass} disabled={busy || !data.settings.timezone}>{busy ? 'Preparing your reflection…' : 'Reflect on this period'}</button>
         </form>
+        {preview ? <div className="mt-5"><LookBackPreview chips={preview} periodNoun={kind} /></div> : null}
         <p className="mt-3 text-sm text-bone-muted">Available once the period has ended. A rich quarter or year may take a few minutes.</p>
       </section>
       {filtered.length > 0 && <label className="block space-y-2"><span className="text-sm">Reflection history</span><select className={inputClass} value={report?.id ?? ''} onChange={e => { setSelectedId(e.target.value); setShareOpen(false) }}>
