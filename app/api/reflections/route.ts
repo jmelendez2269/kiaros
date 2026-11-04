@@ -6,7 +6,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { preferences, reports, feedback, intentions } from '@/lib/reflections/repository'
 import { feedbackSchema } from '@/lib/reflections/report-schema'
 import { periodFor, validTimezone } from '@/lib/reflections/periods'
-import { generateReflection } from '@/lib/reflections/service'
+import { generateReflection, memberSince } from '@/lib/reflections/service'
 import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -45,12 +45,13 @@ export async function GET(request: Request) {
       includedCountQuery = includedCountQuery.eq('include_in_insights', true)
     }
     
-    const [settings, saved, responses, accepted, includedCountRes] = await Promise.all([
+    const [settings, saved, responses, accepted, includedCountRes, since] = await Promise.all([
       preferences(userId), 
       reports(userId), 
       feedback(userId), 
       intentions(userId),
-      includedCountQuery
+      includedCountQuery,
+      memberSince(userId),
     ])
     
     const includedEntriesCount = includedCountRes.error ? 0 : includedCountRes.count ?? 0
@@ -61,7 +62,8 @@ export async function GET(request: Request) {
       feedback: responses, 
       intentions: accepted,
       consentV2Enabled,
-      includedEntriesCount
+      includedEntriesCount,
+      memberSince: since,
     }, { headers })
   } catch {
     return NextResponse.json({ error: 'Reflections are temporarily unavailable. Please try again shortly.' }, { status: 503, headers })

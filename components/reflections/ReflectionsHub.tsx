@@ -7,7 +7,7 @@ import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 import { LookBackPreview } from '@/components/period-review/LookBackPreview'
 import type { PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
-type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number }
+type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number; memberSince?: string | null }
 type Passage = { text: string; sources: string[] }
 type Payload = Record<string, unknown>
 type CardState = 'ready' | 'empty' | 'stale' | 'failed' | 'generating' | 'available' | 'open' | 'future'
@@ -34,10 +34,11 @@ function weekSlots(year: number, month: number) {
   }
   return slots
 }
-function buildCards(kind: PeriodKind, year: number, month: number, timezone: string, reports: SavedReport[], today: string): PeriodCard[] {
+function buildCards(kind: PeriodKind, year: number, month: number, timezone: string, reports: SavedReport[], today: string, since: string | null): PeriodCard[] {
   const thisYear = Number(today.slice(0, 4))
+  const firstYear = since ? Number(since.slice(0, 4)) : thisYear - 2
   const slots: { year: number; index: number; label: string }[] = kind === 'week' ? weekSlots(year, month) : kind === 'year'
-    ? Array.from({ length: thisYear - Math.min(thisYear - 2, ...reports.filter(r => r.kind === 'year').map(r => Number(r.period_start.slice(0, 4)))) + 1 }, (_, i) => {
+    ? Array.from({ length: thisYear - Math.min(firstYear, ...reports.filter(r => r.kind === 'year').map(r => Number(r.period_start.slice(0, 4)))) + 1 }, (_, i) => {
         const y = thisYear - i
         return { year: y, index: 1, label: String(y) }
       })
@@ -48,6 +49,8 @@ function buildCards(kind: PeriodKind, year: number, month: number, timezone: str
     const state: CardState = p.start > today ? 'future' : p.end > today ? 'open' : report ? report.status : 'available'
     return { key: p.start, label: slot.label, year: slot.year, index: slot.index, start: p.start, end: p.end, state, report }
   })
+    // Nothing from before the member's subscription began, unless a reflection already exists for it.
+    .filter(card => !since || card.end > since || !!card.report)
 }
 export function ReflectionsHub({
   initialKind = 'month',
@@ -73,7 +76,8 @@ export function ReflectionsHub({
     if (initialize) {
       const tz = state.settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
       setTimezone(tz); setAutomatic(state.settings.automatic); setIncludeGoals(state.settings.include_goals)
-      const latest = latestClosed(initialKind, tz).start
+      // Open on the latest ended period, or the member's first month when that came before they joined.
+      const closed = latestClosed(initialKind, tz).start, latest = state.memberSince && state.memberSince.slice(0, 7) > closed.slice(0, 7) ? state.memberSince : closed
       setYear(Number(latest.slice(0, 4))); setMonth(Number(latest.slice(5, 7)))
     }
   }, [initialKind])
@@ -106,7 +110,9 @@ export function ReflectionsHub({
   const today = localDate(new Date(), activeTimezone)
   const thisYear = Number(today.slice(0, 4))
   const thisMonth = Number(today.slice(5, 7))
-  const cards = data ? buildCards(kind, year, month, activeTimezone, data.reports, today) : []
+  const since = data?.memberSince ?? null
+  const sinceYear = since ? Number(since.slice(0, 4)) : 2000, sinceMonth = since ? Number(since.slice(5, 7)) : 1
+  const cards = data ? buildCards(kind, year, month, activeTimezone, data.reports, today, since) : []
   const filtered = data?.reports.filter(r => r.kind === kind) ?? []
   const shownPrefix = kind === 'week' ? `${year}-${String(month).padStart(2, '0')}` : String(year)
   const shownInYear = kind === 'year' ? filtered : filtered.filter(r => r.period_start.startsWith(shownPrefix))
@@ -135,7 +141,7 @@ export function ReflectionsHub({
   const unit = kind
   function changeKind(next: PeriodKind) {
     setKind(next); setSelectedId(null); setFocusStart(null); setShareOpen(false)
-    const latest = latestClosed(next, activeTimezone).start
+    const closed = latestClosed(next, activeTimezone).start, latest = since && since.slice(0, 7) > closed.slice(0, 7) ? since : closed
     setYear(Number(latest.slice(0, 4))); setMonth(Number(latest.slice(5, 7)))
   }
   function changeYear(next: number) { setYear(next); setSelectedId(null); setFocusStart(null); setShareOpen(false) }
@@ -208,12 +214,12 @@ export function ReflectionsHub({
     {data && <>
       <section aria-label="Choose a period" className="space-y-4">
         {kind === 'week' && <div className="flex items-center gap-3">
-          <button type="button" aria-label="Previous month" className={pillClass} disabled={year <= 2000 && month <= 1} onClick={() => changeMonth(-1)}>←</button>
+          <button type="button" aria-label="Previous month" className={pillClass} disabled={year * 12 + month <= sinceYear * 12 + sinceMonth} onClick={() => changeMonth(-1)}>←</button>
           <h2 className="font-display text-2xl">{monthName(month)} {year}</h2>
           <button type="button" aria-label="Next month" className={pillClass} disabled={year * 12 + month >= thisYear * 12 + thisMonth} onClick={() => changeMonth(1)}>→</button>
         </div>}
         {(kind === 'month' || kind === 'quarter') && <div className="flex items-center gap-3">
-          <button type="button" aria-label="Previous year" className={pillClass} disabled={year <= 2000} onClick={() => changeYear(year - 1)}>←</button>
+          <button type="button" aria-label="Previous year" className={pillClass} disabled={year <= sinceYear} onClick={() => changeYear(year - 1)}>←</button>
           <h2 className="font-display text-2xl tabular-nums">{year}</h2>
           <button type="button" aria-label="Next year" className={pillClass} disabled={year >= thisYear} onClick={() => changeYear(year + 1)}>→</button>
         </div>}
@@ -259,7 +265,7 @@ export function ReflectionsHub({
           <button type="button" disabled={busy} className={buttonClass} onClick={() => prepare({ kind, ...focusCard })}>{busy && pendingStart === focusCard.start ? 'Preparing your reflection…' : `Reflect on ${label}`}</button>
         </section>
       })()}
-      {!showEmptyState && !report && !focusCard && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once a ${unit} has ended, it will be ready to prepare here.`} We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
+      {!showEmptyState && !report && !focusCard && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once your first ${unit} as a member has ended, it will be ready here.`} We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
       {!showEmptyState && report && <article className="space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
         <header><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'Your lived year' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
           {report.analysis && <p className="mt-3 text-sm text-bone-muted">Based on {report.analysis.observedDays} recorded days across {report.analysis.totalDays} calendar days. Unrecorded days are unknown.</p>}

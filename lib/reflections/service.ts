@@ -22,8 +22,21 @@ export async function hasReflectionAccess(userId: string): Promise<boolean> {
     subscriptionMap
   ).hasPlannerAccess
 }
+/**
+ * The first day of the member's earliest subscription that wasn't revoked
+ * (YYYY-MM-DD), or null when there is none. Reflections start from here.
+ */
+export async function memberSince(userId: string): Promise<string | null> {
+  const { data, error } = await createAdminSupabase().from('product_entitlements').select('starts_at')
+    .eq('user_id', userId).neq('status', 'revoked').order('starts_at', { ascending: true }).limit(1)
+  if (error) throw new Error('Membership could not be verified')
+  const start = data?.[0]?.starts_at
+  return start ? String(start).slice(0, 10) : null
+}
 export async function generateReflection(userId: string, period: ReflectionPeriod, force = false) {
   assertClosed(period)
+  const since = await memberSince(userId)
+  if (since && period.end <= since) throw new Error('This period ended before your membership began')
   if (!await hasReflectionAccess(userId)) throw new Error('An active planner subscription is required')
   const pref = await preferences(userId)
   if (pref.timezone !== period.timezone) throw new Error('Please save your timezone first')

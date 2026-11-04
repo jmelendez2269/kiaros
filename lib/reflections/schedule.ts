@@ -1,7 +1,7 @@
 import 'server-only'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { catchUpOrder, closedPeriodsSince, localDate, validTimezone, type PeriodKind } from './periods'
-import { generateReflection, hasReflectionAccess } from './service'
+import { generateReflection, hasReflectionAccess, memberSince } from './service'
 
 const KINDS: PeriodKind[] = ['week', 'month', 'quarter', 'year']
 // Start new work only inside this window, so a full generation (up to about 105s) still ends within maxDuration 300.
@@ -37,7 +37,8 @@ export async function runReflectionSchedule(now = new Date()) {
       if (saved.error) continue
     }
     if (!await hasReflectionAccess(userId)) continue
-    const since = p.created_at ? localDate(new Date(p.created_at), timezone) : `${localDate(now, timezone).slice(0, 4)}-01-01`
+    // Catch up from when their subscription began; the account date is only a fallback.
+    const since = await memberSince(userId) ?? (p.created_at ? localDate(new Date(p.created_at), timezone) : `${localDate(now, timezone).slice(0, 4)}-01-01`)
     const existing = await admin.from('reflection_reports').select('kind,period_start,status,revision').eq('user_id', userId)
     if (existing.error) { failed++; continue }
     const revision = Number(row.evidence_revision ?? 0)

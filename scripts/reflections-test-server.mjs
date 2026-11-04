@@ -26,7 +26,8 @@ CREATE TABLE curriculum_sessions(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),u
 CREATE TABLE plan_items(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES user_profiles ON DELETE CASCADE,title text,area_goal_id uuid,completed_at timestamptz,created_at timestamptz DEFAULT now());
 CREATE TABLE product_entitlements(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid,source text DEFAULT 'stripe',source_order_id text DEFAULT 'fixture',product_tier text DEFAULT 'planner',planner_year int DEFAULT 2026,oracle_enabled boolean DEFAULT false,starts_at date DEFAULT '2020-01-01',ends_at date DEFAULT '2099-12-31',status text DEFAULT 'active',created_at timestamptz DEFAULT now(),access_plan text DEFAULT 'yearly');
 INSERT INTO user_profiles VALUES('${uid}','fixture'),('22222222-2222-4222-8222-222222222222','second');
-INSERT INTO product_entitlements(user_id) VALUES('${uid}');
+INSERT INTO product_entitlements(user_id,starts_at) VALUES('${uid}','2025-05-01'),('${uid}','2024-01-01');
+UPDATE product_entitlements SET status='revoked' WHERE starts_at='2024-01-01';
 `)
 await db.exec(await readFile('supabase/migrations/0047_reflections.sql','utf8'))
 await db.exec(await readFile('supabase/migrations/0055_weekly_reflections.sql','utf8'))
