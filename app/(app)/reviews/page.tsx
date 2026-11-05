@@ -5,7 +5,8 @@ import { getAppProfile } from '@/lib/app/get-app-profile'
 import { SkyCyclesYearList } from '@/components/sky-cycles/SkyCyclesYearList'
 import { todayISO } from '@/lib/today/get-today-context'
 import { Frame, K, Kicker } from '@/components/almanac'
-import { PeriodReviewReviewsRow } from '@/components/period-review/PeriodReviewReviewsRow'
+import { ReviewsTimeline } from '@/components/reviews/ReviewsTimeline'
+import { loadYearTimeline, timelineYears } from '@/lib/reviews/load-year-timeline'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
 import { BRAND } from '@/lib/brand'
@@ -37,7 +38,11 @@ const OTHER_LINKS = [
  * Insights > Reviews: one place to open any month or quarter look back,
  * instead of waiting for the Today card in the week after a period ends.
  */
-export default async function ReviewsPage() {
+export default async function ReviewsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined> | undefined>
+}) {
   // The chips open the review modal, which only mounts with the public flag.
   if (!isPeriodReviewEnabled() || !periodReviewPublicFlagEnabled()) redirect('/reflections')
 
@@ -47,10 +52,17 @@ export default async function ReviewsPage() {
   const profileId = profileResult.status === 'ok' ? profileResult.profile.id : null
 
   const today = todayISO()
-  const year = Number(today.slice(0, 4))
+  const params = (await searchParams) ?? {}
+  const rawYear = Number(Array.isArray(params.year) ? params.year[0] : params.year)
+  const years = profileId ? await timelineYears(profileId, today) : [Number(today.slice(0, 4))]
+  const year = years.includes(rawYear) ? rawYear : years[years.length - 1]
+  const timeline = profileId ? await loadYearTimeline(profileId, year, today, years).catch((error) => {
+    console.error('[reviews] year timeline unavailable:', error)
+    return null
+  }) : null
 
   return (
-    <div className="mx-auto grid max-w-3xl gap-5 p-4 sm:p-6 md:p-8" style={{ color: K.ink }}>
+    <div className="mx-auto grid max-w-6xl gap-5 p-4 sm:p-6 md:p-8" style={{ color: K.ink }}>
       <header>
         <Kicker color={K.violetDim}>Insights</Kicker>
         <h1
@@ -59,15 +71,20 @@ export default async function ReviewsPage() {
           Reviews
         </h1>
         <p style={{ marginTop: 8, fontSize: 15, lineHeight: 1.65, color: K.inkDim, maxWidth: 560 }}>
-          Look back on any month or quarter once it ends: the sky you moved through, your plans and goals, and
-          your own words. Filled chips are reviews you have already opened.
+          Your whole year on one line: every month and quarter you can look back on once it ends, the sky you
+          moved through, and your Unwrapped waiting at the end.
         </p>
       </header>
 
-      <Frame tone="umber" padding={20}>
-        <PeriodReviewReviewsRow planYear={year} label={String(year)} />
-        <PeriodReviewReviewsRow planYear={year - 1} label={String(year - 1)} />
-      </Frame>
+      {timeline ? (
+        <ReviewsTimeline key={year} timeline={timeline} />
+      ) : (
+        <Frame tone="umber" padding={20}>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: K.inkDim }}>
+            Your year could not be loaded just now. Please refresh in a moment.
+          </p>
+        </Frame>
+      )}
 
       {profileId ? (
         <Frame tone="umber" padding={20}>
