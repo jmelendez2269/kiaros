@@ -4,6 +4,8 @@ import {
   formatPatternLabel,
 } from '@/lib/journal/pattern-discoveries'
 import type { Json, Tables } from '@/types/database'
+import { PatternConstellations, PatternYearStrips, StripLegend, YearStrip, type SkyPattern } from './PatternSky'
+import { patternTitle, TYPE_COLOR } from '@/lib/insights/pattern-sky'
 
 export type PatternRow = Pick<
   Tables<'user_pattern_insights'>,
@@ -139,17 +141,32 @@ function PatternRead({ pattern }: { pattern: PatternRow }) {
   return <p className="text-sm leading-7 text-bone-muted">{pattern.summary}</p>
 }
 
+type StripContext = { year: number; today: string; skyDaysByPatternId: Record<string, string[]> }
+
+function PatternStrip({ pattern, strip, legend }: { pattern: PatternRow; strip: StripContext; legend?: boolean }) {
+  const color = TYPE_COLOR[pattern.pattern_type] ?? '#a98aef'
+  return (
+    <div className="space-y-2">
+      <YearStrip year={strip.year} today={strip.today} color={color} label={patternTitle(pattern.pattern_type, pattern.pattern_key)}
+        entryDates={parseEvidence(pattern.evidence).map((e) => e.entry_date)} skyDates={strip.skyDaysByPatternId[pattern.id] ?? []} />
+      {legend ? <StripLegend color={color} /> : null}
+    </div>
+  )
+}
+
 function FeaturedPattern({
   pattern,
   bodyByEntryId,
+  strip,
 }: {
   pattern: PatternRow
   bodyByEntryId: Map<string, string>
+  strip: StripContext
 }) {
   const evidence = parseEvidence(pattern.evidence)
 
   return (
-    <article className="channel-panel flex flex-col gap-5 px-6 py-6 md:px-7">
+    <article id={`pattern-${pattern.id}`} className="channel-panel flex scroll-mt-24 flex-col gap-5 px-6 py-6 md:px-7">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="channel-kicker">{TYPE_LABEL[pattern.pattern_type as PatternType] ?? 'Pattern'}</p>
@@ -168,6 +185,8 @@ function FeaturedPattern({
         </div>
       </header>
 
+      <PatternStrip pattern={pattern} strip={strip} legend />
+
       <p className="text-sm text-bone-muted">An observation from your recorded entries, not a measure of certainty.</p>
 
       <PatternRead pattern={pattern} />
@@ -181,18 +200,23 @@ function FeaturedPattern({
 function CompactPattern({
   pattern,
   bodyByEntryId,
+  strip,
 }: {
   pattern: PatternRow
   bodyByEntryId: Map<string, string>
+  strip: StripContext
 }) {
   const evidence = parseEvidence(pattern.evidence)
 
   return (
-    <details className="group border-b border-border/40 last:border-b-0">
+    <details id={`pattern-${pattern.id}`} className="group scroll-mt-24 border-b border-border/40 last:border-b-0">
       <summary className="flex cursor-pointer list-none items-center gap-3 py-3 text-sm transition-colors hover:text-bone">
         <span className="channel-dot" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate text-bone">
           {formatPatternLabel(pattern.pattern_type, pattern.pattern_key)}
+        </span>
+        <span className="hidden w-40 shrink-0 md:block">
+          <PatternStrip pattern={pattern} strip={strip} />
         </span>
         <span className="shrink-0 text-xs text-bone-muted/70">
           {pattern.sample_size} entries
@@ -219,6 +243,9 @@ interface PatternInsightsProps {
   bodyByEntryId: Map<string, string>
   journalEntriesCount: number
   voiceLabel: string
+  /** The year the strips show, and per pattern the dates its sky was overhead. */
+  skyYear?: number
+  skyDaysByPatternId?: Record<string, string[]>
 }
 
 export function PatternInsights({
@@ -226,7 +253,19 @@ export function PatternInsights({
   bodyByEntryId,
   journalEntriesCount,
   voiceLabel,
+  skyYear,
+  skyDaysByPatternId = {},
 }: PatternInsightsProps) {
+  const today = new Date().toISOString().slice(0, 10)
+  const strip: StripContext = { year: skyYear ?? Number(today.slice(0, 4)), today, skyDaysByPatternId }
+  const skyPatterns: SkyPattern[] = patterns.map((p) => ({
+    id: p.id,
+    type: p.pattern_type,
+    key: p.pattern_key,
+    dates: parseEvidence(p.evidence).map((e) => e.entry_date),
+    count: p.sample_size,
+    forming: p.sample_size < ESTABLISHED_PATTERN_MIN_SAMPLE,
+  }))
   // Rows arrive sorted by sample_size then recency, so the featured slice is
   // simply the strongest few that clear the evidence bar.
   const featured = patterns
@@ -271,6 +310,14 @@ export function PatternInsights({
 
   return (
     <div className="space-y-8">
+      <div className="space-y-2">
+        <PatternConstellations patterns={skyPatterns} />
+        <p className="text-xs leading-5 text-bone-muted/80">
+          Each pattern is a constellation. Every star is an entry you wrote while that sky was overhead, joined in the order you
+          wrote them. Bright ones have enough entries to trust; dotted ones are still forming.
+        </p>
+      </div>
+
       {featured.length > 0 ? (
         <section className="space-y-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -286,7 +333,7 @@ export function PatternInsights({
           </div>
           <div className={featured.length > 1 ? 'grid gap-4 lg:grid-cols-2' : ''}>
             {featured.map((pattern) => (
-              <FeaturedPattern key={pattern.id} pattern={pattern} bodyByEntryId={bodyByEntryId} />
+              <FeaturedPattern key={pattern.id} pattern={pattern} bodyByEntryId={bodyByEntryId} strip={strip} />
             ))}
           </div>
         </section>
@@ -311,7 +358,7 @@ export function PatternInsights({
                 <p className="channel-kicker mb-1">{TYPE_LABEL[type]}</p>
                 <div>
                   {rows.map((pattern) => (
-                    <CompactPattern key={pattern.id} pattern={pattern} bodyByEntryId={bodyByEntryId} />
+                    <CompactPattern key={pattern.id} pattern={pattern} bodyByEntryId={bodyByEntryId} strip={strip} />
                   ))}
                 </div>
               </div>
@@ -319,6 +366,20 @@ export function PatternInsights({
           </div>
         </section>
       ) : null}
+
+      <details className="group rounded-2xl border border-border/40 px-5 py-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm text-bone">
+          <span>See every pattern across {strip.year}</span>
+          <span aria-hidden="true" className="text-bone-muted/60 transition-transform group-open:rotate-90">›</span>
+        </summary>
+        <div className="mt-4">
+          <p className="mb-4 text-xs leading-5 text-bone-muted/80">
+            Each row is one pattern across the year. The soft band shows when that sky was overhead; the bright marks are the days
+            you wrote under it.
+          </p>
+          <PatternYearStrips patterns={skyPatterns} year={strip.year} today={strip.today} skyDaysByPatternId={skyDaysByPatternId} />
+        </div>
+      </details>
     </div>
   )
 }

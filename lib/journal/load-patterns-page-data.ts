@@ -14,6 +14,8 @@ import type { RecentJournalEntry } from '@/components/insights/JournalHistoryLis
 import type { OracleCaptureRow } from '@/components/insights/CaptureHistoryList'
 import { DEFAULT_VOICE_KEY, VOICE_PRESETS } from '@/lib/ai/journal-insight-synthesis'
 import { isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
+import { loadPatternSkyDays } from '@/lib/insights/load-pattern-sky'
+import { todayISO } from '@/lib/today/get-today-context'
 
 export type PatternsPageData = {
   isAppAdmin: boolean
@@ -29,6 +31,10 @@ export type PatternsPageData = {
   bodyByEntryId: Map<string, string>
   inFlightCount: number
   savedVoiceLabel: string
+  /** The year the pattern strips show. */
+  skyYear: number
+  /** Per pattern id: dates in skyYear when that sky was overhead. */
+  skyDaysByPatternId: Record<string, string[]>
 }
 
 export async function loadPatternsPageData(): Promise<PatternsPageData> {
@@ -130,6 +136,8 @@ export async function loadPatternsPageData(): Promise<PatternsPageData> {
 
   const inFlightCount = patterns.filter((p) => Boolean(p.ai_synthesizing_at)).length
   const savedVoiceLabel = settingsRow?.journal_insight_voice_label ?? VOICE_PRESETS[DEFAULT_VOICE_KEY].label
+  const skyYear = Number(todayISO().slice(0, 4))
+  const skyDaysByPatternId = await loadPatternSkyDays(supabase, profile?.id, skyYear, patterns).catch(() => ({}))
 
   return {
     isAppAdmin,
@@ -145,5 +153,7 @@ export async function loadPatternsPageData(): Promise<PatternsPageData> {
     bodyByEntryId,
     inFlightCount,
     savedVoiceLabel,
+    skyYear,
+    skyDaysByPatternId,
   }
 }

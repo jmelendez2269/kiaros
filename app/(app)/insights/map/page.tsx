@@ -24,6 +24,8 @@ import { BRAND } from '@/lib/brand'
 import { isIaJournalEnabled, isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { redirect } from 'next/navigation'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { loadPatternSkyDays } from '@/lib/insights/load-pattern-sky'
+import { todayISO } from '@/lib/today/get-today-context'
 
 export const metadata = {
   title: `Patterns — ${BRAND.product}`,
@@ -130,6 +132,8 @@ export default async function PatternsPage() {
   }
 
   const inFlightCount = patterns.filter((p) => Boolean(p.ai_synthesizing_at)).length
+  const skyYear = Number(todayISO().slice(0, 4))
+  const skyDaysByPatternId = await loadPatternSkyDays(supabase, profile?.id, skyYear, patterns).catch(() => ({}))
 
   const savedVoiceLabel = settingsRow?.journal_insight_voice_label ?? VOICE_PRESETS[DEFAULT_VOICE_KEY].label
 
@@ -173,6 +177,8 @@ export default async function PatternsPage() {
                 bodyByEntryId={bodyByEntryId}
                 journalEntriesCount={journalEntriesCount}
                 voiceLabel={savedVoiceLabel}
+                skyYear={skyYear}
+                skyDaysByPatternId={skyDaysByPatternId}
               />
             )
           }

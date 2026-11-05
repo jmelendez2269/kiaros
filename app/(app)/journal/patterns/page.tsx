@@ -44,6 +44,8 @@ export default async function JournalPatternsPage({
         bodyByEntryId={data.bodyByEntryId}
         journalEntriesCount={data.journalEntriesCount}
         voiceLabel={data.savedVoiceLabel}
+        skyYear={data.skyYear}
+        skyDaysByPatternId={data.skyDaysByPatternId}
       />
     )
 
