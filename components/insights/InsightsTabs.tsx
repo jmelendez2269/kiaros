@@ -11,7 +11,6 @@ type TabKey = 'patterns' | 'map' | 'journal' | 'captures'
  */
 const TABS: { key: TabKey; label: string; channel: string }[] = [
   { key: 'patterns', label: 'Patterns', channel: 'channel-ai' },
-  { key: 'map', label: 'Mind map', channel: 'channel-ai' },
   { key: 'journal', label: 'Your entries', channel: 'channel-mine' },
   { key: 'captures', label: 'Captures', channel: 'channel-memory' },
 ]
@@ -19,7 +18,8 @@ const TABS: { key: TabKey; label: string; channel: string }[] = [
 interface InsightsTabsProps {
   counts: Partial<Record<TabKey, number>>
   patterns: ReactNode
-  map: ReactNode
+  /** No longer shown here: the mind map has its own page at /insights/mind-map. */
+  map?: ReactNode
   journal: ReactNode
   captures: ReactNode
 }

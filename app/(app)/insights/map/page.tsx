@@ -9,7 +9,6 @@ import {
 } from '@/lib/commerce/entitlements'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { createServerSupabase } from '@/lib/supabase/server'
-import { CaptureGraph } from '@/components/insights/CaptureGraph'
 import {
   PatternInsights,
   parseEvidence,
@@ -181,21 +180,6 @@ export default async function PatternsPage() {
                 skyDaysByPatternId={skyDaysByPatternId}
               />
             )
-          }
-          map={
-            <section className="space-y-4">
-              <header className="max-w-2xl space-y-2">
-                <h2 className="font-display text-[1.4rem] text-bone">
-                  The shape of what you keep circling back to
-                </h2>
-                <p className="shell-prose text-sm">
-                  Every Stelloquy capture is tagged across five axes — themes, natal aspects, transit aspects, Human
-                  Design elements, and the moods you named. Nodes grow with frequency. Edges connect tags that appeared
-                  in the same capture.
-                </p>
-              </header>
-              <CaptureGraph />
-            </section>
           }
           journal={
             <section className="space-y-2">

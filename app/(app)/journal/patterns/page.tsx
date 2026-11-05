@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { PatternsUpgradeState } from '@/components/insights/PatternsUpgradeState'
-import { CaptureGraph } from '@/components/insights/CaptureGraph'
 import { PatternInsights } from '@/components/insights/PatternInsights'
 import { CaptureHistoryList } from '@/components/insights/CaptureHistoryList'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
@@ -28,6 +27,8 @@ export default async function JournalPatternsPage({
   const params = (await searchParams) ?? {}
   const rawView = Array.isArray(params.view) ? params.view[0] : params.view
   const subView = resolvePatternsSubView(rawView ?? null)
+  // The mind map has its own page now.
+  if (subView === 'map') redirect('/insights/mind-map')
 
   const data = await loadPatternsPageData()
 
@@ -49,20 +50,6 @@ export default async function JournalPatternsPage({
       />
     )
 
-  const mapBody = (
-    <section className="space-y-4">
-      <header className="max-w-2xl space-y-2">
-        <h2 className="font-display text-[1.4rem] text-bone">The shape of what you keep circling back to</h2>
-        <p className="shell-prose text-sm">
-          Every Stelloquy capture is tagged across five axes — themes, natal aspects, transit aspects, Human Design
-          elements, and the moods you named. Nodes grow with frequency. Edges connect tags that appeared in the same
-          capture.
-        </p>
-      </header>
-      <CaptureGraph />
-    </section>
-  )
-
   const capturesBody = (
     <section className="space-y-2">
       <header className="max-w-2xl space-y-2">
@@ -77,7 +64,7 @@ export default async function JournalPatternsPage({
   )
 
   const content =
-    subView === 'map' ? mapBody : subView === 'captures' ? capturesBody : patternsBody
+    subView === 'captures' ? capturesBody : patternsBody
 
   return (
     <div className="space-y-8">

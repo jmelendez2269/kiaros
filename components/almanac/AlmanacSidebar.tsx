@@ -80,7 +80,8 @@ const NAV: ReadonlyArray<{
     subItems: [
       { label: 'Reviews', href: '/reviews', hint: 'every month and quarter' },
       { label: 'Patterns', href: '/insights/map', hint: 'what keeps coming up' },
-      { label: 'Yearly Unwrapped', href: '/year/unwrapped', hint: 'the story of your year' },
+      // Yearly Unwrapped opens from the end of the Reviews timeline now.
+      { label: 'Mind map', href: '/insights/mind-map', hint: 'how your themes connect' },
     ],
   },
   {
@@ -154,7 +155,7 @@ function navForAccess(
     if (item.key === 'insights' && item.subItems && !hasOracleAccess) {
       return {
         ...item,
-        subItems: item.subItems.filter((sub) => sub.href !== '/insights/map'),
+        subItems: item.subItems.filter((sub) => sub.href !== '/insights/map' && sub.href !== '/insights/mind-map'),
       }
     }
     if (item.key === 'year' && item.subItems && calendarDayEnabled) {

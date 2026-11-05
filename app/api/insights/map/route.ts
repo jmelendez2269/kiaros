@@ -36,7 +36,8 @@ function nodeId(kind: CaptureTopicKind, label: string): string {
   return `${kind}:${label}`
 }
 
-export async function GET() {
+/** Optional `?since=YYYY-MM-DD` limits the map to captures tagged on or after that day. */
+export async function GET(request: Request) {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -47,11 +48,17 @@ export async function GET() {
 
   const supabase = await createServerSupabase()
 
-  const { data, error } = await supabase
+  const since = new URL(request.url).searchParams.get('since')
+  let query = supabase
     .from('capture_topics')
     .select('capture_id, kind, label')
     .order('created_at', { ascending: false })
     .limit(5000)
+  if (since) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(since)) return NextResponse.json({ error: 'Invalid since date' }, { status: 400 })
+    query = query.gte('created_at', `${since}T00:00:00Z`)
+  }
+  const { data, error } = await query
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
