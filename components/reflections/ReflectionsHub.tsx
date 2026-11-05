@@ -5,6 +5,8 @@ import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflec
 import { addDays, latestClosed, localDate, periodFor, periodLabel, weekOf, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { UnwrappedStory } from '@/components/reflections/UnwrappedStory'
+import { buildStoryFrames } from '@/lib/reflections/story'
 import { LookBackPreview } from '@/components/period-review/LookBackPreview'
 import type { PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number; memberSince?: string | null }
@@ -162,6 +164,10 @@ export function ReflectionsHub({
     if (card.report) { setSelectedId(card.report.id); setFocusStart(null) }
     else if (card.state === 'available') setFocusStart(card.start)
   }
+  function openShare() {
+    setShareText(''); setShareOpen(true)
+    window.setTimeout(() => document.getElementById('reflection-share')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
   async function downloadCard() {
     const svgUrl = URL.createObjectURL(new Blob([reflectionShareCard(title, shareText)], { type: 'image/svg+xml' }))
     try {
@@ -266,10 +272,16 @@ export function ReflectionsHub({
         </section>
       })()}
       {!showEmptyState && !report && !focusCard && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once your first ${unit} as a member has ended, it will be ready here.`} We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
-      {!showEmptyState && report && <article className="space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
-        <header><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'Your lived year' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
+      {!showEmptyState && report && content && kind === 'year' && <UnwrappedStory frames={buildStoryFrames(content, report.analysis, report.sources)}
+        title={`${report.period_start.slice(0, 4)}, unwrapped`}
+        lede={`Written for you from the ${report.analysis?.observedDays ?? 0} days you recorded and the conversations you chose to include. Start with the story, or skip to the full report.`}
+        reportAnchor="unwrapped-report" onShare={openShare} />}
+      {!showEmptyState && report && <article id={kind === 'year' ? 'unwrapped-report' : undefined} className="scroll-mt-6 space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
+        <header className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'The full report' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
           {report.analysis && <p className="mt-3 text-sm text-bone-muted">Based on {report.analysis.observedDays} recorded days across {report.analysis.totalDays} calendar days. Unrecorded days are unknown.</p>}
           {report.generated_at && <p className="mt-1 text-xs text-bone-muted">Prepared {new Date(report.generated_at).toLocaleDateString()} · Private</p>}
+          </div>
+          {kind === 'year' && content ? <button type="button" className={buttonClass} onClick={openShare}>Download a share card</button> : null}
         </header>
         {report.status === 'empty' && <div className="space-y-3"><p>There isn’t enough shared information to write a grounded reflection for this period yet.</p><p className="text-bone-muted">What stayed with you? What gave you room to breathe? What would you like to carry forward?</p><Link href="/journal" className="underline">Make space for a journal entry</Link></div>}
         {['stale','failed','generating'].includes(report.status) && <div className="space-y-3"><p>{report.status === 'generating' ? 'Your reflection is being prepared.' : report.status === 'stale' ? 'Your information has changed. Refresh this reflection to include your latest choices.' : 'This reflection could not be completed. You can try again.'}</p>
@@ -277,32 +289,50 @@ export function ReflectionsHub({
             const month = Number(report.period_start.slice(5,7))
             prepare({ kind: report.kind, year: Number(report.period_start.slice(0,4)), index: report.kind === 'month' ? month : report.kind === 'quarter' ? Math.ceil(month/3) : 1, start: report.period_start })
           }}>Refresh reflection</button></div>}
-        {content && <>
-          <PassageView passage={content.opening} report={report} />
-          {!!content.moments.length && <section className="space-y-4"><h3 className="font-display text-2xl">Moments that mattered</h3>{content.moments.map((p,i) => <PassageView key={i} passage={p} report={report} />)}</section>}
-          {content.rhythms && <section className="space-y-3"><h3 className="font-display text-2xl">Rhythms and rest</h3><PassageView passage={content.rhythms} report={report} /></section>}
-          {!!content.observations.length && <section className="space-y-5"><h3 className="font-display text-2xl">What showed up</h3>{content.observations.map(o => <div key={o.key} className="space-y-3 border-l border-amber-200/30 pl-4">
+        {content && <div className={kind === 'year' ? 'grid gap-10 lg:grid-cols-[190px_minmax(0,1fr)]' : 'space-y-7'}>
+          {kind === 'year' ? <nav aria-label="Report sections" className="hidden lg:block"><ol className="sticky top-6 space-y-1 border-l border-white/10 pl-4 text-sm" style={{ listStyle: 'none' }}>
+            {[['opening', 'Opening', true], ['chapters', 'Chapters of your year', !!report.analysis], ['moments', 'Moments that mattered', content.moments.length > 0], ['rhythms', 'Rhythms and rest', !!content.rhythms],
+              ['showed-up', 'What showed up', content.observations.length > 0], ['turning', 'Turning points', !!content.turningPoints], ['discoveries', 'Connections', !!content.discoveries],
+              ['next', 'What comes next', true], ['letter', 'A letter', !!content.letter], ['share', 'Share a moment', true]]
+              .filter(([, , on]) => on).map(([id, label]) => <li key={String(id)}><a href={`#reflection-${id}`} className="block py-1.5 text-bone-muted hover:text-bone">{label}</a></li>)}
+          </ol></nav> : null}
+          <div className={kind === 'year' ? 'max-w-[700px] space-y-10' : 'space-y-7'}>
+          <section id="reflection-opening" className="scroll-mt-6">{kind === 'year'
+            ? <div className="space-y-2"><p className="whitespace-pre-line font-display text-2xl italic leading-relaxed">{content.opening.text}</p><EvidenceView ids={content.opening.sources} report={report} /></div>
+            : <PassageView passage={content.opening} report={report} />}</section>
+          {kind === 'year' && report.analysis ? <section id="reflection-chapters" className="scroll-mt-6 space-y-4"><h3 className="font-display text-2xl">Chapters of your year</h3>
+            <p className="text-sm text-bone-muted">Recorded days show the shape of what you shared, not a score for your year.</p>
+            <ChapterBars months={report.analysis.months} />
+          </section> : null}
+          {!!content.moments.length && <section id="reflection-moments" className="scroll-mt-6 space-y-4"><h3 className="font-display text-2xl">Moments that mattered</h3>{content.moments.map((p,i) => <PassageView key={i} passage={p} report={report} />)}</section>}
+          {content.rhythms && <section id="reflection-rhythms" className="scroll-mt-6 space-y-3"><h3 className="font-display text-2xl">Rhythms and rest</h3><PassageView passage={content.rhythms} report={report} /></section>}
+          {!!content.observations.length && <section id="reflection-showed-up" className="scroll-mt-6 space-y-5"><h3 className="font-display text-2xl">What showed up</h3>{content.observations.map(o => <div key={o.key} className="space-y-3 border-l border-amber-200/30 pl-4">
             <p className="text-xs uppercase tracking-widest text-bone-muted">{o.kind.replace(/_/g,' ')}</p><PassageView passage={{ text: o.text, sources: [...new Set([...o.sources, ...o.contradictingSources])] }} report={report} />
             <ObservationFeedback claim={o.key} existing={data.feedback.find(f => f.report_id === report.id && f.claim_key === o.key)} busy={busy}
               onSave={(verdict, note) => action({ action: 'feedback', report_id: report.id, claim_key: o.key, verdict, note },
                 verdict === 'confirmed' ? 'Thank you. That’s noted.' : 'Your perspective is saved. Refresh the reflection to include it.')} />
           </div>)}</section>}
-          {content.turningPoints && <section className="space-y-3"><h3 className="font-display text-2xl">Turning points</h3><PassageView passage={content.turningPoints} report={report} /></section>}
-          {content.discoveries && <section className="space-y-3"><h3 className="font-display text-2xl">Connections and discoveries</h3><PassageView passage={content.discoveries} report={report} /></section>}
+          {content.turningPoints && <section id="reflection-turning" className="scroll-mt-6 space-y-3"><h3 className="font-display text-2xl">Turning points</h3><PassageView passage={content.turningPoints} report={report} /></section>}
+          {content.discoveries && <section id="reflection-discoveries" className="scroll-mt-6 space-y-3"><h3 className="font-display text-2xl">Connections and discoveries</h3><PassageView passage={content.discoveries} report={report} /></section>}
           {content.goalThread && data.settings.include_goals && <aside className="space-y-3 rounded-xl bg-amber-100/[.04] p-4"><h3 className="text-sm text-amber-100/80">A thread to something you care about</h3><PassageView passage={content.goalThread} report={report} /></aside>}
-          <section className="space-y-4"><h3 className="font-display text-2xl">A little direction for what comes next</h3><PassageView passage={content.lookingAhead.focus} report={report} />
+          <section id="reflection-next" className="scroll-mt-6 space-y-4"><h3 className="font-display text-2xl">A little direction for what comes next</h3><PassageView passage={content.lookingAhead.focus} report={report} />
             {!!content.lookingAhead.experiments.length && <p className="text-sm text-bone-muted">Small things you could try. Carry forward any that feel right, and you can note how they went later.</p>}
             {content.lookingAhead.experiments.map((p,i) => <ExperimentCard key={i} passage={p} report={report} busy={busy}
               carried={data.intentions.some(item => item.report_id === report.id && item.suggestion_index === i)}
               onCarry={text => action({ action: 'intention', report_id: report.id, suggestion_index: i, text }, 'Your intention is saved. You can note how it goes below.')} />)}
           </section>
-          {content.letter && <section className="space-y-3 border-t border-white/10 pt-6"><h3 className="font-display text-2xl">A letter to carry with you</h3><PassageView passage={content.letter} report={report} /></section>}
-          {kind === 'year' && report.analysis && <section className="space-y-4"><h3 className="font-display text-2xl">Chapters of your year</h3><p className="text-sm text-bone-muted">Recorded days show the shape of the information available, not a score for your year.</p><div className="grid grid-cols-3 gap-3 sm:grid-cols-6">{report.analysis.months.map(m => <div key={m.month} className="rounded-lg border border-white/10 p-3"><p className="text-xs">{m.month}</p><p className="mt-2 text-lg">{m.days} days</p></div>)}</div>
+          {content.letter && <section id="reflection-letter" className={kind === 'year' ? 'scroll-mt-6 space-y-4 rounded-[18px] border border-white/15 p-7 sm:p-9' : 'space-y-3 border-t border-white/10 pt-6'}
+            style={kind === 'year' ? { background: 'linear-gradient(170deg,#21243a,#11131e)' } : undefined}>
+            {kind === 'year' ? <p className="text-sm tracking-wide text-violet-300/90">A letter to carry with you</p> : <h3 className="font-display text-2xl">A letter to carry with you</h3>}
+            {kind === 'year' ? <div className="space-y-2"><p className="whitespace-pre-line font-display text-xl italic leading-relaxed">{content.letter.text}</p><EvidenceView ids={content.letter.sources} report={report} /></div> : <PassageView passage={content.letter} report={report} />}
+          </section>}
+          {kind === 'year' && <section id="reflection-share" className="scroll-mt-6 space-y-4">
             <Link href={reflectionsHomeHref} className="inline-block underline underline-offset-4">Visit your monthly and quarterly reflections</Link>
             <button type="button" className={buttonClass + ' ml-3'} onClick={() => { setShareText(''); setShareOpen(!shareOpen) }}>Choose a moment to share</button>
             {shareOpen && <div className="space-y-3 rounded-xl border border-white/15 p-5"><p>Only the text you choose below goes into your downloaded card. Review it before sharing.</p><label className="block space-y-2"><span>Card text</span><textarea value={shareText} onChange={e => setShareText(e.target.value)} maxLength={450} rows={5} className={inputClass} placeholder="A moment or lesson you want to share…" /></label><p className="text-sm text-bone-muted">Card heading: {title}</p><blockquote className="border-l border-amber-200/30 pl-4">{shareText || 'Your chosen words will appear here.'}</blockquote><button type="button" disabled={!shareText.trim()} className={buttonClass} onClick={downloadCard}>Download private preview card</button></div>}
           </section>}
-        </>}
+          </div>
+        </div>}
       </article>}
       {!!data.intentions.length && <section className="space-y-4"><h2 className="font-display text-2xl">What you’re carrying forward</h2><p className="text-bone-muted">A place to notice what helped, what changed, or what you chose to let go.</p>
         <ul className="space-y-3">{data.intentions.map(item => <IntentionItem key={item.id} item={item} busy={busy}
@@ -351,6 +381,17 @@ function IntentionItem({ item, busy, onSave }: { item: Intention; busy: boolean;
     <label className="block space-y-2"><span className="text-sm">How has it gone?</span><textarea name="outcome" defaultValue={item.outcome ?? ''} maxLength={1000} rows={3} className={inputClass} placeholder="No result is required. You can simply describe what you noticed." /></label>
     <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Save what I noticed</button><button type="button" className={buttonClass} onClick={() => setEditing(false)}>Cancel</button></div>
   </form></li>
+}
+const CHAPTER_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+function ChapterBars({ months }: { months: { month: string; days: number }[] }) {
+  const most = Math.max(1, ...months.map(m => m.days))
+  return <ol className="grid h-40 grid-cols-12 items-end gap-1.5" style={{ listStyle: 'none', padding: 0, margin: 0 }} aria-label="Days recorded each month">
+    {months.map(m => <li key={m.month} className="flex h-full flex-col items-center justify-end gap-1.5" title={`${m.days} days`}>
+      <span className="text-[11px] text-bone-muted">{m.days}</span>
+      <b className="block w-full rounded-t-md" style={{ height: `${Math.max(4, (m.days / most) * 100)}%`, background: 'linear-gradient(to top,#5a3eba,#a98aef)', opacity: m.days ? 1 : 0.25 }} />
+      <span className="text-[10px] uppercase tracking-wider text-bone-muted">{CHAPTER_MONTHS[Number(m.month.slice(5, 7)) - 1] ?? m.month}</span>
+    </li>)}
+  </ol>
 }
 function EvidenceView({ ids, report }: { ids: string[]; report: SavedReport }) {
   const sources = report.sources.filter(e => ids.includes(e.id))
