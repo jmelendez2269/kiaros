@@ -33,6 +33,7 @@ import { getHumanDesignWeather } from '@/lib/today/get-human-design-weather'
 import { YearChartShell } from '@/components/year/YearChartShell'
 import { DeeperToday } from '@/components/today/DeeperToday'
 import { PeriodReviewTodayCards } from '@/components/period-review/PeriodReviewTodayCards'
+import { LastWeekTodayCard } from '@/components/reflections/LastWeekTodayCard'
 import { TodayJournalMemoryNotice } from '@/components/today/TodayJournalMemoryNotice'
 import { SkyCyclesTodayCard } from '@/components/sky-cycles/SkyCyclesTodayCard'
 import { PeriodReviewAutoOpenManager } from '@/components/period-review/PeriodReviewAutoOpenManager'
@@ -260,6 +261,7 @@ export default async function TodayPage({
 
       <TodayCurriculum result={curriculum} />
 
+      <LastWeekTodayCard todayDate={todayDate} profileId={supabaseUserId} />
       <PeriodReviewTodayCards todayDate={todayDate} />
       {periodReviewPublicFlagEnabled() ? (
         <PeriodReviewAutoOpenManager todayDate={todayDate} allowTestParams={mockAllowed} />

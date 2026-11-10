@@ -5,6 +5,7 @@ import { loadCachedPeriodReview, loadPeriodReviewCacheStatus } from '@/lib/perio
 import { cacheKey, periodFor } from '@/lib/period-review/periods'
 import { loadCyclesInRange } from '@/lib/sky-cycles/load'
 import { memberSince } from '@/lib/reflections/service'
+import { reflectionLine } from '@/lib/reflections/report-line'
 import {
   daysInYear,
   daysWrittenByMonth,
@@ -17,7 +18,9 @@ import {
   type TimelineMonth,
   type TimelineQuarter,
   type TimelineSkyEvent,
+  type TimelineWeek,
   type YearTimeline,
+  weeksStartingInYear,
 } from './year-timeline'
 
 /** Years from the member's first subscription (or this year) to now. */
@@ -32,12 +35,31 @@ export async function timelineYears(profileId: string, today: string): Promise<n
 export async function loadYearTimeline(profileId: string, year: number, today: string, years: number[]): Promise<YearTimeline> {
   const admin = createAdminSupabase()
   const from = `${year}-01-01`, to = `${year}-12-31`
-  const [cached, entries, cycles, yearReport] = await Promise.all([
+  const [cached, entries, cycles, yearReport, weekReports, prefs, since] = await Promise.all([
     loadPeriodReviewCacheStatus(profileId, year).catch(() => ({} as Record<string, true>)),
     admin.from('journal_entries').select('entry_date').eq('user_id', profileId).gte('entry_date', from).lte('entry_date', to),
     loadCyclesInRange(profileId, from, to, today).catch(() => []),
     admin.from('reflection_reports').select('status').eq('user_id', profileId).eq('kind', 'year').eq('period_start', from).maybeSingle(),
+    admin.from('reflection_reports').select('period_start,status,revision,content,analysis').eq('user_id', profileId).eq('kind', 'week').gte('period_start', from).lte('period_start', to),
+    admin.from('reflection_preferences').select('evidence_revision').eq('user_id', profileId).maybeSingle(),
+    memberSince(profileId).catch(() => null),
   ])
+  const revision = Number(prefs.data?.evidence_revision ?? 0)
+  // Only a reflection that is current counts as prepared; one made stale by a later change reads as ready again.
+  const weekLines = new Map<string, string | null>()
+  for (const row of weekReports.data ?? []) {
+    if (Number(row.revision) !== revision) continue
+    const line = reflectionLine(row)
+    if (line !== undefined) weekLines.set(String(row.period_start), line)
+  }
+  const weeks: TimelineWeek[] = weeksStartingInYear(year)
+    // Nothing from before the member joined.
+    .filter(w => !since || w.end >= since)
+    .map(w => {
+      const prepared = weekLines.has(w.start)
+      const line = weekLines.get(w.start) ?? null
+      return { ...w, state: reviewState(w.start, w.end, today, prepared), line: line ? firstSentence(line) : null }
+    })
   const written = daysWrittenByMonth((entries.data ?? []).map(r => String(r.entry_date)), year)
 
   const months: TimelineMonth[] = await Promise.all(Array.from({ length: 12 }, async (_, i) => {
@@ -84,5 +106,5 @@ export async function loadYearTimeline(profileId: string, year: number, today: s
     daysToGo: to >= today ? daysInYear(year) - dayOfYear(today) + 1 : 0,
   }
 
-  return { year, today, years, months, quarters, sky, unwrapped }
+  return { year, today, years, months, quarters, weeks, sky, unwrapped }
 }

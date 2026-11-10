@@ -3,6 +3,8 @@
  * pure helpers that build it. No server imports, so it is unit-testable.
  */
 
+import { addDays, weekOf } from '../reflections/periods'
+
 export type ReviewState = 'read' | 'ready' | 'open' | 'future'
 
 export interface TimelineMonth {
@@ -24,6 +26,18 @@ export interface TimelineQuarter {
   start: string
   end: string
   state: ReviewState
+}
+
+export interface TimelineWeek {
+  /** ISO week year and number, as the weekly reflection is addressed. */
+  year: number
+  index: number
+  /** Monday and Sunday (YYYY-MM-DD, inclusive). */
+  start: string
+  end: string
+  state: ReviewState
+  /** The first sentence of the week's reflection once it is prepared. */
+  line: string | null
 }
 
 export type SkyEventKind = 'retrograde' | 'eclipse' | 'ingress' | 'season' | 'personal_transit'
@@ -54,6 +68,8 @@ export interface YearTimeline {
   years: number[]
   months: TimelineMonth[]
   quarters: TimelineQuarter[]
+  /** Weeks (Monday to Sunday) whose Monday falls in this year, from when the member joined. */
+  weeks: TimelineWeek[]
   sky: TimelineSkyEvent[]
   unwrapped: TimelineUnwrapped
 }
@@ -68,6 +84,43 @@ export function reviewState(start: string, end: string, today: string, cached: b
   if (end < today) return cached ? 'read' : 'ready'
   if (start <= today) return 'open'
   return 'future'
+}
+
+/** Every Monday-to-Sunday week whose Monday falls in the calendar year, oldest first. */
+export function weeksStartingInYear(year: number): Array<{ year: number; index: number; start: string; end: string }> {
+  const jan1 = `${year}-01-01`
+  let monday = addDays(jan1, (8 - new Date(jan1 + 'T00:00:00Z').getUTCDay()) % 7)
+  const out: Array<{ year: number; index: number; start: string; end: string }> = []
+  while (monday.slice(0, 4) === String(year)) {
+    out.push({ ...weekOf(monday), start: monday, end: addDays(monday, 6) })
+    monday = addDays(monday, 7)
+  }
+  return out
+}
+
+/** The weeks listed under a month: those whose Monday falls in it. */
+export function weeksForMonth<T extends { start: string }>(weeks: T[], month: { start: string }): T[] {
+  return weeks.filter(w => w.start.slice(0, 7) === month.start.slice(0, 7))
+}
+
+/** "Nov 2 – 8", or "Nov 30 – Dec 6" across a month end. */
+export function weekRangeLabel(week: { start: string; end: string }): string {
+  const sameMonth = week.start.slice(0, 7) === week.end.slice(0, 7)
+  return `${shortDay(week.start)} – ${sameMonth ? Number(week.end.slice(8, 10)) : shortDay(week.end)}`
+}
+
+/** Today shows last week's card Monday to Wednesday, for the week that closed on Sunday. */
+const LAST_WEEK_CARD_DAYS = 3
+
+/** The Monday of the week that just closed, while its card is showing on Today; else null. */
+export function lastWeekOnToday(todayDate: string): string | null {
+  const sinceMonday = (new Date(`${todayDate}T00:00:00Z`).getUTCDay() + 6) % 7
+  return sinceMonday < LAST_WEEK_CARD_DAYS ? addDays(todayDate, -sinceMonday - 7) : null
+}
+
+/** Where a week's reflection opens. The Reflections page forwards it when the journal holds look backs. */
+export function weekReflectionHref(week: { start: string }): string {
+  return `/reflections?kind=week&start=${week.start}`
 }
 
 /** The first sentence of a look back, short enough for one line. */

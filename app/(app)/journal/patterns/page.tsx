@@ -33,7 +33,8 @@ export default async function JournalPatternsPage({
   const data = await loadPatternsPageData()
 
   if (!data.hasOracleAccess) {
-    return <PatternsUpgradeState />
+    // Names and counts only: the readings and the entries behind them stay with Stelloquy access.
+    return <PatternsUpgradeState patterns={data.showEmptyState ? [] : data.patterns} />
   }
 
   const patternsBody =
