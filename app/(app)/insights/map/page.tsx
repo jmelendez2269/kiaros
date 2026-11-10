@@ -23,6 +23,7 @@ import { BRAND } from '@/lib/brand'
 import { isIaJournalEnabled, isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { redirect } from 'next/navigation'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { CheckInRhythms } from '@/components/insights/CheckInRhythms'
 import { loadPatternSkyDays } from '@/lib/insights/load-pattern-sky'
 import { todayISO } from '@/lib/today/get-today-context'
 
@@ -219,6 +220,7 @@ export default async function PatternsPage() {
             </section>
           }
         />
+        <CheckInRhythms />
       </InsightsPollingShell>
     </div>
   )
