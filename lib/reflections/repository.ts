@@ -1,7 +1,7 @@
 import 'server-only'
 import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
-import { preferencesSchema, reportSchema, evidenceSchema, type SavedReport, type Feedback, type Intention } from './report-schema'
+import { preferencesSchema, reportSchema, evidenceSchema, skyReadingSchema, type SavedReport, type Feedback, type Intention } from './report-schema'
 export async function preferences(userId: string) {
   const { data, error } = await createAdminSupabase().from('reflection_preferences').select('*').eq('user_id', userId).maybeSingle()
   if (error) throw new Error('Reflection storage is not available yet')
@@ -17,7 +17,10 @@ export async function reports(userId: string): Promise<SavedReport[]> {
   return (data ?? []).map(row => {
     const r = row as SavedReport
     if (r.revision !== pref.evidence_revision || !['ready', 'empty'].includes(r.status)) return { ...r, content: null, sources: [], analysis: null, status: r.status === 'generating' ? 'generating' : r.status === 'failed' ? 'failed' : 'stale' }
-    return { ...r, content: r.content ? reportSchema.parse(r.content) : null, sources: z.array(evidenceSchema).parse(r.sources) }
+    // A sky reading that does not parse is dropped, never shown half-formed.
+    const sky = skyReadingSchema.safeParse(r.analysis?.sky)
+    return { ...r, content: r.content ? reportSchema.parse(r.content) : null, sources: z.array(evidenceSchema).parse(r.sources),
+      analysis: r.analysis ? { ...r.analysis, sky: sky.success ? sky.data : null } : null }
   })
 }
 export async function feedback(userId: string): Promise<Feedback[]> {

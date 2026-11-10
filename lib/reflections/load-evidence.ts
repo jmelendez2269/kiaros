@@ -36,20 +36,23 @@ export async function loadEvidence(userId: string, period: ReflectionPeriod): Pr
     readRows(userId, 'reflection_intentions', 'id,text,outcome,created_at,updated_at', 'updated_at', start, end),
   ])
   const evidence: Evidence[] = []
-  function add(kind: Evidence['kind'], row: Record<string, unknown>, date: string, title: string, text: string, authored = true, goalId: string | null = null) {
+  // `lived`: a trace of the member's own time (see isLived). Defaults to whether the words are theirs.
+  function add(kind: Evidence['kind'], row: Record<string, unknown>, date: string, title: string, text: string, authored = true, goalId: string | null = null, lived = authored) {
     if (!text.trim() || date < period.start || date >= period.end) return
     evidence.push(evidenceSchema.parse({ id: kind + ':' + string(row, 'id'), kind, date,
       recordedAt: string(row, 'created_at') || string(row, 'occurred_at') || date,
-      title: title.slice(0, 200), text: text.slice(0, 1200), authored, goalId }))
+      title: title.slice(0, 200), text: text.slice(0, 1200), authored, goalId, lived }))
   }
   for (const r of journal) add('journal', r, string(r, 'entry_date'), string(r, 'title') || 'Journal entry', string(r, 'body'))
   for (const r of logs) add('log', r, string(r, 'log_date'), 'Daily check-in',
     [string(r, 'notes'), string(r, 'mood_tag') && 'Recorded mood: ' + string(r, 'mood_tag'),
       typeof r.energy_level === 'number' ? 'Recorded energy: ' + r.energy_level : '',
-      r.values && typeof r.values === 'object' ? 'Other recorded metrics: ' + JSON.stringify(r.values) : ''].filter(Boolean).join('. '))
+      // An untouched check-in row carries an empty object; only real entries count.
+      r.values && typeof r.values === 'object' && Object.keys(r.values).length ? 'Other recorded metrics: ' + JSON.stringify(r.values) : ''].filter(Boolean).join('. '))
   for (const r of captures) add('capture', r, localDate(new Date(string(r, 'created_at')), period.timezone), 'Saved conversation', string(r, 'captured_text'), r.source_role === 'user')
   for (const r of tasks) add('task', r, localDate(new Date(string(r, 'completed_at')), period.timezone), 'Completed planner item', string(r, 'title'), true, string(r, 'area_goal_id') || null)
-  for (const r of sessions) add('session', r, string(r, 'scheduled_for').slice(0, 10), 'Learning session', string(r, 'title') + '. Recorded status: ' + string(r, 'status'))
+  // A session they finished is lived; one still scheduled or skipped is only context.
+  for (const r of sessions) add('session', r, string(r, 'scheduled_for').slice(0, 10), 'Learning session', string(r, 'title') + '. Recorded status: ' + string(r, 'status'), true, null, r.status === 'done')
   for (const r of reviews) {
     if (!hasAuthoredQuarterlyReviewContent(r)) continue
     const qEnd = new Date(Date.UTC(Number(r.plan_year), Number(r.quarter) * 3, 0)).toISOString().slice(0, 10)
@@ -59,9 +62,9 @@ export async function loadEvidence(userId: string, period: ReflectionPeriod): Pr
     ].filter(Boolean).join('\n'))
   }
   for (const r of events) add('goal_event', r, localDate(new Date(string(r, 'occurred_at')), period.timezone), 'Goal update',
-    string(r, 'title') + ': ' + (string(r, 'old_status') || 'created') + ' → ' + string(r, 'new_status'), true, string(r, 'goal_id'))
+    string(r, 'title') + ': ' + (string(r, 'old_status') || 'created') + ' → ' + string(r, 'new_status'), true, string(r, 'goal_id'), false)
   for (const r of intentions) add('intention', r, localDate(new Date(string(r, 'updated_at')), period.timezone), 'Intention follow-up',
-    string(r, 'text') + (string(r, 'outcome') ? '\nRecorded outcome: ' + string(r, 'outcome') : '\nNo outcome recorded.'))
+    string(r, 'text') + (string(r, 'outcome') ? '\nRecorded outcome: ' + string(r, 'outcome') : '\nNo outcome recorded.'), true, null, !!string(r, 'outcome').trim())
   if (evidence.length > 1200) throw new Error('This period has too many records to process in one report')
   return evidence
 }

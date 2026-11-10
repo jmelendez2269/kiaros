@@ -12,8 +12,8 @@ export const CONSENT_EMPTY_STATE_COPY = {
       'Every journal entry starts out unticked. Tick "Let Kairos draw on this entry" on any entry you want to shape what shows up here. Which entries you include is up to you.',
   },
   reflections: {
-    heading: 'No reflections yet',
+    heading: 'Your words are yours to add',
     body:
-      'Reflections only use entries where you\'ve ticked "Let Kairos draw on this entry". Tick it on any entry you want them to use. The rest stay out.',
+      'Each look back reads the sky you moved through, whether or not you wrote. To have your journal woven in too, tick "Let Kairos draw on this entry" on any entry you want used. The rest stay out.',
   },
 } as const

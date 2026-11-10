@@ -19,7 +19,7 @@ import {
 } from '@/lib/period-review/report-schema'
 import { sanitizePeriodReviewOutput } from '@/lib/period-review/sanitize-output'
 import { checkQuestionToCarry } from '@/lib/period-review/question-anchor'
-import { recordUsage } from './usage'
+import { recordUsage, type AIFeature } from './usage'
 
 const MODEL_ID = 'claude-sonnet-4-6'
 const MAX_OUTPUT_TOKENS = 1200
@@ -63,6 +63,8 @@ export async function generateLookBackFromSources(
   sources: PeriodReviewSourceBundle,
   promptOptions: LookBackPromptOptions = {},
   systemAddendum = '',
+  /** Which daily allowance this generation counts against. */
+  usageFeature: AIFeature = 'period_review',
 ): Promise<GeneratedLookBack> {
   const includeJournal = sources.journalEntryCount + (sources.captureCount ?? 0) > 0
 
@@ -96,7 +98,7 @@ Return JSON only with optional string fields: thread, sky, plansAndGoals, questi
 
   await recordUsage({
     userId,
-    feature: 'period_review',
+    feature: usageFeature,
     model: MODEL_ID,
     messages: 1,
     inputTokens: usage.inputTokens ?? 0,

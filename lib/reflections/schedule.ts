@@ -39,12 +39,17 @@ export async function runReflectionSchedule(now = new Date()) {
     if (!await hasReflectionAccess(userId)) continue
     // Catch up from when their subscription began; the account date is only a fallback.
     const since = await memberSince(userId) ?? (p.created_at ? localDate(new Date(p.created_at), timezone) : `${localDate(now, timezone).slice(0, 4)}-01-01`)
-    const existing = await admin.from('reflection_reports').select('kind,period_start,status,revision').eq('user_id', userId)
+    const existing = await admin.from('reflection_reports').select('kind,period_start,status,revision,analysis').eq('user_id', userId)
     if (existing.error) { failed++; continue }
     const revision = Number(row.evidence_revision ?? 0)
-    const done = new Set((existing.data ?? [])
-      .filter(r => r.status === 'generating' || (['ready', 'empty'].includes(String(r.status)) && Number(r.revision) === revision))
+    const current = (existing.data ?? []).filter(r => ['ready', 'empty'].includes(String(r.status)) && Number(r.revision) === revision)
+    // Saved as "not much recorded" before reflections read the sky: prepared again, once, so the period is no longer blank.
+    // A reading that was tried and failed is saved as null, so it is not retried here every morning.
+    const skyless = new Set(current
+      .filter(r => r.status === 'empty' && !(r.analysis && typeof r.analysis === 'object' && 'sky' in r.analysis))
       .map(r => `${r.kind}:${r.period_start}`))
+    const done = new Set([...current, ...(existing.data ?? []).filter(r => r.status === 'generating')]
+      .map(r => `${r.kind}:${r.period_start}`).filter(key => !skyless.has(key)))
     const queue = catchUpOrder(KINDS.map(kind => closedPeriodsSince(kind, since, timezone, now)))
       .filter(period => !done.has(`${period.kind}:${period.start}`))
     if (!queue.length) continue
@@ -56,7 +61,7 @@ export async function runReflectionSchedule(now = new Date()) {
     for (const period of queue) {
       if (allowance <= 0 || Date.now() - started > RUN_BUDGET_MS || Date.now() - memberStarted > MEMBER_BUDGET_MS) break
       allowance--
-      try { await generateReflection(userId, period); completed++ }
+      try { await generateReflection(userId, period, skyless.has(`${period.kind}:${period.start}`)); completed++ }
       catch (e) {
         failed++
         // The daily per-member cap: the rest waits for a later run.

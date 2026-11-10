@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { periodFor, latestClosed, assertClosed, localBoundary, localDate, periodLabel, weekOf, weeksInYear, closedPeriodsSince, catchUpOrder } from '../lib/reflections/periods.ts'
 import { analyzePeriod } from '../lib/reflections/analyze-period.ts'
-import { reportSchema, validateReport, type Evidence } from '../lib/reflections/report-schema.ts'
+import { reportSchema, validateReport, isLived, type Evidence } from '../lib/reflections/report-schema.ts'
 import { reflectionShareCard } from '../lib/reflections/share-card.ts'
 const tz='America/New_York'
 assert.equal(periodFor('month',2024,2,tz).end,'2024-03-01')
@@ -62,7 +62,22 @@ const allowed=base(); allowed.goalThread={text:'A writing thread.',sources:['g']
 assert.ok(validateReport(allowed,[...analysis.evidence,entry('g','2026-08-08','Writing practice','goal-1')],p,['goal-1'],[]).goalThread)
 const oversized=base(); oversized.goalThread={text:'goal '.repeat(61),sources:['g'],goalIds:['goal-1']}
 assert.equal(validateReport(oversized,[...analysis.evidence,entry('g','2026-08-08','Writing','goal-1')],p,['goal-1'],[]).goalThread,null)
+// What counts as lived: things the member wrote, logged or finished. Plans left open, goal statuses and advice are context.
+const trace=(id:string,kind:Evidence['kind'],date:string,text:string,lived?:boolean,authored=true):Evidence=>({id:kind+':'+id,kind,date,title:id,text,recordedAt:date,goalId:null,authored,...(lived===undefined?{}:{lived})})
+assert.equal(isLived(trace('t','task','2026-08-03','Morning walk',true)),true,'a finished plan is lived')
+assert.equal(isLived(trace('s','session','2026-08-03','Chart basics. Recorded status: scheduled',false)),false,'a session not taken is context')
+assert.equal(isLived(trace('i','intention','2026-08-03','Rest more\nNo outcome recorded.',false)),false)
+assert.equal(isLived(trace('c','capture','2026-08-03','Saved advice',false,false)),false,'saved Stelloquy words are not lived')
+// Sources saved before the flag existed keep the earlier rule.
+assert.equal(isLived(trace('old','task','2026-08-03','Morning walk')),false)
+assert.equal(isLived(trace('old','journal','2026-08-03','A day')),true)
+// A month with no writing, only finished plans and a check-in, is no longer empty.
+const quietMonth=analyzePeriod([trace('1','task','2026-08-03','Morning walk',true),trace('2','task','2026-08-04','Morning walk',true),
+  trace('3','log','2026-08-10','Recorded mood: calm',true),trace('4','session','2026-08-12','Chart basics. Recorded status: scheduled',false)],p)
+assert.equal(quietMonth.evidence.filter(isLived).length,3)
+assert.equal(quietMonth.observedDays,3,'the same plan finished on two days is two days, not one copy')
+assert.equal(quietMonth.counts.task,2)
 const svg=reflectionShareCard('My year','<script>alert("secret")</script>')
 assert.ok(!svg.includes('<script>'))
 assert.ok(svg.includes('&lt;script&gt;'))
-console.log('Reflection period, DST, coverage, deduplication, recurrence, source ownership, feedback, goal-balance and share-card checks passed.')
+console.log('Reflection period, DST, coverage, lived traces, deduplication, recurrence, source ownership, feedback, goal-balance and share-card checks passed.')

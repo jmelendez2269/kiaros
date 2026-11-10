@@ -1,4 +1,4 @@
-import type { Evidence, Analysis } from './report-schema'
+import { isLived, REPEATABLE_KINDS, type Evidence, type Analysis } from './report-schema.ts'
 import type { ReflectionPeriod } from './periods'
 const themes = [
   ['rest', 'Rest and space', /\b(rest|rested|sleep|slept|quiet|break|pause)\b/i],
@@ -13,12 +13,15 @@ export function analyzePeriod(input: Evidence[], period: ReflectionPeriod): Anal
     if (item.date < period.start || item.date >= period.end || byId.has(item.id)) continue
     const normalized = item.text.toLowerCase().replace(/\s+/g, ' ').trim()
     // Identical copies are one observation even when saved to several surfaces.
-    if (normalized && seenText.has(normalized)) continue
-    if (normalized) seenText.add(normalized)
+    // A plan finished or a mood logged on several days is several things, so those are kept.
+    if (!REPEATABLE_KINDS.includes(item.kind)) {
+      if (normalized && seenText.has(normalized)) continue
+      if (normalized) seenText.add(normalized)
+    }
     byId.set(item.id, item)
   }
   const evidence = [...byId.values()]
-  const lived = evidence.filter(e => e.authored && !['task', 'goal_event', 'intention'].includes(e.kind))
+  const lived = evidence.filter(isLived)
   const days = [...new Set(lived.map(e => e.date))]
   const counts: Record<string, number> = {}
   for (const e of evidence) counts[e.kind] = (counts[e.kind] ?? 0) + 1
