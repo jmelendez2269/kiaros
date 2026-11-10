@@ -25,6 +25,7 @@ import {
 } from '@/lib/period-review/periods'
 import type { PeriodReviewSections, PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 import { LookBackPreview } from './LookBackPreview'
+import { ReturningThreads } from './ReturningThreads'
 
 type ReviewPayload = {
   sections: PeriodReviewSections
@@ -571,6 +572,12 @@ export function PeriodReviewModal({
               </section>
             ))
           )}
+
+          {payload && (payload.sourceChips.patterns?.length || payload.sourceChips.themes?.length) ? (
+            <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid rgba(164,163,177,0.2)' }}>
+              <ReturningThreads patterns={payload.sourceChips.patterns} themes={payload.sourceChips.themes} onNavigate={onClose} />
+            </div>
+          ) : null}
 
           {showEmptyJournal && period.kind === 'month' && payload ? (
             <p style={{ marginTop: 20, fontSize: 14, color: '#A4A3B1', lineHeight: 1.65 }}>

@@ -11,6 +11,7 @@ import {
   chipRetrogrades,
   chipSignChanges,
 } from './chip-copy'
+import { chipReturningPattern, chipReturningTheme } from './returning-threads'
 
 export const periodReviewSectionsSchema = z.object({
   /** What the period was about: the thread across entries, check-ins, plans and sky. */
@@ -30,6 +31,10 @@ export type PeriodReviewSourceChips = {
   journal: string[]
   /** Major transits to the member's own chart. Absent on reviews saved before 2026-11. */
   personal?: string[]
+  /** Skies overhead in the period that the member has written under before (see Patterns). Absent before 2026-11. */
+  patterns?: string[]
+  /** Themes in the period's saved conversations that have come up before (see Mind map). Absent before 2026-11. */
+  themes?: string[]
 }
 
 export function buildSourceChips(sources: PeriodReviewSourceBundle): PeriodReviewSourceChips {
@@ -57,7 +62,10 @@ export function buildSourceChips(sources: PeriodReviewSourceBundle): PeriodRevie
     chipStelloquyCaptures(sources.captureCount ?? 0),
   ].filter((c): c is string => Boolean(c))
 
-  return { sky, plans, journal, personal }
+  const patterns = (sources.returning?.patterns ?? []).map(chipReturningPattern)
+  const themes = (sources.returning?.themes ?? []).map(chipReturningTheme)
+
+  return { sky, plans, journal, personal, patterns, themes }
 }
 
 export function flattenPeriodReviewSections(sections: PeriodReviewSections): string {

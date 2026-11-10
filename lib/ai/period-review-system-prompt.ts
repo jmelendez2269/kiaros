@@ -1,5 +1,6 @@
 import type { PeriodReviewSourceBundle } from '@/lib/period-review/load-sources'
 import { monthNameAfterPeriod, periodLabel, periodMonthNameOnly } from '@/lib/period-review/periods'
+import { returningThreadsPromptBlock } from '@/lib/period-review/returning-threads'
 
 export function assemblePeriodReviewSystemPrompt(): string {
   return `You are Stella, the voice of Kiaros. You write short look backs for a single closed period: a week, a month, a quarter, or one sky cycle.
@@ -37,6 +38,7 @@ Rules:
 13. "A question to carry" is a single question with one question mark.
 14. A reading describes the pattern, never the member's readiness, capacity, honesty or self-awareness. Never suggest they were not ready, held back, or avoided something. Rest and unfinished things stand on their own.
 15. Keep it short. For a month or sky cycle: thread at most 130 words, sky at most 70, plans and goals at most 30. A week is about half that; a quarter can be a third longer. Cut anything that restates the data.
+16. "Threads the member has met before", when present, lists skies overhead in this period that they have journaled under in the past, and themes from this period's saved conversations that have come up before. You may name at most one, and only where it speaks to the thread or the sky you chose: this sky, or this theme, has come round again. State it as a fact of their record ("you have written under Mercury retrograde six times before"). Never call it a tendency or a trait, never say what those earlier entries held, never predict from it, and never compare how much they wrote then with now. Leave it out when it adds nothing.
 
 If there are zero journal entries and no "Saved from Stelloquy" items in the user message, do not mention the absence of journal entries. Build the thread from check-ins, intentions and plans if they say something; otherwise leave the thread out. The app handles that case separately.
 
@@ -107,6 +109,8 @@ export function assemblePeriodReviewUserPrompt(
       ? sources.planTasksOpen.map((t) => `  - ${t.date}: ${t.title}`).join('\n')
       : '  (none recorded)'
 
+  const returningBlock = returningThreadsPromptBlock(sources.returning)
+
   const goalsLabel = sources.goalsCompletedApproximate
     ? 'Goals marked completed during period (approximate, based on last-updated date)'
     : 'Goals marked completed during period'
@@ -134,7 +138,7 @@ ${
 `
     : ''
 }
-Blueprint context:
+${returningBlock ? `${returningBlock}\n\n` : ''}Blueprint context:
   Month theme: ${sources.monthBlueprintTheme ?? '(none)'}
   Quarter theme: ${sources.quarterBlueprintTheme ?? '(none)'}
 

@@ -61,6 +61,9 @@ export default async function ReviewsPage({
   const rawYear = Number(Array.isArray(params.year) ? params.year[0] : params.year)
   const years = profileId ? await timelineYears(profileId, today) : [Number(today.slice(0, 4))]
   const year = years.includes(rawYear) ? rawYear : years[years.length - 1]
+  // ?month=1..12 opens the timeline on that month, e.g. from a pattern or a star on the Mind map.
+  const rawMonth = Number(Array.isArray(params.month) ? params.month[0] : params.month)
+  const initialMonth = Number.isInteger(rawMonth) && rawMonth >= 1 && rawMonth <= 12 ? rawMonth : undefined
   const timeline = profileId ? await loadYearTimeline(profileId, year, today, years).catch((error) => {
     console.error('[reviews] year timeline unavailable:', error)
     return null
@@ -82,7 +85,7 @@ export default async function ReviewsPage({
       </header>
 
       {timeline ? (
-        <ReviewsTimeline key={year} timeline={timeline} />
+        <ReviewsTimeline key={`${year}:${initialMonth ?? ''}`} timeline={timeline} initialMonth={initialMonth} />
       ) : (
         <Frame tone="umber" padding={20}>
           <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: K.inkDim }}>

@@ -9,6 +9,8 @@ import {
   KIND_META,
   layoutStarChart,
   linesFrom,
+  monthLabel,
+  monthReviewHref,
   rangeStart,
   SECTORS,
   type ChartEdge,
@@ -17,7 +19,7 @@ import {
 } from '@/lib/insights/star-chart'
 
 type Range = '30d' | 'quarter' | 'year'
-type MapData = { nodes: ChartNode[]; edges: ChartEdge[]; captureCount: number }
+type MapData = { nodes: ChartNode[]; edges: ChartEdge[]; captureCount: number; excerpts?: Record<string, { date: string; whose: 'member' | 'stelloquy'; text: string }> }
 
 const W = 732, H = 700, CX = 366, CY = 350, R = 318
 
@@ -164,6 +166,40 @@ export function StarChart({ today, patternsHref }: { today: string; patternsHref
                   </ul>
                 </div>
               ) : null}
+              {selected.months?.length ? (
+                <div>
+                  <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim, marginBottom: 8 }}>Brightest in</div>
+                  <ul className="flex flex-wrap gap-2" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    {selected.months.map(m => (
+                      <li key={m.month}>
+                        <Link href={monthReviewHref(m.month)} aria-label={`${monthLabel(m.month)}, in ${m.count} saved conversations. Open that month in Reviews.`}
+                          className="inline-block rounded-full px-3 py-1" style={{ fontFamily: K.fMono, fontSize: 11, border: `1px solid ${K.lineHi}`, color: K.ink }}>
+                          {monthLabel(m.month)} · {m.count}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {(() => {
+                const behind = (selected.sampleCaptureIds ?? []).flatMap(id => (data.excerpts?.[id] ? [{ id, ...data.excerpts[id] }] : [])).slice(0, 3)
+                if (!behind.length) return null
+                return (
+                  <div>
+                    <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim, marginBottom: 4 }}>From your saved conversations</div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {behind.map((c, i) => (
+                        <li key={c.id} className="py-2" style={{ borderTop: i ? `1px solid ${K.line}` : 'none' }}>
+                          <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55, color: K.ink }}>{c.text}</p>
+                          <p style={{ margin: '4px 0 0', fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.08em', color: K.inkDim }}>
+                            {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${c.date}T12:00:00Z`))} · {c.whose === 'member' ? 'your words' : 'Stelloquy, saved by you'}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              })()}
               <div className="mt-auto grid gap-2">
                 <button type="button" className="rounded-full px-5 py-2.5 text-sm" style={{ background: K.copper, color: K.bg }}
                   onClick={() => openWith(`In my saved Stelloquy conversations, "${selected.label}" (${KIND_META[selected.kind].label.toLowerCase()}) comes up in ${selected.count} of ${data.captureCount}${lines.length ? `, most often alongside ${lines.slice(0, 3).map(l => byId.get(l.other)!.label).join(', ')}` : ''}. What do you notice about it?`)}>

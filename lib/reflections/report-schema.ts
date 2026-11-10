@@ -44,7 +44,8 @@ const optionalText = z.string().min(1).optional()
  */
 export const skyReadingSchema = z.object({
   sections: z.object({ thread: optionalText, sky: optionalText, plansAndGoals: optionalText, inYourWords: optionalText, questionToCarry: optionalText }),
-  sourceChips: z.object({ sky: z.array(z.string()), plans: z.array(z.string()), journal: z.array(z.string()), personal: z.array(z.string()).optional() }),
+  sourceChips: z.object({ sky: z.array(z.string()), plans: z.array(z.string()), journal: z.array(z.string()), personal: z.array(z.string()).optional(),
+    patterns: z.array(z.string()).optional(), themes: z.array(z.string()).optional() }),
   model: z.string(),
 })
 export type SkyReading = z.infer<typeof skyReadingSchema>
