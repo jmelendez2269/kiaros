@@ -4,6 +4,7 @@ import { PatternsUpgradeState } from '@/components/insights/PatternsUpgradeState
 import { PatternInsights } from '@/components/insights/PatternInsights'
 import { CaptureHistoryList } from '@/components/insights/CaptureHistoryList'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { CheckInRhythms } from '@/components/insights/CheckInRhythms'
 import { InsightsPollingShell } from '@/components/journal/InsightsPollingShell'
 import { loadPatternsPageData } from '@/lib/journal/load-patterns-page-data'
 import { resolvePatternsSubView } from '@/lib/journal/ia-journal-routes'
@@ -86,6 +87,7 @@ export default async function JournalPatternsPage({
           </Link>
         </header>
         {content}
+        {subView === 'patterns' ? <CheckInRhythms /> : null}
       </InsightsPollingShell>
     </div>
   )
