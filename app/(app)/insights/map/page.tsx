@@ -67,7 +67,13 @@ export default async function PatternsPage() {
   const isAppAdmin = clerkUser?.publicMetadata?.isAdmin === true
 
   if (!isAppAdmin && !access.hasOracleAccess) {
-    return <PatternsUpgradeState />
+    // Names and counts only: the readings and the entries behind them stay with Stelloquy access.
+    const { data: teaser } = await supabase
+      .from('user_pattern_insights')
+      .select('id, pattern_type, pattern_key, sample_size, last_seen')
+      .order('sample_size', { ascending: false })
+      .limit(24)
+    return <PatternsUpgradeState patterns={teaser ?? []} />
   }
 
   let includedEntriesCountQuery = supabase

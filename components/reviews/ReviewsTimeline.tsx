@@ -12,9 +12,13 @@ import {
   packRows,
   shortDay,
   skyForMonth,
+  weekRangeLabel,
+  weekReflectionHref,
+  weeksForMonth,
   type ReviewState,
   type TimelineMonth,
   type TimelineSkyEvent,
+  type TimelineWeek,
   type YearTimeline,
 } from '@/lib/reviews/year-timeline'
 
@@ -101,7 +105,9 @@ type ViewProps = { timeline: YearTimeline; openMonth: (m: TimelineMonth) => void
 const W = 1032, R = 916
 
 function YearView({ timeline, openMonth, openQuarter }: ViewProps) {
-  const { year, today, months, quarters, sky } = timeline
+  const { year, today, months, quarters, weeks, sky } = timeline
+  // The week that most recently closed, while it is still the latest one.
+  const lastWeek = [...weeks].reverse().find(w => w.state === 'read' || w.state === 'ready')
   const ended = months.filter(m => m.state === 'read' || m.state === 'ready')
   const [selected, setSelected] = useState<number>(ended.at(-1)?.index ?? months.find(m => m.state === 'open')?.index ?? 1)
   const length = daysInYear(year)
@@ -125,9 +131,10 @@ function YearView({ timeline, openMonth, openQuarter }: ViewProps) {
 
   const sel = months[selected - 1]
   const selSky = skyForMonth(sky, sel, false)
-  const waiting = [
+  const waiting: Array<{ key: string; title: string; sub: string; order: string; onOpen?: () => void; href?: string }> = [
     ...months.filter(m => m.state === 'ready').map(m => ({ key: `m${m.index}`, title: monthName(m.index), sub: m.line, order: m.end, onOpen: () => openMonth(m) })),
     ...quarters.filter(q => q.state === 'ready').map(q => ({ key: `q${q.index}`, title: `Q${q.index} · ${monthName(q.index * 3 - 2)} to ${monthName(q.index * 3)}`, sub: 'Three months together', order: q.end + 'z', onOpen: () => openQuarter(q.index) })),
+    ...(isThisYear && lastWeek ? [{ key: `w${lastWeek.start}`, title: `Last week · ${weekRangeLabel(lastWeek)}`, sub: lastWeek.line ?? 'The sky you moved through, and whatever you shared.', order: lastWeek.end, href: weekReflectionHref(lastWeek) }] : []),
   ].sort((a, b) => b.order.localeCompare(a.order))
 
   const onKey = (m: TimelineMonth) => (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(m.index) } }
@@ -251,7 +258,9 @@ function YearView({ timeline, openMonth, openQuarter }: ViewProps) {
                     <div style={{ fontSize: 16 }}>{w.title}</div>
                     <div style={{ fontSize: 13, color: K.inkDim, marginTop: 2 }}>{w.sub}</div>
                   </div>
-                  <button type="button" onClick={w.onOpen} className="text-sm underline underline-offset-4" style={{ color: VIOLET_HI }}>Read →</button>
+                  {w.href
+                    ? <Link href={w.href} className="text-sm underline underline-offset-4" style={{ color: VIOLET_HI }}>Read →</Link>
+                    : <button type="button" onClick={w.onOpen} className="text-sm underline underline-offset-4" style={{ color: VIOLET_HI }}>Read →</button>}
                 </li>
               ))}
             </ul>
@@ -283,6 +292,7 @@ function YearView({ timeline, openMonth, openQuarter }: ViewProps) {
               <span style={{ fontSize: 14, color: K.inkDim }}>{sel.state === 'open' ? `Opens once ${monthName(sel.index)} ends.` : 'Still to come.'}</span>
             )}
           </div>
+          <WeekPills weeks={weeksForMonth(weeks, sel)} label={`Week by week in ${monthName(sel.index)}`} className="mt-5" />
         </section>
       </div>
     </>
@@ -315,7 +325,7 @@ function UnwrappedCap({ timeline, cy }: { timeline: YearTimeline; cy: number }) 
 /* ───────────────────────── List view: the almanac spine ───────────────────────── */
 
 function ListView({ timeline, openMonth, openQuarter }: ViewProps) {
-  const { year, today, months, quarters, sky, unwrapped } = timeline
+  const { year, today, months, quarters, weeks, sky, unwrapped } = timeline
   const isThisYear = today.slice(0, 4) === String(year)
   return (
     <div className="grid gap-2">
@@ -346,6 +356,7 @@ function ListView({ timeline, openMonth, openQuarter }: ViewProps) {
                 const isCurrent = isThisYear && m.state === 'open'
                 return (
                   <li key={m.index} className="grid gap-2 sm:grid-cols-[1fr_56px_1fr] sm:items-center">
+                    <div className="grid gap-2">
                     <button type="button" disabled={!clickableMonth} onClick={() => openMonth(m)}
                       className="flex items-center gap-4 rounded-2xl px-4 py-3 text-left disabled:cursor-default"
                       style={{
@@ -358,6 +369,8 @@ function ListView({ timeline, openMonth, openQuarter }: ViewProps) {
                       {m.state === 'ready' ? <span className="whitespace-nowrap text-sm" style={{ color: VIOLET_HI }}>Read →</span>
                         : m.state === 'read' ? <span style={mono(9.5)}>Read</span> : null}
                     </button>
+                    <WeekPills weeks={weeksForMonth(weeks, m)} label={`Weeks in ${monthName(m.index)}`} className="px-1" />
+                    </div>
                     <div aria-hidden className="relative hidden justify-center sm:flex">
                       <span style={{ position: 'relative', zIndex: 1,
                         width: m.state === 'future' ? 7 : 14, height: m.state === 'future' ? 7 : 14, borderRadius: 999,
@@ -399,6 +412,33 @@ function ListView({ timeline, openMonth, openQuarter }: ViewProps) {
           ) : null}
         </div>
       </section>
+    </div>
+  )
+}
+
+/** The weeks under a month: each opens that week's reflection once the week has ended. */
+function WeekPills({ weeks, label, className }: { weeks: TimelineWeek[]; label: string; className?: string }) {
+  const shown = weeks.filter(w => w.state !== 'future')
+  if (!shown.length) return null
+  const pill: CSSProperties = { fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.06em', padding: '5px 10px', borderRadius: 999, whiteSpace: 'nowrap' }
+  return (
+    <div className={className}>
+      <div style={mono(9.5)}>{label}</div>
+      <ul className="mt-2 flex flex-wrap gap-2" style={{ listStyle: 'none', padding: 0, margin: '8px 0 0' }}>
+        {shown.map(w => (
+          <li key={w.start}>
+            {w.state === 'open' ? (
+              <span title="This week is still unfolding" style={{ ...pill, border: `1px dashed ${K.lineHi}`, color: INK_SOFT }}>{weekRangeLabel(w)}</span>
+            ) : (
+              <Link href={weekReflectionHref(w)} title={w.line ?? (w.state === 'ready' ? 'Ready to prepare' : undefined)}
+                aria-label={`Week of ${weekRangeLabel(w)}: ${w.state === 'read' ? 'ready to read' : 'ready to prepare'}`}
+                style={{ ...pill, display: 'inline-block', border: `1px solid ${w.state === 'ready' ? '#a98aef88' : K.lineHi}`, background: w.state === 'ready' ? '#a98aef22' : 'transparent', color: w.state === 'ready' ? VIOLET_HI : K.ink }}>
+                {weekRangeLabel(w)}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

@@ -78,7 +78,7 @@ const NAV: ReadonlyArray<{
     href: '/reviews',
     collapsible: true,
     subItems: [
-      { label: 'Reviews', href: '/reviews', hint: 'every month and quarter' },
+      { label: 'Reviews', href: '/reviews', hint: 'every week, month and quarter' },
       { label: 'Patterns', href: '/insights/map', hint: 'what keeps coming up' },
       // Yearly Unwrapped opens from the end of the Reviews timeline now.
       { label: 'Mind map', href: '/insights/mind-map', hint: 'how your themes connect' },
@@ -155,7 +155,8 @@ function navForAccess(
     if (item.key === 'insights' && item.subItems && !hasOracleAccess) {
       return {
         ...item,
-        subItems: item.subItems.filter((sub) => sub.href !== '/insights/map' && sub.href !== '/insights/mind-map'),
+        // Patterns stays: without Stelloquy access it opens a preview of the member's own patterns.
+        subItems: item.subItems.filter((sub) => sub.href !== '/insights/mind-map'),
       }
     }
     if (item.key === 'year' && item.subItems && calendarDayEnabled) {

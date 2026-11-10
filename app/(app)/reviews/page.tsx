@@ -13,7 +13,7 @@ import { BRAND } from '@/lib/brand'
 
 export const metadata = {
   title: `Reviews — ${BRAND.product}`,
-  description: 'Look back on each month and quarter: the sky, your plans, and your own words.',
+  description: 'Look back on each week, month and quarter: the sky, your plans, and your own words.',
 }
 
 const OTHER_LINKS = [
@@ -28,9 +28,14 @@ const OTHER_LINKS = [
     hint: 'the story of your whole year',
   },
   {
+    href: '/reflections?kind=week',
+    label: 'Weekly reflections',
+    hint: 'every week since you joined, read from the sky and whatever you shared',
+  },
+  {
     href: '/reflections',
-    label: 'Reflections',
-    hint: 'your earlier written reflections',
+    label: 'Monthly and quarterly reflections',
+    hint: 'the longer written reflections, with space for your own perspective',
   },
 ] as const
 
@@ -71,8 +76,8 @@ export default async function ReviewsPage({
           Reviews
         </h1>
         <p style={{ marginTop: 8, fontSize: 15, lineHeight: 1.65, color: K.inkDim, maxWidth: 560 }}>
-          Your whole year on one line: every month and quarter you can look back on once it ends, the sky you
-          moved through, and your Unwrapped waiting at the end.
+          Your whole year on one line: every week, month and quarter you can look back on once it ends, the sky
+          you moved through, and your Unwrapped waiting at the end. A stretch with nothing written is still read.
         </p>
       </header>
 

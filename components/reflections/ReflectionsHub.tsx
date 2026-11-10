@@ -57,9 +57,12 @@ function buildCards(kind: PeriodKind, year: number, month: number, timezone: str
 }
 export function ReflectionsHub({
   initialKind = 'month',
+  initialStart,
   journalIaEmbed = false,
 }: {
   initialKind?: PeriodKind
+  /** First day (YYYY-MM-DD) of a period to open on, e.g. from a week on the Reviews page. */
+  initialStart?: string
   journalIaEmbed?: boolean
 }) {
   const [data, setData] = useState<State | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState('')
@@ -82,8 +85,14 @@ export function ReflectionsHub({
       // Open on the latest ended period, or the member's first month when that came before they joined.
       const closed = latestClosed(initialKind, tz).start, latest = state.memberSince && state.memberSince.slice(0, 7) > closed.slice(0, 7) ? state.memberSince : closed
       setYear(Number(latest.slice(0, 4))); setMonth(Number(latest.slice(5, 7)))
+      if (initialStart) {
+        // Open on the asked-for period: its reflection when there is one, else the offer to prepare it.
+        setYear(Number(initialStart.slice(0, 4))); setMonth(Number(initialStart.slice(5, 7)))
+        const match = state.reports.find(r => r.kind === initialKind && r.period_start === initialStart)
+        if (match) setSelectedId(match.id); else setFocusStart(initialStart)
+      }
     }
-  }, [initialKind])
+  }, [initialKind, initialStart])
   useEffect(() => { load(true).catch(e => setError(e.message)).finally(() => setLoading(false)) }, [load])
   // Refresh on return to the page so consent changes elsewhere cannot leave an old report on screen.
   useEffect(() => {

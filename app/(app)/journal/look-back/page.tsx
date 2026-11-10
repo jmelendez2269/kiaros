@@ -35,6 +35,8 @@ export default async function JournalLookBackPage({
   }
 
   const kind: PeriodKind = subView === 'year' ? 'year' : subView === 'week' ? 'week' : 'month'
+  const startRaw = Array.isArray(params.start) ? params.start[0] : params.start
+  const initialStart = startRaw && /^\d{4}-\d{2}-\d{2}$/.test(startRaw) ? startRaw : undefined
   const monthRaw = Array.isArray(params.month) ? params.month[0] : params.month
   const monthMatch = typeof monthRaw === 'string' ? monthRaw.match(/^(\d{4})-(\d{2})$/) : null
   const planYear = monthMatch ? Number(monthMatch[1]) : new Date().getFullYear()
@@ -45,7 +47,7 @@ export default async function JournalLookBackPage({
       {isPeriodReviewEnabled() && subView === 'month' ? (
         <PeriodReviewLookBackLinks kind="month" planYear={planYear} selectedIndex={monthIndex} />
       ) : null}
-      <ReflectionsHub key={kind} initialKind={kind} journalIaEmbed />
+      <ReflectionsHub key={`${kind}:${initialStart ?? ''}`} initialKind={kind} initialStart={initialStart} journalIaEmbed />
     </div>
   )
 }
