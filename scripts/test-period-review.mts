@@ -388,8 +388,14 @@ assert.equal(periodReviewStorageFullLine2(), "We're adding room for more. Check 
 assert.ok(periodReviewStorageFullApiMessage().includes(periodReviewStorageFullLine1()))
 
 const systemPrompt = readFileSync(join(root, 'lib/ai/period-review-system-prompt.ts'), 'utf8')
-assert.ok(systemPrompt.includes('workshop "we" voice'))
-assert.ok(systemPrompt.includes('The sky'))
+// The voice was rewritten on 2026-11 ("Look backs read the period instead of recounting it"): the
+// workshop "we" gave way to speaking to the member directly. These are the rules it now promises.
+assert.ok(systemPrompt.includes('Speak to the member as "you"'), 'addresses the member directly')
+assert.ok(systemPrompt.includes('Pattern, not prophecy'), 'reads what happened, never predicts')
+assert.ok(systemPrompt.includes('Never say a transit caused anything'), 'no causal language')
+assert.ok(systemPrompt.includes('No ampersands and no em dashes'), 'house punctuation')
+assert.ok(systemPrompt.includes('"still open", never "missed" or "behind"'), 'unfinished plans are neutral')
+assert.ok(systemPrompt.includes('What it was about') && systemPrompt.includes('How the sky sat with it'), 'section names')
 
 const featureFlags = readFileSync(join(root, 'lib/feature-flags.ts'), 'utf8')
 assert.ok(featureFlags.includes('isPeriodReviewEnabled'))
