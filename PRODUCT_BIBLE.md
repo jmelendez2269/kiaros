@@ -2,6 +2,8 @@
 
 > Source of truth for product vision, shipped features, AI architecture, and design. Updated 2026-06-02 from live code audit.
 >
+> **Targeted update 2026-11-10:** the Journal insights, Daily check-in, Today, Look backs / Reflections / Insights (§3.16), schema and "not yet built" sections were re-audited against the code. Every other section still dates from 2026-06-02 and has not been re-checked.
+>
 > **Rule:** What's in this file reflects what's in `app/`, `lib/`, `components/`, and `supabase/migrations/`. If the code disagrees with this doc, the code wins — update this doc.
 
 ---
@@ -14,7 +16,7 @@ Kairos is a personalized yearly planning system built around three inputs that m
 - **Your goals** — in your own words, tied to areas of life you actually care about.
 - **The live sky** — what the planets are actually doing this week, this month, this year.
 
-These three inputs are woven together by Claude into a week-by-week blueprint. That blueprint then feeds every surface in the app: the calendar, the tracker, the Oracle conversation, the journal insights, and the quarterly reviews.
+These three inputs are woven together by Claude into a week-by-week blueprint. That blueprint then feeds every surface in the app: the calendar, the Today dashboard, the Oracle conversation, the journal insights, and the look backs and reviews.
 
 **It is not a generic productivity system.** It does not assume every week should look the same, that progress is linear, or that rest is a failure. It works with cycles — astronomical, personal, seasonal.
 
@@ -101,7 +103,11 @@ Every journal entry is automatically enriched at save time:
 
 The Journal composer also lets users tag captures for Stelloquy memory and flag entries as part of a ritual or intention.
 
-**Insights surface** (`/journal/insights`): patterns are detected across journal history on five axes — lunar phase, lunar sign, transit aspects, retrogrades. Each pattern has a confidence score and links back to the supporting entries. An AI synthesis layer (Claude Haiku 4.5) runs on top of the SQL pattern summary and can be regenerated. The synthesis voice is user-configurable (three presets + custom prompt, stored in `user_settings.journal_insight_voice`).
+**Patterns** (`/insights/map`, or `/journal/patterns` when `NEXT_PUBLIC_IA_JOURNAL` is on): patterns are detected across journal history on four axes — lunar phase, lunar sign, transit aspects, retrogrades. The database computes them only from entries the member includes in Insights. Each pattern links back to the supporting entries and lists the months those entries fall in, each opening that month in Reviews. An AI synthesis layer (Claude Haiku 4.5) runs on top of the SQL pattern summary and can be regenerated. The synthesis voice is user-configurable (three presets + custom prompt, stored in `user_settings.journal_insight_voice`).
+
+Patterns needs Stelloquy access. Members without it see a preview: the top three skies their own journal keeps returning to, with entry counts and the date last seen; the readings and entries stay locked.
+
+**Under each moon** (same page): once a member has at least eight daily check-ins (§3.5), this shows how their energy and mood have sat under each moon phase against their own usual. A phase needs four check-ins of its own and must stand clearly apart. Computed at page load in `lib/insights/check-in-rhythms.ts`; no AI.
 
 ---
 
@@ -115,22 +121,20 @@ Four views driven by a shared ephemeris dataset:
 |------|---------------|
 | **Year** | Full-year grid of push/rest periods, planetary stations, moon phases |
 | **Month** | Calendar grid with moon glyphs, journal entries, month brief, intentions, key transits, Sabian symbols, curriculum sessions |
-| **Week** | Detailed week with blueprint week content, transits, Daily Tracker ribbon |
+| **Week** | Detailed week with blueprint week content and transits |
 | **Review** | Quarterly review builder (see §3.7) |
 
 ---
 
-### 3.5 Daily Tracker
+### 3.5 Daily Check-in
 
-**Route:** `/tracker` → `TrackerView` component
+**Where:** a card on `/today`, "How today is sitting" → `components/today/TodayCheckIn.tsx`, `lib/today/check-in.ts`
 
-Users define metric categories tied to their goal areas. Each day they log values per metric. The tracker surface shows:
+One energy level (Resting, Low, Even, Lifted, Full; stored 1 to 5) and one mood word from a short list (`lib/today/check-in-options.ts`). It saves on tap, and tapping the chosen one again clears it. One row per member per day in `daily_logs`, in the member's planner timezone, stamped with the moon phase and sign it was made under, using the same labels journal entries carry.
 
-- **90-day consistency grid** — one cell per day per metric, color-coded by value
-- **14-day per-category bars** — recent trend per goal area
-- **Lunar phase stamp** — every log is stored with the moon's phase and sign at log time
+It is optional and never scored. Reflections, month and quarter look backs, and Stelloquy's context all read it. It also feeds "Under each moon" on Patterns (§3.3).
 
-Metric definitions live in `tracker_metrics`. Daily logs in `daily_logs`.
+**The earlier Daily Tracker is not in the app.** As of 2026-11-10 there is no `/tracker` route or `TrackerView` component, nothing reads or writes `tracker_metrics`, and `daily_logs` had no rows in production before the check-in shipped. The 90-day grid and per-metric logging described in earlier versions of this document do not exist in the code.
 
 ---
 
@@ -146,7 +150,10 @@ A single-page daily summary pulling live data:
 | Sky Now | Current planet positions overlaid on natal chart |
 | Active Transits | Planets making aspects to natal points today |
 | Season Read | 3-month AI synthesis (generated via `season-synthesis.ts`, cached in `season_read` table) |
-| Today's Intention | AI-generated one-liner from blueprint week + transits |
+| Today's Intention | One line taken from the Blueprint (the week's intentions, rotated by weekday; falls back to month, quarter, year). Not written by the member |
+| How today is sitting | Daily check-in: energy and mood (§3.5) |
+| Last week | Monday to Wednesday: a pointer to the week's reflection, with its first sentence once prepared (§3.16) |
+| Month / quarter look back | For seven days after a month or quarter ends (§3.16) |
 | Week Ribbon | Current week in the year arc (push/rest coloring) |
 | Curriculum | Today's scheduled session (if curriculum is active) |
 | Journal Streak | Consecutive days with journal entries |
@@ -159,7 +166,7 @@ A single-page daily summary pulling live data:
 
 Users fill in wins, challenges, and pivots for the quarter. Kairos then:
 
-1. Pulls activity stats (journal entries, tracker consistency, oracle captures, curriculum sessions)
+1. Pulls activity stats (journal entries, daily check-ins, oracle captures, curriculum sessions)
 2. Shows deltas vs. the prior quarter
 3. Generates an AI summary via `quarterly-review-generator.ts` (streaming)
 
@@ -283,6 +290,34 @@ Six-step flow:
 
 ---
 
+### 3.16 Look backs, Reflections and Insights
+
+Three connected surfaces under **Insights** in the sidebar. Audited 2026-11-10.
+
+**Insights home** (`/insights` → `lib/insights/load-home.ts`). Three cards: the latest look backs (last week and last month, each with its first sentence once prepared); *Overhead today*, the skies in the air today that the member has journaled under at least twice; and, for members with Stelloquy, the *Brightest star*, the theme in the most saved conversations. No AI calls.
+
+**Two look-back engines.**
+
+| | Look backs (`lib/period-review/`) | Reflections (`lib/reflections/`) |
+|---|---|---|
+| Periods | Month, quarter, and sky cycles | Week, month, quarter, year (Yearly Unwrapped) |
+| Opens from | Reviews timeline, Today card, modal | `/reflections` (or `/journal/look-back`), Reviews week pills, Today "Last week" card |
+| Written | On request | Each morning by cron for members with automatic preparation on, including missed periods; or on request |
+| Storage | `period_reviews`, `sky_cycle_reviews` | `reflection_reports` and related tables |
+
+- **Every reflection reads the sky.** `lib/reflections/sky-reading.ts` calls the look back engine for the same period and saves the result inside the report's `analysis`. A period with nothing recorded shows that reading instead of a blank state; one with records shows it as its own section. The prompt for a quiet period never mentions or explains that nothing was written (`lib/ai/reflection-sky-prompt.ts`).
+- **What counts as lived** is one rule, `isLived` in `lib/reflections/report-schema.ts`: journal entries, the member's own saved Stelloquy words, check-ins with something recorded, finished plan items, learning sessions marked done, intentions with an outcome noted, and their quarterly check-in. A period with any of these gets a written reflection. Finished plans are read as traces of where time went, never counted or scored.
+- **Returning threads.** A look back is told which skies overhead in its period the member has already journaled under (four or more entries) and which themes in the period's saved conversations have come up before (`lib/period-review/returning-threads.ts`). Only names, counts and dates go to the model, never the readings or entry text. They show under the look back as "Threads you've met before", linking to Patterns and the Mind map.
+- **Yearly Unwrapped** is the yearly reflection: a five-frame story, then the full report, with a downloadable share card (`components/reflections/UnwrappedStory.tsx`).
+
+**Reviews** (`/reviews` → `components/reviews/ReviewsTimeline.tsx`). The whole year on one line, in a Year view and a List view: months, quarters, the weeks under each month, the sky's cycles, and Unwrapped at the end. `?year=&month=` opens on a month. Requires `NEXT_PUBLIC_KIAROS_PERIOD_REVIEW`; otherwise it redirects to Reflections.
+
+**Mind map** (`/insights/mind-map` → `components/insights/StarChart.tsx`). Topics extracted from saved Stelloquy conversations, drawn as a star chart. Selecting a star shows the months it was brightest in and up to three of the conversations behind it. Needs Stelloquy access.
+
+**Quarterly check-in** (§3.7) is separate: the member writes it themselves.
+
+---
+
 ## 4. AI Architecture
 
 ### Models
@@ -330,7 +365,7 @@ Claude knows what we explicitly feed it:
 |--------|---------|
 | Natal chart (planets, houses, aspects) | Blueprint, Oracle, HD, all AI prompts |
 | Year ephemeris (daily positions) | Calendar, month briefs, transit cards |
-| Moon phase + sign + cycle phase | Journal stamps, tracker logs, today dashboard |
+| Moon phase + sign + cycle phase | Journal stamps, daily check-ins, today dashboard |
 | Retrograde periods | Blueprint push/rest arc, insights |
 | Transit aspects to natal | Today dashboard, Oracle memory, journal context |
 | Sabian symbols (Sun degree) | Month view |
@@ -343,7 +378,9 @@ Claude knows what we explicitly feed it:
 
 ---
 
-## 6. Database Schema (as of migration 0025)
+## 6. Database Schema
+
+The table below dates from migration 0025, with reflection and look-back tables added on 2026-11-10. Migration files now run to `0056`; tables added between 0026 and 0046 (commerce, plan items, funnel events, artifacts and others) are not listed here.
 
 | Table | Purpose |
 |-------|---------|
@@ -357,8 +394,13 @@ Claude knows what we explicitly feed it:
 | `user_pattern_insights` | Detected patterns (lunar, aspect, retrograde) with confidence + AI summaries |
 | `oracle_captures` | Saved conversation snippets (5000 char limit) |
 | `capture_topics` | Tags for oracle captures |
-| `daily_logs` | Daily tracker entries |
-| `tracker_metrics` | Metric definitions per user |
+| `daily_logs` | Daily check-ins: energy, mood, moon phase and sign. One row per member per day |
+| `tracker_metrics` | Unused. Left from the earlier Daily Tracker; no code reads or writes it |
+| `reflection_reports` | Weekly, monthly, quarterly and yearly reflections, with their sky reading inside `analysis` (migrations 0047, 0055) |
+| `reflection_preferences` | Timezone, automatic preparation, goal context, and the revision that marks reports out of date |
+| `reflection_feedback`, `reflection_intentions` | Corrections to a reflection's observations; intentions carried forward and their outcomes |
+| `period_reviews` | Month and quarter look backs (migration 0052) |
+| `sky_cycle_reviews` | Look backs for a single sky cycle (migration 0053) |
 | `curriculum_plans` | Generated study plans |
 | `curriculum_session_content` | Session details (objectives, resources) |
 | `curriculum_session_progress` | Completion state per user per session |
@@ -377,11 +419,14 @@ Claude knows what we explicitly feed it:
 
 | Gap | Status |
 |-----|--------|
-| **Year Unwrapped** | Not started. Q4 year-end retrospective: 8-section recap + Recharts visualizations + AI year-end letter. See `docs/architecture-v2.md` Phase 7. |
+| **Year Unwrapped charts** | Yearly Unwrapped is built as the yearly reflection (§3.16): a five-frame story, the full report, and a share card. The Recharts visualizations described in `docs/architecture-v2.md` Phase 7 are not built. |
+| **Stelloquy themes by transit** | Not built. Too few members have saved conversations for it to say anything honest yet. |
+| **Consent for check-ins and plans** | Journal entries and saved conversations have a per-item "include" switch. Check-ins, plan items and learning sessions do not; reflections read them all. |
+| **Opened vs prepared** | A week or year counts as "read" on Reviews once its reflection exists. Nothing records whether the member opened it. |
 | **Areas → Oracle wiring** | `area_goals` exists but is not pulled into Oracle's system prompt or quarterly review stats. |
 | **Areas → Quarterly Review stats** | Area goal progress not yet surfaced in QR activity stats. |
 | **Gene Keys deepening** | HD math layer validated; IQ/EQ/SQ/Core/Culture/Vocation paths not implemented. |
-| **Cycle step (onboarding)** | `/onboarding/cycle` page exists but cycle data is not used downstream in any AI prompt or tracker context. |
+| **Cycle step (onboarding)** | `/onboarding/cycle` page exists but cycle data is not used downstream in any AI prompt. |
 
 ---
 
@@ -395,6 +440,6 @@ A feature is done when:
 5. No TODOs about "real implementation" — if it's mocked, it's flagged in session notes
 
 
-### Local implementation note — 2026-09-14: Reflections and Yearly Unwrapped
+### Implementation note — Reflections and Yearly Unwrapped
 
-Monthly and quarterly period-end reflections, Yearly Unwrapped, evidence-backed synthesis, corrections and intention follow-up, opt-in scheduling, and relevance-based journal recall are implemented locally. Migration 0047_reflections.sql passed isolated PostgreSQL tests but is not applied to the configured database. These features are not yet deployed. See [the implementation and verification record](docs/planning/reflections-memory-unwrapped-plan.md) for scope, tests, limits and activation steps. Goals remain a small optional passage.
+Reflections, Yearly Unwrapped, evidence-backed synthesis, corrections and intention follow-up, scheduling, and relevance-based journal recall are deployed (see §3.16). As of 2026-11-10 the production database holds reflection reports for weeks, months and quarters, and the `period_reviews` and `sky_cycle_reviews` tables exist. The original note here, dated 2026-09-14, described them as local only. See [the implementation and verification record](docs/planning/reflections-memory-unwrapped-plan.md) for scope, tests, limits and activation steps. Goals remain a small optional passage.
