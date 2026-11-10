@@ -58,6 +58,10 @@ import {
 } from '../lib/period-review/copy.ts'
 import { sanitizePeriodReviewOutput } from '../lib/period-review/sanitize-output.ts'
 import {
+  assemblePeriodReviewSystemPrompt,
+  assemblePeriodReviewUserPrompt,
+} from '../lib/ai/period-review-system-prompt.ts'
+import {
   chipCheckIns,
   chipJournalEntries,
   chipPlans,
@@ -351,8 +355,11 @@ const chipSources = {
     significantTransits: [],
     eclipseCount: 0,
     signChangeCount: 0,
+    ingresses: [],
     text: '',
   },
+  checkIns: [],
+  intentions: [],
   planTasksCompleted: [],
   planTasksOpen: [],
   planTasksCompletedCount: 30,
@@ -361,6 +368,7 @@ const chipSources = {
   dailyLogDays: 4,
   goalsActive: 2,
   goalsCompletedInPeriod: 1,
+  goalsCompletedApproximate: false,
   journalEntryCount: 20,
   journalExcerpts: [],
   quarterBlueprintTheme: null,
@@ -387,9 +395,68 @@ assert.equal(periodReviewStorageFullLine1(), "We couldn't save this review yet. 
 assert.equal(periodReviewStorageFullLine2(), "We're adding room for more. Check back soon to save this one.")
 assert.ok(periodReviewStorageFullApiMessage().includes(periodReviewStorageFullLine1()))
 
-const systemPrompt = readFileSync(join(root, 'lib/ai/period-review-system-prompt.ts'), 'utf8')
-assert.ok(systemPrompt.includes('workshop "we" voice'))
-assert.ok(systemPrompt.includes('The sky'))
+// The look back prompt: check what the assembled prompt guarantees, not its wording at large.
+const systemPrompt = assemblePeriodReviewSystemPrompt()
+const promptRule = (n: number): string => {
+  const line = systemPrompt.split('\n').find((l) => l.startsWith(`${n}. `))
+  assert.ok(line, `look back system prompt is missing rule ${n}`)
+  return line
+}
+// Rule 1: pattern, not prophecy. No prediction, no causation.
+assert.ok(promptRule(1).includes('never predict'))
+assert.ok(promptRule(1).includes('Never say a transit caused anything'))
+// Rule 2: astrology is a lens, not an authority.
+assert.ok(promptRule(2).includes('Frame astrology as a lens'))
+// Rule 3: no instructions to the member; looking ahead is only ever a question.
+assert.ok(promptRule(3).includes('Never tell the member what they need or must do'))
+// Rule 4: nothing invented.
+assert.ok(promptRule(4).includes('Never invent feelings, events, or quotes'))
+// Rule 5: unfinished plans stay neutral.
+assert.ok(promptRule(5).includes('"still open", never "missed" or "behind"'))
+// Rule 6: house style.
+assert.ok(promptRule(6).includes('No ampersands and no em dashes'))
+// Rule 7: the JSON sections, with the member's words folded into the thread.
+for (const field of ['thread', 'sky', 'plansAndGoals', 'questionToCarry']) {
+  assert.ok(systemPrompt.includes(`   - ${field}: `), `rule 7 must describe the ${field} field`)
+}
+assert.ok(promptRule(7).includes('JSON fields'))
+assert.ok(systemPrompt.includes('Do not write an inYourWords field'))
+// Rule 9: date overlaps are described, never explained.
+assert.ok(promptRule(9).includes('No causal language'))
+// Rule 10 and 13: the question to carry is concrete and single.
+assert.ok(promptRule(10).includes('No prediction, no advice, and no causal wording'))
+assert.ok(promptRule(13).includes('a single question with one question mark'))
+// Rule 11: Stelloquy's words are never presented as the member's.
+assert.ok(promptRule(11).includes("never present those words as the member's own"))
+// Rule 12: second person. This replaced the earlier workshop "we" voice on purpose.
+assert.ok(promptRule(12).includes('Speak to the member as "you"'))
+assert.ok(promptRule(12).includes('Never use their name or refer to them in the third person'))
+assert.equal(systemPrompt.includes('"we" voice'), false)
+// Rule 14: a reading never judges the member.
+assert.ok(promptRule(14).includes("never the member's readiness, capacity, honesty or self-awareness"))
+// Rule 16: returning threads are a fact of the record, at most one, never a trait or a forecast.
+assert.ok(promptRule(16).startsWith('16. "Threads the member has met before"'))
+assert.ok(promptRule(16).includes('at most one'))
+assert.ok(promptRule(16).includes('never predict from it'))
+// The sky is read as a lens on the thread, and the prompt obeys its own house style.
+assert.ok(systemPrompt.includes('The sky is a lens on the thread, not a weather report'))
+assert.equal(/[&\u2014]/.test(systemPrompt), false, 'look back system prompt must not contain ampersands or em dashes')
+
+// The user prompt carries the returning threads block only when there is something to say.
+const returningHeading = 'Threads the member has met before (from their Patterns and Mind map):'
+const plainUserPrompt = assemblePeriodReviewUserPrompt(chipSources)
+assert.ok(plainUserPrompt.includes('Write a period look back for October 2026 (2026-10-01 through 2026-10-31)'))
+assert.equal(plainUserPrompt.includes(returningHeading), false)
+const returningUserPrompt = assemblePeriodReviewUserPrompt({
+  ...chipSources,
+  returning: {
+    patterns: [{ label: 'Mercury retrograde', entries: 6, firstSeen: '2025-03-15', lastSeen: '2026-07-20' }],
+    themes: [],
+  },
+})
+assert.ok(returningUserPrompt.includes(returningHeading))
+assert.ok(returningUserPrompt.includes('Mercury retrograde: 6 journal entries across all time'))
+assert.ok(returningUserPrompt.indexOf(returningHeading) < returningUserPrompt.indexOf('Blueprint context:'))
 
 const featureFlags = readFileSync(join(root, 'lib/feature-flags.ts'), 'utf8')
 assert.ok(featureFlags.includes('isPeriodReviewEnabled'))
