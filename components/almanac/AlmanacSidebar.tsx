@@ -75,7 +75,7 @@ const NAV: ReadonlyArray<{
     hint: 'patterns · reviews · your year',
     glyph: '◎',
     tone: K.violetDim,
-    href: '/reviews',
+    href: '/insights',
     collapsible: true,
     subItems: [
       { label: 'Reviews', href: '/reviews', hint: 'every week, month and quarter' },
