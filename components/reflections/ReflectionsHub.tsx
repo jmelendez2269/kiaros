@@ -5,6 +5,7 @@ import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflec
 import { addDays, latestClosed, localDate, periodFor, periodLabel, weekOf, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { REFLECTIONS_SEEN_EVENT } from '@/lib/reflections/notification'
 import { SkyReadingView } from '@/components/reflections/SkyReading'
 import { UnwrappedStory } from '@/components/reflections/UnwrappedStory'
 import { buildStoryFrames } from '@/lib/reflections/story'
@@ -94,6 +95,11 @@ export function ReflectionsHub({
     }
   }, [initialKind, initialStart])
   useEffect(() => { load(true).catch(e => setError(e.message)).finally(() => setLoading(false)) }, [load])
+  // Being here is looking: clear the "new reflection" notice, on screen and for next time.
+  useEffect(() => {
+    window.dispatchEvent(new Event(REFLECTIONS_SEEN_EVENT))
+    void fetch('/api/reflections', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'seen' }) }).catch(() => {})
+  }, [])
   // Refresh on return to the page so consent changes elsewhere cannot leave an old report on screen.
   useEffect(() => {
     const refresh = () => { if (!document.hidden) { setData(null); load().catch(e => setError(e.message)) } }

@@ -5,7 +5,8 @@ import { getUserProfileId } from '@/lib/ai/usage'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { preferences, reports, feedback, intentions } from '@/lib/reflections/repository'
 import { feedbackSchema } from '@/lib/reflections/report-schema'
-import { periodFor, validTimezone } from '@/lib/reflections/periods'
+import { localDate, periodFor, validTimezone, type PeriodKind } from '@/lib/reflections/periods'
+import { pickReflectionNotice } from '@/lib/reflections/notification'
 import { generateReflection, memberSince } from '@/lib/reflections/service'
 import { isJournalConsentV2Enabled } from '@/lib/feature-flags'
 export const maxDuration = 300
@@ -30,11 +31,18 @@ export async function GET(request: Request) {
   try {
     if (new URL(request.url).searchParams.get('notification') === '1') {
       const settings = await preferences(userId)
-      const result = await createAdminSupabase().from('reflection_reports').select('id')
-        .eq('user_id', userId).eq('status', 'ready').eq('revision', settings.evidence_revision)
-        .gt('first_generated_at', settings.seen_at ?? '1970-01-01T00:00:00Z').limit(1)
+      // Current reflections first prepared since the member last looked.
+      const result = await createAdminSupabase().from('reflection_reports').select('kind,period_start,period_end,status,analysis')
+        .eq('user_id', userId).in('status', ['ready', 'empty']).eq('revision', settings.evidence_revision)
+        .gt('first_generated_at', settings.seen_at ?? '1970-01-01T00:00:00Z')
+        .order('period_end', { ascending: false }).limit(60)
       if (result.error) throw new Error('Notifications unavailable')
-      return NextResponse.json({ available: Boolean(result.data?.length) }, { headers })
+      const today = localDate(new Date(), settings.timezone && validTimezone(settings.timezone) ? settings.timezone : 'UTC')
+      const notice = pickReflectionNotice((result.data ?? []).map(row => ({
+        kind: row.kind as PeriodKind, start: String(row.period_start), end: String(row.period_end), status: String(row.status),
+        hasSky: !!row.analysis && typeof row.analysis === 'object' && !!(row.analysis as Record<string, unknown>).sky,
+      })), today)
+      return NextResponse.json({ available: notice !== null, notice, today }, { headers })
     }
     const consentV2Enabled = isJournalConsentV2Enabled()
     let includedCountQuery = createAdminSupabase()
