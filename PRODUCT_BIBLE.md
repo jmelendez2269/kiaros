@@ -63,7 +63,7 @@ The user's natal chart + year ephemeris + goals are assembled into a ~600-line s
 
 Generation runs asynchronously via Next.js `after()` (5-minute max). The UI polls `/api/blueprint/status` until `status = ready`.
 
-**Models used:** Claude Sonnet 4.6 via Anthropic AI SDK (direct, not Vercel AI Gateway — see commit `e202cf6`).
+**Models used:** Claude Sonnet 4.6 via the Vercel AI SDK's Anthropic provider (`@ai-sdk/anthropic`), calling Anthropic directly and not through the Vercel AI Gateway — see commit `e202cf6`.
 
 ---
 
@@ -170,7 +170,7 @@ Users fill in wins, challenges, and pivots for the quarter. Kairos then:
 2. Shows deltas vs. the prior quarter
 3. Generates an AI summary via `quarterly-review-generator.ts` (streaming)
 
-Reviews are stored in `quarterly_reviews`. The AI runs on Claude via the Anthropic SDK.
+Reviews are stored in `quarterly_reviews`. The AI runs on Claude via the Vercel AI SDK's Anthropic provider.
 
 ---
 
@@ -333,7 +333,7 @@ Three connected surfaces under **Insights** in the sidebar. Audited 2026-11-10.
 | Capture topics | Claude (Haiku) | Simple extraction task |
 | Season read | Claude (Sonnet) | 3-month narrative synthesis |
 
-All AI calls use the Anthropic SDK directly (`@ai-sdk/anthropic`). The Vercel AI Gateway is **not used** (removed in commit `e202cf6`).
+All AI calls go through the Vercel AI SDK (`ai`) with its Anthropic provider (`@ai-sdk/anthropic`), which calls Anthropic directly. Anthropic's own SDK (`@anthropic-ai/sdk`) is installed but nothing imports it. The Vercel AI Gateway is **not used** (removed in commit `e202cf6`), with one exception: the admin card generator (`lib/admin/card-generator.ts`) uses it when running on Vercel. Checked 2026-11-10.
 
 ### Prompt architecture
 

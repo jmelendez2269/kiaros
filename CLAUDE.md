@@ -23,7 +23,7 @@ Kiaros (formerly "Cosmic Life Planner") is a personalised yearly planning system
 - Tailwind CSS (dark-mode first)
 - Clerk — auth
 - Supabase (Postgres, RLS) — data
-- Anthropic SDK (direct, no AI Gateway) — Claude Sonnet 4.6 and Haiku 4.5
+- Vercel AI SDK (`ai` with the `@ai-sdk/anthropic` provider), calling Anthropic directly — Claude Sonnet 4.6 and Haiku 4.5. Not routed through the Vercel AI Gateway, with one exception: the admin card generator (`lib/admin/card-generator.ts`) uses the Gateway when running on Vercel. `@anthropic-ai/sdk` is installed but nothing imports it
 - `astronomia` — ephemeris
 - shadcn/ui — components
 - Recharts — charts (Phase 7)
@@ -127,4 +127,4 @@ A feature is done when:
 
 ---
 
-**Last updated:** 2026-11-10 — Targeted update for the daily check-in, look backs, reflections and Insights; Daily Tracker noted as not in the code. Other sections date from the 2026-06-02 live code audit (PRODUCT_BIBLE.md created from scratch; maxDuration on blueprint/generate raised to 300; AI stack: direct Anthropic SDK, no Vercel AI Gateway).
+**Last updated:** 2026-11-10 — Targeted update for the daily check-in, look backs, reflections and Insights; Daily Tracker noted as not in the code. Other sections date from the 2026-06-02 live code audit (PRODUCT_BIBLE.md created from scratch; maxDuration on blueprint/generate raised to 300; AI stack: Vercel AI SDK with the Anthropic provider, not the AI Gateway).
