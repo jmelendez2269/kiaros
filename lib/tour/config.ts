@@ -53,9 +53,9 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'insights',
     tourTarget: 'nav-insights',
-    requiredRoute: '/reviews',
+    requiredRoute: '/insights',
     title: 'Insights',
-    body: 'Where your entries, conversations and the sky come together: a review at the end of every month and quarter, and the patterns that keep coming up.',
+    body: 'Where your entries, conversations and the sky come together: a look back at the end of every week, month and quarter, and the patterns that keep coming up.',
     cta: 'See Insights',
   },
 ]
