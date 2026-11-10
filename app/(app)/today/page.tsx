@@ -16,6 +16,9 @@ import { ActiveTransits } from '@/components/today/ActiveTransits'
 import { LifeArcRead } from '@/components/today/LifeArcRead'
 import { JupiterSeason } from '@/components/today/JupiterSeason'
 import { TodayIntention } from '@/components/today/TodayIntention'
+import { TodayCheckIn } from '@/components/today/TodayCheckIn'
+import { loadCheckIn } from '@/lib/today/check-in'
+import { EMPTY_CHECK_IN } from '@/lib/today/check-in-options'
 import { TodayCurriculum } from '@/components/today/TodayCurriculum'
 import { WeekArc } from '@/components/today/WeekArc'
 import { PlanChecklist } from '@/components/plan/PlanChecklist'
@@ -110,6 +113,7 @@ export default async function TodayPage({
     moonSign: context.today.moon.sign,
   })
   const [
+    checkIn,
     activeTransits,
     journalStreak,
     intention,
@@ -123,6 +127,8 @@ export default async function TodayPage({
     todayCurriculumSessions,
     ritualTodayRes,
   ] = await Promise.all([
+    // Optional: Today still loads if the check-in cannot be read.
+    loadCheckIn(todayDate).catch(() => EMPTY_CHECK_IN),
     getActiveTransits(todayDate, supabaseUserId),
     getJournalStreak(todayDate, supabaseUserId),
     getTodayIntention(todayDate, supabaseUserId),
@@ -206,6 +212,7 @@ export default async function TodayPage({
         {/* Left column — stacks naturally, no row-height coupling to SkyNow */}
         <div className="flex flex-col gap-4 min-w-0">
           <TodayIntention result={intention} />
+          <TodayCheckIn initial={checkIn} />
           <Frame tone="umber" padding={20}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Kicker color={K.copper}>Today&rsquo;s plan</Kicker>

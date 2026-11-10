@@ -1,7 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { auth } from '@clerk/nextjs/server'
 import { createJournalEntry } from '@/lib/journal/entry-service'
+import { requireActivePlannerAccess } from '@/lib/commerce/access'
+import { saveCheckIn } from '@/lib/today/check-in'
+import { parseCheckIn, type CheckIn } from '@/lib/today/check-in-options'
 
 const MIN_BODY_LEN = 1
 const MAX_BODY_LEN = 4000
@@ -60,4 +64,20 @@ export async function saveLineForToday(
 
   revalidatePath('/today')
   return { ok: true, entryId: result.data.id }
+}
+
+export type SaveCheckInResult = { ok: true; checkIn: CheckIn } | { ok: false; error: string }
+
+/** Server action for Today's check-in: an energy level and a mood word, either of which may be cleared. */
+export async function saveTodayCheckIn(input: { energy: number | null; mood: string | null }): Promise<SaveCheckInResult> {
+  const { userId } = await auth()
+  if (!userId) return { ok: false, error: 'Please sign in again.' }
+  const checkIn = parseCheckIn(input)
+  if (!checkIn) return { ok: false, error: 'That check-in could not be read.' }
+  if (await requireActivePlannerAccess(userId)) return { ok: false, error: 'Check-ins need an active planner.' }
+
+  const result = await saveCheckIn(checkIn)
+  if (!result.success) return { ok: false, error: result.error }
+  revalidatePath('/today')
+  return { ok: true, checkIn: result.data }
 }
