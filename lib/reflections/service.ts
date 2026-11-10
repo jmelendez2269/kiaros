@@ -7,6 +7,7 @@ import { preferences, feedback } from './repository'
 import { loadEvidence } from './load-evidence'
 import { analyzePeriod } from './analyze-period'
 import { generateReflectionContent } from '@/lib/ai/reflection-generator'
+import { generateSkyReading } from './sky-reading'
 export async function hasReflectionAccess(userId: string): Promise<boolean> {
   const admin = createAdminSupabase()
   const { data, error } = await admin.from('product_entitlements').select('*').eq('user_id', userId).neq('status', 'revoked')
@@ -54,12 +55,20 @@ export async function generateReflection(userId: string, period: ReflectionPerio
     const [evidence, history] = await Promise.all([loadEvidence(userId, period), feedback(userId)])
     const analysis = analyzePeriod(evidence, period)
     const lived = analysis.evidence.filter(e => e.authored && !['goal_event', 'task', 'intention'].includes(e.kind))
-    const generated = lived.length ? await generateReflectionContent(userId, period, analysis, history, pref.include_goals) : null
+    // The sky is read for every period, so one with nothing recorded still has something true to show.
+    // It must never cost the member the reflection written from their own words: a failure is saved as null.
+    const [generated, sky] = await Promise.all([
+      lived.length ? generateReflectionContent(userId, period, analysis, history, pref.include_goals) : null,
+      generateSkyReading(userId, period, lived.length > 0).catch(error => {
+        console.error('[reflections] sky reading unavailable:', error instanceof Error ? error.message : 'unknown error')
+        return null
+      }),
+    ])
     if (!await hasReflectionAccess(userId)) throw new Error('Planner access changed during generation')
     const { evidence: _evidence, ...coverage } = analysis
     const saved = await admin.rpc('finish_reflection', { p_user_id: userId, p_report_id: claim.id,
       p_token: claim.token, p_revision: claim.revision, p_content: generated?.content ?? null,
-      p_analysis: coverage, p_sources: generated?.sources ?? [], p_model: generated?.model ?? 'no-generation' })
+      p_analysis: { ...coverage, sky }, p_sources: generated?.sources ?? [], p_model: generated?.model ?? 'no-generation' })
     if (saved.error || saved.data !== true) throw new Error('Your source information changed. Please generate a fresh reflection.')
     return claim.id
   } catch (error) {

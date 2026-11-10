@@ -23,6 +23,18 @@ export const reportSchema = z.object({
   letter: passage.nullable(),
 })
 export type ReflectionContent = z.infer<typeof reportSchema>
+const optionalText = z.string().min(1).optional()
+/**
+ * The sky part of a reflection, written by the look back engine. Same shape
+ * as a look back's sections and source chips. Saved inside the report's
+ * analysis, so it is cleared and rewritten along with the rest of it.
+ */
+export const skyReadingSchema = z.object({
+  sections: z.object({ thread: optionalText, sky: optionalText, plansAndGoals: optionalText, inYourWords: optionalText, questionToCarry: optionalText }),
+  sourceChips: z.object({ sky: z.array(z.string()), plans: z.array(z.string()), journal: z.array(z.string()), personal: z.array(z.string()).optional() }),
+  model: z.string(),
+})
+export type SkyReading = z.infer<typeof skyReadingSchema>
 export interface Analysis {
   evidence: Evidence[]
   observedDays: number
@@ -34,7 +46,7 @@ export interface Analysis {
 export interface SavedReport {
   id: string; kind: ReflectionPeriod['kind']; period_start: string; period_end: string; timezone: string
   status: 'generating' | 'ready' | 'empty' | 'stale' | 'failed'
-  content: ReflectionContent | null; analysis: Omit<Analysis, 'evidence'> | null
+  content: ReflectionContent | null; analysis: (Omit<Analysis, 'evidence'> & { sky?: SkyReading | null }) | null
   generated_at: string | null; sources: Evidence[]; revision: number
 }
 export const preferencesSchema = z.object({

@@ -5,6 +5,7 @@ import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflec
 import { addDays, latestClosed, localDate, periodFor, periodLabel, weekOf, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { SkyReadingView } from '@/components/reflections/SkyReading'
 import { UnwrappedStory } from '@/components/reflections/UnwrappedStory'
 import { buildStoryFrames } from '@/lib/reflections/story'
 import { LookBackPreview } from '@/components/period-review/LookBackPreview'
@@ -155,9 +156,9 @@ export function ReflectionsHub({
   function withTimezone(payload: Payload): Payload[] {
     return data?.settings.timezone ? [payload] : [{ action: 'preferences', timezone: activeTimezone, automatic, include_goals: includeGoals }, payload]
   }
-  function prepare(card: { kind: PeriodKind; year: number; index: number; start: string }) {
+  function prepare(card: { kind: PeriodKind; year: number; index: number; start: string }, force = false) {
     setPendingStart(card.start)
-    void action(withTimezone({ action: 'generate', kind: card.kind, year: card.year, index: card.index }), 'Your reflection is ready.')
+    void action(withTimezone({ action: 'generate', kind: card.kind, year: card.year, index: card.index, ...(force ? { force: true } : {}) }), 'Your reflection is ready.')
   }
   function openCard(card: PeriodCard) {
     setShareOpen(false)
@@ -186,12 +187,14 @@ export function ReflectionsHub({
     } catch { setError('Your card could not be downloaded. Please try again.') }
     finally { URL.revokeObjectURL(svgUrl) }
   }
+  // No included entries yet: a note about what gets woven in, never a reason to hide the sky.
   const showEmptyState = data?.consentV2Enabled && data?.includedEntriesCount === 0
+  const sky = report?.analysis?.sky ?? null
   const content = report?.content
   const quarterlyReviewHref = journalIaEmbed ? '/journal/look-back?view=quarter' : '/year?view=review'
   const reflectionsHomeHref = journalIaEmbed ? '/journal/look-back' : '/reflections'
   const explainer = <p className={(journalIaEmbed ? 'shell-prose text-sm ' : '') + 'leading-relaxed text-bone-muted'}>
-    Kairos writes these for you from the journal entries and conversations you’ve chosen to include. Your Quarterly Review is different: that’s the one you write yourself.{' '}
+    Every look back starts with the sky you moved through, read against your own chart. Kairos weaves in the journal entries and conversations you’ve chosen to include, and a stretch with nothing recorded is still read. Your Quarterly Review is different: that’s the one you write yourself.{' '}
     <Link href={quarterlyReviewHref} className="whitespace-nowrap text-bone underline underline-offset-4">Write your Quarterly Review</Link>
   </p>
   return <div className={journalIaEmbed ? 'space-y-8 text-bone' : 'mx-auto max-w-5xl space-y-8 px-5 py-10 text-bone sm:px-8'}>
@@ -233,16 +236,17 @@ export function ReflectionsHub({
           {cards.map(card => {
             const selected = focusCard ? focusCard.key === card.key : !!report && report.period_start === card.start
             const preparing = busy && pendingStart === card.start
-            const status = preparing ? 'Preparing…' : card.state === 'available' && data.settings.automatic ? 'On its way · or prepare now' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
+            const readable = card.state === 'ready' || (card.state === 'empty' && !!card.report?.analysis?.sky)
+            const status = preparing ? 'Preparing…' : card.state === 'empty' && readable ? 'Ready to read · from the sky' : card.state === 'available' && data.settings.automatic ? 'On its way · or prepare now' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
             const clickable = !!card.report || card.state === 'available'
-            const tone = card.state === 'ready' ? 'border-amber-200/40 bg-amber-100/[.06]' : card.state === 'available' ? 'border-white/25' : clickable ? 'border-white/15' : 'border-white/10 opacity-50'
+            const tone = readable ? 'border-amber-200/40 bg-amber-100/[.06]' : card.state === 'available' ? 'border-white/25' : clickable ? 'border-white/15' : 'border-white/10 opacity-50'
             return <li key={card.key}>
               <button type="button" disabled={!clickable || busy} aria-current={selected ? 'true' : undefined}
                 aria-label={`${kind === 'week' ? periodLabel({ kind, start: card.start, end: card.end, timezone: activeTimezone }) : kind === 'month' ? `${card.label} ${card.year}` : kind === 'quarter' ? `${card.label} ${card.year}` : `${card.label} Unwrapped`}: ${status}`}
                 onClick={() => openCard(card)}
                 className={`flex h-full w-full flex-col items-start gap-1 rounded-xl border p-4 text-left transition enabled:hover:bg-white/[.06] disabled:cursor-default focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${tone} ${selected ? 'ring-2 ring-amber-200/60' : ''}`}>
                 <span className="font-display text-lg">{card.label}</span>
-                <span className={'text-xs ' + (card.state === 'ready' ? 'text-amber-100/90' : 'text-bone-muted')}>{status}</span>
+                <span className={'text-xs ' + (readable ? 'text-amber-100/90' : 'text-bone-muted')}>{status}</span>
               </button>
             </li>
           })}
@@ -262,28 +266,36 @@ export function ReflectionsHub({
           <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Save preferences</button><button type="button" className={buttonClass} onClick={() => setPrefsOpen(false)}>Cancel</button></div>
         </form>}
       </section>
-      {!showEmptyState && focusCard && (() => {
+      {focusCard && (() => {
         const label = periodLabel({ kind, start: focusCard.start, end: focusCard.end, timezone: activeTimezone })
         return <section aria-label={`Prepare ${label}`} className="space-y-5 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9">
           <header><p className="text-xs uppercase tracking-widest text-amber-200/70">Ready to prepare</p><h2 className="mt-2 font-display text-3xl">{label}</h2>
-            <p className="mt-3 text-bone-muted">This {unit} has ended. Kairos can bring together what you chose to share from it, with space for your own perspective.</p></header>
+            <p className="mt-3 text-bone-muted">This {unit} has ended. Kairos can read the sky you moved through and bring in whatever you chose to share from it.</p></header>
           {preview ? <LookBackPreview chips={preview} periodNoun={kind} /> : null}
           <button type="button" disabled={busy} className={buttonClass} onClick={() => prepare({ kind, ...focusCard })}>{busy && pendingStart === focusCard.start ? 'Preparing your reflection…' : `Reflect on ${label}`}</button>
         </section>
       })()}
-      {!showEmptyState && !report && !focusCard && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once your first ${unit} as a member has ended, it will be ready here.`} We’ll bring together the information you chose to share, with space for your own perspective.</p></div>}
-      {!showEmptyState && report && content && kind === 'year' && <UnwrappedStory frames={buildStoryFrames(content, report.analysis, report.sources)}
+      {!report && !focusCard && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once your first ${unit} as a member has ended, it will be ready here.`} We’ll read the sky you moved through and bring in whatever you chose to share.</p></div>}
+      {report && content && kind === 'year' && <UnwrappedStory frames={buildStoryFrames(content, report.analysis, report.sources)}
         title={`${report.period_start.slice(0, 4)}, unwrapped`}
         lede={`Written for you from the ${report.analysis?.observedDays ?? 0} days you recorded and the conversations you chose to include. Start with the story, or skip to the full report.`}
         reportAnchor="unwrapped-report" onShare={openShare} />}
-      {!showEmptyState && report && <article id={kind === 'year' ? 'unwrapped-report' : undefined} className="scroll-mt-6 space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
-        <header className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'The full report' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
-          {report.analysis && <p className="mt-3 text-sm text-bone-muted">Based on {report.analysis.observedDays} recorded days across {report.analysis.totalDays} calendar days. Unrecorded days are unknown.</p>}
+      {report && <article id={kind === 'year' ? 'unwrapped-report' : undefined} className="scroll-mt-6 space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
+        <header className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'The full report' : report.status === 'empty' && sky ? 'A look back, read from the sky' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
+          {report.analysis && <p className="mt-3 text-sm text-bone-muted">{report.analysis.observedDays === 0 && sky
+            ? `Nothing of yours is on record for these ${report.analysis.totalDays} days, so this reads the sky and your chart.`
+            : `Based on ${report.analysis.observedDays} recorded days across ${report.analysis.totalDays} calendar days. Unrecorded days are unknown.`}</p>}
           {report.generated_at && <p className="mt-1 text-xs text-bone-muted">Prepared {new Date(report.generated_at).toLocaleDateString()} · Private</p>}
           </div>
           {kind === 'year' && content ? <button type="button" className={buttonClass} onClick={openShare}>Download a share card</button> : null}
         </header>
-        {report.status === 'empty' && <div className="space-y-3"><p>There isn’t enough shared information to write a grounded reflection for this period yet.</p><p className="text-bone-muted">What stayed with you? What gave you room to breathe? What would you like to carry forward?</p><Link href="/journal" className="underline">Make space for a journal entry</Link></div>}
+        {report.status === 'empty' && sky && <SkyReadingView reading={sky} unit={kind} quiet />}
+        {report.status === 'empty' && !sky && <div className="space-y-3"><p>Nothing of yours is on record for this {unit}, and its sky has not been read yet.</p>
+          <div className="flex flex-wrap items-center gap-4"><button type="button" disabled={busy} className={buttonClass} onClick={() => {
+            const m = Number(report.period_start.slice(5,7)), w = weekOf(report.period_start)
+            prepare({ kind: report.kind, year: report.kind === 'week' ? w.year : Number(report.period_start.slice(0,4)), index: report.kind === 'week' ? w.index : report.kind === 'month' ? m : report.kind === 'quarter' ? Math.ceil(m/3) : 1, start: report.period_start }, true)
+          }}>{busy && pendingStart === report.period_start ? 'Reading the sky…' : `Read the sky for this ${unit}`}</button>
+          <Link href="/journal" className="underline underline-offset-4">Or make space for a journal entry</Link></div></div>}
         {['stale','failed','generating'].includes(report.status) && <div className="space-y-3"><p>{report.status === 'generating' ? 'Your reflection is being prepared.' : report.status === 'stale' ? 'Your information has changed. Refresh this reflection to include your latest choices.' : 'This reflection could not be completed. You can try again.'}</p>
           <button type="button" disabled={busy} className={buttonClass} onClick={() => {
             const month = Number(report.period_start.slice(5,7))
@@ -291,7 +303,7 @@ export function ReflectionsHub({
           }}>Refresh reflection</button></div>}
         {content && <div className={kind === 'year' ? 'grid gap-10 lg:grid-cols-[190px_minmax(0,1fr)]' : 'space-y-7'}>
           {kind === 'year' ? <nav aria-label="Report sections" className="hidden lg:block"><ol className="sticky top-6 space-y-1 border-l border-white/10 pl-4 text-sm" style={{ listStyle: 'none' }}>
-            {[['opening', 'Opening', true], ['chapters', 'Chapters of your year', !!report.analysis], ['moments', 'Moments that mattered', content.moments.length > 0], ['rhythms', 'Rhythms and rest', !!content.rhythms],
+            {[['opening', 'Opening', true], ['chapters', 'Chapters of your year', !!report.analysis], ['moments', 'Moments that mattered', content.moments.length > 0], ['sky', 'The sky you moved through', !!sky], ['rhythms', 'Rhythms and rest', !!content.rhythms],
               ['showed-up', 'What showed up', content.observations.length > 0], ['turning', 'Turning points', !!content.turningPoints], ['discoveries', 'Connections', !!content.discoveries],
               ['next', 'What comes next', true], ['letter', 'A letter', !!content.letter], ['share', 'Share a moment', true]]
               .filter(([, , on]) => on).map(([id, label]) => <li key={String(id)}><a href={`#reflection-${id}`} className="block py-1.5 text-bone-muted hover:text-bone">{label}</a></li>)}
@@ -305,6 +317,7 @@ export function ReflectionsHub({
             <ChapterBars months={report.analysis.months} />
           </section> : null}
           {!!content.moments.length && <section id="reflection-moments" className="scroll-mt-6 space-y-4"><h3 className="font-display text-2xl">Moments that mattered</h3>{content.moments.map((p,i) => <PassageView key={i} passage={p} report={report} />)}</section>}
+          {sky && <SkyReadingView reading={sky} unit={kind} quiet={false} />}
           {content.rhythms && <section id="reflection-rhythms" className="scroll-mt-6 space-y-3"><h3 className="font-display text-2xl">Rhythms and rest</h3><PassageView passage={content.rhythms} report={report} /></section>}
           {!!content.observations.length && <section id="reflection-showed-up" className="scroll-mt-6 space-y-5"><h3 className="font-display text-2xl">What showed up</h3>{content.observations.map(o => <div key={o.key} className="space-y-3 border-l border-amber-200/30 pl-4">
             <p className="text-xs uppercase tracking-widest text-bone-muted">{o.kind.replace(/_/g,' ')}</p><PassageView passage={{ text: o.text, sources: [...new Set([...o.sources, ...o.contradictingSources])] }} report={report} />

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { getUserProfileId } from '@/lib/ai/usage'
-import { periodFor, type PeriodReviewPeriod } from '@/lib/period-review/periods'
-import { addDays, periodFor as reflectionPeriodFor } from '@/lib/reflections/periods'
+import type { PeriodReviewPeriod } from '@/lib/period-review/periods'
+import { periodFor as reflectionPeriodFor } from '@/lib/reflections/periods'
+import { lookBackWindow } from '@/lib/reflections/sky-window'
 import { loadLookBackPreview } from '@/lib/period-review/preview'
 import { todayISO } from '@/lib/today/get-today-context'
 
@@ -15,16 +16,7 @@ const querySchema = z.object({
 
 /** The window a reflection covers. A year uses the whole calendar year; a week runs Monday to Sunday. */
 function windowFor(kind: 'week' | 'month' | 'quarter' | 'year', year: number, index: number): PeriodReviewPeriod {
-  if (kind === 'week') {
-    // The preview only reads counts and named transits over the date range.
-    const week = reflectionPeriodFor('week', year, index, 'UTC')
-    return { kind: 'month', periodStart: week.start, periodEnd: addDays(week.end, -1), planYear: year, index: 1 }
-  }
-  if (kind === 'year') {
-    // The preview only reads counts and named transits over the date range.
-    return { kind: 'month', periodStart: `${year}-01-01`, periodEnd: `${year}-12-31`, planYear: year, index: 1 }
-  }
-  return periodFor(kind, year, kind === 'quarter' ? Math.min(index, 4) : index)
+  return lookBackWindow(reflectionPeriodFor(kind, year, kind === 'quarter' ? Math.min(index, 4) : index, 'UTC'))
 }
 
 /** What a reflection will draw on, before it's prepared. No model call. */
