@@ -4,6 +4,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { assertClosed, type ReflectionPeriod } from './periods'
 import { preferences, feedback } from './repository'
+import { isLived } from './report-schema'
 import { loadEvidence } from './load-evidence'
 import { analyzePeriod } from './analyze-period'
 import { generateReflectionContent } from '@/lib/ai/reflection-generator'
@@ -54,7 +55,7 @@ export async function generateReflection(userId: string, period: ReflectionPerio
   try {
     const [evidence, history] = await Promise.all([loadEvidence(userId, period), feedback(userId)])
     const analysis = analyzePeriod(evidence, period)
-    const lived = analysis.evidence.filter(e => e.authored && !['goal_event', 'task', 'intention'].includes(e.kind))
+    const lived = analysis.evidence.filter(isLived)
     // The sky is read for every period, so one with nothing recorded still has something true to show.
     // It must never cost the member the reflection written from their own words: a failure is saved as null.
     const [generated, sky] = await Promise.all([

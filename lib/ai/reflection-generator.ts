@@ -11,9 +11,10 @@ const BATCH_MODEL = 'claude-haiku-4-5'
 const batchSchema = z.object({ notes: z.array(z.object({ text: z.string().max(800), sources: z.array(z.string()).min(1).max(60) })).max(10) })
 export async function generateReflectionContent(userId: string, period: ReflectionPeriod, analysis: Analysis, history: Feedback[], includeGoals: boolean) {
   const goalIds = includeGoals ? [...new Set(analysis.evidence.flatMap(e => e.goalId ? [e.goalId] : []))].slice(0, 2) : []
-  const evidence = analysis.evidence.filter(e => !e.goalId || goalIds.includes(e.goalId))
-  const lived = evidence.filter(e => !e.goalId)
-  const goals = evidence.filter(e => e.goalId)
+  const evidence = analysis.evidence.filter(e => !e.goalId || goalIds.includes(e.goalId) || e.kind === 'task')
+  // A finished plan is something the member did, whether or not it sits under a goal. It joins this pass without the goal link.
+  const lived = evidence.filter(e => !e.goalId || e.kind === 'task').map(e => e.goalId ? { ...e, goalId: null } : e)
+  const goals = evidence.filter(e => e.goalId && goalIds.includes(e.goalId))
   const notes: z.infer<typeof batchSchema>['notes'] = []
   // Every eligible record enters a bounded batch; no recent-only sampling.
   if (lived.length > 60) {

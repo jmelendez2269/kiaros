@@ -4,8 +4,21 @@ export const evidenceSchema = z.object({
   id: z.string(), kind: z.enum(['journal', 'log', 'capture', 'review', 'session', 'task', 'goal_event', 'intention']),
   date: z.string(), recordedAt: z.string(), title: z.string(), text: z.string(),
   goalId: z.string().nullable(), authored: z.boolean(),
+  /** Set when the record is loaded. Absent on sources saved before 2026-11, which fall back to the old rule. */
+  lived: z.boolean().optional(),
 })
 export type Evidence = z.infer<typeof evidenceSchema>
+/**
+ * Whether a record is a trace of the member's own time: something they
+ * wrote, logged or finished. A period with any of these gets a reflection.
+ * A plan left open, a goal's status, an intention with no follow-up and
+ * saved Stelloquy advice are context, not lived.
+ */
+export function isLived(e: Evidence): boolean {
+  return e.lived ?? (e.authored && !['task', 'goal_event', 'intention'].includes(e.kind))
+}
+/** Kinds where the same words on two days are two things that happened, not one thing saved twice. */
+export const REPEATABLE_KINDS: Evidence['kind'][] = ['task', 'session', 'log', 'goal_event', 'intention']
 const passage = z.object({ text: z.string().min(1).max(3000), sources: z.array(z.string()).min(1).max(90) })
 export const reportSchema = z.object({
   opening: passage,

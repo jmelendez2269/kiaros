@@ -194,7 +194,7 @@ export function ReflectionsHub({
   const quarterlyReviewHref = journalIaEmbed ? '/journal/look-back?view=quarter' : '/year?view=review'
   const reflectionsHomeHref = journalIaEmbed ? '/journal/look-back' : '/reflections'
   const explainer = <p className={(journalIaEmbed ? 'shell-prose text-sm ' : '') + 'leading-relaxed text-bone-muted'}>
-    Every look back starts with the sky you moved through, read against your own chart. Kairos weaves in the journal entries and conversations you’ve chosen to include, and a stretch with nothing recorded is still read. Your Quarterly Review is different: that’s the one you write yourself.{' '}
+    Every look back starts with the sky you moved through, read against your own chart. Kairos weaves in the journal entries and conversations you’ve chosen to include, along with the plans and sessions you finished and your check-ins. A stretch with nothing recorded is still read. Your Quarterly Review is different: that’s the one you write yourself.{' '}
     <Link href={quarterlyReviewHref} className="whitespace-nowrap text-bone underline underline-offset-4">Write your Quarterly Review</Link>
   </p>
   return <div className={journalIaEmbed ? 'space-y-8 text-bone' : 'mx-auto max-w-5xl space-y-8 px-5 py-10 text-bone sm:px-8'}>
@@ -262,7 +262,7 @@ export function ReflectionsHub({
           <p className="text-sm text-bone-muted">Your months and quarters close at midnight in this timezone.</p>
           <label className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={automatic} onChange={e => setAutomatic(e.target.checked)} /><span>Prepare reflections automatically after each week, month, quarter and year ends, including any you missed since you joined.</span></label>
           <label className="flex items-start gap-3"><input type="checkbox" className="mt-1" checked={includeGoals} onChange={e => setIncludeGoals(e.target.checked)} /><span>Include a little goal context when it connects to my experience.</span></label>
-          <p className="text-sm text-bone-muted">Only journal entries and saved conversations you allow in Insights are included. Your reports stay private.</p>
+          <p className="text-sm text-bone-muted">Only journal entries and saved conversations you allow in Insights are included. Plans and learning sessions you finished and your check-ins are read too. Your reports stay private.</p>
           <div className="flex flex-wrap gap-3"><button disabled={busy} className={buttonClass}>Save preferences</button><button type="button" className={buttonClass} onClick={() => setPrefsOpen(false)}>Cancel</button></div>
         </form>}
       </section>
