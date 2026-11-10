@@ -12,6 +12,15 @@ export interface MapNode {
   label: string
   count: number
   sampleCaptureIds: string[]
+  /** Up to three months (YYYY-MM) when it came up most, busiest first. */
+  months: Array<{ month: string; count: number }>
+}
+
+/** A saved conversation behind a star, for the stars the chart can show. */
+export interface MapExcerpt {
+  date: string
+  whose: 'member' | 'stelloquy'
+  text: string
 }
 
 export interface MapEdge {
@@ -24,6 +33,8 @@ export interface MapResponse {
   nodes: MapNode[]
   edges: MapEdge[]
   captureCount: number
+  /** By capture id. Only for the sample captures of the most frequent stars. */
+  excerpts: Record<string, MapExcerpt>
 }
 
 interface CaptureTopicRow {
@@ -31,6 +42,10 @@ interface CaptureTopicRow {
   kind: CaptureTopicKind
   label: string
 }
+
+/** Enough to cover every star the chart can draw (8 themes and 7 of each other kind), with room to spare. */
+const EXCERPT_NODES = 60
+const EXCERPTS_PER_NODE = 3
 
 function nodeId(kind: CaptureTopicKind, label: string): string {
   return `${kind}:${label}`
@@ -92,6 +107,7 @@ export async function GET(request: Request) {
           label: t.label,
           count: 1,
           sampleCaptureIds: [captureId],
+          months: [],
         })
       }
     }
@@ -113,10 +129,49 @@ export async function GET(request: Request) {
     }
   }
 
+  const nodes = Array.from(nodeMap.values()).sort((a, b) => b.count - a.count)
+
+  // When each conversation was saved, to say which months a star was brightest in.
+  const { data: captureDates } = await supabase.from('oracle_captures').select('id, created_at').order('created_at', { ascending: false }).limit(5000)
+  const monthByCapture = new Map((captureDates ?? []).map((c) => [String(c.id), String(c.created_at).slice(0, 7)]))
+  const monthCounts = new Map<string, Map<string, number>>()
+  for (const [captureId, topics] of byCapture.entries()) {
+    const month = monthByCapture.get(captureId)
+    if (!month) continue
+    for (const id of new Set(topics.map((t) => nodeId(t.kind, t.label)))) {
+      const counts = monthCounts.get(id) ?? new Map<string, number>()
+      counts.set(month, (counts.get(month) ?? 0) + 1)
+      monthCounts.set(id, counts)
+    }
+  }
+  for (const node of nodes) {
+    node.months = [...(monthCounts.get(node.id) ?? new Map<string, number>()).entries()]
+      .map(([month, count]) => ({ month, count }))
+      .sort((a, b) => b.count - a.count || b.month.localeCompare(a.month))
+      .slice(0, 3)
+  }
+
+  // A few of the member's own saved conversations behind the stars the chart shows.
+  const excerptIds = [...new Set(nodes.slice(0, EXCERPT_NODES).flatMap((n) => n.sampleCaptureIds.slice(0, EXCERPTS_PER_NODE)))]
+  const excerpts: Record<string, MapExcerpt> = {}
+  if (excerptIds.length) {
+    const { data: captures } = await supabase.from('oracle_captures').select('id, captured_text, source_role, created_at').in('id', excerptIds)
+    for (const c of captures ?? []) {
+      const text = String(c.captured_text ?? '').replace(/\s+/g, ' ').trim()
+      if (!text) continue
+      excerpts[String(c.id)] = {
+        date: String(c.created_at).slice(0, 10),
+        whose: c.source_role === 'user' ? 'member' : 'stelloquy',
+        text: text.length > 180 ? `${text.slice(0, 177)}…` : text,
+      }
+    }
+  }
+
   const response: MapResponse = {
-    nodes: Array.from(nodeMap.values()).sort((a, b) => b.count - a.count),
+    nodes,
     edges: Array.from(edgeMap.values()).sort((a, b) => b.weight - a.weight),
     captureCount: byCapture.size,
+    excerpts,
   }
 
   return NextResponse.json(response)

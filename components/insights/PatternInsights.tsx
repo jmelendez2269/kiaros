@@ -6,6 +6,7 @@ import {
 import type { Json, Tables } from '@/types/database'
 import { PatternConstellations, PatternYearStrips, StripLegend, YearStrip, type SkyPattern } from './PatternSky'
 import { patternTitle, TYPE_COLOR } from '@/lib/insights/pattern-sky'
+import { monthLabel, monthReviewHref } from '@/lib/insights/star-chart'
 
 export type PatternRow = Pick<
   Tables<'user_pattern_insights'>,
@@ -141,6 +142,27 @@ function PatternRead({ pattern }: { pattern: PatternRow }) {
   return <p className="text-sm leading-7 text-bone-muted">{pattern.summary}</p>
 }
 
+/** The months this pattern's entries fall in, newest first, each opening that month in Reviews. */
+function PatternMonths({ evidence }: { evidence: EvidenceEntry[] }) {
+  const months = [...new Set(evidence.map((e) => e.entry_date.slice(0, 7)))].sort().reverse().slice(0, 6)
+  if (!months.length) return null
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs uppercase tracking-[0.16em] text-bone-muted/55">You wrote under it in</span>
+      {months.map((month) => (
+        <Link
+          key={month}
+          href={monthReviewHref(month)}
+          aria-label={`${monthLabel(month)}: open that month in Reviews`}
+          className="rounded-full border border-border/70 px-3 py-1 text-xs text-bone transition-colors hover:border-bone/40"
+        >
+          {monthLabel(month)}
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 type StripContext = { year: number; today: string; skyDaysByPatternId: Record<string, string[]> }
 
 function PatternStrip({ pattern, strip, legend }: { pattern: PatternRow; strip: StripContext; legend?: boolean }) {
@@ -186,6 +208,8 @@ function FeaturedPattern({
       </header>
 
       <PatternStrip pattern={pattern} strip={strip} legend />
+
+      <PatternMonths evidence={evidence} />
 
       <p className="text-sm text-bone-muted">An observation from your recorded entries, not a measure of certainty.</p>
 

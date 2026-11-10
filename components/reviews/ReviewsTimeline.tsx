@@ -42,7 +42,7 @@ function stateLabel(state: ReviewState, closesOn: string): string {
  * Reviews, one year at a time. Year view: the whole year on one line with the
  * sky underneath. List view: month by month down a spine, the sky beside each.
  */
-export function ReviewsTimeline({ timeline }: { timeline: YearTimeline }) {
+export function ReviewsTimeline({ timeline, initialMonth }: { timeline: YearTimeline; /** 1..12: the month to open on. */ initialMonth?: number }) {
   const router = useRouter()
   const { openPeriodReview, statusNonce } = usePeriodReview()
   const [view, setView] = useState<View>('year')
@@ -92,24 +92,24 @@ export function ReviewsTimeline({ timeline }: { timeline: YearTimeline }) {
         ) : null}
       </div>
       {view === 'year'
-        ? <YearView timeline={timeline} openMonth={openMonth} openQuarter={openQuarter} />
-        : <ListView timeline={timeline} openMonth={openMonth} openQuarter={openQuarter} />}
+        ? <YearView timeline={timeline} openMonth={openMonth} openQuarter={openQuarter} initialMonth={initialMonth} />
+        : <ListView timeline={timeline} openMonth={openMonth} openQuarter={openQuarter} initialMonth={initialMonth} />}
     </div>
   )
 }
 
-type ViewProps = { timeline: YearTimeline; openMonth: (m: TimelineMonth) => void; openQuarter: (index: number) => void }
+type ViewProps = { timeline: YearTimeline; openMonth: (m: TimelineMonth) => void; openQuarter: (index: number) => void; initialMonth?: number }
 
 /* ───────────────────────── Year view: the sky river ───────────────────────── */
 
 const W = 1032, R = 916
 
-function YearView({ timeline, openMonth, openQuarter }: ViewProps) {
+function YearView({ timeline, openMonth, openQuarter, initialMonth }: ViewProps) {
   const { year, today, months, quarters, weeks, sky } = timeline
   // The week that most recently closed, while it is still the latest one.
   const lastWeek = [...weeks].reverse().find(w => w.state === 'read' || w.state === 'ready')
   const ended = months.filter(m => m.state === 'read' || m.state === 'ready')
-  const [selected, setSelected] = useState<number>(ended.at(-1)?.index ?? months.find(m => m.state === 'open')?.index ?? 1)
+  const [selected, setSelected] = useState<number>(initialMonth ?? ended.at(-1)?.index ?? months.find(m => m.state === 'open')?.index ?? 1)
   const length = daysInYear(year)
   const x = (date: string) => ((Math.min(Math.max(dayOfYear(date), 1), length + 1) - 1) / length) * R
   const clampStart = (d: string) => (d < `${year}-01-01` ? `${year}-01-01` : d)
@@ -324,7 +324,11 @@ function UnwrappedCap({ timeline, cy }: { timeline: YearTimeline; cy: number }) 
 
 /* ───────────────────────── List view: the almanac spine ───────────────────────── */
 
-function ListView({ timeline, openMonth, openQuarter }: ViewProps) {
+function ListView({ timeline, openMonth, openQuarter, initialMonth }: ViewProps) {
+  // Arriving for one month: bring it into view.
+  useEffect(() => {
+    if (initialMonth) document.getElementById(`review-month-${initialMonth}`)?.scrollIntoView({ block: 'center' })
+  }, [initialMonth])
   const { year, today, months, quarters, weeks, sky, unwrapped } = timeline
   const isThisYear = today.slice(0, 4) === String(year)
   return (
@@ -355,7 +359,7 @@ function ListView({ timeline, openMonth, openQuarter }: ViewProps) {
                 const clickableMonth = m.state === 'read' || m.state === 'ready'
                 const isCurrent = isThisYear && m.state === 'open'
                 return (
-                  <li key={m.index} className="grid gap-2 sm:grid-cols-[1fr_56px_1fr] sm:items-center">
+                  <li key={m.index} id={`review-month-${m.index}`} className="grid scroll-mt-24 gap-2 sm:grid-cols-[1fr_56px_1fr] sm:items-center">
                     <div className="grid gap-2">
                     <button type="button" disabled={!clickableMonth} onClick={() => openMonth(m)}
                       className="flex items-center gap-4 rounded-2xl px-4 py-3 text-left disabled:cursor-default"

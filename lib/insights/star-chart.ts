@@ -5,7 +5,7 @@
 
 export type TopicKind = 'theme' | 'natal_aspect' | 'transit_aspect' | 'hd_element' | 'mood'
 
-export interface ChartNode { id: string; kind: TopicKind; label: string; count: number }
+export interface ChartNode { id: string; kind: TopicKind; label: string; count: number; sampleCaptureIds?: string[]; months?: Array<{ month: string; count: number }> }
 export interface ChartEdge { source: string; target: string; weight: number }
 export interface PlacedStar extends ChartNode { x: number; y: number; magnitude: 1 | 2 | 3 }
 
@@ -86,4 +86,14 @@ export function rangeStart(range: '30d' | 'quarter' | 'year', today: string): st
   if (range === '30d') { d.setUTCDate(d.getUTCDate() - 29); return d.toISOString().slice(0, 10) }
   if (range === 'quarter') return `${today.slice(0, 4)}-${String(Math.floor(d.getUTCMonth() / 3) * 3 + 1).padStart(2, '0')}-01`
   return `${today.slice(0, 4)}-01-01`
+}
+
+/** "Oct 2026" for a YYYY-MM month. */
+export function monthLabel(month: string): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-15T12:00:00Z`))
+}
+
+/** That month on the Reviews timeline. */
+export function monthReviewHref(month: string): string {
+  return `/reviews?year=${month.slice(0, 4)}&month=${Number(month.slice(5, 7))}`
 }

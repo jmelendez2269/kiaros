@@ -6,6 +6,8 @@ import { summarizeSkyForPeriod } from './sky-for-period'
 import { majorTransitsForWindow, type MajorTransits } from '@/lib/sky-cycles/load'
 import { quarterForMonth, type PeriodReviewPeriod } from './periods'
 import type { PeriodSkySummary } from './sky-for-period'
+import { loadReturningThreads } from './load-returning-threads'
+import type { ReturningThreads } from './returning-threads'
 
 function sampleEntriesEvenly<T extends { entry_date: string; body: string }>(
   entries: T[],
@@ -99,6 +101,8 @@ export interface PeriodReviewSourceBundle {
   captureExcerpts?: PeriodCaptureExcerpt[]
   /** Named major transits in the window: to the member's chart, and collective. */
   majorTransits?: MajorTransits
+  /** Skies and themes in this period that the member has met before. Absent when they could not be loaded. */
+  returning?: ReturningThreads
   quarterBlueprintTheme: string | null
   monthBlueprintTheme: string | null
 }
@@ -210,6 +214,11 @@ export async function loadPeriodReviewSources(
 
   const ephemeris = (ephemerisRes.data?.data ?? null) as import('@/types/blueprint').YearEphemeris | null
   const sky = summarizeSkyForPeriod(ephemeris, period)
+  // Optional colour: a look back is still written when this cannot be read.
+  const returning = await loadReturningThreads(userId, period, ephemeris?.days ?? []).catch((error) => {
+    console.error('[period-review] returning threads unavailable:', error instanceof Error ? error.message : 'unknown error')
+    return undefined
+  })
 
   const planRows = planItemsRes.data ?? []
   const planTasksCompletedCount = planRows.filter((r) => r.completed_at).length
@@ -284,6 +293,7 @@ export async function loadPeriodReviewSources(
     captureCount: captureRows.length,
     captureExcerpts,
     majorTransits,
+    returning,
     quarterBlueprintTheme: quarterBlueprint?.theme ?? null,
     monthBlueprintTheme: monthBlueprint?.theme ?? null,
   }
