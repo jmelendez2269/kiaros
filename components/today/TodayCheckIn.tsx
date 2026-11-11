@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { Frame, K, Kicker } from '@/components/almanac'
 import { saveTodayCheckIn } from '@/app/(app)/today/actions'
@@ -25,7 +26,7 @@ function pill(active: boolean) {
  * the chosen one again clears it. It feeds look backs and Stelloquy; nothing
  * here is scored or counted.
  */
-export function TodayCheckIn({ initial }: { initial: CheckIn }) {
+export function TodayCheckIn({ initial, rhythm = null }: { initial: CheckIn; /** What earlier check-ins say about today's moon phase. Shown only once today's is noted, so it never colours the answer. */ rhythm?: string | null }) {
   const [checkIn, setCheckIn] = useState<CheckIn>(initial)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -85,6 +86,15 @@ export function TodayCheckIn({ initial }: { initial: CheckIn }) {
           </div>
         </div>
       </div>
+
+      {rhythm && summary ? (
+        <p style={{ margin: '14px 0 0', paddingTop: 12, borderTop: `1px solid ${K.line}`, fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 15.5, lineHeight: 1.5, color: K.ink }}>
+          {rhythm}{' '}
+          <Link href="/insights/map" style={{ fontFamily: K.fBody, fontStyle: 'normal', fontSize: 12.5, color: K.copperHi, textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
+            Under each moon →
+          </Link>
+        </p>
+      ) : null}
 
       {error ? (
         <p role="alert" style={{ margin: '12px 0 0', fontSize: 13, color: '#E8A0A0' }}>{error}</p>

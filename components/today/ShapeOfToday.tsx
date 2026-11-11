@@ -1,10 +1,14 @@
+import Link from 'next/link'
 import { K, Kicker } from '@/components/almanac'
+import { patternHref, timesWritten, type HomePattern } from '@/lib/insights/home'
 import type { ShapeOfToday, ShapeTone } from '@/lib/today/shape-of-today'
 
 interface Props {
   shape: ShapeOfToday
   isoWeek: number
   dayOfYear: number
+  /** Moon and retrograde skies overhead today that the member has written under before. */
+  writtenUnder?: HomePattern[]
 }
 
 const TONE_TO_COLOR: Record<ShapeTone['toneKey'], string> = {
@@ -60,7 +64,7 @@ function ToneCard({ tone }: { tone: ShapeTone }) {
   )
 }
 
-export function ShapeOfTodayCards({ shape, isoWeek, dayOfYear }: Props) {
+export function ShapeOfTodayCards({ shape, isoWeek, dayOfYear, writtenUnder = [] }: Props) {
   return (
     <div>
       <div
@@ -88,6 +92,24 @@ export function ShapeOfTodayCards({ shape, isoWeek, dayOfYear }: Props) {
         <ToneCard tone={shape.voice} />
         <ToneCard tone={shape.body} />
       </div>
+      {writtenUnder.length ? (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${K.line}` }}>
+          <div style={{ fontFamily: K.fMono, fontSize: 10.5, color: K.inkDim, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+            A sky you&rsquo;ve written under before
+          </div>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'flex', flexWrap: 'wrap', gap: '6px 18px' }}>
+            {writtenUnder.map((pattern) => (
+              <li key={pattern.label} style={{ fontSize: 14, color: K.inkDim }}>
+                <span aria-hidden style={{ fontFamily: K.fSerif, color: K.violetDim, marginRight: 6 }}>{pattern.glyph}</span>
+                <Link href={patternHref(pattern.id)} style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 16, color: K.ink, textDecoration: 'underline', textDecorationColor: K.lineHi, textUnderlineOffset: 3 }}>
+                  {pattern.label}
+                </Link>
+                {' · '}{timesWritten(pattern.entries)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   )
 }
