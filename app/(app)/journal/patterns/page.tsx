@@ -10,6 +10,7 @@ import { loadPatternsPageData } from '@/lib/journal/load-patterns-page-data'
 import { resolvePatternsSubView } from '@/lib/journal/ia-journal-routes'
 import { isIaJournalEnabled } from '@/lib/feature-flags'
 import { BRAND } from '@/lib/brand'
+import { PageHints } from '@/components/tour/PageHints'
 
 export const metadata = {
   title: `Patterns — ${BRAND.product}`,
@@ -86,6 +87,7 @@ export default async function JournalPatternsPage({
             ← Write
           </Link>
         </header>
+        {subView === 'patterns' ? <PageHints page="patterns" /> : null}
         {content}
         {subView === 'patterns' ? <CheckInRhythms /> : null}
       </InsightsPollingShell>

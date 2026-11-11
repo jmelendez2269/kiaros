@@ -20,6 +20,7 @@ import { InsightsTabs } from '@/components/insights/InsightsTabs'
 import { InsightsPollingShell } from '@/components/journal/InsightsPollingShell'
 import { DEFAULT_VOICE_KEY, VOICE_PRESETS } from '@/lib/ai/journal-insight-synthesis'
 import { BRAND } from '@/lib/brand'
+import { PageHints } from '@/components/tour/PageHints'
 import { isIaJournalEnabled, isJournalConsentV2Enabled, isMemoryDefaultsEnabled } from '@/lib/feature-flags'
 import { redirect } from 'next/navigation'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
@@ -167,6 +168,8 @@ export default async function PatternsPage() {
             </Link>
           </div>
         </header>
+
+        <PageHints page="patterns" />
 
         <InsightsTabs
           counts={{

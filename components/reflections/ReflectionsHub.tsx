@@ -5,6 +5,7 @@ import type { Feedback, Intention, Preferences, SavedReport } from '@/lib/reflec
 import { addDays, latestClosed, localDate, periodFor, periodLabel, weekOf, type PeriodKind } from '@/lib/reflections/periods'
 import { reflectionShareCard } from '@/lib/reflections/share-card'
 import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
+import { PageHints } from '@/components/tour/PageHints'
 import { REFLECTIONS_SEEN_EVENT } from '@/lib/reflections/notification'
 import { SkyReadingView } from '@/components/reflections/SkyReading'
 import { UnwrappedStory } from '@/components/reflections/UnwrappedStory'
@@ -225,6 +226,7 @@ export function ReflectionsHub({
         {explainer}
       </header>
     )}
+    <PageHints page="reflections" />
     {showEmptyState && <ConsentEmptyState variant="reflections" />}
     {!journalIaEmbed ? (
       <nav aria-label="Reflection periods" className="flex flex-wrap gap-2">

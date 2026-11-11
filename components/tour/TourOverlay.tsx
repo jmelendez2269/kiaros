@@ -8,6 +8,7 @@ import {
   TOUR_RESTART_EVENT,
   getTourState,
   setTourState,
+  tourTargets,
   type TourState,
 } from '@/lib/tour/config'
 import { K } from '@/components/almanac/tokens'
@@ -33,11 +34,14 @@ export function TourOverlay() {
     setLocal(next)
   }, [])
 
-  const attachSpotlight = useCallback((target: string) => {
+  const attachSpotlight = useCallback((targets: string[]) => {
     cleanupRef.current?.()
 
     function measure() {
-      const el = document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null
+      // The first target that is on screen: a sub-item may sit inside a closed section.
+      const el = targets
+        .map((target) => document.querySelector(`[data-tour="${target}"]`) as HTMLElement | null)
+        .find((candidate) => candidate && candidate.getBoundingClientRect().width > 0) ?? null
       if (!el) { setSpot(null); return }
       const r = el.getBoundingClientRect()
       setSpot({ left: r.left - PAD, top: r.top - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 })
@@ -63,14 +67,14 @@ export function TourOverlay() {
       const fresh: TourState = { active: true, step: 0, completed: false }
       setTourState(fresh)
       setLocal(fresh)
-      attachSpotlight(TOUR_STEPS[0].tourTarget)
+      attachSpotlight(tourTargets(TOUR_STEPS[0]))
       return
     }
 
     const saved = getTourState()
     setLocal(saved)
     if (saved.active && !saved.completed && TOUR_STEPS[saved.step]) {
-      attachSpotlight(TOUR_STEPS[saved.step].tourTarget)
+      attachSpotlight(tourTargets(TOUR_STEPS[saved.step]))
     }
   }, [attachSpotlight])
 
@@ -80,7 +84,7 @@ export function TourOverlay() {
       const s = getTourState()
       setLocal(s)
       if (s.active && !s.completed && TOUR_STEPS[s.step]) {
-        attachSpotlight(TOUR_STEPS[s.step].tourTarget)
+        attachSpotlight(tourTargets(TOUR_STEPS[s.step]))
       }
     }
     window.addEventListener(TOUR_RESTART_EVENT, onRestart)
@@ -104,7 +108,7 @@ export function TourOverlay() {
     } else {
       const next: TourState = { active: true, step: nextStep, completed: false }
       applyState(next)
-      attachSpotlight(TOUR_STEPS[nextStep].tourTarget)
+      attachSpotlight(tourTargets(TOUR_STEPS[nextStep]))
     }
   }
 

@@ -10,6 +10,7 @@ import { loadYearTimeline, timelineYears } from '@/lib/reviews/load-year-timelin
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
 import { BRAND } from '@/lib/brand'
+import { PageHints } from '@/components/tour/PageHints'
 
 export const metadata = {
   title: `Reviews — ${BRAND.product}`,
@@ -83,6 +84,8 @@ export default async function ReviewsPage({
           you moved through, and your Unwrapped waiting at the end. A stretch with nothing written is still read.
         </p>
       </header>
+
+      <PageHints page="reviews" />
 
       {timeline ? (
         <ReviewsTimeline key={`${year}:${initialMonth ?? ''}`} timeline={timeline} initialMonth={initialMonth} />

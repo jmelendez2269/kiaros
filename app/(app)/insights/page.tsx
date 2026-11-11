@@ -11,6 +11,7 @@ import { loadInsightsHome, type InsightsHome } from '@/lib/insights/load-home'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
 import { todayISO } from '@/lib/today/get-today-context'
 import { BRAND } from '@/lib/brand'
+import { PageHints } from '@/components/tour/PageHints'
 
 export const metadata = {
   title: `Insights — ${BRAND.product}`,
@@ -71,6 +72,8 @@ export default async function InsightsHomePage() {
           Each one opens onto the fuller picture.
         </p>
       </header>
+
+      <PageHints page="insights" />
 
       <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
         <Card kicker="Your latest look backs" href={reviewsHref} cta="See your whole year">

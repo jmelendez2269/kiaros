@@ -17,6 +17,7 @@ import { LifeArcRead } from '@/components/today/LifeArcRead'
 import { JupiterSeason } from '@/components/today/JupiterSeason'
 import { TodayIntention } from '@/components/today/TodayIntention'
 import { TodayCheckIn } from '@/components/today/TodayCheckIn'
+import { PageHints } from '@/components/tour/PageHints'
 import { loadCheckIn, loadRhythmLine } from '@/lib/today/check-in'
 import { overheadMoonAndRetrogrades, writtenUnderTransits } from '@/lib/insights/home'
 import { humanizeLunarPhase } from '@/lib/journal/intelligence'
@@ -217,6 +218,8 @@ export default async function TodayPage({
       {periodReviewPublicFlagEnabled() ? (
         <PeriodReviewAutoOpenManager todayDate={todayDate} allowTestParams={mockAllowed} />
       ) : null}
+
+      <PageHints page="today" />
 
       <TodayJournalMemoryNotice profileId={supabaseUserId} />
 
