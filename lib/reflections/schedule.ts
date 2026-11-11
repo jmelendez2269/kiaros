@@ -48,6 +48,8 @@ export async function runReflectionSchedule(now = new Date()) {
     const skyless = new Set(current
       .filter(r => r.status === 'empty' && !(r.analysis && typeof r.analysis === 'object' && 'sky' in r.analysis))
       .map(r => `${r.kind}:${r.period_start}`))
+    // A year written while it was under way carries `through`. Once the year has ended it is read again, whole.
+    for (const r of current) if (r.kind === 'year' && r.analysis && typeof r.analysis === 'object' && 'through' in r.analysis) skyless.add(`${r.kind}:${r.period_start}`)
     const done = new Set([...current, ...(existing.data ?? []).filter(r => r.status === 'generating')]
       .map(r => `${r.kind}:${r.period_start}`).filter(key => !skyless.has(key)))
     const queue = catchUpOrder(KINDS.map(kind => closedPeriodsSince(kind, since, timezone, now)))

@@ -38,7 +38,10 @@ export async function GET(req: Request) {
   let window: PeriodReviewPeriod
   try { window = windowFor(parsed.data.kind, parsed.data.year, parsed.data.index) }
   catch { return NextResponse.json({ error: 'Invalid period' }, { status: 400 }) }
-  if (window.periodEnd >= todayISO()) {
+  const today = todayISO()
+  // A year under way is read as far as today; anything else waits until it has ended.
+  if (parsed.data.kind === 'year' && window.periodStart <= today && window.periodEnd >= today) window = { ...window, periodEnd: today }
+  else if (window.periodEnd >= today) {
     return NextResponse.json({ ended: false, preview: null })
   }
   const preview = await loadLookBackPreview(profileId, window, (sources) => ({

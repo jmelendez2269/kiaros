@@ -20,7 +20,7 @@ function Stars({ seed, count }: { seed: number; count: number }) {
 
 function FrameCard({ frame, index, total, large, onShare, active }: { frame: StoryFrame; index: number; total: number; large?: boolean; onShare?: () => void; active?: number }) {
   const opening = frame.key === 'year'
-  const background = opening ? 'linear-gradient(170deg,#2a1f5c 0%,#1a1640 45%,#11131e 100%)' : frame.key === 'carry' ? 'linear-gradient(180deg,#11131e,#21243a)' : '#11131e'
+  const background = opening ? 'linear-gradient(170deg,#2a1f5c 0%,#1a1640 45%,#11131e 100%)' : frame.key === 'carry' || frame.key === 'yours' ? 'linear-gradient(180deg,#11131e,#21243a)' : '#11131e'
   return (
     <article className="relative flex h-full flex-col justify-between overflow-hidden rounded-[18px] p-5 sm:p-6"
       style={{ background, border: '1px solid rgba(227,226,237,0.10)', minHeight: large ? 480 : 420 }}>
@@ -59,11 +59,12 @@ function FrameCard({ frame, index, total, large, onShare, active }: { frame: Sto
  * The opening of Yearly Unwrapped: up to five frames from the year report,
  * shown side by side, or played one at a time full screen.
  */
-export function UnwrappedStory({ frames, title, lede, reportAnchor, onShare }: {
+export function UnwrappedStory({ frames, title, lede, reportAnchor, reportLabel = 'the report', onShare }: {
   frames: StoryFrame[]
   title: string
   lede: string
   reportAnchor: string
+  reportLabel?: string
   onShare: () => void
 }) {
   const [playing, setPlaying] = useState<number | null>(null)
@@ -98,7 +99,7 @@ export function UnwrappedStory({ frames, title, lede, reportAnchor, onShare }: {
           <p className="mt-2 leading-relaxed text-bone-muted">{lede}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <a href={`#${reportAnchor}`} className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10">Skip to the report ↓</a>
+          <a href={`#${reportAnchor}`} className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10">Skip to {reportLabel} ↓</a>
           <button ref={returnRef} type="button" onClick={() => setPlaying(0)} className="rounded-full px-4 py-2 text-sm" style={{ background: '#704bd2', color: INK }}>Play the story</button>
         </div>
       </div>

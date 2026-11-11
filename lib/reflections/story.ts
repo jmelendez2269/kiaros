@@ -3,10 +3,10 @@
  * already holds. Pure, so it is unit-testable.
  */
 
-import type { Analysis, Evidence, ReflectionContent } from './report-schema'
+import type { Analysis, Evidence, ReflectionContent, SkyReading } from './report-schema'
 
 export interface StoryFrame {
-  key: 'year' | 'showed-up' | 'showed' | 'turning' | 'carry'
+  key: 'year' | 'showed-up' | 'showed' | 'turning' | 'carry' | 'overhead' | 'thread' | 'question' | 'yours'
   kicker: string
   /** The large line. */
   big: string
@@ -75,5 +75,33 @@ export function buildStoryFrames(
 
   const carry = content.lookingAhead.experiments[0]?.text ?? sentences(content.lookingAhead.focus.text)[0]
   if (carry) frames.push({ key: 'carry', kicker: 'Carry forward', big: carry })
+  return frames
+}
+
+/**
+ * The story of a year with nothing recorded, told from its sky reading: how
+ * the year read, what was overhead, a question to carry, and, while the year
+ * is still open, what the member can add. Nothing here says or implies that
+ * the member wrote nothing.
+ */
+export function buildSkyStoryFrames(sky: SkyReading, open: boolean): StoryFrame[] {
+  const frames: StoryFrame[] = []
+  const [first, second] = sentences(sky.sections.sky ?? '')
+  if (first) frames.push({ key: 'year', kicker: open ? 'Your year so far' : 'Your year', big: first, small: second })
+
+  const [lead, ...rest] = [...(sky.sourceChips.personal ?? []), ...sky.sourceChips.sky]
+  if (lead) frames.push({ key: 'overhead', kicker: 'Overhead', big: lead, small: rest.slice(0, 2).join(' · ') || undefined })
+
+  const thread = sentences(sky.sections.thread ?? '')[0]
+  if (thread) frames.push({ key: 'thread', kicker: 'What it was about', big: thread })
+
+  if (sky.sections.questionToCarry) frames.push({ key: 'question', kicker: 'A question to carry', big: sky.sections.questionToCarry })
+
+  if (open && frames.length) {
+    frames.push({
+      key: 'yours', kicker: 'Yours to add', big: 'This is the sky’s side of your year.',
+      small: 'What you write, check in and save is woven in each time you refresh it.',
+    })
+  }
   return frames
 }

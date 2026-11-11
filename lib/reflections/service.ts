@@ -2,7 +2,7 @@ import 'server-only'
 import { z } from 'zod'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
-import { assertClosed, type ReflectionPeriod } from './periods'
+import { addDays, assertReadable, isOpenYear, livedSoFar, type ReflectionPeriod } from './periods'
 import { preferences, feedback } from './repository'
 import { isLived } from './report-schema'
 import { loadEvidence } from './load-evidence'
@@ -36,7 +36,10 @@ export async function memberSince(userId: string): Promise<string | null> {
   return start ? String(start).slice(0, 10) : null
 }
 export async function generateReflection(userId: string, period: ReflectionPeriod, force = false) {
-  assertClosed(period)
+  const now = new Date()
+  assertReadable(period, now)
+  // A year under way is read as far as today. Its row keeps the whole year's dates, so the same report is written again when the year ends.
+  const soFar = isOpenYear(period, now), livedPeriod = livedSoFar(period, now)
   const since = await memberSince(userId)
   if (since && period.end <= since) throw new Error('This period ended before your membership began')
   if (!await hasReflectionAccess(userId)) throw new Error('An active planner subscription is required')
@@ -53,14 +56,14 @@ export async function generateReflection(userId: string, period: ReflectionPerio
   const claim = z.object({ cached: z.boolean(), id: z.string().uuid(), token: z.string().uuid().optional(), revision: z.number().optional() }).parse(claimResult.data)
   if (claim.cached) return claim.id
   try {
-    const [evidence, history] = await Promise.all([loadEvidence(userId, period), feedback(userId)])
-    const analysis = analyzePeriod(evidence, period)
+    const [evidence, history] = await Promise.all([loadEvidence(userId, livedPeriod), feedback(userId)])
+    const analysis = analyzePeriod(evidence, livedPeriod)
     const lived = analysis.evidence.filter(isLived)
     // The sky is read for every period, so one with nothing recorded still has something true to show.
     // It must never cost the member the reflection written from their own words: a failure is saved as null.
     const [generated, sky] = await Promise.all([
-      lived.length ? generateReflectionContent(userId, period, analysis, history, pref.include_goals) : null,
-      generateSkyReading(userId, period, lived.length > 0).catch(error => {
+      lived.length ? generateReflectionContent(userId, livedPeriod, analysis, history, pref.include_goals, soFar) : null,
+      generateSkyReading(userId, livedPeriod, lived.length > 0, soFar).catch(error => {
         console.error('[reflections] sky reading unavailable:', error instanceof Error ? error.message : 'unknown error')
         return null
       }),
@@ -69,7 +72,7 @@ export async function generateReflection(userId: string, period: ReflectionPerio
     const { evidence: _evidence, ...coverage } = analysis
     const saved = await admin.rpc('finish_reflection', { p_user_id: userId, p_report_id: claim.id,
       p_token: claim.token, p_revision: claim.revision, p_content: generated?.content ?? null,
-      p_analysis: { ...coverage, sky }, p_sources: generated?.sources ?? [], p_model: generated?.model ?? 'no-generation' })
+      p_analysis: { ...coverage, sky, ...(soFar ? { through: addDays(livedPeriod.end, -1) } : {}) }, p_sources: generated?.sources ?? [], p_model: generated?.model ?? 'no-generation' })
     if (saved.error || saved.data !== true) throw new Error('Your source information changed. Please generate a fresh reflection.')
     return claim.id
   } catch (error) {

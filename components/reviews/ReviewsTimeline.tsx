@@ -302,9 +302,9 @@ function YearView({ timeline, openMonth, openQuarter, initialMonth }: ViewProps)
 function UnwrappedCap({ timeline, cy }: { timeline: YearTimeline; cy: number }) {
   const { year, unwrapped } = timeline
   const ux = 972
-  const label = unwrapped.state === 'waiting' ? `OPENS ${shortDay(unwrapped.opensOn).toUpperCase()}` : unwrapped.state === 'ready' ? 'READY' : 'READ'
+  const label = unwrapped.state === 'waiting' ? `OPENS ${shortDay(unwrapped.opensOn).toUpperCase()}` : unwrapped.state === 'so-far' ? 'OPEN · SO FAR' : unwrapped.state === 'ready' ? 'READY' : 'READ'
   return (
-    <a href="/year/unwrapped" aria-label={`${year} Unwrapped: ${unwrapped.state === 'waiting' ? `opens ${shortDay(unwrapped.opensOn)}` : unwrapped.state === 'ready' ? 'ready' : 'read'}`}>
+    <a href="/year/unwrapped" aria-label={`${year} Unwrapped: ${unwrapped.state === 'waiting' ? `opens ${shortDay(unwrapped.opensOn)}` : unwrapped.state === 'so-far' ? 'open to read so far' : unwrapped.state === 'ready' ? 'ready' : 'read'}`}>
       <defs>
         <radialGradient id="unwrapped-glow">
           <stop offset="0%" stopColor={VIOLET_HI} stopOpacity={unwrapped.state === 'waiting' ? 0.55 : 0.9} />
@@ -404,15 +404,16 @@ function ListView({ timeline, openMonth, openQuarter, initialMonth }: ViewProps)
           <h2 style={{ margin: '10px 0 0', fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 40, fontWeight: 500, lineHeight: 1.05 }}>your {year}, unwrapped.</h2>
           <p style={{ margin: '10px 0 0', fontSize: 14.5, lineHeight: 1.6, color: K.inkDim }}>
             {unwrapped.state === 'waiting' ? 'The story of your year, from the days you wrote and the sky you moved through. It opens when the year ends.'
+              : unwrapped.state === 'so-far' ? 'The story of your year so far, from the sky you’ve moved through and whatever you’ve written. Open it now and refresh it as you go. It is written one last time when the year ends.'
               : unwrapped.state === 'ready' ? 'Your year has ended. Its story is ready to prepare.' : 'Your year’s story is waiting to be read again.'}
           </p>
         </div>
         <div className="flex flex-col items-start gap-3 sm:items-end">
-          {unwrapped.state === 'waiting' ? (
+          {unwrapped.state === 'waiting' || unwrapped.state === 'so-far' ? (
             <><span style={{ fontFamily: K.fSerif, fontSize: 56, lineHeight: 1 }}>{unwrapped.daysToGo}</span><span style={mono(10, K.ink)}>{unwrapped.daysToGo === 1 ? 'day' : 'days'} to go</span></>
           ) : null}
           {unwrapped.state !== 'waiting' ? (
-            <Link href="/year/unwrapped" className="rounded-full px-5 py-2 text-sm" style={{ border: `1px solid ${K.lineHi}`, color: K.ink }}>Open Unwrapped →</Link>
+            <Link href="/year/unwrapped" className="rounded-full px-5 py-2 text-sm" style={{ border: `1px solid ${K.lineHi}`, color: K.ink }}>{unwrapped.state === 'so-far' ? 'Open your year so far →' : 'Open Unwrapped →'}</Link>
           ) : null}
         </div>
       </section>

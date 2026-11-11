@@ -45,3 +45,10 @@ for (const kind of ['week', 'month', 'quarter', 'year'] as const) {
   for (const lived of [true, false]) assert.doesNotMatch(skyReadingAddendum(kind, lived), /[—&]/, 'no em dashes or ampersands, as the voice rules ask')
 }
 console.log('reflection sky checks passed')
+
+// A year under way is read only as far as it has gone.
+const soFar = skyReadingAddendum('year', false, true)
+assert.match(soFar, /a year still under way/)
+assert.match(soFar, /say nothing about how the year ends/)
+assert.match(soFar, /Never mention that nothing was written/)
+assert.doesNotMatch(skyReadingAddendum('year', false), /still under way/)

@@ -55,8 +55,8 @@ export interface TimelineSkyEvent {
 }
 
 export interface TimelineUnwrapped {
-  /** ready: the year has ended and nothing is prepared yet; read: a reflection exists; waiting: the year is still going. */
-  state: 'ready' | 'read' | 'waiting'
+  /** ready: the year has ended and nothing is prepared yet; read: a reflection exists; so-far: the year is under way and can be read as it goes; waiting: the year has not begun. */
+  state: 'ready' | 'read' | 'so-far' | 'waiting'
   opensOn: string
   daysToGo: number
 }

@@ -11,10 +11,11 @@ const SPAN: Record<PeriodKind, string> = {
  * Added to the look back system prompt when it writes the sky part of a
  * reflection. Two cases: a period the member recorded nothing in, where the
  * sky carries the look back, and a period that already has a reflection
- * written from their own words, where the sky sits beside it.
+ * written from their own words, where the sky sits beside it. `soFar` is a
+ * year read while it is still under way.
  */
-export function skyReadingAddendum(kind: PeriodKind, hasLivedReflection: boolean): string {
-  const span = `This look back covers ${SPAN[kind]}.${kind === 'year' ? ' Stay with the two or three slowest transits to the member\'s own chart and the arc they trace across the year; "sky" may run to 120 words.' : ''}`
+export function skyReadingAddendum(kind: PeriodKind, hasLivedReflection: boolean, soFar = false): string {
+  const span = `This look back covers ${soFar ? 'a year still under way, from January 1 to the last date given. Read only those dates, and say nothing about how the year ends' : SPAN[kind]}.${kind === 'year' ? ' Stay with the two or three slowest transits to the member\'s own chart and the arc they trace across the year; "sky" may run to 120 words.' : ''}`
   if (hasLivedReflection) {
     return `${span}
 A separate reflection, shown beside this one, already covers what the member wrote and did. Do not write "thread" or "plansAndGoals". Write only "sky": one paragraph on the one or two transits whose meaning speaks to what they recorded, as a way of reading it. "questionToCarry" is optional.`

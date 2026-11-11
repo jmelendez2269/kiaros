@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { periodFor, latestClosed, assertClosed, localBoundary, localDate, periodLabel, weekOf, weeksInYear, closedPeriodsSince, catchUpOrder } from '../lib/reflections/periods.ts'
+import { periodFor, latestClosed, assertClosed, assertReadable, isOpenYear, livedSoFar, localBoundary, localDate, periodLabel, weekOf, weeksInYear, closedPeriodsSince, catchUpOrder } from '../lib/reflections/periods.ts'
 import { analyzePeriod } from '../lib/reflections/analyze-period.ts'
 import { reportSchema, validateReport, isLived, type Evidence } from '../lib/reflections/report-schema.ts'
 import { reflectionShareCard } from '../lib/reflections/share-card.ts'
@@ -39,6 +39,19 @@ assert.equal(localDate(new Date('2026-09-01T00:30:00Z'),tz),'2026-08-31')
 assert.throws(()=>periodFor('quarter',2026,5,tz))
 assert.throws(()=>periodFor('year',2026,2,tz))
 assert.throws(()=>assertClosed(periodFor('month',2026,9,tz),new Date('2026-09-20')))
+// A year under way can be read as far as today; nothing else can be read early.
+const y26=periodFor('year',2026,1,tz), nov11=new Date('2026-11-11T17:00:00Z')
+assert.equal(isOpenYear(y26,nov11),true)
+assert.equal(isOpenYear(periodFor('year',2027,1,tz),nov11),false,'a year that has not begun is not open')
+assert.equal(isOpenYear(y26,new Date('2027-01-01T05:00:00Z')),false,'ended at local midnight')
+assert.equal(isOpenYear(periodFor('month',2026,11,tz),nov11),false)
+assert.deepEqual(livedSoFar(y26,nov11),{...y26,end:'2026-11-12'},'today is included')
+assert.deepEqual(livedSoFar(periodFor('month',2026,10,tz),nov11),periodFor('month',2026,10,tz))
+assert.doesNotThrow(()=>assertReadable(y26,nov11))
+assert.throws(()=>assertReadable(periodFor('year',2027,1,tz),nov11))
+assert.throws(()=>assertReadable(periodFor('month',2026,11,tz),nov11))
+assert.equal(analyzePeriod([],livedSoFar(y26,nov11)).totalDays,315)
+assert.equal(analyzePeriod([],livedSoFar(y26,nov11)).months.length,11)
 const p=periodFor('month',2026,8,tz)
 const entry=(id:string,date:string,text:string,goalId:string|null=null):Evidence=>({id,kind:'journal',date,title:id,text,recordedAt:date,goalId,authored:true})
 const evidence=[entry('a','2026-08-01','I rested after a long day'),entry('b','2026-08-08','Quiet time with a friend'),entry('c','2026-08-20','A break helped me think'),

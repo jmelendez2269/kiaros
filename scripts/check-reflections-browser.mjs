@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer-core'
 import { mkdir, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
-const browser=await puppeteer.launch({headless:true,executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe'})
+const browser=await puppeteer.launch({headless:true,executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:(process.env.CHROME_ARGS||'').split(' ').filter(Boolean)})
 const page=await browser.newPage(),errors=[]
 page.on('pageerror',e=>errors.push(e.message))
 const base='http://127.0.0.1:3701'
@@ -70,6 +70,23 @@ try{
  assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a','valid PNG file')
  assert.equal(png.readUInt32BE(16),1080)
  assert.equal(png.readUInt32BE(20),1080)
+ // The year under way: nothing recorded in it yet, so it is told from the sky; then written again once something is.
+ const Y=new Date().getFullYear(), todayNY=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(new Date())
+ await clickCard(`${Y} Unwrapped`);await clickPrefix(`Unwrap ${Y} so far`);await ready()
+ assert.ok((await text()).includes(`${Y} so far, unwrapped`),'an open year is titled as so far')
+ assert.ok((await text()).includes('This is the sky’s side of your year.'),'the sky story ends on what can be added')
+ assert.ok((await text()).includes('Saturn opposite your Sun'))
+ assert.ok(!(await text()).includes('Chapters of your year'),'no recorded-days chart for a year told from the sky')
+ await page.screenshot({path:'node_modules/.cache/reflections-tests/unwrapped-so-far-sky.png',fullPage:true})
+ const added=await page.evaluate(async(date)=>(await fetch('/rest/v1/journal_entries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:'11111111-1111-4111-8111-111111111111',title:'First entry',body:'I started writing things down today.',entry_date:date,include_in_insights:true,include_in_stelloquy:true})})).status,todayNY)
+ assert.equal(added,200)
+ await page.goto(base+'/unwrapped',{waitUntil:'networkidle0'})
+ await page.waitForFunction(()=>document.body.innerText.includes('You’ve added to your year since this was written.'))
+ await clickText('Refresh reflection');await ready()
+ assert.ok((await text()).includes('the 1 day you’ve recorded so far'),'the refreshed year is written from what was recorded')
+ assert.ok((await text()).includes('Chapters of your year'))
+ assert.ok(!(await text()).includes('This is the sky’s side of your year.'))
+ await page.screenshot({path:'node_modules/.cache/reflections-tests/unwrapped-so-far-lived.png',fullPage:true})
  await page.setViewport({width:390,height:844})
  await page.screenshot({path:'node_modules/.cache/reflections-tests/mobile-unwrapped.png',fullPage:true})
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'no horizontal overflow')

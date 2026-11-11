@@ -8,7 +8,7 @@ import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 import { REFLECTIONS_SEEN_EVENT } from '@/lib/reflections/notification'
 import { SkyReadingView } from '@/components/reflections/SkyReading'
 import { UnwrappedStory } from '@/components/reflections/UnwrappedStory'
-import { buildStoryFrames } from '@/lib/reflections/story'
+import { buildSkyStoryFrames, buildStoryFrames } from '@/lib/reflections/story'
 import { LookBackPreview } from '@/components/period-review/LookBackPreview'
 import type { PeriodReviewSourceChips } from '@/lib/period-review/report-schema'
 type State = { settings: Preferences; reports: SavedReport[]; feedback: Feedback[]; intentions: Intention[]; consentV2Enabled: boolean; includedEntriesCount: number; memberSince?: string | null }
@@ -50,7 +50,8 @@ function buildCards(kind: PeriodKind, year: number, month: number, timezone: str
   return slots.map(slot => {
     const p = periodFor(kind, slot.year, slot.index, timezone)
     const report = reports.find(r => r.kind === kind && r.period_start === p.start)
-    const state: CardState = p.start > today ? 'future' : p.end > today ? 'open' : report ? report.status : 'available'
+    // A year under way can be unwrapped as it goes; every other period waits until it has ended.
+    const state: CardState = p.start > today ? 'future' : p.end > today && kind !== 'year' ? 'open' : report ? report.status : 'available'
     return { key: p.start, label: slot.label, year: slot.year, index: slot.index, start: p.start, end: p.end, state, report }
   })
     // Nothing from before the member's subscription began, unless a reflection already exists for it.
@@ -137,7 +138,9 @@ export function ReflectionsHub({
   const latestStart = latestClosed(kind, activeTimezone).start
   // A period that has ended but has no reflection yet: the one the member picked, else the latest one when nothing else is chosen.
   const focusCard = cards.find(c => c.state === 'available' && c.key === focusStart)
-    ?? (!selectedId && !shownInYear.length ? cards.find(c => c.state === 'available' && c.key === latestStart) : undefined)
+    ?? (!selectedId && !shownInYear.length ? cards.find(c => c.state === 'available' && c.key === latestStart)
+      // No ended year to offer (a new member, say): the year under way.
+      ?? (kind === 'year' ? cards.find(c => c.state === 'available' && c.end > today) : undefined) : undefined)
   const report = focusCard ? undefined : filtered.find(r => r.id === selectedId) ?? shownInYear[0]
   const focusYear = focusCard?.year, focusIndex = focusCard?.index
   // What the focused period's reflection will draw on, before it is prepared.
@@ -155,7 +158,12 @@ export function ReflectionsHub({
     return () => { cancelled = true; clearTimeout(timer) }
   }, [data, kind, focusYear, focusIndex])
   const period = report ? { kind: report.kind, start: report.period_start, end: report.period_end, timezone: report.timezone } : null
-  const title = period ? periodLabel(period) : 'Your reflection'
+  // A year still under way, read as far as today.
+  const openYear = !!report && report.kind === 'year' && report.period_end > today
+  const through = report?.analysis?.through
+  // Written while its year was under way, and the year has since ended: it wants one more reading.
+  const unclosedYear = !!report && report.kind === 'year' && !openYear && !!through
+  const title = period ? periodLabel(period) + (openYear ? ', so far' : '') : 'Your reflection'
   const unit = kind
   function changeKind(next: PeriodKind) {
     setKind(next); setSelectedId(null); setFocusStart(null); setShareOpen(false)
@@ -212,6 +220,12 @@ export function ReflectionsHub({
     Every look back starts with the sky you moved through, read against your own chart. Kairos weaves in the journal entries and conversations you’ve chosen to include, along with the plans and sessions you finished and your check-ins. A stretch with nothing recorded is still read. Your Quarterly Review is different: that’s the one you write yourself.{' '}
     <Link href={quarterlyReviewHref} className="whitespace-nowrap text-bone underline underline-offset-4">Write your Quarterly Review</Link>
   </p>
+  // Yearly Unwrapped only: a card holding words the member chooses.
+  const shareSection = <section id="reflection-share" className="scroll-mt-6 space-y-4">
+            <Link href={reflectionsHomeHref} className="inline-block underline underline-offset-4">Visit your monthly and quarterly reflections</Link>
+            <button type="button" className={buttonClass + ' ml-3'} onClick={() => { setShareText(''); setShareOpen(!shareOpen) }}>Choose a moment to share</button>
+            {shareOpen && <div className="space-y-3 rounded-xl border border-white/15 p-5"><p>Only the text you choose below goes into your downloaded card. Review it before sharing.</p><label className="block space-y-2"><span>Card text</span><textarea value={shareText} onChange={e => setShareText(e.target.value)} maxLength={450} rows={5} className={inputClass} placeholder="A moment or lesson you want to share…" /></label><p className="text-sm text-bone-muted">Card heading: {title}</p><blockquote className="border-l border-amber-200/30 pl-4">{shareText || 'Your chosen words will appear here.'}</blockquote><button type="button" disabled={!shareText.trim()} className={buttonClass} onClick={downloadCard}>Download private preview card</button></div>}
+  </section>
   return <div className={journalIaEmbed ? 'space-y-8 text-bone' : 'mx-auto max-w-5xl space-y-8 px-5 py-10 text-bone sm:px-8'}>
     {!journalIaEmbed ? (
       <header className="max-w-2xl space-y-3">
@@ -252,7 +266,8 @@ export function ReflectionsHub({
             const selected = focusCard ? focusCard.key === card.key : !!report && report.period_start === card.start
             const preparing = busy && pendingStart === card.start
             const readable = card.state === 'ready' || (card.state === 'empty' && !!card.report?.analysis?.sky)
-            const status = preparing ? 'Preparing…' : card.state === 'empty' && readable ? 'Ready to read · from the sky' : card.state === 'available' && data.settings.automatic ? 'On its way · or prepare now' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
+            const underWay = kind === 'year' && card.end > today
+            const status = preparing ? 'Preparing…' : underWay && readable ? 'Ready to read · so far' : underWay && card.state === 'available' ? 'Ready to unwrap · so far' : card.state === 'empty' && readable ? 'Ready to read · from the sky' : card.state === 'available' && data.settings.automatic ? 'On its way · or prepare now' : card.state === 'open' ? `Closes ${dayLabel(lastDay(card.end))}` : CARD_COPY[card.state]
             const clickable = !!card.report || card.state === 'available'
             const tone = readable ? 'border-amber-200/40 bg-amber-100/[.06]' : card.state === 'available' ? 'border-white/25' : clickable ? 'border-white/15' : 'border-white/10 opacity-50'
             return <li key={card.key}>
@@ -267,7 +282,7 @@ export function ReflectionsHub({
           })}
         </ul>
         <p className="text-sm text-bone-muted">
-          A {unit} can be prepared once it has ended{kind === 'week' || kind === 'month' ? '' : ', and a rich one may take a few minutes'}.{' '}
+          {kind === 'year' ? 'Your year can be unwrapped while it is still going and refreshed whenever you’ve added to it. It is written one last time once the year ends, and a rich one may take a few minutes.' : `A ${unit} can be prepared once it has ended${kind === 'week' || kind === 'month' ? '' : ', and a rich one may take a few minutes'}.`}{' '}
           {data.settings.automatic ? 'Reflections are prepared for you each morning, including any you missed, a few at a time.' : 'You choose when each one is prepared.'}
           {' '}Times follow <span className="text-bone">{activeTimezone}</span>.{' '}
           <button type="button" aria-expanded={prefsOpen} className={linkButtonClass} onClick={() => setPrefsOpen(!prefsOpen)}>Preferences</button>
@@ -282,36 +297,54 @@ export function ReflectionsHub({
         </form>}
       </section>
       {focusCard && (() => {
-        const label = periodLabel({ kind, start: focusCard.start, end: focusCard.end, timezone: activeTimezone })
+        const underWay = kind === 'year' && focusCard.end > today
+        const label = periodLabel({ kind, start: focusCard.start, end: focusCard.end, timezone: activeTimezone }) + (underWay ? ', so far' : '')
         return <section aria-label={`Prepare ${label}`} className="space-y-5 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9">
-          <header><p className="text-xs uppercase tracking-widest text-amber-200/70">Ready to prepare</p><h2 className="mt-2 font-display text-3xl">{label}</h2>
-            <p className="mt-3 text-bone-muted">This {unit} has ended. Kairos can read the sky you moved through and bring in whatever you chose to share from it.</p></header>
+          <header><p className="text-xs uppercase tracking-widest text-amber-200/70">{underWay ? 'Ready to unwrap' : 'Ready to prepare'}</p><h2 className="mt-2 font-display text-3xl">{label}</h2>
+            <p className="mt-3 text-bone-muted">{underWay
+              ? 'Your year is still unfolding, and it can already be read. Kairos reads the sky you’ve moved through since January against your own chart, and weaves in whatever you’ve chosen to share. Each entry, check-in and saved conversation you add makes the next reading more yours.'
+              : `This ${unit} has ended. Kairos can read the sky you moved through and bring in whatever you chose to share from it.`}</p></header>
           {preview ? <LookBackPreview chips={preview} periodNoun={kind} /> : null}
-          <button type="button" disabled={busy} className={buttonClass} onClick={() => prepare({ kind, ...focusCard })}>{busy && pendingStart === focusCard.start ? 'Preparing your reflection…' : `Reflect on ${label}`}</button>
+          <button type="button" disabled={busy} className={buttonClass} onClick={() => prepare({ kind, ...focusCard })}>{busy && pendingStart === focusCard.start ? (underWay ? 'Unwrapping your year…' : 'Preparing your reflection…') : underWay ? `Unwrap ${focusCard.year} so far` : `Reflect on ${label}`}</button>
         </section>
       })()}
       {!report && !focusCard && <div className="rounded-xl border border-dashed border-white/20 p-8"><h2 className="font-display text-2xl">Your story has room here.</h2><p className="mt-3 text-bone-muted">{cards.some(c => c.state === 'available') ? `Choose a ${unit} marked “Ready to prepare” above.` : `Once your first ${unit} as a member has ended, it will be ready here.`} We’ll read the sky you moved through and bring in whatever you chose to share.</p></div>}
       {report && content && kind === 'year' && <UnwrappedStory frames={buildStoryFrames(content, report.analysis, report.sources)}
-        title={`${report.period_start.slice(0, 4)}, unwrapped`}
-        lede={`Written for you from the ${report.analysis?.observedDays ?? 0} days you recorded and the conversations you chose to include. Start with the story, or skip to the full report.`}
+        title={`${report.period_start.slice(0, 4)}${openYear ? ' so far' : ''}, unwrapped`}
+        lede={openYear
+          ? `Written for you from the ${report.analysis?.observedDays ?? 0} ${report.analysis?.observedDays === 1 ? 'day' : 'days'} you’ve recorded so far and the conversations you chose to include. It keeps growing with you: refresh it whenever you’ve added more.`
+          : `Written for you from the ${report.analysis?.observedDays ?? 0} days you recorded and the conversations you chose to include. Start with the story, or skip to the full report.`}
         reportAnchor="unwrapped-report" onShare={openShare} />}
+      {report && !content && sky && report.status === 'empty' && kind === 'year' && <UnwrappedStory frames={buildSkyStoryFrames(sky, openYear)}
+        title={`${report.period_start.slice(0, 4)}${openYear ? ' so far' : ''}, unwrapped`}
+        lede={openYear
+          ? 'Read from the sky you’ve moved through this year and your own chart. As you journal, check in and save conversations, refresh it and it is written again around what you lived.'
+          : 'Read from the sky you moved through this year and your own chart.'}
+        reportAnchor="unwrapped-report" reportLabel="the reading" onShare={openShare} />}
       {report && <article id={kind === 'year' ? 'unwrapped-report' : undefined} className="scroll-mt-6 space-y-7 rounded-2xl border border-white/15 bg-white/[.025] p-6 sm:p-9" aria-label={title}>
-        <header className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' ? 'The full report' : report.status === 'empty' && sky ? 'A look back, read from the sky' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
+        <header className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-amber-200/70">{kind === 'year' && content ? 'The full report' : report.status === 'empty' && sky ? 'A look back, read from the sky' : 'A reflection, in perspective'}</p><h2 className="mt-2 font-display text-3xl">{title}</h2>
           {report.analysis && <p className="mt-3 text-sm text-bone-muted">{report.analysis.observedDays === 0 && sky
-            ? `Nothing of yours is on record for these ${report.analysis.totalDays} days, so this reads the sky and your chart.`
-            : `Based on ${report.analysis.observedDays} recorded days across ${report.analysis.totalDays} calendar days. Unrecorded days are unknown.`}</p>}
+            ? openYear ? `Read from the sky and your own chart across these ${report.analysis.totalDays} days.`
+            : `Nothing of yours is on record for these ${report.analysis.totalDays} days, so this reads the sky and your chart.`
+            : `Based on ${report.analysis.observedDays} recorded days across ${report.analysis.totalDays} calendar days. Unrecorded days are unknown.`}{through ? ` Read through ${dayLabel(through)}.` : ''}</p>}
           {report.generated_at && <p className="mt-1 text-xs text-bone-muted">Prepared {new Date(report.generated_at).toLocaleDateString()} · Private</p>}
           </div>
-          {kind === 'year' && content ? <button type="button" className={buttonClass} onClick={openShare}>Download a share card</button> : null}
+          {kind === 'year' && (content || sky) ? <button type="button" className={buttonClass} onClick={openShare}>Download a share card</button> : null}
         </header>
+        {(unclosedYear || (openYear && !!through && through < today)) && ['ready', 'empty'].includes(report.status) && <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/15 p-4">
+          <p className="text-sm text-bone-muted">{unclosedYear ? 'This was written while the year was still going. It can now be read whole.' : `This reads your year through ${dayLabel(through!)}. Anything you add brings up a refresh on its own.`}</p>
+          <button type="button" disabled={busy} className={buttonClass} onClick={() => prepare({ kind: 'year', year: Number(report.period_start.slice(0, 4)), index: 1, start: report.period_start }, true)}>
+            {busy && pendingStart === report.period_start ? 'Reading…' : unclosedYear ? 'Read the whole year' : 'Read it through today'}</button>
+        </div>}
         {report.status === 'empty' && sky && <SkyReadingView reading={sky} unit={kind} quiet />}
+        {report.status === 'empty' && sky && kind === 'year' && shareSection}
         {report.status === 'empty' && !sky && <div className="space-y-3"><p>Nothing of yours is on record for this {unit}, and its sky has not been read yet.</p>
           <div className="flex flex-wrap items-center gap-4"><button type="button" disabled={busy} className={buttonClass} onClick={() => {
             const m = Number(report.period_start.slice(5,7)), w = weekOf(report.period_start)
             prepare({ kind: report.kind, year: report.kind === 'week' ? w.year : Number(report.period_start.slice(0,4)), index: report.kind === 'week' ? w.index : report.kind === 'month' ? m : report.kind === 'quarter' ? Math.ceil(m/3) : 1, start: report.period_start }, true)
           }}>{busy && pendingStart === report.period_start ? 'Reading the sky…' : `Read the sky for this ${unit}`}</button>
           <Link href="/journal" className="underline underline-offset-4">Or make space for a journal entry</Link></div></div>}
-        {['stale','failed','generating'].includes(report.status) && <div className="space-y-3"><p>{report.status === 'generating' ? 'Your reflection is being prepared.' : report.status === 'stale' ? 'Your information has changed. Refresh this reflection to include your latest choices.' : 'This reflection could not be completed. You can try again.'}</p>
+        {['stale','failed','generating'].includes(report.status) && <div className="space-y-3"><p>{report.status === 'generating' ? 'Your reflection is being prepared.' : report.status === 'stale' ? (openYear ? 'You’ve added to your year since this was written. Refresh it and it is written again with what’s new.' : 'Your information has changed. Refresh this reflection to include your latest choices.') : 'This reflection could not be completed. You can try again.'}</p>
           <button type="button" disabled={busy} className={buttonClass} onClick={() => {
             const month = Number(report.period_start.slice(5,7))
             prepare({ kind: report.kind, year: Number(report.period_start.slice(0,4)), index: report.kind === 'month' ? month : report.kind === 'quarter' ? Math.ceil(month/3) : 1, start: report.period_start })
@@ -354,11 +387,7 @@ export function ReflectionsHub({
             {kind === 'year' ? <p className="text-sm tracking-wide text-violet-300/90">A letter to carry with you</p> : <h3 className="font-display text-2xl">A letter to carry with you</h3>}
             {kind === 'year' ? <div className="space-y-2"><p className="whitespace-pre-line font-display text-xl italic leading-relaxed">{content.letter.text}</p><EvidenceView ids={content.letter.sources} report={report} /></div> : <PassageView passage={content.letter} report={report} />}
           </section>}
-          {kind === 'year' && <section id="reflection-share" className="scroll-mt-6 space-y-4">
-            <Link href={reflectionsHomeHref} className="inline-block underline underline-offset-4">Visit your monthly and quarterly reflections</Link>
-            <button type="button" className={buttonClass + ' ml-3'} onClick={() => { setShareText(''); setShareOpen(!shareOpen) }}>Choose a moment to share</button>
-            {shareOpen && <div className="space-y-3 rounded-xl border border-white/15 p-5"><p>Only the text you choose below goes into your downloaded card. Review it before sharing.</p><label className="block space-y-2"><span>Card text</span><textarea value={shareText} onChange={e => setShareText(e.target.value)} maxLength={450} rows={5} className={inputClass} placeholder="A moment or lesson you want to share…" /></label><p className="text-sm text-bone-muted">Card heading: {title}</p><blockquote className="border-l border-amber-200/30 pl-4">{shareText || 'Your chosen words will appear here.'}</blockquote><button type="button" disabled={!shareText.trim()} className={buttonClass} onClick={downloadCard}>Download private preview card</button></div>}
-          </section>}
+          {kind === 'year' && shareSection}
           </div>
         </div>}
       </article>}

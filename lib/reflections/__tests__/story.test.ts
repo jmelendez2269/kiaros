@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildStoryFrames, fullestMonth, sentences } from '@/lib/reflections/story'
+import { buildSkyStoryFrames, buildStoryFrames, fullestMonth, sentences } from '@/lib/reflections/story'
 import type { Evidence, ReflectionContent } from '@/lib/reflections/report-schema'
 
 const p = (text: string, sources = ['journal:a']) => ({ text, sources })
@@ -64,5 +64,34 @@ describe('helpers', () => {
   it('finds the fullest month', () => {
     assert.equal(fullestMonth([{ month: '2025-02', days: 1 }]), 'February with 1 day')
     assert.equal(fullestMonth([{ month: '2025-02', days: 0 }]), null)
+  })
+})
+
+describe('sky story frames', () => {
+  const sky = {
+    sections: { sky: 'Saturn spent the year opposite your Sun. It is often read as a season of weighing what holds.', questionToCarry: 'What do you remember of early March?' },
+    sourceChips: { sky: ['12 moon phases'], plans: [], journal: [], personal: ['Saturn opposite your Sun', 'Jupiter trine your Moon'] },
+    model: 'm',
+  }
+
+  it('tells an open year from the sky and ends on what can be added', () => {
+    const frames = buildSkyStoryFrames(sky, true)
+    assert.deepEqual(frames.map(f => f.key), ['year', 'overhead', 'question', 'yours'])
+    assert.equal(frames[0].kicker, 'Your year so far')
+    assert.equal(frames[0].big, 'Saturn spent the year opposite your Sun.')
+    assert.equal(frames[1].big, 'Saturn opposite your Sun')
+    assert.equal(frames[1].small, 'Jupiter trine your Moon · 12 moon phases')
+  })
+
+  it('leaves the invitation off a year that has ended', () => {
+    assert.deepEqual(buildSkyStoryFrames(sky, false).map(f => f.key), ['year', 'overhead', 'question'])
+  })
+
+  it('never says that nothing was written', () => {
+    assert.doesNotMatch(JSON.stringify(buildSkyStoryFrames(sky, true)), /nothing|empty|haven.t|no entries/i)
+  })
+
+  it('is empty when the reading has no prose', () => {
+    assert.deepEqual(buildSkyStoryFrames({ sections: {}, sourceChips: { sky: [], plans: [], journal: [] }, model: 'm' }, true), [])
   })
 })

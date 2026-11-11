@@ -11,18 +11,18 @@ import { skyReadingAddendum } from '@/lib/ai/reflection-sky-prompt'
  * and whatever plans and check-ins exist. Written for every reflection, so a
  * period with nothing recorded still has something true to show.
  */
-export async function generateSkyReading(userId: string, period: ReflectionPeriod, hasLivedReflection: boolean): Promise<SkyReading> {
+export async function generateSkyReading(userId: string, period: ReflectionPeriod, hasLivedReflection: boolean, soFar = false): Promise<SkyReading> {
   const loaded = await loadPeriodReviewSources(userId, lookBackWindow(period))
   const sources = usesCalendarThemes(period.kind) ? loaded : { ...loaded, monthBlueprintTheme: null, quarterBlueprintTheme: null }
   const generated = await generateLookBackFromSources(
     userId,
     sources,
     {
-      title: period.kind === 'year' ? `the year ${period.start.slice(0, 4)}` : periodLabel(period),
+      title: period.kind === 'year' ? `the year ${period.start.slice(0, 4)}${soFar ? ' so far' : ''}` : periodLabel(period),
       // A reflection is often read well after its period, so only a month names what came next.
       carryLabel: period.kind === 'month' ? undefined : null,
     },
-    skyReadingAddendum(period.kind, hasLivedReflection),
+    skyReadingAddendum(period.kind, hasLivedReflection, soFar),
     'reflection',
   )
   return { sections: generated.sections, sourceChips: generated.sourceChips, model: generated.model }

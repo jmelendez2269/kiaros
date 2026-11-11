@@ -953,7 +953,8 @@ export function PublicPricingPage({
                   <p className="mt-3 text-sm leading-7 text-bone-muted">
                     Ritual entries, Quarterly Reviews, Reflections, and Yearly Unwrapped come with
                     every paid plan, Planner or Planner + Oracle, monthly or yearly. Yearly Unwrapped
-                    looks back on a year once it has ended.
+                    opens the day you join, read from the sky you&rsquo;ve moved through and your own
+                    chart, and grows more yours with every entry you add.
                   </p>
                 ) : null}
               </div>

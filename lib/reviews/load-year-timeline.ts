@@ -101,7 +101,7 @@ export async function loadYearTimeline(profileId: string, year: number, today: s
   const opensOn = `${year + 1}-01-01`
   const yearStatus = yearReport.data?.status
   const unwrapped = {
-    state: to >= today ? 'waiting' as const : yearStatus === 'ready' || yearStatus === 'empty' ? 'read' as const : 'ready' as const,
+    state: from > today ? 'waiting' as const : to >= today ? 'so-far' as const : yearStatus === 'ready' || yearStatus === 'empty' ? 'read' as const : 'ready' as const,
     opensOn,
     daysToGo: to >= today ? daysInYear(year) - dayOfYear(today) + 1 : 0,
   }

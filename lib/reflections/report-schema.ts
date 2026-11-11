@@ -60,7 +60,8 @@ export interface Analysis {
 export interface SavedReport {
   id: string; kind: ReflectionPeriod['kind']; period_start: string; period_end: string; timezone: string
   status: 'generating' | 'ready' | 'empty' | 'stale' | 'failed'
-  content: ReflectionContent | null; analysis: (Omit<Analysis, 'evidence'> & { sky?: SkyReading | null }) | null
+  content: ReflectionContent | null; /** `through`: the last day covered, set only on a year written while it was still under way. */
+  analysis: (Omit<Analysis, 'evidence'> & { sky?: SkyReading | null; through?: string }) | null
   generated_at: string | null; sources: Evidence[]; revision: number
 }
 export const preferencesSchema = z.object({

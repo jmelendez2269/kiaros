@@ -9,7 +9,7 @@ import { recordUsage } from '@/lib/ai/usage'
 const MODEL = 'claude-sonnet-4-6'
 const BATCH_MODEL = 'claude-haiku-4-5'
 const batchSchema = z.object({ notes: z.array(z.object({ text: z.string().max(800), sources: z.array(z.string()).min(1).max(60) })).max(10) })
-export async function generateReflectionContent(userId: string, period: ReflectionPeriod, analysis: Analysis, history: Feedback[], includeGoals: boolean) {
+export async function generateReflectionContent(userId: string, period: ReflectionPeriod, analysis: Analysis, history: Feedback[], includeGoals: boolean, soFar = false) {
   const goalIds = includeGoals ? [...new Set(analysis.evidence.flatMap(e => e.goalId ? [e.goalId] : []))].slice(0, 2) : []
   const evidence = analysis.evidence.filter(e => !e.goalId || goalIds.includes(e.goalId) || e.kind === 'task')
   // A finished plan is something the member did, whether or not it sits under a goal. It joins this pass without the goal link.
@@ -38,7 +38,7 @@ export async function generateReflectionContent(userId: string, period: Reflecti
   const submittedEvidence = evidence.filter(e => submittedIds.has(e.id))
   const result = await generateText({
     model: anthropic(MODEL), output: Output.object({ schema: reportSchema }),
-    system: reflectionSystemPrompt(period.kind),
+    system: reflectionSystemPrompt(period.kind, soFar),
     prompt: JSON.stringify({ period, coverage: { recordedDays: analysis.observedDays, totalDays: analysis.totalDays, counts: Object.fromEntries(Object.entries(analysis.counts).filter(([key]) => !['goal_event', 'task'].includes(key))), sourceTextIsExcerpted: true },
       themeCandidates: analysis.patterns.map(p => ({ ...p, sources: p.sources.filter(id => submittedIds.has(id)) })), evidence: notes.length ? notes : lived, allowedGoalIds: [],
       goalInstruction: 'Set goalThread to null. This pass reflects lived experience only; goal context is added separately.',

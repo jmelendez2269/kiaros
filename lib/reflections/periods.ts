@@ -53,6 +53,19 @@ export function latestClosed(kind: PeriodKind, timezone: string, now = new Date(
 export function assertClosed(period: ReflectionPeriod, now = new Date()): void {
   if (period.end > localDate(now, period.timezone)) throw new Error('This period has not ended yet')
 }
+/** A year still under way. Its Unwrapped can be read "so far", and is written again once the year ends. */
+export function isOpenYear(period: ReflectionPeriod, now = new Date()): boolean {
+  const today = localDate(now, period.timezone)
+  return period.kind === 'year' && period.start <= today && period.end > today
+}
+/** The part of a period that has been lived: an open year stops after today, anything else is whole. */
+export function livedSoFar(period: ReflectionPeriod, now = new Date()): ReflectionPeriod {
+  return isOpenYear(period, now) ? { ...period, end: addDays(localDate(now, period.timezone), 1) } : period
+}
+/** A reflection can be prepared for a period that has ended, or for the year under way. */
+export function assertReadable(period: ReflectionPeriod, now = new Date()): void {
+  if (!isOpenYear(period, now)) assertClosed(period, now)
+}
 // Find the first instant belonging to a local date. Handles DST and midnight offset transitions.
 export function localBoundary(date: string, timezone: string): string {
   const nominal = Date.parse(date + 'T00:00:00Z')

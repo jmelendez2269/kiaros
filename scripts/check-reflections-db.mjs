@@ -22,6 +22,7 @@ await db.exec(await readFile(new URL('../supabase/migrations/0047_reflections.sq
 await db.exec(await readFile(new URL('../supabase/migrations/0055_weekly_reflections.sql',import.meta.url),'utf8'))
 await db.query("insert into reflection_preferences(user_id,automatic) values($1,false)",[u2])
 await db.exec(await readFile(new URL('../supabase/migrations/0056_reflections_automatic_default.sql',import.meta.url),'utf8'))
+await db.exec(await readFile(new URL('../supabase/migrations/0057_open_year_reflection.sql',import.meta.url),'utf8'))
 {
   const prefs=Object.fromEntries((await db.query('select user_id,automatic,timezone from reflection_preferences')).rows.map(r=>[r.user_id,r]))
   assert.equal(Object.keys(prefs).length,4,'every member gets a preferences row')
@@ -45,6 +46,11 @@ await assert.rejects(db.query("insert into reflection_reports(user_id,kind,perio
 const first=await claim()
 await assert.rejects(claim(),/generation_in_progress/)
 await assert.rejects(query("select claim_reflection($1,'month','2099-01-01','2099-02-01','America/New_York',false)",[u1]),/period_not_closed/)
+// The year under way can be claimed; a year that has not begun cannot, and nor can any other open period.
+const thisYear=Number((await query("select extract(year from (now() at time zone 'America/New_York'))::int as y"))[0].y)
+assert.ok((await query("select claim_reflection($1,'year',$2::date,$3::date,'America/New_York',false) as result",[u2,`${thisYear}-01-01`,`${thisYear+1}-01-01`]))[0].result.id,'the open year is accepted')
+await assert.rejects(query("select claim_reflection($1,'year',$2::date,$3::date,'America/New_York',false)",[u2,`${thisYear+1}-01-01`,`${thisYear+2}-01-01`]),/period_not_closed/)
+await assert.rejects(query("select claim_reflection($1,'quarter',$2::date,$3::date,'America/New_York',false)",[u2,`${thisYear}-01-01`,`${thisYear+5}-01-01`]),/period_not_closed/)
 const finish=async(c,id=u1)=> (await query("select finish_reflection($1,$2,$3,$4,'{\"opening\":\"private\"}','{}','[]','fixture') as ok",[id,c.id,c.token,c.revision]))[0].ok
 assert.equal(await finish(first,u2),false)
 assert.equal(await finish(first),true)

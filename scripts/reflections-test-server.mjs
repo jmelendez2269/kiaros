@@ -32,13 +32,14 @@ UPDATE product_entitlements SET status='revoked' WHERE starts_at='2024-01-01';
 await db.exec(await readFile('supabase/migrations/0047_reflections.sql','utf8'))
 await db.exec(await readFile('supabase/migrations/0055_weekly_reflections.sql','utf8'))
 await db.exec(await readFile('supabase/migrations/0056_reflections_automatic_default.sql','utf8'))
+await db.exec(await readFile('supabase/migrations/0057_open_year_reflection.sql','utf8'))
 await db.query("select save_reflection_preferences($1,'America/New_York',false,true)",[uid])
 await db.query(`insert into journal_entries(user_id,title,body,entry_date,include_in_insights,include_in_stelloquy) values
 ($1,'A quiet evening','I rested with a book and felt settled.','2025-08-02',true,true),
 ($1,'Room to breathe','I took a quiet break after a busy afternoon.','2025-08-10',true,true),
 ($1,'Time together','A walk with my friend gave us space to talk.','2025-08-24',true,true),
 ($1,'Excluded private memory','DO_NOT_INCLUDE_PRIVATE','2025-08-25',false,false)`,[uid])
-const empty=resolve(temp,'empty.cjs'),auth=resolve(temp,'auth.cjs'),usage=resolve(temp,'usage.cjs'),admin=resolve(temp,'admin.cjs'),model=resolve(temp,'model.cjs')
+const empty=resolve(temp,'empty.cjs'),auth=resolve(temp,'auth.cjs'),usage=resolve(temp,'usage.cjs'),admin=resolve(temp,'admin.cjs'),model=resolve(temp,'model.cjs'),skyModel=resolve(temp,'sky.cjs')
 await writeFile(empty,'module.exports={};')
 await writeFile(auth,'exports.auth=async()=>({userId:globalThis.__reflectionTestUser});')
 await writeFile(usage,'exports.getUserProfileId=async id=>id;exports.recordUsage=async()=>{};')
@@ -48,11 +49,19 @@ await writeFile(model,`exports.generateReflectionContent=async (userId,period,an
  const o={...p,key:'rest',kind:'observation',contradictingSources:[]};
  return {model:'deterministic-browser-fixture',sources:[source],content:{opening:p,moments:[p],observations:history.some(f=>f.claim_key==='rest'&&f.verdict!=='confirmed')?[]:[o],rhythms:period.kind==='year'?p:null,turningPoints:period.kind==='year'?p:null,discoveries:period.kind==='year'?p:null,goalThread:null,lookingAhead:{focus:{...p,text:'You might leave room for one unhurried evening next month.'},experiments:[{...p,text:'Protect a quiet evening and notice what it gives you.'}]},letter:period.kind==='year'?p:null}};
 };`)
+// The sky is read for a year only, so month and quarter checks keep their "not much recorded" state.
+await writeFile(skyModel,`exports.generateSkyReading=async (userId,period,hasLived,soFar)=>{
+ if(period.kind!=='year') throw new Error('fixture reads the sky for years only');
+ return {sections:{sky:'Saturn spent these months opposite your Sun. It is often read as a season of weighing what holds.'+(soFar?' Read so far.':''),questionToCarry:'What do you remember of early March?'},
+  sourceChips:{sky:['12 moon phases'],plans:[],journal:[],personal:['Saturn opposite your Sun']},model:'deterministic-sky-fixture'};
+};`)
+// The service imports it by relative path, which an alias does not match.
+const skyStub={name:'sky-stub',setup(b){b.onResolve({filter:/\/sky-reading$/},()=>({path:skyModel}))}}
 await build({entryPoints:['app/api/reflections/route.ts'],outfile:resolve(temp,'api.cjs'),bundle:true,platform:'node',format:'cjs',packages:'external',
- alias:{'server-only':empty,'@clerk/nextjs/server':auth,'@/lib/ai/usage':usage,'@/lib/supabase/admin':admin,'@/lib/ai/reflection-generator':model}})
+ alias:{'server-only':empty,'@clerk/nextjs/server':auth,'@/lib/ai/usage':usage,'@/lib/supabase/admin':admin,'@/lib/ai/reflection-generator':model},plugins:[skyStub]})
 const api=createRequire(import.meta.url)(resolve(temp,'api.cjs'))
 await build({entryPoints:['app/api/cron/reflections/route.ts'],outfile:resolve(temp,'cron.cjs'),bundle:true,platform:'node',format:'cjs',packages:'external',
- alias:{'server-only':empty,'@clerk/nextjs/server':auth,'@/lib/ai/usage':usage,'@/lib/supabase/admin':admin,'@/lib/ai/reflection-generator':model}})
+ alias:{'server-only':empty,'@clerk/nextjs/server':auth,'@/lib/ai/usage':usage,'@/lib/supabase/admin':admin,'@/lib/ai/reflection-generator':model},plugins:[skyStub]})
 const cron=createRequire(import.meta.url)(resolve(temp,'cron.cjs'))
 process.env.CRON_SECRET='local-reflection-fixture-only'
 let failureTable=null

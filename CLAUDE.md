@@ -31,7 +31,7 @@ Kiaros (formerly "Cosmic Life Planner") is a personalised yearly planning system
 
 ## Current state (2026-06-02, reflections and Insights re-checked 2026-11-10)
 
-Kiaros went live ~2026-05-01. Migration files run to 0056. See [`PRODUCT_BIBLE.md`](./PRODUCT_BIBLE.md) for the full shipped feature inventory.
+Kiaros went live ~2026-05-01. Migration files run to 0057. See [`PRODUCT_BIBLE.md`](./PRODUCT_BIBLE.md) for the full shipped feature inventory.
 
 **All of the following are live in production:**
 - Auth (Clerk), DB (Supabase), RLS clients, Clerk webhook
@@ -105,6 +105,7 @@ Always write:
 - Querying Supabase directly from client components (always through API routes)
 - Using the service-role client outside webhooks and system jobs
 - Assuming Claude knows the ephemeris — it doesn't, feed it real data
+- Letting any period but the year be read before it ends — only the open year has a "so far" reading (`isOpenYear` in `lib/reflections/periods.ts`)
 - Treating a period with no journal entries as empty — reflections and look backs still read the sky; rest and unrecorded time are never explained or scored
 - Passing pattern readings or journal text from one period into another period's look back — only names, counts and dates cross periods (`lib/period-review/returning-threads.ts`)
 - Asking it to output markdown when we need JSON — we always want structured output for blueprint/review generation
