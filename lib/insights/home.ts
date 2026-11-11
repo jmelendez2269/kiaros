@@ -6,6 +6,8 @@ import type { EphemerisDay } from '@/types/blueprint'
 import { dayMatchesPattern, patternGlyph, patternTitle } from './pattern-sky'
 
 export interface HomePattern {
+  /** The pattern's row id, when known: its anchor on the Patterns page. */
+  id?: string
   label: string
   glyph: string
   /** Entries the member has written under this sky. */
@@ -13,12 +15,14 @@ export interface HomePattern {
 }
 
 export interface PatternRowForHome {
+  id?: string
   pattern_type: string
   pattern_key: string
   sample_size: number
 }
 
 const toHome = (row: PatternRowForHome): HomePattern => ({
+  ...(row.id ? { id: row.id } : {}),
   label: patternTitle(row.pattern_type, row.pattern_key),
   glyph: patternGlyph(row.pattern_type, row.pattern_key),
   entries: row.sample_size,
@@ -68,3 +72,26 @@ export function brightestTheme(topics: Array<{ capture_id: string; kind: string;
 }
 
 export const timesWritten = (n: number) => (n === 1 ? 'written under once' : `written under ${n} times`)
+
+/** The Patterns page, at one pattern when its id is known. */
+export function patternHref(id?: string): string {
+  return id ? `/insights/map#pattern-${id}` : '/insights/map'
+}
+
+/**
+ * For Today's transit list: how many entries the member has written under
+ * each transit, keyed as "Planet:aspect:NatalPlanet". Only skies written
+ * under at least twice.
+ */
+export function writtenUnderTransits(rows: PatternRowForHome[]): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const row of rows) {
+    if (row.pattern_type === 'aspect' && row.sample_size >= MIN_ENTRIES) out[row.pattern_key] = row.sample_size
+  }
+  return out
+}
+
+/** For Today's "shape of today": the moon and retrograde skies overhead that the member has written under. Transits have their own list. */
+export function overheadMoonAndRetrogrades(rows: PatternRowForHome[], day: EphemerisDay | null | undefined, limit = 3): HomePattern[] {
+  return overheadPatterns(rows.filter((row) => row.pattern_type !== 'aspect'), day, limit)
+}

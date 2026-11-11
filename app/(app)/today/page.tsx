@@ -17,7 +17,9 @@ import { LifeArcRead } from '@/components/today/LifeArcRead'
 import { JupiterSeason } from '@/components/today/JupiterSeason'
 import { TodayIntention } from '@/components/today/TodayIntention'
 import { TodayCheckIn } from '@/components/today/TodayCheckIn'
-import { loadCheckIn } from '@/lib/today/check-in'
+import { loadCheckIn, loadRhythmLine } from '@/lib/today/check-in'
+import { overheadMoonAndRetrogrades, writtenUnderTransits } from '@/lib/insights/home'
+import { humanizeLunarPhase } from '@/lib/journal/intelligence'
 import { EMPTY_CHECK_IN } from '@/lib/today/check-in-options'
 import { TodayCurriculum } from '@/components/today/TodayCurriculum'
 import { WeekArc } from '@/components/today/WeekArc'
@@ -114,6 +116,8 @@ export default async function TodayPage({
   })
   const [
     checkIn,
+    rhythmLine,
+    patternRowsRes,
     activeTransits,
     journalStreak,
     intention,
@@ -129,6 +133,9 @@ export default async function TodayPage({
   ] = await Promise.all([
     // Optional: Today still loads if the check-in cannot be read.
     loadCheckIn(todayDate).catch(() => EMPTY_CHECK_IN),
+    // Both optional: Today reads the same without them.
+    loadRhythmLine(humanizeLunarPhase(context.today.moonPhase)).catch(() => null),
+    admin.from('user_pattern_insights').select('id, pattern_type, pattern_key, sample_size').eq('user_id', supabaseUserId),
     getActiveTransits(todayDate, supabaseUserId),
     getJournalStreak(todayDate, supabaseUserId),
     getTodayIntention(todayDate, supabaseUserId),
@@ -153,6 +160,7 @@ export default async function TodayPage({
       .eq('is_ritual', true),
   ])
   const todayPlanItems = todayPlanItemsRes.data ?? []
+  const patternRows = patternRowsRes.data ?? []
 
   // Year-at-a-glance grid (same data the Year tab uses): the current
   // blueprint's weeks plus the cached year ephemeris.
@@ -167,6 +175,9 @@ export default async function TodayPage({
       .maybeSingle()
     yearEphemeris = (ephemerisRow?.data as YearEphemeris | null) ?? null
   }
+
+  // Today's stored sky, in the same form journal entries are stamped from.
+  const todaySky = yearEphemeris?.days?.find((d) => d.date === todayDate) ?? null
 
   const currentWeek = blueprintLoaded?.blueprint.weeks.find(
     (w) => w.weekNumber === context.meta.isoWeek
@@ -200,6 +211,13 @@ export default async function TodayPage({
         moonDayNudge={moonDayNudge}
       />
 
+      {/* Look backs show only for a few days after a period closes, so they lead while they are here. */}
+      <LastWeekTodayCard todayDate={todayDate} profileId={supabaseUserId} />
+      <PeriodReviewTodayCards todayDate={todayDate} />
+      {periodReviewPublicFlagEnabled() ? (
+        <PeriodReviewAutoOpenManager todayDate={todayDate} allowTestParams={mockAllowed} />
+      ) : null}
+
       <TodayJournalMemoryNotice profileId={supabaseUserId} />
 
       <SkyCyclesTodayCard profileId={supabaseUserId} todayDate={todayDate} />
@@ -212,7 +230,7 @@ export default async function TodayPage({
         {/* Left column — stacks naturally, no row-height coupling to SkyNow */}
         <div className="flex flex-col gap-4 min-w-0">
           <TodayIntention result={intention} />
-          <TodayCheckIn initial={checkIn} />
+          <TodayCheckIn initial={checkIn} rhythm={rhythmLine} />
           <Frame tone="umber" padding={20}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Kicker color={K.copper}>Today&rsquo;s plan</Kicker>
@@ -232,6 +250,7 @@ export default async function TodayPage({
               shape={shape}
               isoWeek={context.meta.isoWeek}
               dayOfYear={context.meta.dayOfYear}
+              writtenUnder={overheadMoonAndRetrogrades(patternRows, todaySky)}
             />
           </Frame>
           <LineForToday streak={journalStreak} />
@@ -262,17 +281,11 @@ export default async function TodayPage({
               </p>
             </Frame>
           )}
-          <ActiveTransits data={activeTransits} />
+          <ActiveTransits data={activeTransits} writtenUnder={writtenUnderTransits(patternRows)} />
         </div>
       </div>
 
       <TodayCurriculum result={curriculum} />
-
-      <LastWeekTodayCard todayDate={todayDate} profileId={supabaseUserId} />
-      <PeriodReviewTodayCards todayDate={todayDate} />
-      {periodReviewPublicFlagEnabled() ? (
-        <PeriodReviewAutoOpenManager todayDate={todayDate} allowTestParams={mockAllowed} />
-      ) : null}
 
       <DeeperToday defaultOpen={deeperOpenByDefault}>
         <div className="grid gap-5">

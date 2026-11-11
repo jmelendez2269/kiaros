@@ -6,6 +6,7 @@ import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
 import { getTodayContext } from '@/lib/today/get-today-context'
 import { resolveTodayDateISO } from '@/lib/today/mock-today-date'
 import { checkInFromRow, type CheckIn } from './check-in-options'
+import { checkInRhythms, rhythmLineForPhase } from '@/lib/insights/check-in-rhythms'
 
 export type CheckInResult = { success: true; data: CheckIn } | { success: false; error: string }
 
@@ -47,4 +48,20 @@ export async function saveCheckIn(checkIn: CheckIn): Promise<CheckInResult> {
   )
   if (error) return { success: false, error: 'Could not save your check-in.' }
   return { success: true, data: checkIn }
+}
+
+/**
+ * What the member's own check-ins say about the moon phase overhead, as one
+ * line, or null when there is not enough to say. `phase` is the humanized
+ * label check-ins are stamped with, e.g. "Full".
+ */
+export async function loadRhythmLine(phase: string): Promise<string | null> {
+  const supabase = await createServerSupabase()
+  const { data, error } = await supabase
+    .from('daily_logs')
+    .select('log_date, energy_level, mood_tag, lunar_phase')
+    .order('log_date', { ascending: false })
+    .limit(400)
+  if (error || !data) return null
+  return rhythmLineForPhase(checkInRhythms(data), phase)
 }

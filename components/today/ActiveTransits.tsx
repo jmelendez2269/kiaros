@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Frame, K, Kicker, GLYPH } from '@/components/almanac'
 import { AskOracleButton } from '@/components/oracle/AskOracleButton'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
@@ -10,6 +11,8 @@ import type { AspectKind } from '@/components/almanac/tokens'
 import type { Planet } from '@/types/blueprint'
 
 interface Props {
+  /** Entries the member has written under each transit, keyed "Planet:aspect:NatalPlanet". */
+  writtenUnder?: Record<string, number>
   data: ActiveTransitsResult
 }
 
@@ -50,7 +53,7 @@ const RARITY_TONE: Record<string, string> = {
   'once-in-lifetime': K.ember,
 }
 
-export function ActiveTransits({ data }: Props) {
+export function ActiveTransits({ data, writtenUnder = {} }: Props) {
   const { hasOracleAccess } = useStelloquy()
   const [lifetimeOpen, setLifetimeOpen] = useState(false)
 
@@ -114,7 +117,7 @@ export function ActiveTransits({ data }: Props) {
               label={`this ${row.technical}`}
               triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
             >
-              <TransitRow row={row} first={i === 0} />
+              <TransitRow row={row} first={i === 0} written={writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]} />
             </AskOracleButton>
           ))}
         </div>
@@ -132,6 +135,12 @@ export function ActiveTransits({ data }: Props) {
           No fast-moving transits today — the slower planets are holding the field.
         </p>
       )}
+
+      {[...current, ...lifetime].some((row) => writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]) ? (
+        <Link href="/insights/map" style={{ display: 'inline-block', marginTop: 10, fontFamily: K.fBody, fontSize: 12.5, color: K.copperHi, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+          See what you wrote under these in Patterns →
+        </Link>
+      ) : null}
 
       {/* Lifetime / outer-planet transits — collapsible */}
       {lifetime.length > 0 && (
@@ -189,7 +198,7 @@ export function ActiveTransits({ data }: Props) {
                   label={`this ${row.technical}`}
                   triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
                 >
-                  <TransitRow row={row} first={i === 0} />
+                  <TransitRow row={row} first={i === 0} written={writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]} />
                 </AskOracleButton>
               ))}
             </div>
@@ -200,7 +209,7 @@ export function ActiveTransits({ data }: Props) {
   )
 }
 
-function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
+function TransitRow({ row, first, written }: { row: ActiveTransitRow; first: boolean; written?: number }) {
   const aspectKey = row.aspect as AspectKind
   const tone = ASPECT_TONE[aspectKey] ?? K.copper
   const rarityColor = RARITY_TONE[row.rarity] ?? K.inkDim
@@ -251,6 +260,11 @@ function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
         >
           {row.rarityLabel}
         </div>
+        {written ? (
+          <div style={{ marginTop: 3, fontFamily: K.fBody, fontSize: 12.5, color: K.violetDim }}>
+            ✎ You&rsquo;ve written under this {written} times
+          </div>
+        ) : null}
       </div>
       <div
         style={{

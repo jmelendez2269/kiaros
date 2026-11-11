@@ -91,3 +91,20 @@ export function describePhaseRhythm(rhythm: PhaseRhythm): string {
   const text = [energy, mood].filter(Boolean).join(', ')
   return `${text.charAt(0).toUpperCase()}${text.slice(1)}.`
 }
+
+/**
+ * One line for Today's check-in card, about the moon phase overhead:
+ * "Under the Full Moon, your energy has usually sat lower, around Low, and
+ * tired has come up most." null when that phase has nothing to say yet.
+ */
+export function rhythmLineForPhase(rhythms: CheckInRhythms, phase: string | null | undefined): string | null {
+  const rhythm = phase ? rhythms.phases.find((p) => p.phase === phase) : undefined
+  if (!rhythm) return null
+  const energy = rhythm.energy
+    ? `your energy has usually sat ${rhythm.energy}${rhythm.energyWord ? `, around ${rhythm.energyWord}` : ''}`
+    : null
+  const mood = rhythm.mood ? `${rhythm.mood} has come up most` : null
+  const parts = [energy, mood].filter(Boolean)
+  if (!parts.length) return null
+  return `Under the ${rhythm.phase} Moon, ${parts.join(energy && mood ? ', and ' : '')}.`
+}

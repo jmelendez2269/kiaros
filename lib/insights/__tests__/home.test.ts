@@ -55,3 +55,43 @@ describe('timesWritten', () => {
     assert.equal(timesWritten(6), 'written under 6 times')
   })
 })
+
+import { overheadMoonAndRetrogrades, patternHref, writtenUnderTransits } from '../home'
+import { checkInRhythms, rhythmLineForPhase, type CheckInRow } from '../check-in-rhythms'
+
+describe('Today: skies written under before', () => {
+  const withAspects = [
+    ...rows.map((r, i) => ({ ...r, id: `p${i}` })),
+    { id: 'a1', pattern_type: 'aspect', pattern_key: 'Saturn:square:Moon', sample_size: 4 },
+    { id: 'a2', pattern_type: 'aspect', pattern_key: 'Venus:trine:Sun', sample_size: 1 },
+  ]
+  it('marks a transit by its planet, aspect and natal point, once written under twice', () => {
+    assert.deepEqual(writtenUnderTransits(withAspects), { 'Saturn:square:Moon': 4 })
+  })
+  it('lists the moon and retrogrades overhead, leaving transits to their own card', () => {
+    const sky = { ...today, transits: [{ planet: 'Saturn', aspect: 'square', natalPlanet: 'Moon' }] } as unknown as EphemerisDay
+    assert.deepEqual(overheadMoonAndRetrogrades(withAspects, sky).map(p => [p.label, p.id]), [['Mercury retrograde', 'p0'], ['Moon in Scorpio', 'p1']])
+  })
+  it('links to the pattern itself when it can', () => {
+    assert.equal(patternHref('p0'), '/insights/map#pattern-p0')
+    assert.equal(patternHref(), '/insights/map')
+  })
+})
+
+describe('Today: the check-in card and the moon overhead', () => {
+  const many = (n: number, phase: string, energy: number, mood: string | null = null): CheckInRow[] =>
+    Array.from({ length: n }, (_, i) => ({ log_date: `2026-10-${String(i + 1).padStart(2, '0')}`, energy_level: energy, mood_tag: mood, lunar_phase: phase }))
+  const rhythms = checkInRhythms([...many(4, 'Full', 2, 'tired'), ...many(8, 'New', 4), ...many(4, 'First Quarter', 3, 'open')])
+  it('speaks about the phase overhead in one line', () => {
+    assert.equal(rhythmLineForPhase(rhythms, 'Full'), 'Under the Full Moon, your energy has usually sat lower, around Low, and tired has come up most.')
+  })
+  it('handles a phase with only a mood, or only energy', () => {
+    assert.equal(rhythmLineForPhase(rhythms, 'First Quarter'), 'Under the First Quarter Moon, open has come up most.')
+    assert.equal(rhythmLineForPhase(rhythms, 'New'), 'Under the New Moon, your energy has usually sat higher, around Lifted.')
+  })
+  it('says nothing for a phase without a rhythm, or before there are enough check-ins', () => {
+    assert.equal(rhythmLineForPhase(rhythms, 'Waning Crescent'), null)
+    assert.equal(rhythmLineForPhase(checkInRhythms(many(3, 'Full', 1)), 'Full'), null)
+    assert.equal(rhythmLineForPhase(rhythms, null), null)
+  })
+})
