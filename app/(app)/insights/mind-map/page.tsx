@@ -7,6 +7,7 @@ import { requireOracleAccess } from '@/lib/commerce/access'
 import { isIaJournalEnabled } from '@/lib/feature-flags'
 import { todayISO } from '@/lib/today/get-today-context'
 import { BRAND } from '@/lib/brand'
+import { PageHints } from '@/components/tour/PageHints'
 
 export const metadata = {
   title: `Mind map — ${BRAND.product}`,
@@ -31,6 +32,7 @@ export default async function MindMapPage() {
           came up in the same conversation.
         </p>
       </header>
+      <PageHints page="mind-map" />
       <StarChart today={todayISO()} patternsHref={isIaJournalEnabled() ? '/journal/patterns' : '/insights/map'} />
     </div>
   )
