@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -19,6 +20,7 @@ import { TodayIntention } from '@/components/today/TodayIntention'
 import { TodayCheckIn } from '@/components/today/TodayCheckIn'
 import { PageHints } from '@/components/tour/PageHints'
 import { loadCheckIn, loadRhythmLine } from '@/lib/today/check-in'
+import { weekMarks } from '@/lib/today/week-marks'
 import { overheadMoonAndRetrogrades, writtenUnderTransits } from '@/lib/insights/home'
 import { humanizeLunarPhase } from '@/lib/journal/intelligence'
 import { EMPTY_CHECK_IN } from '@/lib/today/check-in-options'
@@ -115,10 +117,13 @@ export default async function TodayPage({
     moonPhase: context.today.moonPhase,
     moonSign: context.today.moon.sign,
   })
+  const weekDates = context.week.map((day) => day.date)
   const [
     checkIn,
     rhythmLine,
     patternRowsRes,
+    weekJournalRes,
+    weekCheckInsRes,
     activeTransits,
     journalStreak,
     intention,
@@ -137,6 +142,9 @@ export default async function TodayPage({
     // Both optional: Today reads the same without them.
     loadRhythmLine(humanizeLunarPhase(context.today.moonPhase)).catch(() => null),
     admin.from('user_pattern_insights').select('id, pattern_type, pattern_key, sample_size').eq('user_id', supabaseUserId),
+    // This week's own traces, for the marks on the week ribbon.
+    admin.from('journal_entries').select('entry_date').eq('user_id', supabaseUserId).gte('entry_date', weekDates[0]).lte('entry_date', weekDates[weekDates.length - 1]),
+    admin.from('daily_logs').select('log_date, energy_level, mood_tag').eq('user_id', supabaseUserId).gte('log_date', weekDates[0]).lte('log_date', weekDates[weekDates.length - 1]),
     getActiveTransits(todayDate, supabaseUserId),
     getJournalStreak(todayDate, supabaseUserId),
     getTodayIntention(todayDate, supabaseUserId),
@@ -162,6 +170,7 @@ export default async function TodayPage({
   ])
   const todayPlanItems = todayPlanItemsRes.data ?? []
   const patternRows = patternRowsRes.data ?? []
+  const ribbonMarks = weekMarks(weekDates, todayDate, (weekJournalRes.data ?? []).map((row) => row.entry_date), weekCheckInsRes.data ?? [])
 
   // Year-at-a-glance grid (same data the Year tab uses): the current
   // blueprint's weeks plus the cached year ephemeris.
@@ -258,7 +267,7 @@ export default async function TodayPage({
           </Frame>
           <LineForToday streak={journalStreak} />
           <Frame tone="umber" padding={20}>
-            <WeekRibbon week={context.week} />
+            <WeekRibbon week={context.week} marks={ribbonMarks} />
           </Frame>
         </div>
 
@@ -311,6 +320,16 @@ export default async function TodayPage({
               <div style={{ marginTop: 12 }}>
                 <YearChartShell yearEphemeris={yearEphemeris} weeks={blueprintLoaded.blueprint.weeks} />
               </div>
+              <p style={{ margin: '14px 0 0', fontSize: 13.5, lineHeight: 1.6, color: K.inkDim }}>
+                This is the year as it was planned. For the year as you have lived it so far, week by week,{' '}
+                <Link
+                  href={periodReviewPublicFlagEnabled() ? `/reviews?year=${blueprintLoaded.planYear}` : '/reflections'}
+                  style={{ color: K.copperHi, textDecoration: 'underline', textUnderlineOffset: 3 }}
+                >
+                  open your look backs
+                </Link>
+                .
+              </p>
             </Frame>
           ) : null}
 

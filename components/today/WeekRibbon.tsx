@@ -1,9 +1,14 @@
 import { K, Kicker, MoonGlyph } from '@/components/almanac'
 import type { TodayContext } from '@/lib/today/get-today-context'
+import { dayMarkLabel, type DayMark } from '@/lib/today/week-marks'
 
 interface Props {
   week: TodayContext['week']
+  /** By date: the days this week the member wrote or checked in. */
+  marks?: Record<string, DayMark>
 }
+
+const WROTE = K.brickHi, CHECKED_IN = K.violetDim
 
 function rangeLabel(week: TodayContext['week']): string {
   if (week.length === 0) return ''
@@ -36,7 +41,8 @@ function phaseHint(phase: TodayContext['week'][number]['moonPhase']): string {
   }
 }
 
-export function WeekRibbon({ week }: Props) {
+export function WeekRibbon({ week, marks = {} }: Props) {
+  const anyMarks = Object.keys(marks).length > 0
   return (
     <div>
       <div
@@ -114,10 +120,25 @@ export function WeekRibbon({ week }: Props) {
               >
                 {day.isToday ? 'today' : phaseHint(day.moonPhase)}
               </div>
+              {/* Always present, so every cell keeps the same height. */}
+              <div
+                role={dayMarkLabel(marks[day.date]) ? 'img' : undefined}
+                aria-label={dayMarkLabel(marks[day.date]) ?? undefined}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, height: 10 }}
+              >
+                {marks[day.date]?.wrote ? <span aria-hidden style={{ fontSize: 10, lineHeight: 1, color: WROTE }}>✎</span> : null}
+                {marks[day.date]?.checkedIn ? <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: CHECKED_IN }} /> : null}
+              </div>
             </div>
           )
         })}
       </div>
+      {anyMarks ? (
+        <div style={{ display: 'flex', gap: 16, marginTop: 10, fontFamily: K.fBody, fontSize: 12, color: K.inkDim }}>
+          <span><span aria-hidden style={{ color: WROTE, marginRight: 5 }}>✎</span>you wrote</span>
+          <span><span aria-hidden style={{ display: 'inline-block', width: 6, height: 6, borderRadius: 999, background: CHECKED_IN, marginRight: 6, verticalAlign: 'middle' }} />you checked in</span>
+        </div>
+      ) : null}
     </div>
   )
 }
