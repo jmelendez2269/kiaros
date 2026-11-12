@@ -8,7 +8,7 @@ export const metadata: Metadata = homeMarketingMetadata;
 
 export default async function HomePage() {
   const { userId } = await auth();
-  if (userId) redirect("/today");
+  if (userId) redirect("/insights");
 
   return <KairosHome isSignedIn={false} />;
 }

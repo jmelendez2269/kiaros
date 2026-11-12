@@ -8,7 +8,7 @@ import { reflectionLine } from '@/lib/reflections/report-line'
 import { memberSince } from '@/lib/reflections/service'
 import { firstSentence, weekRangeLabel, weekReflectionHref } from '@/lib/reviews/year-timeline'
 import type { YearEphemeris } from '@/types/blueprint'
-import { brightestTheme, overheadPatterns, strongestPattern, type HomePattern, type HomeStar, type PatternRowForHome } from './home'
+import { brightestTheme, overheadPatterns, skyPatternsForHome, strongestPattern, type HomePattern, type HomeSkyPattern, type HomeStar, type PatternRowForSky } from './home'
 
 export interface InsightsHome {
   /** The week that most recently closed. null before the member's first full week. */
@@ -20,12 +20,14 @@ export interface InsightsHome {
   /** Shown when nothing is overhead. */
   strongest: HomePattern | null
   patternCount: number
+  /** The member's patterns as constellations. Empty before any pattern has formed. */
+  sky: HomeSkyPattern[]
   /** null without Stelloquy access, or before any conversation is saved. */
   star: HomeStar | null
 }
 
 /** Each part is optional: one that cannot be read is left out, never an error page. */
-export async function loadInsightsHome(profileId: string, today: string, opts: { monthLookBacks: boolean; mindMap: boolean }): Promise<InsightsHome> {
+export async function loadInsightsHome(profileId: string, today: string, opts: { monthLookBacks: boolean; mindMap: boolean; patternDates: boolean }): Promise<InsightsHome> {
   const admin = createAdminSupabase()
   const sinceMonday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7
   const weekStart = addDays(today, -sinceMonday - 7), weekEnd = addDays(weekStart, 6)
@@ -36,7 +38,7 @@ export async function loadInsightsHome(profileId: string, today: string, opts: {
     admin.from('reflection_reports').select('status,revision,content,analysis').eq('user_id', profileId).eq('kind', 'week').eq('period_start', weekStart).maybeSingle(),
     admin.from('reflection_preferences').select('evidence_revision').eq('user_id', profileId).maybeSingle(),
     opts.monthLookBacks ? loadCachedPeriodReview(profileId, monthPeriod).catch(() => null) : null,
-    admin.from('user_pattern_insights').select('pattern_type, pattern_key, sample_size').eq('user_id', profileId),
+    admin.from('user_pattern_insights').select('id, pattern_type, pattern_key, sample_size, evidence').eq('user_id', profileId),
     admin.from('ephemeris_cache').select('data').eq('user_id', profileId).eq('year', Number(today.slice(0, 4))).maybeSingle(),
     opts.mindMap
       ? admin.from('capture_topics').select('capture_id, kind, label').eq('user_id', profileId).order('created_at', { ascending: false }).limit(5000)
@@ -58,7 +60,7 @@ export async function loadInsightsHome(profileId: string, today: string, opts: {
     line: monthText ? firstSentence(monthText, 200) : null,
   }
 
-  const patterns = (patternsRes.data ?? []) as PatternRowForHome[]
+  const patterns = (patternsRes.data ?? []) as PatternRowForSky[]
   const days = (ephemerisRes.data?.data as unknown as YearEphemeris | null)?.days
   const todayDay = Array.isArray(days) ? days.find((d) => d.date === today) : null
 
@@ -68,6 +70,7 @@ export async function loadInsightsHome(profileId: string, today: string, opts: {
     overhead: overheadPatterns(patterns, todayDay),
     strongest: strongestPattern(patterns),
     patternCount: patterns.length,
+    sky: skyPatternsForHome(patterns, { withDates: opts.patternDates }),
     star: topicsRes?.data ? brightestTheme(topicsRes.data.map((t) => ({ capture_id: String(t.capture_id), kind: String(t.kind), label: String(t.label) }))) : null,
   }
 }

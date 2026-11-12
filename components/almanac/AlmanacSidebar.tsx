@@ -42,6 +42,22 @@ const NAV: ReadonlyArray<{
   collapsible?: boolean
   subItems?: ReadonlyArray<SubNavItem>
 }> = [
+  // Insights leads: it is the home page, and Today follows it.
+  {
+    key: 'insights',
+    label: 'Insights',
+    hint: 'patterns · reviews · your year',
+    glyph: '◎',
+    tone: K.violetDim,
+    href: '/insights',
+    collapsible: true,
+    subItems: [
+      { label: 'Patterns', href: '/insights/map', hint: 'what keeps coming up' },
+      { label: 'Mind map', href: '/insights/mind-map', hint: 'how your themes connect' },
+      // Yearly Unwrapped opens from the end of the Reviews timeline now.
+      { label: 'Reviews', href: '/reviews', hint: 'every week, month and quarter' },
+    ],
+  },
   {
     key: 'today',
     label: 'Today',
@@ -68,21 +84,6 @@ const NAV: ReadonlyArray<{
     glyph: '✦',
     tone: K.kairosHi,
     href: '/oracle',
-  },
-  {
-    key: 'insights',
-    label: 'Insights',
-    hint: 'patterns · reviews · your year',
-    glyph: '◎',
-    tone: K.violetDim,
-    href: '/insights',
-    collapsible: true,
-    subItems: [
-      { label: 'Reviews', href: '/reviews', hint: 'every week, month and quarter' },
-      { label: 'Patterns', href: '/insights/map', hint: 'what keeps coming up' },
-      // Yearly Unwrapped opens from the end of the Reviews timeline now.
-      { label: 'Mind map', href: '/insights/mind-map', hint: 'how your themes connect' },
-    ],
   },
   {
     key: 'year',
@@ -587,7 +588,7 @@ function SidebarBody({
 
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 18, height: '100%' }}>
         <div style={{ padding: '0 4px' }}>
-          <Link href="/today" onClick={onNavigate} style={{ textDecoration: 'none' }}>
+          <Link href="/insights" onClick={onNavigate} style={{ textDecoration: 'none' }}>
             <ChromeMark collapsed={collapsed} />
           </Link>
         </div>
@@ -925,7 +926,7 @@ export function AlmanacSidebar({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/today" style={{ textDecoration: 'none' }}>
+          <Link href="/insights" style={{ textDecoration: 'none' }}>
             <ChromeMark />
           </Link>
           <button
