@@ -4,6 +4,8 @@ import { auth } from '@clerk/nextjs/server'
 import type { ReactNode } from 'react'
 import { K, Kicker } from '@/components/almanac'
 import { PatternConstellations } from '@/components/insights/PatternSky'
+import { SkyTurnBand } from '@/components/sky-cycles/SkyTurnBand'
+import { SkyTurnMoment } from '@/components/sky-cycles/SkyTurnMoment'
 import { LineForToday } from '@/components/today/LineForToday'
 import { TodayCheckIn } from '@/components/today/TodayCheckIn'
 import { TodayIntention } from '@/components/today/TodayIntention'
@@ -15,6 +17,8 @@ import { loadInsightsHome, type InsightsHome } from '@/lib/insights/load-home'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
 import { humanizeLunarPhase } from '@/lib/journal/intelligence'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
+import { loadSkyTurns } from '@/lib/sky-cycles/load'
+import { turnsHeadline } from '@/lib/sky-cycles/turns'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { loadCheckIn, loadRhythmLine } from '@/lib/today/check-in'
 import { EMPTY_CHECK_IN } from '@/lib/today/check-in-options'
@@ -105,13 +109,16 @@ export default async function InsightsHomePage() {
   const reviewsOn = isPeriodReviewEnabled() && periodReviewPublicFlagEnabled()
   const hasStelloquy = (await requireOracleAccess(userId)) === null
   // Each of the capture parts is optional: the page reads the same without one.
-  const [home, checkIn, rhythmLine, journalStreak, intention] = await Promise.all([
+  const [home, checkIn, rhythmLine, journalStreak, intention, turns] = await Promise.all([
     loadInsightsHome(profileId, today, { monthLookBacks: reviewsOn, mindMap: hasStelloquy, patternDates: hasStelloquy }),
     loadCheckIn(today).catch(() => EMPTY_CHECK_IN),
     loadRhythmLine(moonPhase).catch(() => null),
     getJournalStreak(today, profileId).catch(() => 0),
     getTodayIntention(today, profileId).catch(() => ({ status: 'no-blueprint' as const })),
+    loadSkyTurns(profileId, today, timeZone).catch(() => []),
   ])
+  const turnsLine = turnsHeadline(turns)
+  const dateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${today}T12:00:00Z`))
   const reviewsHref = reviewsOn ? '/reviews' : '/reflections'
   const beginning = home.sky.length === 0
 
@@ -130,6 +137,9 @@ export default async function InsightsHomePage() {
       </header>
 
       <PageHints page="insights" />
+
+      <SkyTurnBand turns={turns} headline={turnsLine} dateLabel={dateLabel} />
+      <SkyTurnMoment turns={turns} headline={turnsLine} today={today} dateLabel={dateLabel} />
 
       {beginning ? (
         <WhatArrives hasStelloquy={hasStelloquy} />
