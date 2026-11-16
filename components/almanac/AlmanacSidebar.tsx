@@ -125,7 +125,7 @@ const NAV: ReadonlyArray<{
 const GOALS_STUDY_NAV: (typeof NAV)[number] = {
   key: 'goalsStudy',
   label: 'Goals and study',
-  hint: 'life areas · study plans',
+  hint: 'goals · curriculum',
   glyph: '◈',
   tone: K.starlight,
   href: '/areas',

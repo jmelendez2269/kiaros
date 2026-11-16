@@ -15,10 +15,10 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
           Turn a Stelloquy reading into a conversation.
         </h1>
         <p className="shell-prose-lead mt-4 max-w-3xl">
-          Stelloquy is the voice woven through {BRAND.product} — an ongoing conversation grounded
-          in your chart, the current sky, your goals and blueprint, and the memory you choose to
-          carry forward. Follow up, refine the question, and capture what matters with active
-          Planner + Oracle access.
+          Stelloquy is the voice woven through {BRAND.product}. It&apos;s an ongoing conversation
+          grounded in your chart, the current sky, your goals and blueprint, and the memory you
+          choose to carry forward. With Stelloquy access, you can follow up, refine the question,
+          and save what you want to keep.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -35,8 +35,8 @@ function OracleUpgradeState({ hasReadOnlyPlannerAccess }: { hasReadOnlyPlannerAc
 
         {hasReadOnlyPlannerAccess ? (
           <p className="mt-6 rounded-[1rem] border border-leather-500/25 bg-leather-500/10 px-4 py-3 text-sm leading-6 text-bone-muted">
-            Your previous annual planner remains readable, but Stelloquy requires active Planner +
-            Oracle access.
+            Your previous annual planner is still here to read. Stelloquy opens again when your plan
+            with Stelloquy access is active.
           </p>
         ) : null}
 

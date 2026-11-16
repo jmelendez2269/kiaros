@@ -110,7 +110,7 @@ export default function OnboardingBirthPage() {
         : !birthDate
           ? "Add your date of birth to continue"
           : !birthCity
-            ? "Add your birth city to continue"
+            ? "Add the city you were born in to continue"
             : null
       : null;
 
