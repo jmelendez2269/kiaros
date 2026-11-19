@@ -56,7 +56,7 @@ describe('timesWritten', () => {
   })
 })
 
-import { overheadMoonAndRetrogrades, patternHref, writtenUnderTransits } from '../home'
+import { overheadMoonAndRetrogrades, patternHref, writtenUnderTransitLinks, writtenUnderTransits } from '../home'
 import { checkInRhythms, rhythmLineForPhase, type CheckInRow } from '../check-in-rhythms'
 
 describe('Today: skies written under before', () => {
@@ -67,6 +67,9 @@ describe('Today: skies written under before', () => {
   ]
   it('marks a transit by its planet, aspect and natal point, once written under twice', () => {
     assert.deepEqual(writtenUnderTransits(withAspects), { 'Saturn:square:Moon': 4 })
+  })
+  it('links each transit to its pattern, with the count', () => {
+    assert.deepEqual(writtenUnderTransitLinks(withAspects), { 'Saturn:square:Moon': { count: 4, href: '/insights/map#pattern-a1' } })
   })
   it('lists the moon and retrogrades overhead, leaving transits to their own card', () => {
     const sky = { ...today, transits: [{ planet: 'Saturn', aspect: 'square', natalPlanet: 'Moon' }] } as unknown as EphemerisDay
