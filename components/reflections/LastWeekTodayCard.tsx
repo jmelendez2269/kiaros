@@ -35,41 +35,29 @@ export async function LastWeekTodayCard({ todayDate, profileId }: { todayDate: s
   }
 
   return (
-    <div
+    <Link
+      href={weekReflectionHref(week)}
       style={{
-        border: '1px solid rgba(164,163,177,0.45)',
-        borderLeft: '3px solid #A98AEF',
-        background: '#0A0C14',
-        borderRadius: 4,
-        padding: '12px 14px',
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
+        padding: 22,
+        borderRadius: 16,
+        border: `1px solid ${K.violetDim}66`,
+        background: `linear-gradient(to right, ${K.violetDim}1a, transparent 70%), ${K.bg2}`,
+        color: K.ink,
+        textDecoration: 'none',
       }}
     >
-      <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.16em', color: '#A98AEF', textTransform: 'uppercase' }}>
-        Last week · {weekRangeLabel(week)}
-      </div>
-      <p style={{ margin: 0, fontFamily: K.fBody, fontSize: 13, color: '#A4A3B1', lineHeight: 1.45 }}>
+      <span style={{ fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.violetDim }}>
+        From Insights &middot; last week&rsquo;s look back &middot; {weekRangeLabel(week)}
+      </span>
+      <span style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontWeight: 500, fontSize: 22, lineHeight: 1.3 }}>
         {line ? firstSentence(line, 180) : 'A look back at the sky you moved through, with whatever you shared woven in.'}
-      </p>
-      <Link
-        href={weekReflectionHref(week)}
-        style={{
-          alignSelf: 'flex-start',
-          fontFamily: K.fMono,
-          fontSize: 11,
-          letterSpacing: '0.08em',
-          padding: '10px 14px',
-          borderRadius: 999,
-          background: '#A98AEF',
-          color: '#0A0C14',
-          textDecoration: 'none',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {line ? 'Read last week' : 'Look back on last week'}
-      </Link>
-    </div>
+      </span>
+      <span style={{ fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.copperHi }}>
+        {line ? 'Read last week →' : 'Look back on last week →'}
+      </span>
+    </Link>
   )
 }

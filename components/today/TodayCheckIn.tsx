@@ -8,15 +8,19 @@ import { CHECK_IN_MOODS, ENERGY_LEVELS, checkInSummary, type CheckIn } from '@/l
 
 const label = { fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim } as const
 
-function pill(active: boolean) {
+const BLUE = '#6798cb'
+const MOOD_TONE = '#c1dcef'
+
+function pill(active: boolean, tone: string) {
   return {
     fontFamily: K.fBody,
-    fontSize: 13,
-    padding: '6px 12px',
+    fontSize: 13.5,
+    minHeight: 44,
+    padding: '0 16px',
     borderRadius: 999,
-    border: `1px solid ${active ? '#A98AEF' : K.lineHi}`,
-    background: active ? '#A98AEF' : 'transparent',
-    color: active ? '#0A0C14' : K.ink,
+    border: `1px solid ${active ? tone : '#6e6d7c'}`,
+    background: active ? tone : 'transparent',
+    color: active ? '#0a0c14' : K.ink,
     cursor: 'pointer',
   } as const
 }
@@ -47,22 +51,26 @@ export function TodayCheckIn({ initial, rhythm = null }: { initial: CheckIn; /**
   const summary = checkInSummary(checkIn)
 
   return (
-    <Frame tone="umber" padding={20}>
+    <Frame
+      tone="umber"
+      padding={22}
+      style={{ border: `1px solid ${BLUE}66`, background: `linear-gradient(to right, ${BLUE}1a, transparent 70%), ${K.bg2}` }}
+    >
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-        <Kicker color={K.violetDim} opacity={1}>How today is sitting</Kicker>
-        <span role="status" style={{ fontSize: 12, color: K.inkDim }}>
-          {pending ? 'Saving…' : summary ? `Noted · ${summary}` : ''}
+        <Kicker color={K.stelloBlueSoft} opacity={1}>Check in</Kicker>
+        <span role="status" style={{ fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim }}>
+          {pending ? 'Saving…' : summary ? `Noted · ${summary}` : 'Two taps · moon-stamped'}
         </span>
       </div>
 
-      <div style={{ display: 'grid', gap: 14, marginTop: 14 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22, marginTop: 16 }}>
         <div role="group" aria-label="Energy">
           <div style={label}>Energy</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
             {ENERGY_LEVELS.map((level) => {
               const active = checkIn.energy === level.value
               return (
-                <button key={level.value} type="button" aria-pressed={active} style={pill(active)}
+                <button key={level.value} type="button" aria-pressed={active} style={pill(active, K.copper)}
                   onClick={() => save({ ...checkIn, energy: active ? null : level.value })}>
                   {level.label}
                 </button>
@@ -77,7 +85,7 @@ export function TodayCheckIn({ initial, rhythm = null }: { initial: CheckIn; /**
             {CHECK_IN_MOODS.map((mood) => {
               const active = checkIn.mood === mood
               return (
-                <button key={mood} type="button" aria-pressed={active} style={pill(active)}
+                <button key={mood} type="button" aria-pressed={active} style={pill(active, MOOD_TONE)}
                   onClick={() => save({ ...checkIn, mood: active ? null : mood })}>
                   {mood}
                 </button>

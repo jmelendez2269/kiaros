@@ -139,6 +139,22 @@ export function writtenUnderTransits(rows: PatternRowForHome[]): Record<string, 
   return out
 }
 
+/** One transit the member has written under, with the pattern it links to. */
+export interface TransitWritten {
+  count: number
+  /** The Patterns page at this pattern. Names and counts only for members without Stelloquy, who land on the preview. */
+  href: string
+}
+
+/** As writtenUnderTransits, with where each one leads in Patterns. */
+export function writtenUnderTransitLinks(rows: PatternRowForHome[]): Record<string, TransitWritten> {
+  const out: Record<string, TransitWritten> = {}
+  for (const row of rows) {
+    if (row.pattern_type === 'aspect' && row.sample_size >= MIN_ENTRIES) out[row.pattern_key] = { count: row.sample_size, href: patternHref(row.id) }
+  }
+  return out
+}
+
 /** For Today's "shape of today": the moon and retrograde skies overhead that the member has written under. Transits have their own list. */
 export function overheadMoonAndRetrogrades(rows: PatternRowForHome[], day: EphemerisDay | null | undefined, limit = 3): HomePattern[] {
   return overheadPatterns(rows.filter((row) => row.pattern_type !== 'aspect'), day, limit)

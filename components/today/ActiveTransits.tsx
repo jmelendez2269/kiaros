@@ -1,18 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import Link from 'next/link'
 import { Frame, K, Kicker, GLYPH } from '@/components/almanac'
 import { AskOracleButton } from '@/components/oracle/AskOracleButton'
 import { useStelloquy } from '@/components/oracle/StelloquyProvider'
+import type { TransitWritten } from '@/lib/insights/home'
 import { buildActiveTransitPrompt } from '@/lib/oracle/preseed'
 import type { ActiveTransitsResult, ActiveTransitRow } from '@/lib/today/get-active-transits'
 import type { AspectKind } from '@/components/almanac/tokens'
 import type { Planet } from '@/types/blueprint'
 
 interface Props {
-  /** Entries the member has written under each transit, keyed "Planet:aspect:NatalPlanet". */
-  writtenUnder?: Record<string, number>
+  /** Entries the member has written under each transit, keyed "Planet:aspect:NatalPlanet", with the pattern each links to. */
+  writtenUnder?: Record<string, TransitWritten>
   data: ActiveTransitsResult
 }
 
@@ -110,15 +111,17 @@ export function ActiveTransits({ data, writtenUnder = {} }: Props) {
       {current.length > 0 ? (
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column' }}>
           {current.map((row, i) => (
+            <Fragment key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}>
             <AskOracleButton
-              key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
               prompt={buildActiveTransitPrompt(row)}
               hasOracleAccess={hasOracleAccess}
               label={`this ${row.technical}`}
               triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
             >
-              <TransitRow row={row} first={i === 0} written={writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]} />
+              <TransitRow row={row} first={i === 0} />
             </AskOracleButton>
+            <WrittenLink written={writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]} />
+          </Fragment>
           ))}
         </div>
       ) : (
@@ -135,12 +138,6 @@ export function ActiveTransits({ data, writtenUnder = {} }: Props) {
           No fast-moving transits today — the slower planets are holding the field.
         </p>
       )}
-
-      {[...current, ...lifetime].some((row) => writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]) ? (
-        <Link href="/insights/map" style={{ display: 'inline-block', marginTop: 10, fontFamily: K.fBody, fontSize: 12.5, color: K.copperHi, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-          See what you wrote under these in Patterns →
-        </Link>
-      ) : null}
 
       {/* Lifetime / outer-planet transits — collapsible */}
       {lifetime.length > 0 && (
@@ -191,15 +188,17 @@ export function ActiveTransits({ data, writtenUnder = {} }: Props) {
                 Slow outer-planet transits that define a years-long season of your life.
               </p>
               {lifetime.map((row, i) => (
+                <Fragment key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}>
                 <AskOracleButton
-                  key={`${row.planet}-${row.aspect}-${row.natalPlanet}`}
                   prompt={buildActiveTransitPrompt(row)}
                   hasOracleAccess={hasOracleAccess}
                   label={`this ${row.technical}`}
                   triggerClassName="block w-full text-left rounded-sm transition-colors hover:bg-[rgba(255,245,224,0.04)]"
                 >
-                  <TransitRow row={row} first={i === 0} written={writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]} />
+                  <TransitRow row={row} first={i === 0} />
                 </AskOracleButton>
+                <WrittenLink written={writtenUnder[`${row.planet}:${row.aspect}:${row.natalPlanet}`]} />
+              </Fragment>
               ))}
             </div>
           )}
@@ -209,7 +208,7 @@ export function ActiveTransits({ data, writtenUnder = {} }: Props) {
   )
 }
 
-function TransitRow({ row, first, written }: { row: ActiveTransitRow; first: boolean; written?: number }) {
+function TransitRow({ row, first }: { row: ActiveTransitRow; first: boolean }) {
   const aspectKey = row.aspect as AspectKind
   const tone = ASPECT_TONE[aspectKey] ?? K.copper
   const rarityColor = RARITY_TONE[row.rarity] ?? K.inkDim
@@ -260,11 +259,6 @@ function TransitRow({ row, first, written }: { row: ActiveTransitRow; first: boo
         >
           {row.rarityLabel}
         </div>
-        {written ? (
-          <div style={{ marginTop: 3, fontFamily: K.fBody, fontSize: 12.5, color: K.violetDim }}>
-            ✎ You&rsquo;ve written under this {written} times
-          </div>
-        ) : null}
       </div>
       <div
         style={{
@@ -289,5 +283,18 @@ function TransitRow({ row, first, written }: { row: ActiveTransitRow; first: boo
         {row.applying ? 'applying' : 'separating'}
       </div>
     </div>
+  )
+}
+
+/** Back into Insights: the pattern for this sky. Same link for every member; without Stelloquy access it lands on the names-and-counts preview. */
+function WrittenLink({ written }: { written?: TransitWritten }) {
+  if (!written) return null
+  return (
+    <Link
+      href={written.href}
+      style={{ display: 'inline-block', padding: '4px 0 8px', fontFamily: K.fBody, fontSize: 13.5, color: K.copperHi, textDecoration: 'underline', textUnderlineOffset: 4 }}
+    >
+      You have written under this sky {written.count === 1 ? 'once' : `${written.count} times`} →
+    </Link>
   )
 }
