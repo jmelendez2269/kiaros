@@ -25,7 +25,12 @@ import { EMPTY_CHECK_IN } from '@/lib/today/check-in-options'
 import { getJournalStreak } from '@/lib/today/get-journal-streak'
 import { getTodayContext } from '@/lib/today/get-today-context'
 import { getTodayIntention } from '@/lib/today/get-today-intention'
-import { resolveTodayDateISO } from '@/lib/today/mock-today-date'
+import {
+  isMockTodayDateAllowed,
+  MOCK_TODAY_QUERY_PARAM,
+  parseMockTodayDateParam,
+  resolveTodayDateISO,
+} from '@/lib/today/mock-today-date'
 import { BRAND } from '@/lib/brand'
 import { PageHints } from '@/components/tour/PageHints'
 
@@ -89,7 +94,11 @@ function WhatArrives({ hasStelloquy }: { hasStelloquy: boolean }) {
 }
 
 /** Insights home: the first page a member sees. The pattern sky, a place to add to it, then the look backs, Patterns and the Mind map. */
-export default async function InsightsHomePage() {
+export default async function InsightsHomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
+}) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
   const profileResult = await getAppProfile(userId)
@@ -103,7 +112,12 @@ export default async function InsightsHomePage() {
     .select('birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz')
     .maybeSingle()
   const { timeZone } = resolvePlannerLocation(locationProfile)
-  const today = resolveTodayDateISO({ timeZone })
+  // Previews can set ?mockToday=YYYY-MM-DD, as on Today; production ignores it.
+  const rawMock = ((await searchParams) ?? {})[MOCK_TODAY_QUERY_PARAM]
+  const mockToday = isMockTodayDateAllowed()
+    ? parseMockTodayDateParam(Array.isArray(rawMock) ? rawMock[0] : rawMock)
+    : null
+  const today = resolveTodayDateISO({ timeZone, mockToday })
   const moonPhase = humanizeLunarPhase(getTodayContext({ dateISO: today, timeZone }).today.moonPhase)
 
   const reviewsOn = isPeriodReviewEnabled() && periodReviewPublicFlagEnabled()
