@@ -5,7 +5,10 @@ import { getAppProfile } from '@/lib/app/get-app-profile'
 import { SkyCyclesYearList } from '@/components/sky-cycles/SkyCyclesYearList'
 import { todayISO } from '@/lib/today/get-today-context'
 import { Frame, K, Kicker } from '@/components/almanac'
+import { QuarterCards } from '@/components/reviews/QuarterCards'
 import { ReviewsTimeline } from '@/components/reviews/ReviewsTimeline'
+import { YearlyReflectionBanner } from '@/components/reviews/YearlyReflectionBanner'
+import { quarterCards } from '@/lib/reviews/quarter-cards'
 import { loadYearTimeline, timelineYears } from '@/lib/reviews/load-year-timeline'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
@@ -87,6 +90,8 @@ export default async function ReviewsPage({
 
       <PageHints page="reviews" />
 
+      {timeline ? <QuarterCards cards={quarterCards(timeline.quarters, today)} year={year} /> : null}
+
       {timeline ? (
         <ReviewsTimeline key={`${year}:${initialMonth ?? ''}`} timeline={timeline} initialMonth={initialMonth} />
       ) : (
@@ -102,6 +107,8 @@ export default async function ReviewsPage({
           <SkyCyclesYearList profileId={profileId} today={today} />
         </Frame>
       ) : null}
+
+      {timeline ? <YearlyReflectionBanner year={year} unwrapped={timeline.unwrapped} /> : null}
 
       <Frame tone="umber" padding={20}>
         <Kicker color={K.copper}>More ways to look back</Kicker>

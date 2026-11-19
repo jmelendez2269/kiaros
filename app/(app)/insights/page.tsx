@@ -3,18 +3,19 @@ import { redirect } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import type { ReactNode } from 'react'
 import { K, Kicker } from '@/components/almanac'
+import { AddToSkyPanel } from '@/components/insights/AddToSkyPanel'
+import { NewMemberSky } from '@/components/insights/NewMemberSky'
 import { PatternConstellations } from '@/components/insights/PatternSky'
 import { SeasonBand } from '@/components/look-ahead/SeasonBand'
 import { SkyTurnBand } from '@/components/sky-cycles/SkyTurnBand'
 import { SkyTurnMoment } from '@/components/sky-cycles/SkyTurnMoment'
-import { LineForToday } from '@/components/today/LineForToday'
-import { TodayCheckIn } from '@/components/today/TodayCheckIn'
 import { TodayIntention } from '@/components/today/TodayIntention'
 import { getAppProfile } from '@/lib/app/get-app-profile'
 import { requireOracleAccess } from '@/lib/commerce/access'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
 import { timesWritten } from '@/lib/insights/home'
 import { loadInsightsHome, type InsightsHome } from '@/lib/insights/load-home'
+import { isSkyBeginning } from '@/lib/insights/new-member-sky'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
 import { humanizeLunarPhase } from '@/lib/journal/intelligence'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
@@ -73,28 +74,6 @@ function LookBackRow({ title, row }: { title: string; row: NonNullable<InsightsH
   )
 }
 
-/** What a new member's Insights will hold, and what brings each part. Nothing here is a task. */
-function WhatArrives({ hasStelloquy }: { hasStelloquy: boolean }) {
-  const items = [
-    { kicker: 'Your first look back', title: 'Arrives when your first full week ends.', body: 'It reads the sky you moved through, and whatever you chose to share. A week with nothing written still gets its sky.' },
-    { kicker: 'Your first pattern', title: 'Forms once a few entries share a sky.', body: 'Every line and entry is stamped with the sky above it. When several land under the same one, it appears here as a constellation.' },
-    ...(hasStelloquy
-      ? [{ kicker: 'Your mind map', title: 'Begins with one saved moment.', body: `Save a moment from a ${BRAND.oracle} conversation and its themes begin to chart as stars.` }]
-      : []),
-  ]
-  return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {items.map((item) => (
-        <section key={item.kicker} className="flex flex-col gap-2 rounded-2xl p-5" style={card}>
-          <Kicker color={K.violetDim}>{item.kicker}</Kicker>
-          <p style={{ ...serif, margin: 0, fontSize: 21, lineHeight: 1.3 }}>{item.title}</p>
-          <p style={{ ...dim, margin: 0 }}>{item.body}</p>
-        </section>
-      ))}
-    </div>
-  )
-}
-
 /** Insights home: the first page a member sees. The pattern sky, a place to add to it, then the look backs, Patterns and the Mind map. */
 export default async function InsightsHomePage({
   searchParams,
@@ -137,7 +116,8 @@ export default async function InsightsHomePage({
   const turnsLine = turnsHeadline(turns)
   const dateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${today}T12:00:00Z`))
   const reviewsHref = reviewsOn ? '/reviews' : '/reflections'
-  const beginning = home.sky.length === 0
+  // Until a first pattern has enough entries behind it, the page draws the sky as it begins.
+  const beginning = isSkyBeginning(home.sky.map((p) => p.count))
 
   return (
     <div className="mx-auto grid max-w-6xl gap-5 p-4 sm:p-6 md:p-8" style={{ color: K.ink }}>
@@ -161,7 +141,7 @@ export default async function InsightsHomePage({
       <SkyTurnMoment turns={turns} headline={turnsLine} today={today} dateLabel={dateLabel} />
 
       {beginning ? (
-        <WhatArrives hasStelloquy={hasStelloquy} />
+        <NewMemberSky patterns={home.sky} hasStelloquy={hasStelloquy} />
       ) : (
         <section aria-label="Your patterns" className="grid gap-3">
           <PatternConstellations patterns={home.sky} hrefBase="/insights/map" />
@@ -176,20 +156,12 @@ export default async function InsightsHomePage({
         </section>
       )}
 
-      <section aria-labelledby="add-to-sky" className="grid gap-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-3 px-1">
-          <h2 id="add-to-sky" style={{ margin: 0, fontWeight: 400 }}>
-            <Kicker color={K.copperHi}>Add to today’s sky</Kicker>
-          </h2>
-          <span style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim }}>
-            {moonPhase} moon · both are optional
-          </span>
-        </div>
-        <div className="grid items-start gap-5 lg:grid-cols-2">
-          <TodayCheckIn initial={checkIn} rhythm={rhythmLine} />
-          <LineForToday streak={journalStreak} />
-        </div>
-      </section>
+      <AddToSkyPanel
+        initial={checkIn}
+        rhythm={rhythmLine}
+        streak={journalStreak}
+        context={home.overhead[0] ? `${home.overhead[0].label} overhead` : `${moonPhase} moon`}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
         <Card kicker="Your latest look backs" href={reviewsHref} cta="See your whole year">

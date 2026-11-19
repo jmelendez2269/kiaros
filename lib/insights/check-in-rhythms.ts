@@ -108,3 +108,42 @@ export function rhythmLineForPhase(rhythms: CheckInRhythms, phase: string | null
   if (!parts.length) return null
   return `Under the ${rhythm.phase} Moon, ${parts.join(energy && mood ? ', and ' : '')}.`
 }
+
+/** The eight moon phases in order, with the one-word verb each carries on Today. */
+export const MOON_PHASES = [
+  { phase: 'New', verb: 'seed' },
+  { phase: 'Waxing Crescent', verb: 'tend' },
+  { phase: 'First Quarter', verb: 'commit' },
+  { phase: 'Waxing Gibbous', verb: 'refine' },
+  { phase: 'Full', verb: 'reveal' },
+  { phase: 'Waning Gibbous', verb: 'release' },
+  { phase: 'Last Quarter', verb: 'cull' },
+  { phase: 'Waning Crescent', verb: 'rest' },
+] as const
+
+export interface PhaseOverview {
+  phase: string
+  verb: string
+  checkIns: number
+  /** Average energy on the 1 to 5 scale. null until the phase has enough check-ins to say anything. */
+  energy: number | null
+  /** The mood chosen most under this phase, when it is a clear first. */
+  mood: string | null
+}
+
+/** All eight phases, each with what its own check-ins say. A phase with few check-ins is shown as still gathering, never as low. */
+export function phaseOverview(rows: CheckInRow[]): PhaseOverview[] {
+  const recorded = rows.filter((row) => row.energy_level !== null || row.mood_tag)
+  return MOON_PHASES.map(({ phase, verb }) => {
+    const list = recorded.filter((row) => row.lunar_phase === phase)
+    const energies = list.flatMap((row) => (row.energy_level === null ? [] : [row.energy_level]))
+    const enough = list.length >= MIN_PER_PHASE
+    return {
+      phase,
+      verb,
+      checkIns: list.length,
+      energy: enough && energies.length >= MIN_PER_PHASE ? average(energies) : null,
+      mood: enough ? topMood(list.flatMap((row) => (row.mood_tag ? [row.mood_tag] : []))) : null,
+    }
+  })
+}

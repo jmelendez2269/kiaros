@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
+import { K } from '@/components/almanac'
 
 type TabKey = 'patterns' | 'map' | 'journal' | 'captures'
 
@@ -32,24 +33,23 @@ export function InsightsTabs({ counts, patterns, map, journal, captures }: Insig
 
   return (
     <div className="space-y-6">
-      <div className="shell-tablist" role="tablist" aria-label="Insight views">
+      <div role="tablist" aria-label="Insight views" className="flex flex-wrap gap-1.5 self-start rounded-full p-1" style={{ width: 'fit-content', maxWidth: '100%', background: K.bg3, border: `1px solid ${K.line}` }}>
         {TABS.map((tab) => {
           const count = counts[tab.key]
+          const on = active === tab.key
           return (
             <button
               key={tab.key}
               type="button"
               role="tab"
               id={`insights-tab-${tab.key}`}
-              aria-selected={active === tab.key}
+              aria-selected={on}
               aria-controls={`insights-panel-${tab.key}`}
               onClick={() => setActive(tab.key)}
-              className={`${tab.channel} shell-tab`}
+              style={{ minHeight: 44, padding: '0 18px', borderRadius: 999, fontSize: 14, cursor: 'pointer', border: `1px solid ${on ? `${K.copper}66` : 'transparent'}`, background: on ? `${K.copper}1a` : 'transparent', color: on ? K.ink : K.inkDim }}
             >
               {tab.label}
-              {typeof count === 'number' && count > 0 ? (
-                <span className="ml-1.5 text-bone-muted/60">{count}</span>
-              ) : null}
+              {typeof count === 'number' && count > 0 ? <span style={{ marginLeft: 6, opacity: 0.7 }}>· {count}</span> : null}
             </button>
           )
         })}

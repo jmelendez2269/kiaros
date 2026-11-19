@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import { K } from '@/components/almanac'
 import { createServerSupabase } from '@/lib/supabase/server'
-import { checkInRhythms, describePhaseRhythm, type CheckInRow } from '@/lib/insights/check-in-rhythms'
+import { checkInRhythms, phaseOverview, type CheckInRow } from '@/lib/insights/check-in-rhythms'
+
+const mono = { fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase' } as const
 
 /**
  * Patterns: how the member's daily check-ins have sat under each moon phase.
@@ -24,42 +27,44 @@ export async function CheckInRhythms() {
 
   const rhythms = checkInRhythms(rows)
   if (rhythms.total === 0) return null
+  const phases = phaseOverview(rows)
 
   return (
-    <section aria-labelledby="check-in-rhythms" className="channel-mine channel-panel space-y-4 px-6 py-6 md:px-7">
-      <header>
-        <p className="channel-kicker">From your check-ins</p>
-        <h2 id="check-in-rhythms" className="mt-1.5 font-display text-[1.45rem] leading-tight text-bone">Under each moon</h2>
+    <section aria-labelledby="check-in-rhythms" className="grid gap-4 rounded-2xl p-6" style={{ background: K.bg2, border: `1px solid ${K.sage}44` }}>
+      <header className="grid gap-1.5">
+        <span style={{ ...mono, color: K.stelloBlueSoft }}>From your check-ins</span>
+        <h2 id="check-in-rhythms" style={{ margin: 0, fontFamily: K.fSerif, fontStyle: 'italic', fontWeight: 500, fontSize: 28 }}>Under each moon</h2>
+        <p style={{ margin: 0, maxWidth: 620, fontSize: 14, lineHeight: 1.65, color: K.inkDim }}>
+          {rhythms.toGo > 0
+            ? `${rhythms.total} ${rhythms.total === 1 ? 'check-in' : 'check-ins'} so far. After about ${rhythms.toGo} more, this begins to show how your energy and mood have sat in each phase.`
+            : `How your energy and mood have tended to sit in each phase, from ${rhythms.total} check-ins.`}
+          {' '}Days without a check-in are left out, never counted against you.
+        </p>
       </header>
 
-      {rhythms.toGo > 0 ? (
-        <p className="text-sm leading-7 text-bone-muted">
-          {rhythms.total} {rhythms.total === 1 ? 'check-in' : 'check-ins'} so far. After about {rhythms.toGo} more, this
-          begins to show how your energy and mood have sat under each moon phase.{' '}
-          <Link href="/today" className="text-bone underline underline-offset-4">Check in on Today</Link>
-        </p>
-      ) : rhythms.phases.length ? (
-        <>
-          <p className="text-sm text-bone-muted">
-            {rhythms.usualEnergyWord ? `Your usual energy sits around ${rhythms.usualEnergyWord}. ` : ''}
-            An observation from {rhythms.total} check-ins, not a rule.
-          </p>
-          <ul className="grid gap-3 sm:grid-cols-2" style={{ listStyle: 'none', padding: 0 }}>
-            {rhythms.phases.map((rhythm) => (
-              <li key={rhythm.phase} className="rounded-2xl border border-border/70 bg-stone-950/50 p-4">
-                <p className="font-display text-[1.15rem] text-bone">{rhythm.phase} Moon</p>
-                <p className="mt-1.5 text-sm leading-6 text-bone-muted">{describePhaseRhythm(rhythm)}</p>
-                <p className="mt-2 text-xs uppercase tracking-[0.16em] text-bone-muted/55">{rhythm.checkIns} check-ins</p>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <p className="text-sm leading-7 text-bone-muted">
-          {rhythms.total} check-ins so far, and no moon phase stands apart from your usual yet. That is a finding too: it
-          fills in as the moon comes round again.
-        </p>
-      )}
+      <ul className="grid gap-2.5" style={{ listStyle: 'none', padding: 0, margin: 0, gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
+        {phases.map((p) => (
+          <li key={p.phase} className="grid gap-2.5 rounded-xl p-3.5" style={{ background: K.bg3, border: `1px solid ${K.line}` }}>
+            <div role="img" aria-label={p.energy === null ? `${p.phase}: still gathering` : `${p.phase}: energy about ${p.energy.toFixed(1)} of 5`} className="flex items-end" style={{ height: 56 }}>
+              {p.energy === null ? (
+                <div style={{ width: '100%', height: 2, borderTop: `1px dashed ${K.inkSoft}` }} />
+              ) : (
+                <div style={{ width: '45%', height: `${(p.energy / 5) * 100}%`, borderRadius: '3px 3px 0 0', background: K.copper }} />
+              )}
+            </div>
+            <span style={{ fontSize: 13.5 }}>{p.phase}</span>
+            {p.mood ? <span style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 15 }}>{p.mood}</span> : null}
+            <span style={{ ...mono, fontSize: 11, color: K.ink }}>{p.verb} · {p.checkIns} {p.checkIns === 1 ? 'check-in' : 'check-ins'}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="flex items-center gap-1.5" style={{ ...mono, fontSize: 11, color: K.ink }}>
+          <span aria-hidden style={{ width: 10, height: 10, background: K.copper }} />Energy · a phase fills in after a few check-ins
+        </span>
+        <Link href="/today" style={{ ...mono, color: K.stelloBlueSoft, textDecoration: 'none' }}>Check in on today →</Link>
+      </div>
     </section>
   )
 }
