@@ -17,10 +17,14 @@ export interface FirstPatternProgress {
   toGo: number
 }
 
-/** "1 of N" toward the first pattern. N is the app's own threshold for an established pattern. */
-export function firstPatternProgress(patternCounts: number[]): FirstPatternProgress {
+/**
+ * "1 of N" toward the first pattern. N is the app's own threshold for an
+ * established pattern. A member with any entry has at least one under its sky,
+ * even before a pattern row has been written for it.
+ */
+export function firstPatternProgress(patternCounts: number[], entries = 0): FirstPatternProgress {
   const of = ESTABLISHED_PATTERN_MIN_SAMPLE
-  const best = Math.max(0, ...patternCounts.filter((n) => Number.isFinite(n)))
+  const best = Math.max(entries > 0 ? 1 : 0, ...patternCounts.filter((n) => Number.isFinite(n)))
   const have = Math.min(best, of)
   return { have, of, toGo: of - have }
 }

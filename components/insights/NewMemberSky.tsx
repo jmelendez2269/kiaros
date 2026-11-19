@@ -8,7 +8,7 @@ import { patternGlyph, patternTitle } from '@/lib/insights/pattern-sky'
 import { createServerSupabase } from '@/lib/supabase/server'
 
 const serif = { fontFamily: K.fSerif, fontStyle: 'italic', fontWeight: 500 } as const
-const mono = { fontFamily: K.fMono, fontSize: 9, letterSpacing: 1.3 } as const
+const mono = { fontFamily: K.fMono, fontSize: 12, letterSpacing: 1.5 } as const
 const card = { background: K.bg2, border: `1px solid ${K.line}`, color: K.ink } as const
 
 /** Entries the member's patterns are built from: one star each. Read under their own access. */
@@ -39,7 +39,7 @@ function sentence(have: number, of: number, hasEntries: boolean): string {
 export async function NewMemberSky({ patterns, hasStelloquy }: { patterns: HomeSkyPattern[]; hasStelloquy: boolean }) {
   const entries = await countEntries()
   const strongest = [...patterns].sort((a, b) => b.count - a.count)[0]
-  const progress = firstPatternProgress(patterns.map((p) => p.count))
+  const progress = firstPatternProgress(patterns.map((p) => p.count), entries)
   const layout = layoutNewMemberSky(entries, progress.have)
   const first = layout.shared[0] ?? layout.ghosts[0]
   const label = entries === 0 ? 'Room for your first star' : entries === 1 ? 'Your first star' : `${entries} stars so far`
@@ -72,10 +72,10 @@ export async function NewMemberSky({ patterns, hasStelloquy }: { patterns: HomeS
           {layout.loose.map((p, i) => <circle key={`l${i}`} cx={p.x} cy={p.y} r={3.4} fill={K.ink} opacity={0.85} />)}
           <text x={120} y={118} fill={K.ink} fontSize={20} fontFamily={K.fSerif} fontStyle="italic">{label}</text>
           {strongest && progress.have > 0 ? (
-            <text x={120} y={136} fill={K.inkDim} style={mono}>{`${patternGlyph(strongest.type, strongest.key)} ${patternTitle(strongest.type, strongest.key)}`.toUpperCase()}</text>
+            <text x={120} y={136} fill={K.ink} fillOpacity={0.85} style={mono}>{`${patternGlyph(strongest.type, strongest.key)} ${patternTitle(strongest.type, strongest.key)}`.toUpperCase()}</text>
           ) : null}
-          {first ? <text x={452} y={150} fill={K.inkDim} style={mono}>{sentence(progress.have, progress.of, entries > 0).toUpperCase()}</text> : null}
-          <text x={560} y={52} fill={K.inkDim} style={mono}>ROOM FOR A SKY NOT YET WRITTEN UNDER</text>
+          {first ? <text x={452} y={150} fill={K.ink} fillOpacity={0.85} style={mono}>{sentence(progress.have, progress.of, entries > 0).toUpperCase()}</text> : null}
+          <text x={560} y={52} fill={K.ink} fillOpacity={0.85} style={mono}>ROOM FOR A SKY NOT YET WRITTEN UNDER</text>
         </svg>
       </section>
 

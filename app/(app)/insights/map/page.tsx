@@ -26,7 +26,7 @@ import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 import { CheckInRhythms } from '@/components/insights/CheckInRhythms'
 import { loadPatternSkyDays } from '@/lib/insights/load-pattern-sky'
 import { todayISO } from '@/lib/today/get-today-context'
-import { K, Kicker, Stat } from '@/components/almanac'
+import { K, Kicker } from '@/components/almanac'
 
 export const metadata = {
   title: `Patterns — ${BRAND.product}`,
@@ -156,8 +156,12 @@ export default async function PatternsPage() {
             </p>
           </div>
           <div className="flex gap-7">
-            <Stat label="Entries on file" value={journalEntriesCount} mono={false} />
-            <Stat label="Patterns" value={patterns.length} mono={false} />
+            {[['Entries on file', journalEntriesCount], ['Patterns', patterns.length]].map(([label, value]) => (
+              <div key={label} className="grid gap-1">
+                <span style={{ fontFamily: K.fMono, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.ink, opacity: 0.8 }}>{label}</span>
+                <span style={{ fontFamily: K.fSerif, fontSize: 26, lineHeight: 1 }}>{value}</span>
+              </div>
+            ))}
           </div>
         </header>
 

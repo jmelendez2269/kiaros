@@ -332,6 +332,12 @@ export function PatternInsights({
             </>
           )}
         </p>
+        <section aria-label={`Every pattern across ${strip.year}`} className="mx-auto mt-8 max-w-xl rounded-2xl p-5 text-left" style={{ background: K.bg2, border: `1px solid ${K.line}` }}>
+          <p className="channel-kicker mb-2" style={{ color: K.violetDim }}>Every pattern across {strip.year}</p>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65, color: K.inkDim }}>
+            Each pattern will get its own row here: a soft band for when that sky is overhead, and a bright mark for each day you wrote under it.
+          </p>
+        </section>
       </section>
     )
   }

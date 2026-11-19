@@ -46,3 +46,10 @@ test('no entries yet draws outlines only, and a long record is capped', () => {
   const long = layoutNewMemberSky(200, 3)
   assert.ok(long.shared.length + long.loose.length <= MAX_ENTRY_STARS)
 })
+
+test('one entry reads as 1 of N even before a pattern row exists', () => {
+  const p = firstPatternProgress([], 1)
+  assert.equal(p.have, 1)
+  assert.equal(p.toGo, ESTABLISHED_PATTERN_MIN_SAMPLE - 1)
+  assert.equal(firstPatternProgress([], 0).have, 0)
+})

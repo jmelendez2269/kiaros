@@ -54,13 +54,13 @@ export async function CheckInRhythms() {
             </div>
             <span style={{ fontSize: 13.5 }}>{p.phase}</span>
             {p.mood ? <span style={{ fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 15 }}>{p.mood}</span> : null}
-            <span style={{ ...mono, fontSize: 9.5, color: K.inkDim }}>{p.verb} · {p.checkIns} {p.checkIns === 1 ? 'check-in' : 'check-ins'}</span>
+            <span style={{ ...mono, fontSize: 11, color: K.ink }}>{p.verb} · {p.checkIns} {p.checkIns === 1 ? 'check-in' : 'check-ins'}</span>
           </li>
         ))}
       </ul>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="flex items-center gap-1.5" style={{ ...mono, fontSize: 10, color: K.inkDim }}>
+        <span className="flex items-center gap-1.5" style={{ ...mono, fontSize: 11, color: K.ink }}>
           <span aria-hidden style={{ width: 10, height: 10, background: K.copper }} />Energy · a phase fills in after a few check-ins
         </span>
         <Link href="/today" style={{ ...mono, color: K.stelloBlueSoft, textDecoration: 'none' }}>Check in on today →</Link>
