@@ -60,6 +60,9 @@ interface JournalComposerProps {
   initialNewEntryConsent?: JournalConsentState
   hasOracleAccess?: boolean
   iaJournalShell?: boolean
+  /** Server-rendered sky stamp for skyStampDate. */
+  skyStampSlot?: React.ReactNode
+  skyStampDate?: string
 }
 
 const PRIVATE_CONSENT: JournalConsentState = {
@@ -99,6 +102,8 @@ export function JournalComposer({
   initialNewEntryConsent,
   hasOracleAccess: hasOracleAccessProp = false,
   iaJournalShell = false,
+  skyStampSlot = null,
+  skyStampDate,
 }: JournalComposerProps) {
   const iaJournal = iaJournalShell || iaJournalFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)
   const isEditing = Boolean(initialEntry)
@@ -387,6 +392,12 @@ export function JournalComposer({
           </div>
         ) : null}
 
+        {skyStampSlot && (isEditing || !skyStampDate || !entryDate || entryDate === skyStampDate) ? (
+          <div className="mt-5">{skyStampSlot}</div>
+        ) : skyStampSlot ? (
+          <p className="mt-5 text-xs text-bone-muted">The sky for this date is stamped when you save.</p>
+        ) : null}
+
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div className="grid gap-4 md:grid-cols-[1fr_180px]">
             <label className="block">
@@ -515,6 +526,10 @@ export function JournalComposer({
           </div>
         </form>
       </section>
+
+      <Link href="/insights" className="inline-block text-sm text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone">
+        Back to Insights →
+      </Link>
 
       <section className="space-y-2">
         <p className="shell-eyebrow px-1">Prompts to start from</p>
