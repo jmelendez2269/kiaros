@@ -4,6 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@clerk/nextjs/server'
 import { createJournalEntry } from '@/lib/journal/entry-service'
 import { requireActivePlannerAccess } from '@/lib/commerce/access'
+import { localDateInTimeZone } from '@/lib/journal/entry-sky'
+import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
+import { createServerSupabase } from '@/lib/supabase/server'
 import { saveCheckIn } from '@/lib/today/check-in'
 import { parseCheckIn, type CheckIn } from '@/lib/today/check-in-options'
 
@@ -35,12 +38,14 @@ export async function saveLineForToday(
     ),
   ).slice(0, MAX_TAGS)
 
-  const entryDate = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/New_York',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
+  // Date the line in the member's own timezone (same resolution as Insights),
+  // falling back to New York if the profile can't be read.
+  const supabase = await createServerSupabase()
+  const { data: locationProfile } = await supabase
+    .from('user_profiles')
+    .select('birth_lat, birth_lng, birth_tz, planner_lat, planner_lng, planner_tz')
+    .maybeSingle()
+  const entryDate = localDateInTimeZone(new Date(), resolvePlannerLocation(locationProfile).timeZone)
 
   const result = await createJournalEntry({
     title: null,
