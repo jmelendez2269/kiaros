@@ -46,6 +46,11 @@ export function personalCyclesFor(chart: NatalChart, today: string): SkyCycle[] 
   return detectPersonalTransits(slowSeries(addDays(today, -400), addDays(today, 200)), natalPointsFromChart(chart))
 }
 
+/** Personal transits across [from, to], with room either side so passes that straddle the edges close. */
+export function personalCyclesBetween(chart: NatalChart, from: string, to: string): SkyCycle[] {
+  return detectPersonalTransits(slowSeries(addDays(from, -400), addDays(to, 200)), natalPointsFromChart(chart))
+}
+
 export function collectiveCycles(): SkyCycle[] {
   return COLLECTIVE
 }
