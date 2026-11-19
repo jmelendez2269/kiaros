@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { currentUser } from '@clerk/nextjs/server'
 import { PatternsUpgradeState } from '@/components/insights/PatternsUpgradeState'
 import {
