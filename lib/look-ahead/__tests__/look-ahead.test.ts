@@ -9,6 +9,8 @@ import { addDays, detectPersonalTransits, natalPointsFromChart } from '@/lib/sky
 import type { SkyCycle } from '@/lib/sky-cycles/types'
 import { getCurrentPlannerYear } from '@/lib/commerce/planner-year'
 import { lookAheadWindow, lookAheadWindowAt } from '@/lib/look-ahead/window'
+import { eligibleForLookAhead } from '@/lib/look-ahead/eligibility'
+import { parseGoalChoice } from '@/lib/look-ahead/goals'
 import { buildYearSky, cyclesInYear, eclipsesOf, wholeSignHouse, yearPosition } from '@/lib/look-ahead/sky'
 import type { NatalChart, PlanetPosition, ZodiacSign } from '@/types/blueprint'
 
@@ -149,5 +151,36 @@ describe('2027 cycle selection', () => {
     const jupiter = sky.meetings.find((m) => m.title.startsWith('Jupiter moves into'))
     assert.equal(jupiter?.title, 'Jupiter moves into your 6th house')
     assert.match(jupiter?.body ?? '', /Evenings that are mine/)
+  })
+})
+
+describe('who sees the look-ahead', () => {
+  it('opens for active monthly or yearly members', () => {
+    assert.equal(eligibleForLookAhead({ hasPlannerAccess: true, activeEntitlements: [{ source: 'stripe' }] }), true)
+    assert.equal(eligibleForLookAhead({ hasPlannerAccess: true, activeEntitlements: [{ source: 'activation_code' }] }), true)
+  })
+  it('stays closed without active access, or with Etsy access only', () => {
+    assert.equal(eligibleForLookAhead({ hasPlannerAccess: false, activeEntitlements: [{ source: 'stripe' }] }), false)
+    assert.equal(eligibleForLookAhead({ hasPlannerAccess: true, activeEntitlements: [{ source: 'etsy' }] }), false)
+  })
+  it('lets admins in', () => {
+    assert.equal(eligibleForLookAhead({ isAdmin: true, hasPlannerAccess: false, activeEntitlements: [] }), true)
+  })
+})
+
+describe('goal choice requests', () => {
+  const goalId = '0f8b5a7e-1c2d-4e3f-8a9b-0c1d2e3f4a5b'
+  it('accepts carry and release without words', () => {
+    assert.deepEqual(parseGoalChoice({ goalId, year: 2027, choice: 'release', reshapedTitle: 'ignored' }),
+      { ok: true, value: { goalId, year: 2027, choice: 'release', reshapedTitle: null } })
+  })
+  it('keeps reshaped words, trimmed', () => {
+    const r = parseGoalChoice({ goalId, year: 2027, choice: 'reshape', reshapedTitle: '  Quieter evenings  ' })
+    assert.ok(r.ok && r.value.reshapedTitle === 'Quieter evenings')
+  })
+  it('refuses unknown choices, ids and over-long words', () => {
+    assert.equal(parseGoalChoice({ goalId, year: 2027, choice: 'drop' }).ok, false)
+    assert.equal(parseGoalChoice({ goalId: 'x', year: 2027, choice: 'carry' }).ok, false)
+    assert.equal(parseGoalChoice({ goalId, year: 2027, choice: 'reshape', reshapedTitle: 'a'.repeat(201) }).ok, false)
   })
 })
