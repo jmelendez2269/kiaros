@@ -6,7 +6,7 @@ import type { NatalPoint, SkyCycle, SkyCycleStatus } from './types'
  * read as"), never a cause or a forecast. No ampersands or em dashes.
  */
 
-const PLANET_THEMES: Record<string, string> = {
+export const PLANET_THEMES: Record<string, string> = {
   Mercury: 'conversations, plans, travel and tech',
   Venus: 'relationships, values and money',
   Mars: 'drive, conflict and pace',
@@ -32,7 +32,7 @@ const ASPECT_LENS: Record<string, string> = {
   trine: 'flows easily with, a quiet support for',
 }
 
-const HOUSE_AREAS: Record<number, string> = {
+export const HOUSE_AREAS: Record<number, string> = {
   1: 'self, body and first impressions', 2: 'money, values and self-worth', 3: 'everyday thinking, siblings and neighbourhood',
   4: 'home, roots and family', 5: 'creativity, play and romance', 6: 'daily work, health and routines',
   7: 'partnerships and close one-to-one ties', 8: 'shared resources, intimacy and what lies underneath',
