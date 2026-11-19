@@ -62,7 +62,7 @@ export default async function SelfPage() {
   const supabase = await createServerSupabase()
   const today = todayISO()
 
-  const [profileRes, categoriesRes] = await Promise.all([
+  const [profileRes, categoriesRes, goalsRes] = await Promise.all([
     supabase
       .from('user_profiles')
       .select(
@@ -72,6 +72,11 @@ export default async function SelfPage() {
     supabase
       .from('goal_categories')
       .select('id, name, icon_key, success, description, sort_order')
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('area_goals')
+      .select('category_id, title, status, sort_order')
+      .eq('status', 'active')
       .order('sort_order', { ascending: true }),
   ])
 
@@ -106,6 +111,9 @@ export default async function SelfPage() {
   const natalAspects = computeNatalAspects(natalChart)
 
   const categories = categoriesRes.data ?? []
+  // The member's own words: the first active goal in each area.
+  const goalByCategory = new Map<string, string>()
+  for (const goal of goalsRes.data ?? []) if (!goalByCategory.has(goal.category_id)) goalByCategory.set(goal.category_id, goal.title)
   const weeks = loaded?.blueprint.weeks ?? []
   const currentQuarterNumber = Math.ceil((new Date().getMonth() + 1) / 3)
   const currentQuarterTheme = findCurrentQuarterTheme(loaded?.blueprint.quarters, currentQuarterNumber)
@@ -128,6 +136,7 @@ export default async function SelfPage() {
       energyMode: area.energyMode,
       currentWindow,
       houseDetails,
+      goalTitle: goalByCategory.get(category.id) ?? null,
     }
   })
 

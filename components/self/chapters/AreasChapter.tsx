@@ -36,6 +36,9 @@ export function AreasChapter({ previews }: Props) {
                   {preview.iconKey ? <span className="text-leather-200">{preview.iconKey}</span> : null}
                   <h3 className="font-serif text-lg text-bone">{preview.name}</h3>
                 </div>
+                {preview.goalTitle ? (
+                  <p className="mt-2 font-serif text-lg italic leading-snug text-bone">“{preview.goalTitle}”</p>
+                ) : null}
                 <p className="mt-2 text-xs leading-5 text-bone-muted">{preview.summary}</p>
                 {preview.houseDetails.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-1.5">
