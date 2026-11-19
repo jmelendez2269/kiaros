@@ -27,6 +27,7 @@ import { ConsentEmptyState } from '@/components/insights/ConsentEmptyState'
 import { CheckInRhythms } from '@/components/insights/CheckInRhythms'
 import { loadPatternSkyDays } from '@/lib/insights/load-pattern-sky'
 import { todayISO } from '@/lib/today/get-today-context'
+import { K, Kicker, Stat } from '@/components/almanac'
 
 export const metadata = {
   title: `Patterns — ${BRAND.product}`,
@@ -145,27 +146,19 @@ export default async function PatternsPage() {
   const savedVoiceLabel = settingsRow?.journal_insight_voice_label ?? VOICE_PRESETS[DEFAULT_VOICE_KEY].label
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 md:p-8" style={{ color: K.ink }}>
       <InsightsPollingShell initialInFlight={inFlightCount}>
-        <header className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-2xl">
-            <p className="channel-ai channel-kicker mb-2.5">Patterns</p>
-            <h1 className="shell-hero-title">Everything {BRAND.product} has noticed</h1>
-            <p className="mt-4 shell-prose">
-              Observed personal evidence drawn from your entries and captures — not a fixed rule.
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="grid max-w-2xl gap-2">
+            <Kicker color={K.violetDim}>Insights · patterns</Kicker>
+            <h1 style={{ margin: 0, fontFamily: K.fSerif, fontStyle: 'italic', fontWeight: 500, fontSize: 42, lineHeight: 1.08 }}>Everything {BRAND.product} has noticed</h1>
+            <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: K.inkDim }}>
+              Observed personal evidence drawn from your entries and captures, not a fixed rule.
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="channel-mine">
-              <p className="channel-kicker">Entries on file</p>
-              <p className="mt-1 font-display text-[1.75rem] leading-none text-bone">{journalEntriesCount}</p>
-            </div>
-            <Link
-              href="/journal"
-              className="inline-flex items-center gap-2 self-end rounded-full border border-border/70 bg-stone-950/60 px-4 py-2 text-sm font-medium text-bone transition-colors hover:border-moss-400/40 hover:bg-moss-500/8"
-            >
-              ← Journal
-            </Link>
+          <div className="flex gap-7">
+            <Stat label="Entries on file" value={journalEntriesCount} mono={false} />
+            <Stat label="Patterns" value={patterns.length} mono={false} />
           </div>
         </header>
 

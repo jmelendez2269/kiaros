@@ -5,7 +5,9 @@ import {
 } from '@/lib/journal/pattern-discoveries'
 import type { Json, Tables } from '@/types/database'
 import { PatternConstellations, PatternYearStrips, StripLegend, YearStrip, type SkyPattern } from './PatternSky'
-import { patternTitle, TYPE_COLOR } from '@/lib/insights/pattern-sky'
+import { patternGlyph, patternTitle, TYPE_COLOR } from '@/lib/insights/pattern-sky'
+import { K } from '@/components/almanac'
+import { AskStelloquyButton } from './AskStelloquyButton'
 import { monthLabel, monthReviewHref } from '@/lib/insights/star-chart'
 
 export type PatternRow = Pick<
@@ -187,35 +189,37 @@ function FeaturedPattern({
 }) {
   const evidence = parseEvidence(pattern.evidence)
 
+  const title = patternTitle(pattern.pattern_type, pattern.pattern_key)
+  const shown = evidence.slice(0, 3)
   return (
-    <article id={`pattern-${pattern.id}`} className="channel-panel flex scroll-mt-24 flex-col gap-5 px-6 py-6 md:px-7">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="channel-kicker">{TYPE_LABEL[pattern.pattern_type as PatternType] ?? 'Pattern'}</p>
-          <h3 className="mt-1.5 font-display text-[1.45rem] leading-tight text-bone">
-            {formatPatternLabel(pattern.pattern_type, pattern.pattern_key)}
-          </h3>
-          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-bone-muted/55">
-            {formatRange(pattern.first_seen, pattern.last_seen)}
-          </p>
+    <article id={`pattern-${pattern.id}`} className="flex scroll-mt-24 flex-wrap gap-7 rounded-2xl p-6" style={{ background: K.bg2, border: `1px solid ${K.line}` }}>
+      <div className="grid min-w-0 flex-[3_1_380px] content-start gap-3">
+        <p className="channel-kicker" style={{ color: K.copperHi }}>{TYPE_LABEL[pattern.pattern_type as PatternType] ?? 'Pattern'}</p>
+        <h3 style={{ margin: 0, fontFamily: K.fSerif, fontStyle: 'italic', fontWeight: 500, fontSize: 30, lineHeight: 1.12 }}>
+          {patternGlyph(pattern.pattern_type, pattern.pattern_key)} {title}
+        </h3>
+        <p style={{ margin: 0, fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim }}>
+          {pattern.sample_size} {pattern.sample_size === 1 ? 'entry' : 'entries'} · {formatRange(pattern.first_seen, pattern.last_seen)}
+        </p>
+        <PatternStrip pattern={pattern} strip={strip} legend />
+        <PatternRead pattern={pattern} />
+        <p className="text-sm text-bone-muted">An observation from your recorded entries, not a measure of certainty.</p>
+        <PatternMonths evidence={evidence} />
+        <div className="flex flex-wrap gap-2.5 pt-1">
+          <AskStelloquyButton question={`In my journal, I have written ${pattern.sample_size} ${pattern.sample_size === 1 ? 'entry' : 'entries'} under ${title}. What do you notice about it?`}>
+            Ask Stelloquy about this sky →
+          </AskStelloquyButton>
+          <Link href="/settings#insight-voice" className="rounded-full px-5 py-2.5 text-sm" style={{ color: K.inkDim }}>Change the voice</Link>
         </div>
-        <div className="text-right">
-          <p className="font-display text-[1.6rem] leading-none text-bone">{pattern.sample_size}</p>
-          <p className="mt-1 text-[0.6rem] uppercase tracking-[0.2em] text-bone-muted/60">
-            {pattern.sample_size === 1 ? 'entry' : 'entries'}
-          </p>
+      </div>
+      {shown.length ? (
+        <div className="grid min-w-0 flex-[2_1_280px] content-start gap-3 rounded-xl p-4" style={{ background: K.bg3, border: `1px solid ${K.sage}44` }}>
+          <EvidenceList evidence={shown} bodyByEntryId={bodyByEntryId} compact />
+          {evidence.length > shown.length ? (
+            <Link href="/journal" className="text-sm underline underline-offset-4" style={{ color: K.stelloBlueSoft }}>All {evidence.length} entries →</Link>
+          ) : null}
         </div>
-      </header>
-
-      <PatternStrip pattern={pattern} strip={strip} legend />
-
-      <PatternMonths evidence={evidence} />
-
-      <p className="text-sm text-bone-muted">An observation from your recorded entries, not a measure of certainty.</p>
-
-      <PatternRead pattern={pattern} />
-
-      <EvidenceList evidence={evidence} bodyByEntryId={bodyByEntryId} />
+      ) : null}
     </article>
   )
 }
@@ -391,19 +395,10 @@ export function PatternInsights({
         </section>
       ) : null}
 
-      <details className="group rounded-2xl border border-border/40 px-5 py-4">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm text-bone">
-          <span>See every pattern across {strip.year}</span>
-          <span aria-hidden="true" className="text-bone-muted/60 transition-transform group-open:rotate-90">›</span>
-        </summary>
-        <div className="mt-4">
-          <p className="mb-4 text-xs leading-5 text-bone-muted/80">
-            Each row is one pattern across the year. The soft band shows when that sky was overhead; the bright marks are the days
-            you wrote under it.
-          </p>
-          <PatternYearStrips patterns={skyPatterns} year={strip.year} today={strip.today} skyDaysByPatternId={skyDaysByPatternId} />
-        </div>
-      </details>
+      <section aria-label={`Every pattern across ${strip.year}`} className="rounded-2xl p-6" style={{ background: K.bg2, border: `1px solid ${K.line}` }}>
+        <p className="channel-kicker mb-3" style={{ color: K.violetDim }}>Every pattern across {strip.year}</p>
+        <PatternYearStrips patterns={skyPatterns} year={strip.year} today={strip.today} skyDaysByPatternId={skyDaysByPatternId} />
+      </section>
     </div>
   )
 }

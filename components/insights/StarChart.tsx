@@ -138,7 +138,7 @@ export function StarChart({ today, patternsHref }: { today: string; patternsHref
           </svg>
 
           {selected ? (
-            <aside className="flex flex-col gap-4 p-6 lg:border-l" style={{ borderColor: K.line }} aria-live="polite">
+            <aside className="flex flex-col gap-4 p-6 lg:border-l" style={{ borderColor: K.line, background: K.bg2 }} aria-live="polite">
               <div>
                 <Kicker color={K.violetDim}>{selected.id === brightest?.id ? 'Brightest star' : KIND_META[selected.kind].label}</Kicker>
                 <h2 style={{ margin: '8px 0 0', fontFamily: K.fSerif, fontSize: 32, fontWeight: 500, lineHeight: 1.1 }}>{selected.label}</h2>
@@ -185,12 +185,12 @@ export function StarChart({ today, patternsHref }: { today: string; patternsHref
                 const behind = (selected.sampleCaptureIds ?? []).flatMap(id => (data.excerpts?.[id] ? [{ id, ...data.excerpts[id] }] : [])).slice(0, 3)
                 if (!behind.length) return null
                 return (
-                  <div>
-                    <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim, marginBottom: 4 }}>From your saved conversations</div>
+                  <div className="rounded-xl p-4" style={{ background: K.bg3, border: `1px solid ${K.plum}44` }}>
+                    <div style={{ fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#cdb4ec', marginBottom: 4 }}>From your saved conversations</div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                       {behind.map((c, i) => (
                         <li key={c.id} className="py-2" style={{ borderTop: i ? `1px solid ${K.line}` : 'none' }}>
-                          <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55, color: K.ink }}>{c.text}</p>
+                          <p style={{ margin: 0, fontFamily: K.fSerif, fontStyle: 'italic', fontSize: 17, lineHeight: 1.45, color: K.ink }}>{c.text}</p>
                           <p style={{ margin: '4px 0 0', fontFamily: K.fMono, fontSize: 10, letterSpacing: '0.08em', color: K.inkDim }}>
                             {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${c.date}T12:00:00Z`))} · {c.whose === 'member' ? 'your words' : 'Stelloquy, saved by you'}
                           </p>
@@ -201,7 +201,7 @@ export function StarChart({ today, patternsHref }: { today: string; patternsHref
                 )
               })()}
               <div className="mt-auto grid gap-2">
-                <button type="button" className="rounded-full px-5 py-2.5 text-sm" style={{ background: K.copper, color: K.bg }}
+                <button type="button" className="rounded-full px-5 py-2.5 text-sm" style={{ background: `${K.copper}26`, border: `1px solid ${K.copper}66`, color: K.ink }}
                   onClick={() => openWith(`In my saved Stelloquy conversations, "${selected.label}" (${KIND_META[selected.kind].label.toLowerCase()}) comes up in ${selected.count} of ${data.captureCount}${lines.length ? `, most often alongside ${lines.slice(0, 3).map(l => byId.get(l.other)!.label).join(', ')}` : ''}. What do you notice about it?`)}>
                   Ask Stelloquy about {selected.label} →
                 </button>
