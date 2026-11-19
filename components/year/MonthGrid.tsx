@@ -24,6 +24,10 @@ interface Props {
   planItemsByDay?: Map<number, Tables<'plan_items'>[]>
   curriculumByDay?: Map<number, CurriculumSessionRow[]>
   energyByDay?: Map<number, EnergyWindow>
+  /** Day-of-month values the member checked in. */
+  checkedInDays?: Set<number>
+  /** Day-of-month to planets retrograde that day. */
+  retrogradeByDay?: Map<number, string[]>
 }
 
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
@@ -47,6 +51,8 @@ export function MonthGrid({
   planItemsByDay,
   curriculumByDay,
   energyByDay,
+  checkedInDays,
+  retrogradeByDay,
 }: Props) {
   const offset = (new Date(year, month, 1).getDay() + 6) % 7
   const days = daysInMonth(year, month)
@@ -81,6 +87,8 @@ export function MonthGrid({
           const event = valid ? eventByDay.get(d) : undefined
           const showMoon = valid && (d === 1 || d % 7 === 0)
           const hasJournal = valid && journalDays?.has(d) === true
+          const checkedIn = valid && checkedInDays?.has(d) === true
+          const retro = valid ? retrogradeByDay?.get(d) : undefined
           const planItems = valid ? planItemsByDay?.get(d) ?? [] : []
           const curriculumSessions = valid ? curriculumByDay?.get(d) ?? [] : []
           const character = valid ? energyByDay?.get(d) : undefined
@@ -94,7 +102,9 @@ export function MonthGrid({
               ? K.bg
               : isToday
                 ? `linear-gradient(180deg, ${K.copper}22, ${K.bg2})`
-                : K.bg2,
+                : retro?.length
+                  ? `linear-gradient(180deg, ${K.ember}1f, ${K.bg2})`
+                  : K.bg2,
             padding: 7,
             position: 'relative',
             border: isToday ? `1px solid ${K.copper}` : 'none',
@@ -177,10 +187,17 @@ export function MonthGrid({
                   {event.tag}
                 </div>
               ) : null}
+              {checkedIn ? (
+                <span
+                  title="Checked in"
+                  aria-label="Checked in this day"
+                  style={{ position: "absolute", bottom: 10, right: 26, width: 7, height: 7, borderRadius: 999, background: K.copper }}
+                />
+              ) : null}
               {hasJournal ? (
                 <span
-                  title="Journal entry on this day"
-                  aria-label="Journal entry on this day"
+                  title="You wrote"
+                  aria-label="You wrote this day"
                   style={{
                     position: 'absolute',
                     bottom: 6,
@@ -221,6 +238,11 @@ export function MonthGrid({
             </div>
           )
         })}
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 18, marginTop: 10, fontFamily: K.fMono, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: K.inkDim }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span aria-hidden="true" style={{ fontFamily: K.fSerif, color: K.starlight }}>✎</span>You wrote</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: 999, background: K.copper }} />Checked in</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span aria-hidden="true" style={{ width: 14, height: 10, borderRadius: 2, background: `${K.ember}33`, border: `1px solid ${K.ember}` }} />Retrograde</span>
       </div>
     </div>
   )

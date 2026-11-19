@@ -9,6 +9,10 @@ import { derivePushRestArc } from '@/lib/year/push-rest-arc'
 import { todayISO } from '@/lib/today/get-today-context'
 import { monthChartNavHref } from '@/lib/calendar/calendar-day-routes'
 import { isPeriodReviewEnabled } from '@/lib/feature-flags'
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { collectiveCycles } from '@/lib/sky-cycles/load'
+import { daysOfMonth, retrogradePlanetsByDay } from '@/lib/year/month-marks'
+import { latestClosedMonth, periodLabel } from '@/lib/period-review/periods'
 import { PeriodReviewLookBackLinks } from '@/components/period-review/PeriodReviewLookBackLinks'
 import type { CurriculumSessionRow } from '@/types/curriculum'
 import type { Tables } from '@/types/database'
@@ -59,6 +63,7 @@ export async function MonthChartView({
     journalEntries,
     monthBrief,
     plannerContext,
+    supabaseUserId,
   } = await loadMonthData(selected.year, selected.month)
 
   const weekStart = new Date(selected.year, selected.month, 1)
@@ -89,6 +94,14 @@ export async function MonthChartView({
     const d = Number(row.entry_date?.slice(8, 10))
     if (Number.isFinite(d)) journalDays.add(d)
   }
+  // Marks the grid reads: days checked in, and the retrogrades from the sky cycles (read only).
+  const checkInRes = supabaseUserId
+    ? await createAdminSupabase().from('daily_logs').select('log_date').eq('user_id', supabaseUserId).like('log_date', `${monthPrefix}%`)
+    : null
+  const checkedInDays = daysOfMonth((checkInRes?.data ?? []).map((r) => r.log_date), monthPrefix)
+  const retrogradeByDay = retrogradePlanetsByDay(collectiveCycles(), selected.year, selected.month)
+  const reviewsOn = isPeriodReviewEnabled()
+  const closedMonth = latestClosedMonth(todayIso)
   const monthPlanItems = planItems.filter((item) => item.item_date.startsWith(monthPrefix))
   const planItemsByDay = new Map<number, PlanItemRow[]>()
   const curriculumByDay = new Map<number, CurriculumSessionRow[]>()
@@ -275,6 +288,16 @@ export async function MonthChartView({
               initialEditedAt={(existingBrief as { edited_at?: string | null } | null)?.edited_at ?? undefined}
               initialPinned={Boolean(existingBrief?.pinned)}
             />
+          ) : null}
+
+          {reviewsOn ? (
+            <Link
+              href={`/reviews?year=${closedMonth.planYear}&month=${closedMonth.index}`}
+              style={{ textDecoration: "none", color: K.ink, borderRadius: 16, border: `1px solid ${K.violetDim}66`, background: `linear-gradient(to right, ${K.violetDim}1a, transparent 70%), ${K.bg2}`, padding: 20, display: "flex", flexDirection: "column", gap: 6 }}
+            >
+              <span style={{ fontFamily: K.fMono, fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: K.violetDim }}>From Insights</span>
+              <span style={{ fontFamily: K.fSerif, fontStyle: "italic", fontSize: 20, lineHeight: 1.3 }}>Read the look back for {periodLabel(closedMonth)} →</span>
+            </Link>
           ) : null}
 
           {isPeriodReviewEnabled() ? (
@@ -530,6 +553,8 @@ export async function MonthChartView({
               planItemsByDay={planItemsByDay}
               curriculumByDay={curriculumByDay}
               energyByDay={energyByDay}
+              checkedInDays={checkedInDays}
+              retrogradeByDay={retrogradeByDay}
             />
           </Frame>
         </div>

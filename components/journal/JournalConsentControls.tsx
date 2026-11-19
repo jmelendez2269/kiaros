@@ -60,7 +60,7 @@ export function JournalConsentControls({
       className={`rounded-[1.1rem] border border-border/70 bg-stone-950/45 ${compact ? 'p-4' : 'p-5'}`}
     >
       <legend className="px-2 text-xs font-medium uppercase tracking-[0.18em] text-bone-muted/70">
-        How this entry may be used
+        Who may read this
       </legend>
       <p className="text-sm leading-6 text-bone-muted">
         Saving keeps the entry in your private journal. Each permission below is separate and can be changed later.
@@ -77,7 +77,7 @@ export function JournalConsentControls({
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-moss-300 focus:ring-moss-400"
           />
           <span>
-            <span className="block text-sm font-medium text-bone">Let Kairos draw on this entry</span>
+            <span className="block text-sm font-medium text-bone">Include in Insights, so patterns and look backs can draw on it</span>
             <span className="mt-1 block text-xs leading-5 text-bone-muted">
               Allows Reflections, Quarterly Reviews, and month briefs to use this entry, plus pattern insights on Planner + Oracle.
             </span>
@@ -92,7 +92,7 @@ export function JournalConsentControls({
             className="mt-0.5 h-4 w-4 shrink-0 rounded border-border/80 bg-stone-950/80 text-plum-300 focus:ring-plum-400"
           />
           <span>
-            <span className="block text-sm font-medium text-bone">Let Stelloquy recall it</span>
+            <span className="block text-sm font-medium text-bone">Let Stelloquy remember it</span>
             <span className="mt-1 block text-xs leading-5 text-bone-muted">
               Allows future conversations to retrieve relevant excerpts from this entry.
             </span>
