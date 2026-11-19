@@ -3,6 +3,7 @@
  * unit-testable.
  */
 import type { EphemerisDay } from '@/types/blueprint'
+import { ESTABLISHED_PATTERN_MIN_SAMPLE } from '@/lib/journal/pattern-discoveries'
 import { dayMatchesPattern, patternGlyph, patternTitle } from './pattern-sky'
 
 export interface HomePattern {
@@ -69,6 +70,53 @@ export function brightestTheme(topics: Array<{ capture_id: string; kind: string;
   }
   const top = [...byLabel.entries()].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0]))[0]
   return top ? { label: top[0], count: top[1].size, of: all.size } : null
+}
+
+/** One pattern as the constellation on the Insights home draws it. */
+export interface HomeSkyPattern {
+  id: string
+  type: string
+  key: string
+  /** One per star. Empty strings when the member may see names and counts only. */
+  dates: string[]
+  count: number
+  forming: boolean
+}
+
+export interface PatternRowForSky extends PatternRowForHome {
+  id: string
+  evidence?: unknown
+}
+
+/** Stars drawn for a pattern whose entry dates are withheld. */
+const MAX_UNDATED_STARS = 9
+
+function evidenceDates(evidence: unknown): string[] {
+  if (!Array.isArray(evidence)) return []
+  return evidence.flatMap((item) => {
+    const date = item && typeof item === 'object' ? (item as Record<string, unknown>).entry_date : null
+    return typeof date === 'string' ? [date] : []
+  })
+}
+
+/**
+ * The member's patterns for the home constellation, most written-under first.
+ * With `withDates` false (no Stelloquy access) each star carries no date:
+ * names and counts only, as the Patterns preview shows.
+ */
+export function skyPatternsForHome(rows: PatternRowForSky[], opts: { withDates: boolean }, limit = 8): HomeSkyPattern[] {
+  return [...rows]
+    .sort(byEntries)
+    .map((row) => ({
+      id: row.id,
+      type: row.pattern_type,
+      key: row.pattern_key,
+      dates: opts.withDates ? evidenceDates(row.evidence) : Array.from({ length: Math.min(row.sample_size, MAX_UNDATED_STARS) }, () => ''),
+      count: row.sample_size,
+      forming: row.sample_size < ESTABLISHED_PATTERN_MIN_SAMPLE,
+    }))
+    .filter((pattern) => pattern.dates.length > 0)
+    .slice(0, limit)
 }
 
 export const timesWritten = (n: number) => (n === 1 ? 'written under once' : `written under ${n} times`)

@@ -63,6 +63,7 @@ export async function saveLineForToday(
   }
 
   revalidatePath('/today')
+  revalidatePath('/insights')
   return { ok: true, entryId: result.data.id }
 }
 
@@ -79,5 +80,6 @@ export async function saveTodayCheckIn(input: { energy: number | null; mood: str
   const result = await saveCheckIn(checkIn)
   if (!result.success) return { ok: false, error: result.error }
   revalidatePath('/today')
+  revalidatePath('/insights')
   return { ok: true, checkIn: result.data }
 }

@@ -33,7 +33,7 @@ function starfield(width: number, height: number, count: number) {
  * joined in the order they were written. Bright ones have enough evidence to
  * trust; dotted ones are still forming.
  */
-export function PatternConstellations({ patterns }: { patterns: SkyPattern[] }) {
+export function PatternConstellations({ patterns, hrefBase = '' }: { patterns: SkyPattern[]; /** Page the pattern anchors live on, when it is not this one. */ hrefBase?: string }) {
   const shown = patterns.slice(0, 8)
   if (!shown.length) return null
   const W = 1000, H = shown.length > 4 ? 380 : 300
@@ -56,7 +56,7 @@ export function PatternConstellations({ patterns }: { patterns: SkyPattern[] }) 
           const minX = Math.min(...stars.map(s => s.x)), minY = Math.min(...stars.map(s => s.y))
           const labelX = Math.max(8, Math.min(minX - 6, W - 230)), labelY = Math.max(22, minY - 30)
           return (
-            <a key={p.id} href={`#pattern-${p.id}`} aria-label={`${patternTitle(p.type, p.key)}, ${p.count} entries${p.forming ? ', still forming' : ''}`}>
+            <a key={p.id} href={`${hrefBase}#pattern-${p.id}`} aria-label={`${patternTitle(p.type, p.key)}, ${p.count} entries${p.forming ? ', still forming' : ''}`}>
               {p.id === strongest ? <circle cx={stars.reduce((t, s) => t + s.x, 0) / stars.length} cy={stars.reduce((t, s) => t + s.y, 0) / stars.length} r={120} fill="url(#pattern-glow)" /> : null}
               <polyline points={stars.map(s => `${s.x},${s.y}`).join(' ')} fill="none" stroke={color}
                 strokeOpacity={p.forming ? 0.45 : 0.7} strokeWidth={1} strokeDasharray={p.forming ? '2 4' : undefined} />

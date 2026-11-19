@@ -42,6 +42,9 @@ import { PeriodReviewTodayCards } from '@/components/period-review/PeriodReviewT
 import { LastWeekTodayCard } from '@/components/reflections/LastWeekTodayCard'
 import { TodayJournalMemoryNotice } from '@/components/today/TodayJournalMemoryNotice'
 import { SkyCyclesTodayCard } from '@/components/sky-cycles/SkyCyclesTodayCard'
+import { SkyTurnMoment } from '@/components/sky-cycles/SkyTurnMoment'
+import { loadSkyTurns } from '@/lib/sky-cycles/load'
+import { turnsHeadline } from '@/lib/sky-cycles/turns'
 import { PeriodReviewAutoOpenManager } from '@/components/period-review/PeriodReviewAutoOpenManager'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
@@ -160,6 +163,9 @@ export default async function TodayPage({
       .eq('entry_date', todayDate)
       .eq('is_ritual', true),
   ])
+  // Optional: a day the sky turns opens a short popup once; Today reads the same without it.
+  const skyTurns = await loadSkyTurns(supabaseUserId, todayDate, timeZone).catch(() => [])
+  const skyTurnDateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${todayDate}T12:00:00Z`))
   const todayPlanItems = todayPlanItemsRes.data ?? []
   const patternRows = patternRowsRes.data ?? []
 
@@ -224,6 +230,7 @@ export default async function TodayPage({
       <TodayJournalMemoryNotice profileId={supabaseUserId} />
 
       <SkyCyclesTodayCard profileId={supabaseUserId} todayDate={todayDate} />
+      <SkyTurnMoment turns={skyTurns} headline={turnsHeadline(skyTurns)} today={todayDate} dateLabel={skyTurnDateLabel} onToday />
 
       <Frame tone="umber" padding={18}>
         <RightNowCard windows={nowEnergyWindows} />

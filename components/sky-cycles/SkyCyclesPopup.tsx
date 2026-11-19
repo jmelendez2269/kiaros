@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Frame, K, Kicker } from '@/components/almanac'
+import { SKY_TURN_OPEN_EVENT } from '@/lib/sky-cycles/turn-storage'
 
 export type SkyCycleSummary = {
   id: string
@@ -22,6 +23,16 @@ export function SkyCyclesPopup({ summaries, children }: { summaries: SkyCycleSum
   const bodyRef = useRef<HTMLDivElement>(null)
   const close = useCallback(() => setOpenAt(null), [])
   const open = openAt !== null
+
+  // The "sky turned today" popup hands over to the full read here.
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const cycleId = (e as CustomEvent<{ cycleId?: string }>).detail?.cycleId ?? ''
+      setOpenAt(summaries.some((s) => s.id === cycleId) ? cycleId : '')
+    }
+    window.addEventListener(SKY_TURN_OPEN_EVENT, onOpen)
+    return () => window.removeEventListener(SKY_TURN_OPEN_EVENT, onOpen)
+  }, [summaries])
 
   useEffect(() => {
     if (!open) return
@@ -47,6 +58,7 @@ export function SkyCyclesPopup({ summaries, children }: { summaries: SkyCycleSum
 
   return (
     <>
+      <div id="in-the-sky" style={{ scrollMarginTop: 16 }}>
       <Frame tone="umber" padding={14}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <Kicker color={K.stelloBlueSoft}>In the sky</Kicker>
@@ -93,6 +105,7 @@ export function SkyCyclesPopup({ summaries, children }: { summaries: SkyCycleSum
           ))}
         </div>
       </Frame>
+      </div>
 
       {open
         ? createPortal(

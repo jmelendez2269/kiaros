@@ -6,7 +6,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import type { EphemerisDay } from '@/types/blueprint'
-import { brightestTheme, overheadPatterns, strongestPattern, timesWritten } from '../home'
+import { brightestTheme, overheadPatterns, skyPatternsForHome, strongestPattern, timesWritten } from '../home'
 
 const today = { date: '2026-11-10', moon: { lunarPhase: 'new', sign: 'Scorpio' }, retrogrades: ['Mercury'], transits: [] } as unknown as EphemerisDay
 const rows = [
@@ -93,5 +93,32 @@ describe('Today: the check-in card and the moon overhead', () => {
     assert.equal(rhythmLineForPhase(rhythms, 'Waning Crescent'), null)
     assert.equal(rhythmLineForPhase(checkInRhythms(many(3, 'Full', 1)), 'Full'), null)
     assert.equal(rhythmLineForPhase(rhythms, null), null)
+  })
+})
+
+describe('skyPatternsForHome', () => {
+  const skyRows = [
+    { id: 'a', pattern_type: 'lunar_sign', pattern_key: 'Scorpio', sample_size: 2, evidence: [{ entry_id: 'e1', entry_date: '2026-10-01' }, { entry_id: 'e2', entry_date: '2026-10-28' }] },
+    { id: 'b', pattern_type: 'retrograde', pattern_key: 'Mercury', sample_size: 5, evidence: [{ entry_id: 'e3', entry_date: '2026-03-02' }, { entry_date: 7 }, 'junk'] },
+    { id: 'c', pattern_type: 'lunar_phase', pattern_key: 'New', sample_size: 3, evidence: null },
+  ]
+  it('draws one star per dated entry, most written-under first, and marks thin patterns as forming', () => {
+    const sky = skyPatternsForHome(skyRows, { withDates: true })
+    assert.deepEqual(sky.map(p => [p.id, p.dates, p.count, p.forming]), [
+      ['b', ['2026-03-02'], 5, false],
+      ['a', ['2026-10-01', '2026-10-28'], 2, true],
+    ])
+  })
+  it('gives names and counts only, with no entry dates, when dates are withheld', () => {
+    const sky = skyPatternsForHome(skyRows, { withDates: false })
+    assert.deepEqual(sky.map(p => p.id), ['b', 'c', 'a'])
+    assert.ok(sky.every(p => p.dates.every(d => d === '')))
+    assert.deepEqual(sky.map(p => p.dates.length), [5, 3, 2])
+  })
+  it('caps undated stars and the number of constellations', () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({ id: `p${i}`, pattern_type: 'retrograde', pattern_key: `K${i}`, sample_size: 40 }))
+    const sky = skyPatternsForHome(many, { withDates: false })
+    assert.equal(sky.length, 8)
+    assert.equal(sky[0].dates.length, 9)
   })
 })
