@@ -44,6 +44,8 @@ import { TodayJournalMemoryNotice } from '@/components/today/TodayJournalMemoryN
 import { SkyCyclesTodayCard } from '@/components/sky-cycles/SkyCyclesTodayCard'
 import { SkyTurnMoment } from '@/components/sky-cycles/SkyTurnMoment'
 import { loadSkyTurns } from '@/lib/sky-cycles/load'
+import { SeasonBand } from '@/components/look-ahead/SeasonBand'
+import { loadLookAheadBand } from '@/lib/look-ahead/load'
 import { turnsHeadline } from '@/lib/sky-cycles/turns'
 import { PeriodReviewAutoOpenManager } from '@/components/period-review/PeriodReviewAutoOpenManager'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
@@ -165,6 +167,8 @@ export default async function TodayPage({
   ])
   // Optional: a day the sky turns opens a short popup once; Today reads the same without it.
   const skyTurns = await loadSkyTurns(supabaseUserId, todayDate, timeZone).catch(() => [])
+  // From Nov 1, a band leads into next year's look-ahead; Today reads the same without it.
+  const lookAhead = await loadLookAheadBand(supabaseUserId, mockToday).catch(() => null)
   const skyTurnDateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${todayDate}T12:00:00Z`))
   const todayPlanItems = todayPlanItemsRes.data ?? []
   const patternRows = patternRowsRes.data ?? []
@@ -225,6 +229,8 @@ export default async function TodayPage({
       ) : null}
 
       <PageHints page="today" />
+
+      {lookAhead ? <SeasonBand year={lookAhead.year} mockToday={mockToday} /> : null}
 
       <TodayJournalMemoryNotice profileId={supabaseUserId} />
 
