@@ -19,12 +19,13 @@ import {
   buildJournalSkyInsert,
   buildJournalTransitContext,
   computeCyclePhase,
-  findEphemerisDay,
   getPatternRefreshTargets,
   humanizeLunarPhase,
 } from '@/lib/journal/intelligence'
+import { collectRpcErrors, resolveEntrySkyDay } from '@/lib/journal/entry-sky'
+import { computeNatalChart, computeYearEphemeris } from '@/lib/ephemeris'
 import { createServerSupabase } from '@/lib/supabase/server'
-import type { YearEphemeris } from '@/types/blueprint'
+import type { HouseSystem, NatalChart, YearEphemeris } from '@/types/blueprint'
 import type { Database, Json, Tables, TablesInsert } from '@/types/database'
 
 export type JournalEntrySource = 'journal_api' | 'today_quick_entry'
@@ -88,7 +89,9 @@ export async function createJournalEntry(
 
   const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
-    .select('id, cycle_enabled, avg_cycle_length, avg_period_length')
+    .select(
+      'id, cycle_enabled, avg_cycle_length, avg_period_length, natal_chart, house_system, birth_date, birth_time, birth_time_unknown, birth_tz, birth_lat, birth_lng',
+    )
     .maybeSingle()
 
   if (profileError) return failure('profile_read_failed', profileError.message)
@@ -127,7 +130,50 @@ export async function createJournalEntry(
     .maybeSingle()
 
   const ephemeris = (cachedEphemeris?.data as unknown as YearEphemeris | null) ?? null
-  const ephemerisDay = findEphemerisDay(ephemeris, input.entryDate)
+  // The cache is only written when a Blueprint is generated, so a new member
+  // may have none. Compute just this day rather than saving the entry unstamped.
+  const skyDay = resolveEntrySkyDay({
+    cached: ephemeris,
+    entryDate: input.entryDate,
+    compute: () => {
+      let natalChart = profile.natal_chart as unknown as NatalChart | null
+      if (!natalChart || typeof natalChart !== 'object') {
+        if (!profile.birth_date || profile.birth_lat == null || profile.birth_lng == null) {
+          throw new Error('no natal chart and birth data is incomplete')
+        }
+        natalChart = computeNatalChart(
+          {
+            date: profile.birth_date,
+            time: profile.birth_time ?? null,
+            timezone: profile.birth_tz ?? null,
+            lat: profile.birth_lat,
+            lng: profile.birth_lng,
+            timeUnknown: profile.birth_time_unknown ?? false,
+          },
+          (profile.house_system as HouseSystem | null) ?? 'whole_sign',
+        )
+      }
+      return (
+        computeYearEphemeris({
+          userId: profile.id,
+          natalChart,
+          startDate: input.entryDate,
+          endDate: input.entryDate,
+          year: entryYear,
+        }).days[0] ?? null
+      )
+    },
+  })
+  const ephemerisDay = skyDay.day
+  if (skyDay.source === 'computed') {
+    console.warn(
+      `[journal/create:${input.source}] No cached sky for ${input.entryDate}; computed it directly for user ${profile.id}`,
+    )
+  } else if (skyDay.source === 'missing') {
+    console.error(
+      `[journal/create:${input.source}] Could not resolve sky for ${input.entryDate}; entry will save without a sky stamp or pattern rows (user ${profile.id}): ${skyDay.reason}`,
+    )
+  }
   const transitContext = buildJournalTransitContext(input.transitContext ?? null, ephemerisDay)
 
   let cyclePhase: string | null = null
@@ -221,18 +267,28 @@ export async function createJournalEntry(
     if (!shouldRefreshPatterns) return { success: true, data }
 
     const refreshTargets = getPatternRefreshTargets(ephemerisDay)
-    await Promise.all(
-      refreshTargets.map((target) =>
-        supabase.rpc('refresh_user_pattern_insight', {
-          p_user_id: profile.id,
-          p_pattern_type: target.patternType,
-          p_pattern_key: target.patternKey,
-          p_last_entry_id: data.id,
-        }),
-      ),
-    ).catch((patternError: unknown) => {
+    try {
+      // supabase-js resolves with `{ error }` instead of throwing, so check each result.
+      const results = await Promise.all(
+        refreshTargets.map((target) =>
+          supabase.rpc('refresh_user_pattern_insight', {
+            p_user_id: profile.id,
+            p_pattern_type: target.patternType,
+            p_pattern_key: target.patternKey,
+            p_last_entry_id: data.id,
+          }),
+        ),
+      )
+      const rpcErrors = collectRpcErrors(results)
+      if (rpcErrors.length > 0) {
+        console.error(
+          `[journal/create:${input.source}] ${rpcErrors.length}/${results.length} pattern refreshes failed for entry ${data.id}:`,
+          rpcErrors,
+        )
+      }
+    } catch (patternError: unknown) {
       console.error(`[journal/create:${input.source}] Failed to refresh pattern insights:`, patternError)
-    })
+    }
 
     after(() =>
       resyncPatternSynthesisForTargets({ userProfileId: profile.id, targets: refreshTargets }).catch(

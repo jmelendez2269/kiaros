@@ -182,11 +182,13 @@ export interface ComputeYearEphemerisOptions {
   natalChart: NatalChart
   startDate: string    // YYYY-MM-DD (start of planning year)
   year: number
+  /** Optional earlier end (YYYY-MM-DD); defaults to Dec 31 of `year`. */
+  endDate?: string
 }
 
 export function computeYearEphemeris(opts: ComputeYearEphemerisOptions): YearEphemeris {
   const { userId, natalChart, startDate, year } = opts
-  const endDate = `${year}-12-31`
+  const endDate = opts.endDate ?? `${year}-12-31`
 
   // Build array of YYYY-MM-DD dates from startDate to endDate
   const dates: string[] = []
