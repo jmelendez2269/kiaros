@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { OracleChat } from '@/components/oracle/OracleChat'
+import { OracleHoldingPanel } from '@/components/oracle/OracleHoldingPanel'
 import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { createServerSupabase } from '@/lib/supabase/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -91,5 +92,11 @@ export default async function OraclePage() {
     return <OracleUpgradeState hasReadOnlyPlannerAccess={access.hasReadOnlyPlannerAccess} />
   }
 
-  return <OracleChat today={today} userTradition={profile?.tradition ?? null} />
+  return (
+    <OracleChat
+      today={today}
+      userTradition={profile?.tradition ?? null}
+      aside={profile?.id ? <OracleHoldingPanel supabase={supabase} profileId={profile.id} today={today} /> : null}
+    />
+  )
 }
