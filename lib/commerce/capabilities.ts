@@ -314,6 +314,11 @@ export function resolveAccessCapabilities(input: ResolveAccessCapabilitiesInput)
     if (entitlement.accessPlan === 'yearly' && entitlement.isSubscription === true) {
       return true;
     }
+    // Gifts are sold as "the rest of this year plus all of next", so they
+    // roll into each planner year that opens inside the gift window.
+    if (entitlement.source === 'gift') {
+      return true;
+    }
     // One-time purchases and Etsy follow the input parameter
     return input.oneTimeAnnualRollsForward ?? false;
   };

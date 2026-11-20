@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { recordVerifiedCheckoutCompleted } from "@/lib/analytics/checkout-events";
+import { fulfillGiftCheckout, isGiftCheckoutSession } from "@/lib/commerce/gift-server";
 import {
   fulfillCheckoutSession,
   getStripeClient,
@@ -44,6 +45,13 @@ export async function POST(request: Request) {
       case "checkout.session.completed":
       case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
+        if (isGiftCheckoutSession(session)) {
+          // Async payment methods complete later; only fulfill once paid.
+          if (session.payment_status === "paid") {
+            await fulfillGiftCheckout(session.id);
+          }
+          break;
+        }
         const fulfillment = await fulfillCheckoutSession({ sessionId: session.id });
         try {
           await recordVerifiedCheckoutCompleted({
