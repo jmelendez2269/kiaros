@@ -10,6 +10,7 @@ import {
   type ProductEntitlementRecord 
 } from "@/lib/commerce/entitlements";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
+import { nextBlueprintVersion } from "@/lib/season/turn-of-year";
 
 // Same budget as the initial generate route — full AI generation runs in after().
 export const maxDuration = 300;
@@ -67,19 +68,26 @@ export async function POST() {
     );
   }
 
-  // Idempotent: if a blueprint for the current planner year already exists (generating or ready),
-  // return it immediately so the polling page can pick up where it left off.
+  // Idempotent: if a blueprint for the current planner year already exists (generating or ready,
+  // including one written early in November), keep it and only move the profile to the new year.
   const { data: existing } = await admin
     .from("blueprints")
     .select("id, status")
     .eq("user_id", profile.id)
     .eq("plan_year", currentPlannerYear)
+    .in("status", ["ready", "generating"])
     .order("version", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (existing) {
-    return NextResponse.json({ blueprintId: existing.id, alreadyExists: true });
+    if ((profile.plan_year ?? 0) < currentPlannerYear) {
+      await admin
+        .from("user_profiles")
+        .update({ plan_year: currentPlannerYear })
+        .eq("id", profile.id);
+    }
+    return NextResponse.json({ blueprintId: existing.id, alreadyExists: true, plannerYear: currentPlannerYear });
   }
 
   // Advance the profile's plan_year so the status route and rest of the app
@@ -89,9 +97,24 @@ export async function POST() {
     .update({ plan_year: currentPlannerYear })
     .eq("id", profile.id);
 
+  // A failed earlier attempt leaves an error row; versions count up from the newest.
+  const { data: latest } = await admin
+    .from("blueprints")
+    .select("version")
+    .eq("user_id", profile.id)
+    .eq("plan_year", currentPlannerYear)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const { data: blueprint, error: insertError } = await admin
     .from("blueprints")
-    .insert({ user_id: profile.id, plan_year: currentPlannerYear, version: 1, status: "generating" })
+    .insert({
+      user_id: profile.id,
+      plan_year: currentPlannerYear,
+      version: nextBlueprintVersion(latest?.version),
+      status: "generating",
+    })
     .select("id")
     .single();
 

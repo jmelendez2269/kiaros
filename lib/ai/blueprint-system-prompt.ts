@@ -42,6 +42,30 @@ interface BlueprintPromptContext {
   studyFocus: string | null
   planYear: number
   startDate: string   // YYYY-MM-DD (start of planning year)
+  /** The member's look-ahead goal review for this plan year, when they made one. */
+  goalChoices?: GoalChoiceForPrompt[]
+}
+
+export interface GoalChoiceForPrompt {
+  title: string
+  choice: 'carry' | 'reshape' | 'release'
+  reshapedTitle: string | null
+}
+
+/** The goals a member carries, reshapes or releases into this year, in their own words. */
+export function goalChoicesToText(choices: readonly GoalChoiceForPrompt[]): string | null {
+  if (choices.length === 0) return null
+  const carried = choices.filter((c) => c.choice === 'carry').map((c) => `  - ${c.title}`)
+  const reshaped = choices
+    .filter((c) => c.choice === 'reshape')
+    .map((c) => `  - ${c.reshapedTitle?.trim() || c.title} (reshaped from "${c.title}")`)
+  const released = choices.filter((c) => c.choice === 'release').map((c) => `  - ${c.title}`)
+  const sections = [
+    carried.length > 0 ? `Carrying into this year:\n${carried.join('\n')}` : null,
+    reshaped.length > 0 ? `Reshaped for this year:\n${reshaped.join('\n')}` : null,
+    released.length > 0 ? `Released, not to plan around:\n${released.join('\n')}` : null,
+  ].filter((section): section is string => section !== null)
+  return sections.length > 0 ? sections.join('\n\n') : null
 }
 
 // ─── Natal chart → readable summary ──────────────────────────────────────
@@ -430,7 +454,9 @@ export function assembleBlueprintUserPrompt(ctx: BlueprintPromptContext): string
     studyFocus,
     planYear,
     startDate,
+    goalChoices = [],
   } = ctx
+  const goalChoiceText = goalChoicesToText(goalChoices)
 
   const transitSummary = summariseTransitWindows(ephemeris)
   const weeks = generateWeekList(startDate, planYear)
@@ -466,7 +492,12 @@ Study / curriculum focus: ${studyFocus ?? 'Not specified'}
 GOAL CATEGORIES (in priority order)
 ═══════════════════════════════════════════
 ${goalsToText(goals)}
-
+${goalChoiceText ? `
+═══════════════════════════════════════════
+GOALS CHOSEN FOR ${planYear} (from their look-ahead review; plan around carried and reshaped goals, not released ones)
+═══════════════════════════════════════════
+${goalChoiceText}
+` : ''}
 ═══════════════════════════════════════════
 KEY TRANSITS ${planYear} (real calculations)
 ═══════════════════════════════════════════

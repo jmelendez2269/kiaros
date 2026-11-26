@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
 
-export async function GET() {
+export async function GET(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -21,7 +21,13 @@ export async function GET() {
       return NextResponse.json({ status: "error" });
     }
 
-    const plan_year = profile.plan_year ?? getPlannerYearWithOverride();
+    // ?year= lets a Blueprint written ahead (November) be followed while the
+    // profile is still on the current year.
+    const requestedYear = Number(new URL(request.url).searchParams.get("year"));
+    const plan_year =
+      Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 3000
+        ? requestedYear
+        : profile.plan_year ?? getPlannerYearWithOverride();
 
     const { data: blueprint, error: blueprintError } = await admin
       .from("blueprints")
@@ -54,7 +60,7 @@ export async function GET() {
     return NextResponse.json({ 
       status: blueprint.status, 
       error: blueprint.error_message ?? null,
-      plannerYear: getPlannerYearWithOverride()
+      plannerYear: plan_year
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

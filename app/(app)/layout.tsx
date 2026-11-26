@@ -13,6 +13,7 @@ import { ReflectionNotification } from '@/components/reflections/ReflectionNotif
 import { PatternDiscoveryNotifier } from '@/components/insights/PatternDiscoveryNotifier'
 import { resolveUserAccess, loadOrderSubscriptionMap, extractStripeOrderIds, type ProductEntitlementRecord } from '@/lib/commerce/entitlements'
 import { shouldRollOver } from '@/lib/commerce/capabilities'
+import { rolloverAction } from '@/lib/season/turn-of-year'
 import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { getAppProfile } from '@/lib/app/get-app-profile'
 import { DataUnavailable } from '@/components/shared/DataUnavailable'
@@ -112,24 +113,43 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       asOf,
     })
   ) {
+    // A Blueprint written early (in November) or already under way counts:
+    // the member moves to the new year without generating again.
     const { data: currentYearBlueprint } = await admin
       .from('blueprints')
-      .select('id')
+      .select('id, status')
       .eq('user_id', profile.id)
       .eq('plan_year', currentPlannerYear)
+      .in('status', ['ready', 'generating'])
+      .order('version', { ascending: false })
       .limit(1)
       .maybeSingle()
 
-    if (!currentYearBlueprint) {
+    const action = rolloverAction({
+      profilePlanYear: profile?.plan_year ?? null,
+      coveredYears,
+      asOf,
+      currentYearBlueprint: currentYearBlueprint ?? null,
+    })
+
+    if (action === 'advance') {
+      const { error: advanceError } = await admin
+        .from('user_profiles')
+        .update({ plan_year: currentPlannerYear })
+        .eq('id', profile.id)
+      if (advanceError) console.error('[layout] Could not move plan_year to the new year:', advanceError.message)
+    } else if (action === 'generate') {
       redirect('/renewing')
     }
   }
 
   // Expiry banner — only for yearly entitlements (monthly subs are handled by Stripe).
   const todayStr = new Date().toISOString().slice(0, 10)
-  const activeYearlyEntitlement = (entitlements ?? []).find(
-    (e) => e.access_plan === 'yearly' && e.status !== 'revoked' && e.ends_at >= todayStr
-  )
+  // The yearly access that reaches furthest, so an early renewal (which starts
+  // the day after the current year ends) stops the expiry banner.
+  const activeYearlyEntitlement = (entitlements ?? [])
+    .filter((e) => e.access_plan === 'yearly' && e.status !== 'revoked' && e.ends_at >= todayStr)
+    .sort((a, b) => b.ends_at.localeCompare(a.ends_at))[0]
   const daysUntilExpiry = activeYearlyEntitlement
     ? Math.ceil(
         (new Date(activeYearlyEntitlement.ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)

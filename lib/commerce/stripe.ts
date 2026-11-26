@@ -19,7 +19,8 @@ import {
   type ProductKind,
 } from "@/lib/commerce/config";
 import { getNextPlannerYear } from "@/lib/commerce/planner-year";
-import { buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
+import { addDaysISO, buildAnnualEntitlementRecord, toISODate } from "@/lib/commerce/entitlements";
+import { renewedEndsAt } from "@/lib/season/turn-of-year";
 import { buildSubscriptionCancelMetadata } from "@/lib/commerce/subscription-cancel-metadata";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { BRAND } from "@/lib/brand";
@@ -188,6 +189,12 @@ async function redeemLoyaltyRewardFromSession(session: Stripe.Checkout.Session) 
     .eq("status", "created");
 }
 
+function formatRenewalDay(day: string) {
+  return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(
+    new Date(`${day}T00:00:00.000Z`)
+  );
+}
+
 export async function createCheckoutSession(params: {
   tier: CommerceTier;
   accessPlan?: AccessPlan;
@@ -196,14 +203,25 @@ export async function createCheckoutSession(params: {
   loyaltyReward?: { rewardId: string; promotionCodeId: string } | null;
   checkoutAttemptId: string;
   funnelContext?: CheckoutFunnelContext | null;
+  /**
+   * An early yearly renewal (lib/season/turn-of-year.ts): charged today, with
+   * the new year running from the day after the current one ends.
+   */
+  renewal?: { startsOn: string; endsOn: string; plannerYear: number } | null;
 }) {
   const stripe = getStripeClient();
   const appUrl = getAppUrl();
-  const accessPlan = params.accessPlan ?? "yearly";
+  const accessPlan = params.renewal ? "yearly" : params.accessPlan ?? "yearly";
   const metadata = {
     ...buildTierMetadata(params.tier, accessPlan),
     ...buildCheckoutAnalyticsMetadata(params.checkoutAttemptId, params.funnelContext ?? null),
     ...(params.loyaltyReward ? { loyalty_reward_id: params.loyaltyReward.rewardId } : {}),
+    ...(params.renewal
+      ? {
+          renewal_starts_at: params.renewal.startsOn,
+          renewal_planner_year: String(params.renewal.plannerYear),
+        }
+      : {}),
   };
   const commonParams = {
     ...(params.loyaltyReward
@@ -213,12 +231,17 @@ export async function createCheckoutSession(params: {
     client_reference_id: params.clerkUserId,
     customer_email: params.customerEmail,
     success_url: `${appUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/pricing?canceled=1&attempt_id=${encodeURIComponent(params.checkoutAttemptId)}`,
+    cancel_url: params.renewal
+      ? `${appUrl}/look-ahead?renew=canceled`
+      : `${appUrl}/pricing?canceled=1&attempt_id=${encodeURIComponent(params.checkoutAttemptId)}`,
     line_items: [buildLineItem(params.tier, accessPlan)],
     metadata,
   };
 
   // COPY: voice-approved 2026-09-24
+  const customTextForRenewal = params.renewal
+    ? `You're renewing early, so no days are lost: your new year runs from ${formatRenewalDay(params.renewal.startsOn)} to ${formatRenewalDay(params.renewal.endsOn)}. It renews each year after that at the same price, ${formatUsd(params.tier.annualPriceCents)} a year, and you can cancel anytime.`
+    : null;
   const customTextForAnnual = `Your subscription renews each year on your purchase date at the same price, ${formatUsd(params.tier.annualPriceCents)} a year. You can cancel anytime. Full access continues through the year you've paid for. If you cancel, you keep read-only access to everything you've created, but you can't add anything new.`;
 
   return stripe.checkout.sessions.create({
@@ -235,7 +258,7 @@ export async function createCheckoutSession(params: {
       ? {
           custom_text: {
             submit: {
-              message: customTextForAnnual,
+              message: customTextForRenewal ?? customTextForAnnual,
             },
           },
         }
@@ -523,6 +546,12 @@ async function fulfillOneTimeCheckout(params: {
   };
 }
 
+function parseRenewalStartsAt(value: string | null | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value ? value : null;
+}
+
 async function fulfillSubscriptionCheckout(params: {
   session: Stripe.Checkout.Session;
   clerkUserId?: string;
@@ -576,8 +605,16 @@ async function fulfillSubscriptionCheckout(params: {
       ? toISODate(purchasedAt)
       : toISODate(getUnixDate(subscriptionItem?.current_period_start ?? subscription.created));
 
+  // An early renewal's year starts the day after the old one ends (set at checkout).
+  const renewalStartsAt = parseRenewalStartsAt(session.metadata?.renewal_starts_at);
+  const renewalPlannerYear = Number(session.metadata?.renewal_planner_year);
+  const entitlementPlannerYear =
+    renewalStartsAt && Number.isInteger(renewalPlannerYear) ? renewalPlannerYear : tier.plannerYear;
+
   let endsAt: string;
-  if (accessPlan === "yearly") {
+  if (accessPlan === "yearly" && renewalStartsAt) {
+    endsAt = addDaysISO(renewalStartsAt, 364);
+  } else if (accessPlan === "yearly") {
     const window365 = buildAnnualEntitlementRecord({
       user_id: "",
       source: "stripe",
@@ -635,6 +672,7 @@ async function fulfillSubscriptionCheckout(params: {
       subscription_status: subscription.status,
       customer_email: session.customer_details?.email ?? session.customer_email ?? null,
       access_plan: accessPlan,
+      ...(renewalStartsAt ? { renewal_starts_at: renewalStartsAt } : {}),
     },
   };
 
@@ -656,9 +694,9 @@ async function fulfillSubscriptionCheckout(params: {
         source: "stripe",
         source_order_id: order.id,
         product_tier: tier.key,
-        planner_year: tier.plannerYear,
+        planner_year: entitlementPlannerYear,
         oracle_enabled: tier.oracleEnabled,
-        starts_at: startsAt,
+        starts_at: accessPlan === "yearly" && renewalStartsAt ? renewalStartsAt : startsAt,
         ends_at: endsAt,
         access_plan: accessPlan,
         status: entitlementStatus,
@@ -892,20 +930,17 @@ export async function syncInvoiceSubscription(invoice: Stripe.Invoice) {
         if (!processedInvoices.includes(invoice.id)) {
           const subscriptionItem = getSubscriptionItem(subscription);
 
-          // Compute the new ends_at deterministically from the invoice period start + 365 days.
-          // Take the max of that and the Stripe subscription's current_period_end to handle leap years.
-          // This ensures a paying subscriber never briefly loses access the day before renewal.
+          // The next year runs 365 days from the invoice period start, or from the end of the
+          // year already paid for when the order was an early renewal (lib/season/turn-of-year.ts).
+          // Never shorter than Stripe's period end or the current window.
           const periodStart = invoice.lines.data[0]?.period?.start
             ? new Date(invoice.lines.data[0].period.start * 1000)
             : new Date();
-          const target365 = new Date(periodStart);
-          target365.setUTCDate(target365.getUTCDate() + 365);
-
           const stripePeriodEnd = subscriptionItem?.current_period_end
-            ? new Date(subscriptionItem.current_period_end * 1000)
-            : target365;
-
-          const newEndsAt = target365 > stripePeriodEnd ? target365 : stripePeriodEnd;
+            ? toISODate(new Date(subscriptionItem.current_period_end * 1000))
+            : null;
+          const renewalStartsAt =
+            typeof orderMetadata.renewal_starts_at === "string" ? orderMetadata.renewal_starts_at : null;
 
           // Fetch current ends_at to take the max (never reduce access window)
           const { data: entitlement } = await supabase
@@ -916,13 +951,17 @@ export async function syncInvoiceSubscription(invoice: Stripe.Invoice) {
             .single();
 
           if (entitlement) {
-            const currentEndsAt = new Date(`${entitlement.ends_at}T00:00:00.000Z`);
-            const finalEndsAt = newEndsAt > currentEndsAt ? newEndsAt : currentEndsAt;
+            const finalEndsAt = renewedEndsAt({
+              currentEndsAt: toISODate(entitlement.ends_at),
+              invoicePeriodStart: toISODate(periodStart),
+              stripePeriodEnd,
+              renewalStartsAt,
+            });
 
             await supabase
               .from("product_entitlements")
               .update({
-                ends_at: toISODate(finalEndsAt),
+                ends_at: finalEndsAt,
               })
               .eq("source", "stripe")
               .eq("source_order_id", order.id);

@@ -33,6 +33,8 @@ import {
 import type { NatalChart, YearEphemeris, BlueprintOutput, HouseSystem } from '@/types/blueprint'
 import { FALLBACK_TZ } from '@/lib/planner/resolve-planner-location'
 
+const GOAL_YEAR_CHOICES = ['carry', 'reshape', 'release'] as const
+
 // ─── Types ────────────────────────────────────────────────────────────────
 
 interface GenerateBlueprintOptions {
@@ -135,6 +137,21 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       .eq('user_id', userId)
       .order('sort_order', { ascending: true })
     log(`goals loaded (${goals?.length ?? 0})`)
+
+    // The look-ahead goal review for this year: carried, reshaped or released goals.
+    // Optional: a member who never reviewed their goals is written from their areas alone.
+    const { data: goalChoiceRows, error: goalChoiceError } = await admin
+      .from('goal_year_choices')
+      .select('choice, reshaped_title, area_goals(title)')
+      .eq('user_id', userId)
+      .eq('plan_year', planYear)
+    if (goalChoiceError) log(`goal choices unavailable (${goalChoiceError.code ?? 'error'})`)
+    const goalChoices = (goalChoiceRows ?? []).flatMap((row) => {
+      const goal = Array.isArray(row.area_goals) ? row.area_goals[0] : row.area_goals
+      const title = (goal as { title?: string } | null)?.title
+      if (!title || !GOAL_YEAR_CHOICES.includes(row.choice)) return []
+      return [{ title, choice: row.choice as (typeof GOAL_YEAR_CHOICES)[number], reshapedTitle: (row.reshaped_title as string | null) ?? null }]
+    })
 
     const { data: journalPatterns } = await admin
       .from('user_pattern_insights')
@@ -258,6 +275,7 @@ export async function runBlueprintGeneration(opts: GenerateBlueprintOptions): Pr
       studyFocus: profile.study_focus ?? null,
       planYear,
       startDate,
+      goalChoices,
     })
 
     // ── 7. Call Claude ────────────────────────────────────────────────

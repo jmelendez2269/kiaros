@@ -30,12 +30,22 @@ async function loadGoogleFont(
   text: string,
 ): Promise<ArrayBuffer> {
   const url = `https://fonts.googleapis.com/css2?family=${family}:wght@${weight}&text=${encodeURIComponent(text)}`;
-  const css = await (await fetch(url)).text();
+  const css = await (await fetch(url, { signal: AbortSignal.timeout(8000) })).text();
   const match = css.match(/src: url\((.+)\) format\('(?:opentype|truetype)'\)/);
   if (!match?.[1]) {
     throw new Error(`Failed to load font data for ${family}`);
   }
-  return await (await fetch(match[1])).arrayBuffer();
+  return await (await fetch(match[1], { signal: AbortSignal.timeout(8000) })).arrayBuffer();
+}
+
+/** A font that could not be fetched falls back to the image renderer's default, so a slow font server never fails a build. */
+async function loadGoogleFontOrNull(family: string, weight: number, text: string): Promise<ArrayBuffer | null> {
+  try {
+    return await loadGoogleFont(family, weight, text);
+  } catch (err) {
+    console.warn(`[og-image] ${family} not loaded, using the default font:`, err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export interface MarketingOgImageContent {
@@ -51,8 +61,8 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
   const fontText = `${BRAND.product} ${content.title} ${content.subtitle} ${content.kicker ?? ""}`;
   const markSrc = kairosMarkDataUrl();
   const [displayFont, bodyFont] = await Promise.all([
-    loadGoogleFont("Cinzel", 600, fontText),
-    loadGoogleFont("DM+Sans", 400, fontText),
+    loadGoogleFontOrNull("Cinzel", 600, fontText),
+    loadGoogleFontOrNull("DM+Sans", 400, fontText),
   ]);
 
   const typography = pickMarketingOgTypography({
@@ -176,8 +186,8 @@ export async function renderMarketingOgImage(content: MarketingOgImageContent) {
     {
       ...MARKETING_OG_IMAGE_SIZE,
       fonts: [
-        { name: "Cinzel", data: displayFont, weight: 600, style: "normal" },
-        { name: "DM Sans", data: bodyFont, weight: 400, style: "normal" },
+        ...(displayFont ? [{ name: "Cinzel", data: displayFont, weight: 600 as const, style: "normal" as const }] : []),
+        ...(bodyFont ? [{ name: "DM Sans", data: bodyFont, weight: 400 as const, style: "normal" as const }] : []),
       ],
     },
   );
