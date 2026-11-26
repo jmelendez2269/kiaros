@@ -6,8 +6,10 @@ import assert from 'node:assert/strict'
 
 import {
   buildGiftEntitlementWindow,
+  decideGiftRefund,
   generateGiftCode,
   giftCheckoutSchema,
+  isMissingRelationError,
   normalizeGiftCode,
 } from '../lib/commerce/gift.ts'
 import { resolveAccessCapabilities } from '../lib/commerce/capabilities.ts'
@@ -118,6 +120,53 @@ check('the site sells next year from October, and the hook follows the calendar'
 
   // Nov 30 late evening in New York is still November.
   assert.equal(getSalesYearCopy(new Date('2026-12-01T03:00:00Z')).detail !== null, true)
+})
+
+// ── Refunds ───────────────────────────────────────────────────────────────
+check('a full refund on a paid gift closes it without touching entitlements', () => {
+  assert.deepEqual(
+    decideGiftRefund({ giftStatus: 'paid', chargeRefunded: true, amountCents: 9900, amountRefundedCents: 9900 }),
+    { action: 'refund', revokeEntitlement: false },
+  )
+  // amount_refunded reaching the full amount counts even if `refunded` lags.
+  assert.deepEqual(
+    decideGiftRefund({ giftStatus: 'paid', chargeRefunded: false, amountCents: 9900, amountRefundedCents: 9900 }),
+    { action: 'refund', revokeEntitlement: false },
+  )
+})
+
+check('a full refund on a redeemed gift closes it and revokes its own entitlement', () => {
+  assert.deepEqual(
+    decideGiftRefund({ giftStatus: 'redeemed', chargeRefunded: true, amountCents: 9900, amountRefundedCents: 9900 }),
+    { action: 'refund', revokeEntitlement: true },
+  )
+})
+
+check('a partial refund changes nothing', () => {
+  assert.deepEqual(
+    decideGiftRefund({ giftStatus: 'paid', chargeRefunded: false, amountCents: 9900, amountRefundedCents: 2000 }),
+    { action: 'ignore', reason: 'partial_refund' },
+  )
+  assert.deepEqual(
+    decideGiftRefund({ giftStatus: 'redeemed', chargeRefunded: false, amountCents: 9900, amountRefundedCents: 2000 }),
+    { action: 'ignore', reason: 'partial_refund' },
+  )
+})
+
+check('a repeat refund event is a no-op', () => {
+  for (const giftStatus of ['refunded', 'voided']) {
+    assert.deepEqual(
+      decideGiftRefund({ giftStatus, chargeRefunded: true, amountCents: 9900, amountRefundedCents: 9900 }),
+      { action: 'ignore', reason: 'already_closed' },
+    )
+  }
+})
+
+check('a missing gift table is told apart from a real write error', () => {
+  assert.equal(isMissingRelationError({ code: '42P01', message: 'relation "public.gift_purchases" does not exist' }), true)
+  assert.equal(isMissingRelationError({ code: 'PGRST205', message: "Could not find the table 'public.gift_purchases' in the schema cache" }), true)
+  assert.equal(isMissingRelationError({ code: '23514', message: 'new row violates check constraint' }), false)
+  assert.equal(isMissingRelationError(null), false)
 })
 
 // ── Email ─────────────────────────────────────────────────────────────────

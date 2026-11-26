@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { recordVerifiedCheckoutCompleted } from "@/lib/analytics/checkout-events";
-import { fulfillGiftCheckout, isGiftCheckoutSession } from "@/lib/commerce/gift-server";
+import {
+  fulfillGiftCheckout,
+  handleGiftChargeRefunded,
+  isGiftCheckoutSession,
+} from "@/lib/commerce/gift-server";
 import {
   fulfillCheckoutSession,
   getStripeClient,
@@ -81,6 +85,13 @@ export async function POST(request: Request) {
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
         await syncSubscriptionEntitlement(subscription);
+        break;
+      }
+
+      case "charge.refunded": {
+        // Only gift purchases react to refunds; anything else is a no-op.
+        const charge = event.data.object as Stripe.Charge;
+        await handleGiftChargeRefunded(charge);
         break;
       }
 

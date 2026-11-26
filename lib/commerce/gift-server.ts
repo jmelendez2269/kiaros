@@ -9,8 +9,10 @@ import { BRAND } from "@/lib/brand";
 import { formatUsd, getCommerceTier, parseCommerceTierKey } from "@/lib/commerce/config";
 import {
   buildGiftEntitlementWindow,
+  decideGiftRefund,
   generateGiftCode,
   GIFT_PURCHASE_KIND,
+  isMissingRelationError,
   normalizeGiftCode,
   type GiftCheckoutInput,
   type GiftPreview,
@@ -466,4 +468,95 @@ export async function redeemGift(params: { clerkUserId: string; rawCode: string 
       profileSetupComplete: !!profile.profile_setup_completed_at,
     },
   };
+}
+
+// ─── Refunds ───────────────────────────────────────────────────────────────
+
+export type GiftRefundResult =
+  | { handled: false; reason: "no_payment_intent" | "no_gift" | "table_missing" }
+  | { handled: true; outcome: "refunded"; entitlementRevoked: boolean }
+  | { handled: true; outcome: "ignored"; reason: "partial_refund" | "already_closed" | "unknown_status" | "lost_race" };
+
+/**
+ * Stripe `charge.refunded`: a fully refunded gift can no longer be redeemed,
+ * and if it was already redeemed, only that gift's own entitlement is
+ * revoked. Non-gift charges and a missing gift_purchases table (migration
+ * 0059 not applied yet) return `handled: false` so the webhook answers 200.
+ * Real write errors on an existing gift throw so Stripe retries.
+ */
+export async function handleGiftChargeRefunded(charge: Stripe.Charge): Promise<GiftRefundResult> {
+  const paymentIntentId = getStripeId(charge.payment_intent as string | { id: string } | null);
+  if (!paymentIntentId) return { handled: false, reason: "no_payment_intent" };
+
+  const supabase = createAdminSupabase();
+  const { data, error } = await supabase
+    .from("gift_purchases")
+    .select("id, status, metadata")
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingRelationError(error)) {
+      console.warn("[gift] charge.refunded: gift_purchases is not available yet; skipping.");
+      return { handled: false, reason: "table_missing" };
+    }
+    throw new Error(`Gift refund lookup failed: ${error.message}`);
+  }
+  if (!data) return { handled: false, reason: "no_gift" };
+
+  const gift = data as { id: string; status: string; metadata: Record<string, unknown> | null };
+  const decision = decideGiftRefund({
+    giftStatus: gift.status,
+    chargeRefunded: charge.refunded === true,
+    amountCents: charge.amount,
+    amountRefundedCents: charge.amount_refunded,
+  });
+
+  if (decision.action === "ignore") {
+    if (decision.reason === "partial_refund") {
+      console.info("[gift] charge.refunded: partial refund, gift left as is.", {
+        giftId: gift.id,
+        amountCents: charge.amount,
+        amountRefundedCents: charge.amount_refunded,
+      });
+    }
+    return { handled: true, outcome: "ignored", reason: decision.reason };
+  }
+
+  const now = new Date().toISOString();
+  const { data: updated, error: updateError } = await supabase
+    .from("gift_purchases")
+    .update({
+      status: "refunded",
+      updated_at: now,
+      metadata: { ...(gift.metadata ?? {}), refunded_at: now, stripe_charge_id: charge.id },
+    })
+    .eq("id", gift.id)
+    .in("status", ["paid", "redeemed"])
+    .select("id, status")
+    .maybeSingle();
+  if (updateError) {
+    throw new Error(`Gift refund update failed: ${updateError.message}`);
+  }
+  if (!updated) {
+    // Another delivery of the same event got there first.
+    return { handled: true, outcome: "ignored", reason: "lost_race" };
+  }
+
+  if (decision.revokeEntitlement) {
+    const { error: revokeError } = await supabase
+      .from("product_entitlements")
+      .update({ status: "revoked" })
+      .eq("source", "gift")
+      .eq("source_order_id", gift.id);
+    if (revokeError) {
+      throw new Error(`Gift entitlement revoke failed: ${revokeError.message}`);
+    }
+  }
+
+  console.info("[gift] charge.refunded: gift refunded.", {
+    giftId: gift.id,
+    entitlementRevoked: decision.revokeEntitlement,
+  });
+  return { handled: true, outcome: "refunded", entitlementRevoked: decision.revokeEntitlement };
 }
