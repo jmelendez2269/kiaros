@@ -8,6 +8,9 @@ import type { ArcPeriod } from '@/components/year/PushRestRibbon'
 import { sanitizePushRestArc } from '@/lib/year/push-rest-arc'
 import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { isMonthlyBlueprintWindowEnabled } from '@/lib/feature-flags'
+import { getOneTimeAnnualRollsForward } from '@/lib/commerce/config'
+import { lookAheadDateISO } from '@/lib/look-ahead/window'
+import { earlyBlueprintYear, seasonEntitlementFromRow } from '@/lib/season/turn-of-year'
 import {
   getBlueprintYearCapability,
   type BlueprintYearCapability,
@@ -177,6 +180,21 @@ async function loadBlueprintForYearUncached(
       subscriptionMap
     ).capabilities
     access = getBlueprintYearCapability(capabilities, row.plan_year)
+    // In November a yearly member may write next year early (lib/season/turn-of-year.ts)
+    // and read what they wrote, before that year becomes a full access year on Dec 1.
+    if (access.access === 'none') {
+      const early = earlyBlueprintYear({
+        today: lookAheadDateISO(),
+        oneTimeAnnualRollsForward: getOneTimeAnnualRollsForward(),
+        entitlements: ((entitlementResult.data ?? []) as ProductEntitlementRecord[]).map((e) =>
+          seasonEntitlementFromRow(e, {
+            isSubscription: !!(e.source_order_id && subscriptionMap.get(e.source_order_id)),
+            setToCancel: false,
+          }),
+        ),
+      })
+      if (early === row.plan_year) access = { access: 'full', windowEnd: null, windowStart: null }
+    }
   }
 
   const rawBlueprint: BlueprintOutput = {

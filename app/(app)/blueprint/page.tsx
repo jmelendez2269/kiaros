@@ -13,6 +13,9 @@ import {
 import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import type { Tradition } from '@/types/blueprint'
 import { isCalendarDayEnabled } from '@/lib/feature-flags'
+import { lookAheadWindowAt } from '@/lib/look-ahead/window'
+import { TurnOfYearCards } from '@/components/season/TurnOfYearCards'
+import { loadSeason } from '@/lib/season/load'
 
 const TRADITION_LABELS: Record<Tradition, string> = {
   evolutionary: 'Evolutionary Astrology',
@@ -29,7 +32,9 @@ export default async function BlueprintPage({
 }) {
   const supabase = await createServerSupabase()
   const currentYear = getPlannerYearWithOverride()
-  const upcomingYear = getUpcomingPlanYear()
+  // December: the year that has rolled but not begun. November: next year,
+  // which a yearly member may already have written early (lib/season/turn-of-year.ts).
+  const upcomingYear = getUpcomingPlanYear() ?? lookAheadWindowAt().year
   const yearParam = (await searchParams)?.year
   const wantsUpcoming = upcomingYear !== null && String(Array.isArray(yearParam) ? yearParam[0] : yearParam) === String(upcomingYear)
 
@@ -57,6 +62,13 @@ export default async function BlueprintPage({
   ])
 
   const loaded = wantsUpcoming && upcomingLoaded ? upcomingLoaded : currentLoaded
+
+  // In December, renewal, the monthly to yearly switch and rewriting the new
+  // year live here (in November they are on /look-ahead). Never blocks the page.
+  const season =
+    appProfileUserId && getUpcomingPlanYear() !== null
+      ? await loadSeason(appProfileUserId).catch(() => null)
+      : null
   const viewingUpcoming = !!loaded && upcomingLoaded !== null && loaded.planYear === upcomingLoaded.planYear
   const otherYearLink =
     upcomingLoaded && currentLoaded && upcomingLoaded.planYear !== currentLoaded.planYear
@@ -164,6 +176,20 @@ export default async function BlueprintPage({
           </div>
         </div>
       )}
+      {season && season.year !== null ? (
+        <div className="mx-auto mb-6 max-w-3xl">
+          <TurnOfYearCards
+            year={season.year}
+            today={season.today}
+            ahead={false}
+            canWrite={season.canWrite && season.blueprint?.status !== undefined}
+            blueprint={season.blueprint ? { status: season.blueprint.status } : null}
+            renewal={season.renewal}
+            switchOffer={season.switchOffer}
+            mockToday={null}
+          />
+        </div>
+      ) : null}
       <BlueprintView
         blueprint={loaded.blueprint}
         planYear={loaded.planYear}

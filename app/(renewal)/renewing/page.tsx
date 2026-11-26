@@ -29,6 +29,18 @@ const SLIDES = [
   },
 ];
 
+/**
+ * ?year=2027&ahead=1 writes next year's Blueprint ahead of December 1 (or again
+ * before the year begins) and returns to it; without it, this is the Dec 1 roll.
+ */
+function readAheadParams(): { year: number; mockToday: string | null } | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const year = Number(params.get("year"));
+  if (params.get("ahead") !== "1" || !Number.isInteger(year)) return null;
+  return { year, mockToday: params.get("mockToday") };
+}
+
 export default function RenewingPage() {
   const router = useRouter();
   const hasFired = useRef(false);
@@ -46,8 +58,16 @@ export default function RenewingPage() {
   }, []);
 
   async function startRollover() {
+    const ahead = readAheadParams();
+    if (ahead) setPlannerYear(ahead.year);
     try {
-      const res = await fetch("/api/blueprint/rollover", { method: "POST" });
+      const res = ahead
+        ? await fetch("/api/blueprint/write-ahead", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ year: ahead.year, mockToday: ahead.mockToday }),
+          })
+        : await fetch("/api/blueprint/rollover", { method: "POST" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setErrorDetail((data as { error?: string }).error ?? "Rollover request failed. Please try again.");
@@ -75,7 +95,7 @@ export default function RenewingPage() {
         return;
       }
       try {
-        const res = await fetch("/api/blueprint/status");
+        const res = await fetch(ahead ? `/api/blueprint/status?year=${ahead.year}` : "/api/blueprint/status");
         if (!res.ok) {
           clearInterval(poll);
           setErrorDetail(`Status check failed (HTTP ${res.status}). Please try again.`);
@@ -97,7 +117,7 @@ export default function RenewingPage() {
             setFailed(true);
             return;
           }
-          router.replace("/today");
+          router.replace(ahead ? `/blueprint?year=${ahead.year}` : "/today");
         }
       } catch {
         clearInterval(poll);

@@ -11,6 +11,8 @@ import { lookAheadDateISO, lookAheadWindowAt } from '@/lib/look-ahead/window'
 import { shortDate } from '@/lib/sky-cycles/detect'
 import { isMockTodayDateAllowed, MOCK_TODAY_QUERY_PARAM, parseMockTodayDateParam } from '@/lib/today/mock-today-date'
 import { BRAND } from '@/lib/brand'
+import { TurnOfYearCards } from '@/components/season/TurnOfYearCards'
+import { loadSeason, type Season } from '@/lib/season/load'
 
 export const metadata = {
   title: `Looking ahead — ${BRAND.product}`,
@@ -80,6 +82,9 @@ export default async function LookAheadPage({
   } catch {
     return <DataUnavailable />
   }
+  // The cards are an addition to the page: if membership can't be read, the
+  // sky and the goal review still show.
+  const season: Season | null = await loadSeason(profileId, { today: mockToday }).catch(() => null)
 
   const current = window.currentPlannerYear
   const turns = [
@@ -116,7 +121,19 @@ export default async function LookAheadPage({
         <div className="min-w-0" style={{ flex: '1.2 1 440px' }}>
           <GoalReview review={review} mockToday={mockToday} />
         </div>
-        <div className="min-w-0" style={{ flex: '1 1 340px' }}>
+        <div className="grid min-w-0 gap-5" style={{ flex: '1 1 340px' }}>
+          {season && season.year === year ? (
+            <TurnOfYearCards
+              year={year}
+              today={season.today}
+              ahead
+              canWrite={season.canWrite}
+              blueprint={season.blueprint ? { status: season.blueprint.status } : null}
+              renewal={season.renewal}
+              switchOffer={season.switchOffer}
+              mockToday={mockToday}
+            />
+          ) : null}
           <Frame>
             <div className="flex flex-col gap-1">
               <Kicker color={K.violetDim}>The turn of the year</Kicker>
