@@ -122,3 +122,45 @@ export interface GiftPreview {
   recipientName: string | null;
   giftMessage: string | null;
 }
+
+// ─── Refunds ───────────────────────────────────────────────────────────────
+
+export type GiftRefundDecision =
+  | { action: "ignore"; reason: "partial_refund" | "already_closed" | "unknown_status" }
+  | { action: "refund"; revokeEntitlement: boolean };
+
+/**
+ * What a Stripe `charge.refunded` event means for one gift. Only a full
+ * refund closes the gift; a partial refund leaves it as it is. A gift that
+ * is already refunded or voided is left alone, so repeat events are no-ops.
+ * If the gift was already redeemed, that gift's own entitlement is revoked.
+ */
+export function decideGiftRefund(params: {
+  giftStatus: string;
+  chargeRefunded: boolean;
+  amountCents: number;
+  amountRefundedCents: number;
+}): GiftRefundDecision {
+  if (params.giftStatus === "refunded" || params.giftStatus === "voided") {
+    return { action: "ignore", reason: "already_closed" };
+  }
+  if (params.giftStatus !== "paid" && params.giftStatus !== "redeemed") {
+    return { action: "ignore", reason: "unknown_status" };
+  }
+  const fullRefund = params.chargeRefunded || params.amountRefundedCents >= params.amountCents;
+  if (!fullRefund) {
+    return { action: "ignore", reason: "partial_refund" };
+  }
+  return { action: "refund", revokeEntitlement: params.giftStatus === "redeemed" };
+}
+
+/**
+ * True when a Supabase/PostgREST error means the table itself is missing
+ * (for example before migration 0059 is applied), not a failed write.
+ */
+export function isMissingRelationError(error: { code?: string | null; message?: string | null } | null | undefined) {
+  if (!error) return false;
+  if (error.code === "42P01" || error.code === "PGRST205") return true;
+  const message = error.message ?? "";
+  return /relation .* does not exist/i.test(message) || /could not find the table/i.test(message);
+}
