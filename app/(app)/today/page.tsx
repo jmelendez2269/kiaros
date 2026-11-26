@@ -19,7 +19,7 @@ import { TodayIntention } from '@/components/today/TodayIntention'
 import { TodayCheckIn } from '@/components/today/TodayCheckIn'
 import { PageHints } from '@/components/tour/PageHints'
 import { loadCheckIn, loadRhythmLine } from '@/lib/today/check-in'
-import { overheadMoonAndRetrogrades, writtenUnderTransits } from '@/lib/insights/home'
+import { overheadMoonAndRetrogrades, writtenUnderTransitLinks } from '@/lib/insights/home'
 import { humanizeLunarPhase } from '@/lib/journal/intelligence'
 import { EMPTY_CHECK_IN } from '@/lib/today/check-in-options'
 import { TodayCurriculum } from '@/components/today/TodayCurriculum'
@@ -223,7 +223,6 @@ export default async function TodayPage({
       />
 
       {/* Look backs show only for a few days after a period closes, so they lead while they are here. */}
-      <LastWeekTodayCard todayDate={todayDate} profileId={supabaseUserId} />
       <PeriodReviewTodayCards todayDate={todayDate} />
       {periodReviewPublicFlagEnabled() ? (
         <PeriodReviewAutoOpenManager todayDate={todayDate} allowTestParams={mockAllowed} />
@@ -238,15 +237,14 @@ export default async function TodayPage({
       <SkyCyclesTodayCard profileId={supabaseUserId} todayDate={todayDate} />
       <SkyTurnMoment turns={skyTurns} headline={turnsHeadline(skyTurns)} today={todayDate} dateLabel={skyTurnDateLabel} onToday />
 
-      <Frame tone="umber" padding={18}>
-        <RightNowCard windows={nowEnergyWindows} />
-      </Frame>
-
       <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         {/* Left column — stacks naturally, no row-height coupling to SkyNow */}
         <div className="flex flex-col gap-4 min-w-0">
-          <TodayIntention result={intention} />
           <TodayCheckIn initial={checkIn} rhythm={rhythmLine} />
+          <TodayIntention result={intention} />
+          <Frame tone="umber" padding={18}>
+            <RightNowCard windows={nowEnergyWindows} />
+          </Frame>
           <Frame tone="umber" padding={20}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Kicker color={K.copper}>Today&rsquo;s plan</Kicker>
@@ -270,9 +268,6 @@ export default async function TodayPage({
             />
           </Frame>
           <LineForToday streak={journalStreak} />
-          <Frame tone="umber" padding={20}>
-            <WeekRibbon week={context.week} />
-          </Frame>
         </div>
 
         {/* Right column */}
@@ -297,7 +292,11 @@ export default async function TodayPage({
               </p>
             </Frame>
           )}
-          <ActiveTransits data={activeTransits} writtenUnder={writtenUnderTransits(patternRows)} />
+          <ActiveTransits data={activeTransits} writtenUnder={writtenUnderTransitLinks(patternRows)} />
+          <Frame tone="umber" padding={20}>
+            <WeekRibbon week={context.week} />
+          </Frame>
+          <LastWeekTodayCard todayDate={todayDate} profileId={supabaseUserId} />
         </div>
       </div>
 
