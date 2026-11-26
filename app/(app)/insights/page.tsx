@@ -6,6 +6,7 @@ import { K, Kicker } from '@/components/almanac'
 import { AddToSkyPanel } from '@/components/insights/AddToSkyPanel'
 import { NewMemberSky } from '@/components/insights/NewMemberSky'
 import { PatternConstellations } from '@/components/insights/PatternSky'
+import { SeasonBand } from '@/components/look-ahead/SeasonBand'
 import { SkyTurnBand } from '@/components/sky-cycles/SkyTurnBand'
 import { SkyTurnMoment } from '@/components/sky-cycles/SkyTurnMoment'
 import { TodayIntention } from '@/components/today/TodayIntention'
@@ -18,6 +19,7 @@ import { isSkyBeginning } from '@/lib/insights/new-member-sky'
 import { periodReviewPublicFlagEnabled } from '@/lib/period-review/flag'
 import { humanizeLunarPhase } from '@/lib/journal/intelligence'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
+import { loadLookAheadBand } from '@/lib/look-ahead/load'
 import { loadSkyTurns } from '@/lib/sky-cycles/load'
 import { turnsHeadline } from '@/lib/sky-cycles/turns'
 import { createServerSupabase } from '@/lib/supabase/server'
@@ -102,13 +104,14 @@ export default async function InsightsHomePage({
   const reviewsOn = isPeriodReviewEnabled() && periodReviewPublicFlagEnabled()
   const hasStelloquy = (await requireOracleAccess(userId)) === null
   // Each of the capture parts is optional: the page reads the same without one.
-  const [home, checkIn, rhythmLine, journalStreak, intention, turns] = await Promise.all([
+  const [home, checkIn, rhythmLine, journalStreak, intention, turns, lookAhead] = await Promise.all([
     loadInsightsHome(profileId, today, { monthLookBacks: reviewsOn, mindMap: hasStelloquy, patternDates: hasStelloquy }),
     loadCheckIn(today).catch(() => EMPTY_CHECK_IN),
     loadRhythmLine(moonPhase).catch(() => null),
     getJournalStreak(today, profileId).catch(() => 0),
     getTodayIntention(today, profileId).catch(() => ({ status: 'no-blueprint' as const })),
     loadSkyTurns(profileId, today, timeZone).catch(() => []),
+    loadLookAheadBand(profileId, mockToday).catch(() => null),
   ])
   const turnsLine = turnsHeadline(turns)
   const dateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${today}T12:00:00Z`))
@@ -131,6 +134,8 @@ export default async function InsightsHomePage({
       </header>
 
       <PageHints page="insights" />
+
+      {lookAhead ? <SeasonBand year={lookAhead.year} mockToday={mockToday} /> : null}
 
       <SkyTurnBand turns={turns} headline={turnsLine} dateLabel={dateLabel} />
       <SkyTurnMoment turns={turns} headline={turnsLine} today={today} dateLabel={dateLabel} />

@@ -38,6 +38,7 @@
     "test:checkout-attribution": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/check-checkout-attribution.mts",
     "test:marketing-og": "KIAROS_GUIDE_SOURCE=disk npx tsx scripts/check-marketing-og-metadata.mts && KIAROS_GUIDE_SOURCE=disk npx tsx scripts/check-marketing-og-typography.mts",
     "test:guides": "KIAROS_GUIDE_SOURCE=disk npx tsx scripts/check-guide-copy-verbatim.mts",
+    "test:gift": "npx tsx scripts/test-gift.mts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

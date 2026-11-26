@@ -4,7 +4,8 @@ import { EphemerisWheel } from "@/components/almanac/EphemerisWheel";
 import { Divider } from "@/components/almanac/Divider";
 import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributionCapture";
 import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
-import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
+import { getSalesYearCopy } from "@/lib/commerce/planner-year";
+import { buildLiveSkyTicker } from "@/lib/marketing/live-sky-ticker";
 import { FieldNotesFooterSignup } from "@/components/marketing/FieldNotesFooterSignup";
 import { FieldNotesHeroSignup } from "@/components/marketing/FieldNotesHeroSignup";
 import { BrandMark } from "@/components/shared/BrandMark";
@@ -44,15 +45,6 @@ const HERO_ASPECTS = [
   { a: 340, b: 128, kind: "sextile" as const },
 ];
 
-const TICKER_ITEMS = [
-  "☉ 10°42′ CANCER",
-  "☽ WANING GIBBOUS · 62%",
-  "LIVE HUMAN DESIGN · WEATHER × BODY",
-  "♄ STATIONARY RETROGRADE",
-  "NEXT FULL MOON · 6 DAYS",
-  "♃ 12° CAPRICORN · APPLYING TRINE",
-];
-
 const INSTRUMENTS: Array<{
   glyph: string;
   name: string;
@@ -75,8 +67,8 @@ const INSTRUMENTS: Array<{
   { glyph: "✳", name: "Insights Map", body: "The shape of what you keep circling back to, drawn from everything you've saved." },
 ];
 
-function TickerRow() {
-  const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
+function TickerRow({ items }: { items: string[] }) {
+  const doubled = [...items, ...items];
   return (
     <div className="relative overflow-hidden border-y border-almanac-line bg-almanac-bg2/60 py-3">
       <div className="flex w-max gap-10 whitespace-nowrap font-almanac-mono text-[0.72rem] tracking-[0.18em] text-almanac-ink-dim kairos-ticker-track">
@@ -110,6 +102,7 @@ function NavBar() {
           <Link href="#instruments" className="transition-colors hover:text-almanac-ink">Instruments</Link>
           <Link href="/stelloquy" className="transition-colors hover:text-almanac-ink">Stelloquy</Link>
           <Link href="#pricing" className="transition-colors hover:text-almanac-ink">Pricing</Link>
+          <Link href="/gift" className="transition-colors hover:text-almanac-ink">Gift</Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
@@ -131,6 +124,7 @@ function NavBar() {
 }
 
 function Hero() {
+  const salesCopy = getSalesYearCopy();
   return (
     <section className="relative overflow-hidden border-b border-almanac-line">
       <div className="pointer-events-none absolute inset-0">
@@ -182,6 +176,17 @@ function Hero() {
               Meet Stelloquy &rarr;
             </Link>
           </div>
+          {salesCopy.hook ? (
+            <p className="mt-5 max-w-md text-[0.92rem] leading-6 text-almanac-copper-hi">
+              {salesCopy.hook}{" "}
+              <Link
+                href="/gift"
+                className="whitespace-nowrap underline decoration-almanac-line-hi underline-offset-4 transition-colors hover:text-almanac-ink"
+              >
+                Or give someone their {salesCopy.sellingYear} &rarr;
+              </Link>
+            </p>
+          ) : null}
           <FieldNotesHeroSignup source="home_hero" />
         </div>
 
@@ -201,7 +206,7 @@ function Hero() {
         </div>
       </div>
 
-      <TickerRow />
+      <TickerRow items={buildLiveSkyTicker()} />
     </section>
   );
 }
@@ -535,7 +540,7 @@ function PricingTeaser({ isSignedIn }: { isSignedIn: boolean }) {
 }
 
 function MarketingFooter() {
-  const currentPlannerYear = getPlannerYearWithOverride();
+  const copyrightYear = new Date().getFullYear();
   return (
     <footer className="border-t border-almanac-line py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 md:flex-row md:items-center md:justify-between md:px-8">
@@ -547,12 +552,13 @@ function MarketingFooter() {
         </div>
         <nav className="flex flex-wrap gap-x-6 gap-y-2 font-almanac-mono text-[0.7rem] uppercase tracking-[0.14em] text-almanac-ink-dim">
           <Link href="/stelloquy" className="transition-colors hover:text-almanac-ink">Stelloquy</Link>
+          <Link href="/gift" className="transition-colors hover:text-almanac-ink">Give a gift</Link>
           <Link href="/contact" className="transition-colors hover:text-almanac-ink">Contact</Link>
           <Link href="/privacy" className="transition-colors hover:text-almanac-ink">Privacy</Link>
           <Link href="/terms" className="transition-colors hover:text-almanac-ink">Terms</Link>
         </nav>
         <p className="font-almanac-mono text-[0.68rem] uppercase tracking-[0.12em] text-[rgba(110,109,124,0.7)]">
-          &copy; {currentPlannerYear} {BRAND.product}
+          &copy; {copyrightYear} {BRAND.product}
         </p>
       </div>
     </footer>
@@ -560,7 +566,6 @@ function MarketingFooter() {
 }
 
 export function KairosHome({ isSignedIn }: Props) {
-  const currentPlannerYear = getPlannerYearWithOverride();
   return (
     <div className="bg-almanac-bg text-almanac-ink">
       <FunnelAttributionCapture />
