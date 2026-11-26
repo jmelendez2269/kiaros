@@ -1083,6 +1083,86 @@ export type Database = {
           },
         ]
       }
+      gift_purchases: {
+        Row: {
+          amount_total_cents: number
+          buyer_email_sent_at: string | null
+          code: string
+          created_at: string
+          currency: string
+          gift_message: string | null
+          id: string
+          metadata: Json
+          oracle_enabled: boolean
+          product_tier: string
+          purchased_at: string
+          purchaser_email: string
+          purchaser_name: string | null
+          recipient_name: string | null
+          redeemed_at: string | null
+          redeemed_user_id: string | null
+          status: string
+          stripe_checkout_session_id: string
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_total_cents: number
+          buyer_email_sent_at?: string | null
+          code: string
+          created_at?: string
+          currency?: string
+          gift_message?: string | null
+          id?: string
+          metadata?: Json
+          oracle_enabled?: boolean
+          product_tier: string
+          purchased_at?: string
+          purchaser_email: string
+          purchaser_name?: string | null
+          recipient_name?: string | null
+          redeemed_at?: string | null
+          redeemed_user_id?: string | null
+          status?: string
+          stripe_checkout_session_id: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_total_cents?: number
+          buyer_email_sent_at?: string | null
+          code?: string
+          created_at?: string
+          currency?: string
+          gift_message?: string | null
+          id?: string
+          metadata?: Json
+          oracle_enabled?: boolean
+          product_tier?: string
+          purchased_at?: string
+          purchaser_email?: string
+          purchaser_name?: string | null
+          recipient_name?: string | null
+          redeemed_at?: string | null
+          redeemed_user_id?: string | null
+          status?: string
+          stripe_checkout_session_id?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_purchases_redeemed_user_id_fkey"
+            columns: ["redeemed_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_categories: {
         Row: {
           color_key: string | null

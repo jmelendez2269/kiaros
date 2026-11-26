@@ -7,7 +7,7 @@ import {
 } from "@/lib/marketing/guides";
 import { marketingCanonicalUrl } from "@/lib/marketing/public-site";
 
-const STATIC_MARKETING_PATHS = ["/", "/pricing", "/field-notes", "/contact", "/privacy", "/terms"];
+const STATIC_MARKETING_PATHS = ["/", "/pricing", "/gift", "/field-notes", "/contact", "/privacy", "/terms"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

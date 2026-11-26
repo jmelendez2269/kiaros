@@ -9,7 +9,7 @@ import { SamplerCheckoutButton } from "@/components/commerce/SamplerCheckoutButt
 import { BrandMark } from "@/components/shared/BrandMark";
 import { MoonPhaseIcon } from "@/components/shared/MoonPhaseIcon";
 import { COMMERCE_TIERS, formatUsd } from "@/lib/commerce/config";
-import { getPlannerYearWithOverride } from "@/lib/commerce/planner-year";
+import { getSalesYearCopy } from "@/lib/commerce/planner-year";
 
 interface Props {
   isSignedIn: boolean;
@@ -170,7 +170,8 @@ export function PublicPricingPage({
   showCanceledMessage = false,
   canceledCheckoutAttemptId,
 }: Props) {
-  const currentPlannerYear = getPlannerYearWithOverride();
+  const salesCopy = getSalesYearCopy();
+  const sellingYear = salesCopy.sellingYear;
   const isFullPage = mode === "pricing";
 
   const navLinks: { href: string; label: string }[] = [
@@ -243,14 +244,22 @@ export function PublicPricingPage({
         <section className="shell-panel-hero px-7 py-10 md:px-10 md:py-12">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
             <div>
-              <p className="shell-kicker mb-4">{currentPlannerYear} Planner</p>
+              <p className="shell-kicker mb-4">{sellingYear} Planner</p>
               <h1 className="shell-hero-title max-w-4xl">
                 The planets move on their own schedule. Your year should too.
               </h1>
               <p className="shell-prose-lead mt-5">
-                Your personalized {currentPlannerYear} blueprint, built from your natal chart
-                and this year&apos;s real planetary transits.
+                Your personalized {sellingYear} Blueprint, built from your natal chart
+                and the real planetary transits of {sellingYear}.
               </p>
+              {salesCopy.hook ? (
+                <div className="mt-5 max-w-3xl rounded-[1.1rem] border border-leather-300/45 bg-leather-300/12 px-5 py-4">
+                  <p className="text-base font-semibold leading-7 text-bone">{salesCopy.hook}</p>
+                  {salesCopy.detail ? (
+                    <p className="mt-1 text-sm leading-6 text-leather-200">{salesCopy.detail}</p>
+                  ) : null}
+                </div>
+              ) : null}
               <p className="mt-4 max-w-3xl text-base leading-7 text-bone-muted">
                 I built Kairos because it genuinely changed how I moved through a year — and I
                 wanted to share it. I made it for myself first, and then realized it was too
@@ -273,6 +282,12 @@ export function PublicPricingPage({
                   className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
                 >
                   Get your planner
+                </Link>
+                <Link
+                  href="/gift"
+                  className="inline-flex items-center rounded-full border border-border/80 px-5 py-3 text-sm font-semibold text-bone"
+                >
+                  Give it as a gift
                 </Link>
               </div>
             </div>
@@ -1105,13 +1120,13 @@ export function PublicPricingPage({
                     <p className="text-xs leading-5 text-leather-200/80">
                       Renews yearly on your purchase date. Cancel anytime.
                     </p>
-                    {/* COPY: voice-approved 2026-09-30, swap (b) on Dec 1, pull (a) on Jan 1 */}
-                    <p className="text-xs leading-5 text-leather-200/80">
-                      Join now and you get the rest of 2026, plus all of 2027.
-                    </p>
-                    <p className="text-xs leading-5 text-leather-200/80">
-                      Your 2027 Blueprint opens Dec 1, and we'll invite you to generate it then.
-                    </p>
+                    {/* COPY: voice-approved 2026-09-30. Swaps on Dec 1 and goes quiet on Jan 1 (getSalesYearCopy). */}
+                    {salesCopy.hook ? (
+                      <p className="text-xs leading-5 text-leather-200/80">{salesCopy.hook}</p>
+                    ) : null}
+                    {salesCopy.detail ? (
+                      <p className="text-xs leading-5 text-leather-200/80">{salesCopy.detail}</p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -1148,7 +1163,7 @@ export function PublicPricingPage({
                       href="/sign-up?redirect_url=/pricing"
                       className="inline-flex items-center rounded-full bg-leather-300 px-5 py-3 text-sm font-semibold text-stone-950"
                     >
-                      Create account to choose checkout
+                      Start my {sellingYear} planner
                     </Link>
                   )}
                 </div>
@@ -1177,7 +1192,11 @@ export function PublicPricingPage({
               {
                 step: "3",
                 title: "Your blueprint generates",
-                body: "Kairos runs your natal chart and calculates your transits for the rest of 2026, then for 2027 when it opens Dec 1. Monthly shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full Blueprint.",
+                body: `Kairos runs your natal chart and calculates your transits for ${
+                  salesCopy.detail
+                    ? `the rest of ${sellingYear - 1}, then for ${sellingYear} when it opens Dec 1`
+                    : sellingYear
+                }. Monthly shows the current Blueprint week plus the next four Blueprint weeks. Annual unlocks the full Blueprint.`,
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="flex gap-4">

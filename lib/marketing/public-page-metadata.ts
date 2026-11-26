@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { BRAND } from "@/lib/brand";
+import { getSellingPlannerYear } from "@/lib/commerce/planner-year";
 import { marketingCanonicalUrl } from "@/lib/marketing/public-site";
 
 const siteName = BRAND.product;
@@ -29,8 +30,11 @@ function openGraphAndTwitter(
 }
 
 /** Root layout default title + description (homepage). */
-export const HOME_MARKETING_TITLE =
-  "Kairos — Your 2026 planner, built from your natal chart";
+/**
+ * Evaluated when the module loads (each deploy). The selling year turns to
+ * next year from October, so the title reads "2027" while people shop for it.
+ */
+export const HOME_MARKETING_TITLE = `Kairos — Your ${getSellingPlannerYear()} planner, built from your natal chart`;
 
 export const HOME_MARKETING_DESCRIPTION =
   "A personalized year-long blueprint built from your real natal chart and the actual planetary transits of your year.";
