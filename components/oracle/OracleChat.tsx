@@ -18,13 +18,15 @@ type OracleTradition = (typeof ORACLE_TRADITIONS)[number]['id']
 interface Props {
   today: string
   userTradition?: string | null
+  /** Side panel on what the conversation is holding. Shown beside the chat on wide screens. */
+  aside?: React.ReactNode
 }
 
 /**
  * /oracle page layout — header with 4-tradition tabs, one OracleConversation
  * instance per tab, lazy-mounted and kept alive so history survives tab switches.
  */
-export function OracleChat({ today, userTradition }: Props) {
+export function OracleChat({ today, userTradition, aside = null }: Props) {
   const defaultTab: OracleTradition =
     (ORACLE_TRADITIONS.find((t) => t.id === userTradition)?.id) ?? 'synthesis'
 
@@ -38,7 +40,8 @@ export function OracleChat({ today, userTradition }: Props) {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-4xl flex-col">
+    <div className={`mx-auto flex gap-5 ${aside ? 'max-w-6xl' : 'max-w-4xl'}`}>
+    <div className="flex h-[calc(100vh-8rem)] min-w-0 flex-1 flex-col">
       <div className="shell-panel mb-5 px-6 py-6">
         <p className="shell-kicker mb-3">Stelloquy · steh-LOH-kwee</p>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -91,6 +94,8 @@ export function OracleChat({ today, userTradition }: Props) {
           ) : null
         )}
       </div>
+    </div>
+    {aside ? <div className="hidden w-80 shrink-0 xl:block">{aside}</div> : null}
     </div>
   )
 }

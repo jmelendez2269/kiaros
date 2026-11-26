@@ -10,6 +10,10 @@ import { auth } from '@clerk/nextjs/server'
 import { resolvePlannerLocation } from '@/lib/planner/resolve-planner-location'
 import { resolveMoonRitualPromptForJournal } from '@/lib/journal/resolve-moon-ritual-prompt'
 import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
+import { JournalSkyStamp } from '@/components/journal/JournalSkyStamp'
+import { loadSkyStamp } from '@/lib/journal/load-sky-stamp'
+import { recentEntryRow, type RecentEntrySource } from '@/lib/journal/recent-entries'
+import { isMockTodayDateAllowed, MOCK_TODAY_QUERY_PARAM, parseMockTodayDateParam, resolveTodayDateISO } from '@/lib/today/mock-today-date'
 
 export default async function JournalPage({
   searchParams,
@@ -30,7 +34,7 @@ export default async function JournalPage({
 
   const selectedEntryId = value('entry') ?? ''
 
-  const [oracleMemoryRes, journalEntriesRes, profileRes, selectedEntryRes] = await Promise.all([
+  const [oracleMemoryRes, journalEntriesRes, profileRes, selectedEntryRes, recentRes] = await Promise.all([
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('include_in_stelloquy', true),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
     supabase
@@ -46,7 +50,14 @@ export default async function JournalPage({
           .eq('id', selectedEntryId)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from('journal_entries')
+      .select('id, title, body, entry_date, lunar_phase, lunar_sign, include_in_insights, include_in_stelloquy')
+      .order('entry_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(4),
   ])
+  const recentEntries = ((recentRes.data ?? []) as RecentEntrySource[]).map(recentEntryRow)
 
   let showMemoryPrompt = false
   let initialNewEntryConsent: JournalConsentState | undefined
@@ -84,10 +95,20 @@ export default async function JournalPage({
 
   const iaJournalShell = isIaJournalEnabled()
 
+  // The sky above the entry: the entry's own date when editing, else today (previews can set ?mockToday=).
+  const { timeZone: stampTz } = resolvePlannerLocation(profileRes.data)
+  const rawMock = params[MOCK_TODAY_QUERY_PARAM]
+  const mockToday = isMockTodayDateAllowed() ? parseMockTodayDateParam(Array.isArray(rawMock) ? rawMock[0] : rawMock) : null
+  const skyStampDate = selectedEntryRes.data?.entry_date ?? resolveTodayDateISO({ timeZone: stampTz, mockToday })
+  const skyStamp = await loadSkyStamp(supabase, profileRes.data?.id, skyStampDate).catch(() => null)
+  const skyStampLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${skyStampDate}T12:00:00Z`))
+
   return (
     <JournalComposer
       key={selectedEntryRes.data?.id ?? 'new-entry'}
       iaJournalShell={iaJournalShell}
+      skyStampDate={skyStampDate}
+      skyStampSlot={skyStamp ? <JournalSkyStamp stamp={skyStamp} dateLabel={skyStampLabel} /> : null}
       initialEntry={selectedEntryRes.data}
       entryLoadError={
         selectedEntryId && (selectedEntryRes.error || !selectedEntryRes.data)
@@ -114,6 +135,7 @@ export default async function JournalPage({
       showMemoryPrompt={showMemoryPrompt}
       initialNewEntryConsent={initialNewEntryConsent}
       hasOracleAccess={hasOracleAccess}
+      recentEntries={recentEntries}
     />
   )
 }

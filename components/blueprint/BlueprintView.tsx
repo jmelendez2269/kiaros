@@ -10,6 +10,7 @@ import type { BlueprintOutput, PeriodRange } from '@/types/blueprint'
 import type { BlueprintYearCapability } from '@/lib/commerce/capabilities'
 import { cn } from '@/lib/utils'
 import { CalendarTabs } from '@/components/calendar/CalendarTabs'
+import { BlueprintYearStrip } from './BlueprintYearStrip'
 
 interface BlueprintViewProps {
   blueprint: BlueprintOutput
@@ -125,6 +126,10 @@ export function BlueprintView({
       ) : null}
 
       <YearOverview blueprint={blueprint} />
+
+      {planYear === new Date().getFullYear() ? (
+        <BlueprintYearStrip weeks={blueprint.weeks} planYear={planYear} today={new Date().toISOString().slice(0, 10)} />
+      ) : null}
 
       {mode === 'layered' ? (
         <div className="space-y-6">

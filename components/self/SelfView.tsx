@@ -5,6 +5,8 @@ import { EphemerisWheel } from '@/components/almanac/EphemerisWheel'
 import type { GlyphKey } from '@/components/almanac/tokens'
 import { useActiveAnchor } from './use-active-anchor'
 import { ChapterQuarterFooter } from './ChapterQuarterFooter'
+import Link from 'next/link'
+import { BigThreeSeals } from './BigThreeSeals'
 import { IdentityChapter } from './chapters/IdentityChapter'
 import { HousesChapter } from './chapters/HousesChapter'
 import { AspectsChapter } from './chapters/AspectsChapter'
@@ -26,6 +28,8 @@ export interface AreaPreview {
   energyMode: AreaDefinition['energyMode']
   currentWindow: WeekBlueprint | null
   houseDetails: { house: number; sign: string | null }[]
+  /** The member's first active goal in this area, in their words. */
+  goalTitle?: string | null
 }
 
 interface Props {
@@ -164,6 +168,8 @@ export function SelfView({
           </p>
         </header>
 
+        <BigThreeSeals natalChart={natalChart} birthTimeKnown={birthTimeKnown} />
+
         <div>
           <IdentityChapter natalChart={natalChart} birthTimeKnown={birthTimeKnown} />
           <ChapterQuarterFooter quarter={currentQuarter} />
@@ -188,6 +194,9 @@ export function SelfView({
           <AreasChapter previews={areaPreviews} />
           <ChapterQuarterFooter quarter={currentQuarter} />
         </div>
+        <Link href="/insights" className="inline-block text-sm text-leather-200 underline underline-offset-2">
+          Back to Insights →
+        </Link>
       </div>
     </div>
   )

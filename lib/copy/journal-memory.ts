@@ -85,7 +85,7 @@ export const journalMemoryCopy = {
     },
     moreOptions: 'More options',
     kairos: {
-      label: 'Let Kairos draw on this entry',
+      label: 'Include in Insights, so patterns and look backs can draw on it',
       helper(hasOracleAccess: boolean) {
         const v = variant(hasOracleAccess)
         if (v === 'planner') {
@@ -95,12 +95,12 @@ export const journalMemoryCopy = {
       },
     },
     stelloquy: {
-      label: 'Let Stelloquy recall it',
+      label: 'Let Stelloquy remember it',
       helper: 'Stelloquy can bring up relevant parts of this entry in future conversations.',
       patternSummaryNote:
         "Stelloquy may still see this entry's title and date in pattern summaries.",
     },
-    fieldsetLegend: 'How this entry may be used',
+    fieldsetLegend: 'Who may read this',
     fieldsetIntro:
       'Saving keeps the entry in your private journal. Each permission below is separate and can be changed later.',
   },
