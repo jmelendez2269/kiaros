@@ -12,6 +12,7 @@ import { resolveMoonRitualPromptForJournal } from '@/lib/journal/resolve-moon-ri
 import { getPlannerYearWithOverride } from '@/lib/commerce/planner-year'
 import { JournalSkyStamp } from '@/components/journal/JournalSkyStamp'
 import { loadSkyStamp } from '@/lib/journal/load-sky-stamp'
+import { recentEntryRow, type RecentEntrySource } from '@/lib/journal/recent-entries'
 import { isMockTodayDateAllowed, MOCK_TODAY_QUERY_PARAM, parseMockTodayDateParam, resolveTodayDateISO } from '@/lib/today/mock-today-date'
 
 export default async function JournalPage({
@@ -33,7 +34,7 @@ export default async function JournalPage({
 
   const selectedEntryId = value('entry') ?? ''
 
-  const [oracleMemoryRes, journalEntriesRes, profileRes, selectedEntryRes] = await Promise.all([
+  const [oracleMemoryRes, journalEntriesRes, profileRes, selectedEntryRes, recentRes] = await Promise.all([
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('include_in_stelloquy', true),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }),
     supabase
@@ -49,7 +50,14 @@ export default async function JournalPage({
           .eq('id', selectedEntryId)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from('journal_entries')
+      .select('id, title, body, entry_date, lunar_phase, lunar_sign, include_in_insights, include_in_stelloquy')
+      .order('entry_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(4),
   ])
+  const recentEntries = ((recentRes.data ?? []) as RecentEntrySource[]).map(recentEntryRow)
 
   let showMemoryPrompt = false
   let initialNewEntryConsent: JournalConsentState | undefined
@@ -127,6 +135,7 @@ export default async function JournalPage({
       showMemoryPrompt={showMemoryPrompt}
       initialNewEntryConsent={initialNewEntryConsent}
       hasOracleAccess={hasOracleAccess}
+      recentEntries={recentEntries}
     />
   )
 }

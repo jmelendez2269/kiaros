@@ -9,6 +9,7 @@ import { PATTERN_DISCOVERY_CHECK_EVENT } from '@/lib/journal/pattern-discoveries
 import { JournalConsentControls } from '@/components/journal/JournalConsentControls'
 import { JournalMemoryModePrompt } from '@/components/journal/JournalMemoryModePrompt'
 import { journalConsentSaveMessage, type JournalConsentState } from '@/lib/journal/consent'
+import type { RecentEntryRow } from '@/lib/journal/recent-entries'
 import { iaJournalFlagEnabled, patternsPageHref } from '@/lib/journal/ia-journal-routes'
 
 type RecentJournalEntry = {
@@ -63,6 +64,8 @@ interface JournalComposerProps {
   /** Server-rendered sky stamp for skyStampDate. */
   skyStampSlot?: React.ReactNode
   skyStampDate?: string
+  /** The newest few entries, already shaped for the list under the editor. */
+  recentEntries?: RecentEntryRow[]
 }
 
 const PRIVATE_CONSENT: JournalConsentState = {
@@ -104,6 +107,7 @@ export function JournalComposer({
   iaJournalShell = false,
   skyStampSlot = null,
   skyStampDate,
+  recentEntries = [],
 }: JournalComposerProps) {
   const iaJournal = iaJournalShell || iaJournalFlagEnabled(process.env.NEXT_PUBLIC_IA_JOURNAL)
   const isEditing = Boolean(initialEntry)
@@ -300,10 +304,9 @@ export function JournalComposer({
       {iaJournalShell ? (
         <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
-            <h2 className="shell-hero-title">Capture the prompt while the window is open</h2>
+            <h2 className="shell-hero-title">In your own words</h2>
             <p className="mt-4 shell-prose">
-              Save a reflection from a timing window, ritual, or live question. This is also where you decide what
-              Stelloquy should carry forward as memory.
+              Each entry is stamped with the sky above it. That stamp is what lets a pattern form.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -322,10 +325,9 @@ export function JournalComposer({
         <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
             <p className="channel-mine channel-kicker mb-2.5">Journal</p>
-            <h1 className="shell-hero-title">Capture the prompt while the window is open</h1>
+            <h1 className="shell-hero-title">In your own words</h1>
             <p className="mt-4 shell-prose">
-              Save a reflection from a timing window, ritual, or live question. This is also where you decide what
-              Stelloquy should carry forward as memory.
+              Each entry is stamped with the sky above it. That stamp is what lets a pattern form.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -521,7 +523,7 @@ export function JournalComposer({
               title={lastSavedEntry ? undefined : 'Save an entry first'}
               className="text-sm text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
             >
-              Ask Stelloquy after saving
+              Continue with Stelloquy →
             </button>
           </div>
         </form>
@@ -530,6 +532,37 @@ export function JournalComposer({
       <Link href="/insights" className="inline-block text-sm text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone">
         Back to Insights →
       </Link>
+
+      {recentEntries.length > 0 ? (
+        <section className="space-y-3" aria-labelledby="journal-recent-heading">
+          <div className="flex items-baseline justify-between gap-3 px-1">
+            <p id="journal-recent-heading" className="shell-eyebrow">Recent entries</p>
+            {iaJournal ? (
+              <Link href="/journal/entries" className="text-xs text-bone-muted underline decoration-border underline-offset-4 transition-colors hover:text-bone">
+                All {entryCount} →
+              </Link>
+            ) : null}
+          </div>
+          <ul className="space-y-2">
+            {recentEntries.map((row) => (
+              <li key={row.id}>
+                <Link
+                  href={`/journal?entry=${encodeURIComponent(row.id)}`}
+                  className="channel-mine channel-card block px-5 py-4 transition-colors hover:text-bone"
+                >
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-bone-muted/80">
+                    {row.dateLabel}
+                    {row.sky ? ` · ${row.sky}` : ''}
+                  </p>
+                  <p className="mt-1.5 text-sm font-semibold text-bone">{row.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-bone-muted">{row.excerpt}</p>
+                  <p className="mt-2 text-xs text-bone-muted/80">{row.consent}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="space-y-2">
         <p className="shell-eyebrow px-1">Prompts to start from</p>
