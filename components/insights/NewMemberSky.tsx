@@ -27,7 +27,7 @@ async function countEntries(): Promise<number> {
 function sentence(have: number, of: number, hasEntries: boolean): string {
   if (!hasEntries) return 'Your first star arrives with your first line or entry.'
   const left = of - have
-  return `${left === 1 ? 'One more' : `${left} more`} under this sky ${left === 1 ? 'makes' : 'make'} a pattern.`
+  return `${left === 1 ? 'One more' : `${left} more`} under this sky, and a pattern can start to show.`
 }
 
 /**
@@ -92,7 +92,7 @@ export async function NewMemberSky({ patterns, hasStelloquy }: { patterns: HomeS
                     <span key={i} aria-hidden style={{ width: 10, height: 10, boxSizing: 'border-box', borderRadius: 999, background: i < progress.have ? K.ink : 'transparent', border: i < progress.have ? 'none' : `1px solid ${K.inkDim}` }} />
                   ))}
                 </span>
-                <span style={{ fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim }}>{progress.have} of {progress.of}</span>
+                <span style={{ fontFamily: K.fMono, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: K.inkDim }}>{progress.have} of {progress.of} entries</span>
               </div>
             ) : null}
             {'href' in item ? (

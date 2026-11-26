@@ -13,7 +13,7 @@ test('closed quarters open, the current one counts its week, later ones wait', (
     q(1, '2027-01-01', '2027-03-31', 'future'),
   ], '2026-11-19')
   assert.deepEqual(cards.map((c) => c.openable), [true, true, false, false])
-  assert.equal(cards[0].range, 'Q1 · Jan — Mar')
+  assert.equal(cards[0].range, 'Q1 · Jan to Mar')
   assert.equal(cards[2].status, 'Week 8 of 13 · closes Dec 31')
   assert.equal(cards[2].current, true)
   assert.equal(cards[3].status, 'Not yet')
