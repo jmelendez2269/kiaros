@@ -97,7 +97,7 @@ export function getSalesYearCopy(now: Date = new Date()): SalesYearCopy {
   if (month === 10 || month === 11) {
     return {
       sellingYear,
-      hook: `Join now and you get the rest of ${sellingYear - 1}, plus all of ${sellingYear}.`,
+      hook: `A year started now includes the rest of ${sellingYear - 1}, plus all of ${sellingYear}.`,
       detail: `Your ${sellingYear} Blueprint opens Dec 1, and we'll invite you to generate it then.`,
     };
   }
@@ -105,7 +105,7 @@ export function getSalesYearCopy(now: Date = new Date()): SalesYearCopy {
   if (month === 12) {
     return {
       sellingYear,
-      hook: `${sellingYear} Blueprints are open. Join now and your ${sellingYear} is ready before it starts.`,
+      hook: `${sellingYear} Blueprints are open. Yours can be ready before the year begins.`,
       detail: null,
     };
   }

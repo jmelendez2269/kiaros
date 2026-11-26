@@ -104,7 +104,7 @@ check('the site sells next year from October, and the hook follows the calendar'
   const nov = new Date('2026-11-20T15:00:00Z')
   assert.equal(getSellingPlannerYear(nov), 2027)
   const novCopy = getSalesYearCopy(nov)
-  assert.equal(novCopy.hook, 'Join now and you get the rest of 2026, plus all of 2027.')
+  assert.equal(novCopy.hook, 'A year started now includes the rest of 2026, plus all of 2027.')
   assert.match(novCopy.detail ?? '', /2027 Blueprint opens Dec 1/)
 
   const dec = getSalesYearCopy(new Date('2026-12-05T15:00:00Z'))

@@ -66,7 +66,7 @@ export function GiftCheckoutForm({ tiers, defaultTier = "planner" }: Props) {
   return (
     <form className="grid gap-6" onSubmit={handleSubmit}>
       <fieldset className="grid gap-3">
-        <legend className="mb-3 text-sm font-medium text-bone">Which year would you like to give?</legend>
+        <legend className="mb-3 text-sm font-medium text-bone">Which plan would you like to give?</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           {tiers.map((tier) => {
             const selected = tier.key === tierKey;

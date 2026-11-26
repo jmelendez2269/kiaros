@@ -5,7 +5,7 @@ import { FunnelAttributionCapture } from "@/components/analytics/FunnelAttributi
 import { GiftCheckoutForm, type GiftTierOption } from "@/components/commerce/GiftCheckoutForm";
 import { BRAND } from "@/lib/brand";
 import { formatUsd, getAllCommerceTiers, parseCommerceTierKey } from "@/lib/commerce/config";
-import { getSellingPlannerYear } from "@/lib/commerce/planner-year";
+import { getSalesYearCopy, getSellingPlannerYear } from "@/lib/commerce/planner-year";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,8 @@ export default async function GiftPage({ searchParams }: Props) {
   const canceled = (Array.isArray(params.canceled) ? params.canceled[0] : params.canceled) === "1";
   const tierParam = Array.isArray(params.plan) ? params.plan[0] : params.plan;
   const year = getSellingPlannerYear();
+  // Only October through December, while the year-turn hook is showing.
+  const showYearTurnCoverage = getSalesYearCopy().hook !== null;
 
   const tiers: GiftTierOption[] = getAllCommerceTiers().map((tier) => ({
     key: tier.key,
@@ -82,11 +84,13 @@ export default async function GiftPage({ searchParams }: Props) {
               <p className="shell-eyebrow">Good to know</p>
               <ul className="mt-4 space-y-3 text-sm leading-7 text-bone-muted">
                 <li>It&apos;s one year. It never renews or charges them.</li>
-                <li>
-                  Given before the year turns, it covers the rest of this year and the next one, so
-                  their {year} Blueprint is part of the gift.
-                </li>
-                <li>If they already use {BRAND.product}, the gift adds a year after their current paid year.</li>
+                {showYearTurnCoverage ? (
+                  <li>
+                    Their year starts the day they redeem it. If they open it before {year} begins, it
+                    runs through the end of {year}, so their {year} Blueprint is part of the gift.
+                  </li>
+                ) : null}
+                <li>If they already have a paid year running, the gift starts the day after that year ends.</li>
                 <li>
                   Not sure they&apos;re into astrology? The planner reads the chart as a structure for
                   reflection, not a prediction.
